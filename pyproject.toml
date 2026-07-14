@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ceph-prio-hub"
+version = "0.1.0"
+description = "Ceph Prio-List Issue Hub — monitors prio-list emails via Microsoft Graph API, consolidates issues, and cross-references with Ceph knowledge bases"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "mcp>=1.0",
+    "msgraph-sdk>=1.0",
+    "azure-identity>=1.15",
+    "msal>=1.28",
+    "beautifulsoup4>=4.12",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
