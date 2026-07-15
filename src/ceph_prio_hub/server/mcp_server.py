@@ -34,6 +34,7 @@ from ceph_prio_hub.graph.client import GraphClient, GraphAuthError
 from ceph_prio_hub.jira.client import JiraClient, JiraAuthError, parse_jira_issue
 from ceph_prio_hub.parser.issue_extractor import extract_issue_info
 from ceph_prio_hub.tracker.state import IssueStateDB
+from ceph_prio_hub.tracker.tracking import TrackingDB, QA_STATUSES, QA_STATUS_LABELS
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ def create_mcp_server(
     )
 
     db = state_db or IssueStateDB(config.state_dir)
+    tracking = TrackingDB()
     _jira_client: JiraClient | None = None
 
     def _get_graph() -> GraphClient:
@@ -460,6 +462,108 @@ def create_mcp_server(
             return parse_jira_issue(raw)
         except JiraAuthError as exc:
             return {"error": str(exc)}
+
+    @mcp.tool()
+    def get_tracking(issue_key: str) -> dict[str, Any]:
+        """Get QA tracking data for an issue (analysis, repro steps, test coverage, QA status).
+
+        Args:
+            issue_key: JIRA key (e.g. IBMCEPH-16204) or internal issue ID.
+        """
+        data = tracking.get(issue_key)
+        data["issue_key"] = issue_key
+        data["qa_status_label"] = QA_STATUS_LABELS.get(data.get("qa_status", ""), "")
+        return data
+
+    @mcp.tool()
+    def update_tracking(
+        issue_key: str,
+        qa_status: str = "",
+        qa_assignee: str = "",
+        internal_priority: str = "",
+        analysis: str = "",
+        repro_steps: str = "",
+        test_coverage: str = "",
+        hotfix_status: str = "",
+        notes: str = "",
+    ) -> dict[str, Any]:
+        """Update QA tracking fields for an issue.
+
+        This is the primary tool for recording analysis results. Fields are
+        additive — only provided (non-empty) fields are updated; others are
+        left unchanged.
+
+        After updating, regenerate the dashboard to see changes in the reports.
+
+        Args:
+            issue_key: JIRA key (e.g. IBMCEPH-16204) or internal issue ID.
+            qa_status: QA workflow status. One of: not_assessed, needs_analysis, reproducing, test_written, verified, wont_fix.
+            qa_assignee: QA engineer assigned to this issue.
+            internal_priority: Internal priority (P0, P1, P2, P3).
+            analysis: Root cause analysis text. Can be multi-line.
+            repro_steps: Steps to reproduce the issue. Can be multi-line.
+            test_coverage: Test coverage assessment — existing tests and what to add. Can be multi-line.
+            hotfix_status: Hotfix status (requested, delivered, not_needed).
+            notes: Free-form notes.
+        """
+        fields = {}
+        if qa_status:
+            if qa_status not in QA_STATUSES:
+                return {"error": f"Invalid qa_status '{qa_status}'. Must be one of: {', '.join(QA_STATUSES)}"}
+            fields["qa_status"] = qa_status
+        if qa_assignee:
+            fields["qa_assignee"] = qa_assignee
+        if internal_priority:
+            fields["internal_priority"] = internal_priority
+        if analysis:
+            fields["analysis"] = analysis
+        if repro_steps:
+            fields["repro_steps"] = repro_steps
+        if test_coverage:
+            fields["test_coverage"] = test_coverage
+        if hotfix_status:
+            fields["hotfix_status"] = hotfix_status
+        if notes:
+            fields["notes"] = notes
+
+        if not fields:
+            return {"error": "No fields provided to update"}
+
+        tracking.set(issue_key, fields)
+        tracking.save()
+
+        updated = tracking.get(issue_key)
+        updated["issue_key"] = issue_key
+        updated["qa_status_label"] = QA_STATUS_LABELS.get(updated.get("qa_status", ""), "")
+        return {"updated": True, "tracking": updated}
+
+    @mcp.tool()
+    def list_tracking_status() -> dict[str, Any]:
+        """List QA tracking status for all issues that have been assessed.
+
+        Returns issues grouped by QA status with counts.
+        """
+        all_tracked = tracking.all_tracked()
+        stats = tracking.stats()
+
+        by_status: dict[str, list] = {}
+        for key, data in all_tracked.items():
+            qs = data.get("qa_status", "not_assessed")
+            label = QA_STATUS_LABELS.get(qs, qs)
+            by_status.setdefault(label, []).append({
+                "issue_key": key,
+                "qa_assignee": data.get("qa_assignee", ""),
+                "internal_priority": data.get("internal_priority", ""),
+                "has_analysis": bool(data.get("analysis")),
+                "has_repro_steps": bool(data.get("repro_steps")),
+                "has_test_coverage": bool(data.get("test_coverage")),
+            })
+
+        return {
+            "total_tracked": len(all_tracked),
+            "stats": {QA_STATUS_LABELS.get(k, k): v for k, v in stats.items()},
+            "by_status": by_status,
+        }
 
     @mcp.tool()
     def generate_dashboard_tool(
