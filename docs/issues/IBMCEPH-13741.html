@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13741 - [8.1z Backport] [ODF][Nokia]MON crashed - need help analyzin</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13741: [8.1z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13741" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13741</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Prashant Dhange</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rados</dd>
+    <dt>Versions</dt><dd>8.1</dd>
+    <dt>Created</dt><dd>2026-04-02</dd>
+    <dt>Updated</dt><dd>2026-05-18</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>ODF_Issue</span><span>RH_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rados</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-13741): [8.1z Backport] [ODF][Nokia]MON crashed - need help analyzing dump
+Affected version(s): 8.1
+Component(s): rados
+Severity: normal
+
+Developer analysis from JIRA comments:
+This Jira is clone of 13779, This Jira is for the 8.1z backport.
+I have backported the changes from the Squid PR (  ) to the downstream  ceph-8.1-rhel-patches  branch.  $ git log -n4 --pretty=oneline
+a8cc74484609e1c85e9f0011ec6688bf03487323 (HEAD -&gt; ceph-8.1-rhel-patches, patches/ceph-8.1-rhel-patches) ceph_mon: Fix shutdown order to destroy Monitor before closin
+A fix is available for testing in build ceph-19.2.1-359. Moving to ON_QA
+
+Key error indicators:
+  - hi, looking at    so looking at the data provided, I can see this is happening when the node the mon pod is running on gets drained and cordoned because machine-config-operator rolles out a new machin
+  - As part of the verification process, attempts were made to intentionally trigger monitor (MON) crashes; however, no crashes were observed. Additionally, regression tests were executed through the Jenk
+
+Escalation: L3 escalation</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+Component: RADOS (core storage layer)
+Tools: rados bench, ceph osd commands, PG analysis, osd crash dumps
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Create test pool with appropriate PG count
+  3. Verify OSD map and PG states
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check OSD logs and crash dumps: ceph crash ls-new</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/rados
+
+Coverage gaps:
+  - Crash/assert scenario needs dedicated negative test
+  - Add crash dump analysis to regression suite
+
+Recommended tests:
+  - Add regression test to qa/suites/rados covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (15 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-04-03 12:03:02</span><span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>: I think we can move this out ti 8.1z7 this should not block 8.1z6 release</div>
+<div class="tl-entry"><span class="tl-date">2026-04-06 03:41:04</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Hi   This issue has very strict timeline, this MUST be released by mid May. We can not wait for 8.1z7 on this. This is a blocker for 8.1z6. -Bipin Kunal</div>
+<div class="tl-entry"><span class="tl-date">2026-04-06 03:41:58</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I have marked it as blocker and moved the target back to 8.1z6.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-06 08:58:58</span><span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>:  Thank you for correcting me on this, I have seen that Prashant have created a fix for this upstream still in reviews.  </div>
+<div class="tl-entry"><span class="tl-date">2026-04-15 16:38:44</span><span class="tl-badge comment">Comment</span> <strong>Radosław Zarzyński</strong>: Should we mark this as a duplicate of   ? For sure they are related  by the fix.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-16 06:40:02</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  This Jira is clone of 13779, This Jira is for the 8.1z backport. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-20 21:06:05</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: I have backported the changes from the Squid PR (  ) to the downstream  ceph-8.1-rhel-patches  branch.  $ git log -n4 --pretty=oneline
+a8cc74484609e1c85e9f0011ec6688bf03487323 (HEAD -&gt; ceph-8.1-rhel-patches, patches/ceph-8.1-rhel-patches) ceph_mon: F</div>
+<div class="tl-entry"><span class="tl-date">2026-04-21 06:42:39</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-19.2.1-359. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 22:25:14</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>:  - Could you please provide the detailed steps required to reproduce this issue?</div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 01:57:29</span><span class="tl-badge comment">Comment</span> <strong>Daniel Moessner</strong>:  hi, looking at    so looking at the data provided, I can see this is happening when the node the mon pod is running on gets drained and cordoned because machine-config-operator rolles out a new machine config requiring a reboot. During the eviction </div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 09:31:17</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>:    I was unable to reproduce the issue despite executing the following procedure intended to trigger the bug: Configured the parameter values to increase the chances of reproducing the issue. ceph config set mon mon_lease 5 ceph config set mon mon_el</div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 09:48:54</span><span class="tl-badge comment">Comment</span> <strong>Daniel Moessner</strong>:  as said, it is more the draining of the node, perhaps a clean reboot would do the same, but i am not sure. Nokia faced this during upgrades of the cluster while the node got drained and rebooted by mco. And as said, it happened just 2 time in mass e</div>
+<div class="tl-entry"><span class="tl-date">2026-04-27 18:41:55</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>: As part of the verification process, attempts were made to intentionally trigger monitor (MON) crashes; however, no crashes were observed. Additionally, regression tests were executed through the Jenkins pipeline, and no issues were identified. [ceph</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 16:32:35</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 8.1z6 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 16:32:36</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-16079 - Cephadm not creating OSD daemons for few OSDs despite being </title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-16079: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16079" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16079</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Guillaume ABRIOUX</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Versions</dt><dd>N/A</dd>
+    <dt>Created</dt><dd>2026-06-18</dd>
+    <dt>Updated</dt><dd>2026-07-14</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span><span>cephadm</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephadm</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-16079): Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
+Affected version(s): Not specified
+Component(s): cephadm
+Severity: normal
+
+Key error indicators:
+  - Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. ceph orch set-unmanaged osd.default_dr
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph Not specified cluster
+Component: Cephadm orchestrator
+Tools: cephadm shell, ceph orch commands, service deployment/upgrade validation
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Verify cephadm is functional on bootstrap node
+  3. Prepare service specs as described in issue
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+  2. From JIRA: Hi   , The dev environment has since been redeployed, so unfortunately, I don&#x27;t have the output of the requested commands captured after zapping nvme4 and when new LVM was created. When we initially a
+  3. From JIRA: Hello   , Could you please share the reproduction steps? The issue description mentions an 80% hit rate, and we&#x27;d like to understand how this was achieved.
+  4. From JIRA: , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  cephadm ? Sharing these logs will help us investigate further.
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check cephadm logs: ceph log last cephadm</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/cephadm, cephci deploy suites
+
+Coverage gaps:
+  - Functional test for the reported scenario in cephadm
+
+Recommended tests:
+  - Add regression test to qa/suites/cephadm, cephci deploy suites covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-06-23 04:50:14</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the Ceph volume logs below are the observation: Zapping /dev/nvme4n1  [2026-06-18 11:39:46,462][ceph_volume.main][INFO  ] Running command: ceph-volume  lvm zap /dev/nvme4n1 --destroy
+
+For 2 lvm:
+[2026-06-18 11:39:46,656][ceph_volume.process][INF</div>
+<div class="tl-entry"><span class="tl-date">2026-06-24 06:13:46</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the sos report of node dal2-qz2-sr2-rk089-s18: lsblk : NAME                                                                                                  MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+loop0                                            </div>
+<div class="tl-entry"><span class="tl-date">2026-06-25 08:14:59</span><span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi   , The dev environment has since been redeployed, so unfortunately, I don&#x27;t have the output of the requested commands captured after zapping nvme4 and when new LVM was created. When we initially added the new OSD node, we encountered an issue whe</div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 06:16:22</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  , Are both OSDs currently down? The lsblk output indicates that the LVMs referenced by the OSDs are no longer present and have been replaced with newly created LVMs. This could explain why the OSDs are down.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 06:19:33</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Could you please share the reproduction steps? The issue description mentions an 80% hit rate, and we&#x27;d like to understand how this was achieved.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-01 02:49:59</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:    , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  cephadm ? Sharing these logs will help us investigate further.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 05:03:13</span><span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi   , The osds were down initially since the osd daemons were not created, so we tried to zap the disk nvme4, even then the osds daemons were not created successfully with the latest lvms.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 05:21:00</span><span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. ceph orch set-unmanaged osd.default_drive_group
+2. systemctl stop ceph-&lt;cluster_id&gt;@osd.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 06:27:45</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  could you please share ceph-volume lvm list output?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 06:30:51</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will h</div>
+<div class="tl-entry"><span class="tl-date">2026-07-05 21:39:16</span><span class="tl-badge comment">Comment</span> <strong>G Sri Harsha</strong>: Issue appeared once again. Added attachment  ceph_osd_recreation_issue.pdf cc:      Note : didn’t noticed the ask in the ticket hence missed collecting debug logs during the steps execution.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-05 21:47:36</span><span class="tl-badge comment">Comment</span> <strong>G Sri Harsha</strong>:  the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix/workaround.  Let us know your availability today </div>
+<div class="tl-entry"><span class="tl-date">2026-07-05 23:27:08</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the earlier logs, we observed that  cephadm  did not receive the OSD deployment request for two OSDs, which is why those OSDs remained down. On the other hand,  ceph-volume  successfully created the keyrings, indicating that the deployment proce</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 01:05:26</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Analysis from earlier logs : From the logs, it appears that  osd.62  and  osd.63  are being skipped in  deploy_osd_daemons_for_existing_osds() ( src/pybind/mgr/cephadm/services/osd.py ) because they are not present in  osd_uuid_map : if osd_id not in</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 11:17:11</span><span class="tl-badge comment">Comment</span> <strong>G Sri Harsha</strong>: Tried below: Zapping single LV where OSD is not deployed set to unmanaged zapped single LV ( ceph-volume lvm zap --destroy /dev/&lt;&gt;/&lt;&gt; ) set managed lv itself not got created  Zapping complete drive set unmanaged zapped entire drive set managed refres</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 01:39:14</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Based on  the analysis mentioned in    we can confirm the from debug logs we observed the same behaviour. 2026-07-06T12:56:25.980+0000 7fdf9d7ba640  0 [cephadm DEBUG cephadm.services.osd] osd id 64 does not exist in cluster
+2026-07-06T12:56:25.980+00</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 04:37:03</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Case 1: Zapping single LV where OSD is not deployed set to unmanaged zapped single LV ( ceph-volume lvm zap --destroy /dev/&lt;&gt;/&lt;&gt; ) set managed lv itself not got created  ---&gt; observation : when complete disk is available then only we get logs for cep</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 05:57:38</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello  @SriHarsha , Could you please attach the logs from the production environment to the Jira ticket? As discussed, in the test cluster we observed that the OSDs are reported under the  root  bucket and are in the  down  state. However, in the pro</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 11:54:44</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Based on the analysis of local reproducer env, the issue appears to be a cephadm deployment bug during OSD redeployment in an  osds_per_device  configuration, where cephadm generated the OSD deployment artifacts using a stale OSD FSID/LV reference. A</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 13:41:34</span><span class="tl-badge comment">Comment</span> <strong>Adam King</strong>:  There’s a lot of info on here I’m trying to pick up. I saw this tracker    with a PR that includes this comment         # ceph-volume registers new OSDs with the monitor before returning.
+        # the mgr&#x27;s view of the osd map can briefly lag, so g</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 09:48:11</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
+</div>
+
+</body>
+</html>

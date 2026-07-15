@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13748 - [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13748: [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13748" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13748</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Versions</dt><dd>7.1z8</dd>
+    <dt>Created</dt><dd>2026-04-02</dd>
+    <dt>Updated</dt><dd>2026-07-09</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephadm</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-13748): [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State
+Affected version(s): 7.1z8
+Component(s): cephadm
+Severity: normal
+
+Key error indicators:
+  - Hello   , After deleting the OSD spec from the cephadm config-key database and forcing an MGR failover, the orchestrator returned to its expected state. The customer was then able to successfully rede
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 7.1z8 cluster
+Component: Cephadm orchestrator
+Tools: cephadm shell, ceph orch commands, service deployment/upgrade validation
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Verify cephadm is functional on bootstrap node
+  3. Prepare service specs as described in issue
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+  2. From JIRA: Hi  , Sure, it would be great if you could tag me again in case I missed the update. Thanks, Anita
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check cephadm logs: ceph log last cephadm</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/cephadm, cephci deploy suites
+
+Coverage gaps:
+  - Functional test for the reported scenario in cephadm
+
+Recommended tests:
+  - Add regression test to qa/suites/cephadm, cephci deploy suites covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-06-03 09:17:47</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   ,  Yes, I remember you mentioned the working vs non-working node scenario earlier, and that is expected. I think I already responded to that, but let me clarify it again looks like there’s some confusion here. I’ll also tag you in that comment s</div>
+<div class="tl-entry"><span class="tl-date">2026-06-03 09:18:22</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:     ++</div>
+<div class="tl-entry"><span class="tl-date">2026-06-03 09:37:30</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hi  , Sure, it would be great if you could tag me again in case I missed the update. Thanks, Anita</div>
+<div class="tl-entry"><span class="tl-date">2026-06-03 10:38:20</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  please refer   </div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 07:32:30</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hi   , Thanks for tagging:  One point that we would like to better understand is the behavior difference between the two clusters. We understand that the customer manually modified the OSD spec in the affected cluster. However, the OSD service appear</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 01:13:25</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  could you please refer this    </div>
+<div class="tl-entry"><span class="tl-date">2026-06-09 01:08:18</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , The debug logs from the non-affected cluster, where the  ceph orch daemon redeploy osd.&lt;id&gt;  operation succeeds even when the OSD spec is configured as  unmanaged , have been attached. Could you please review these logs and help us understa</div>
+<div class="tl-entry"><span class="tl-date">2026-06-09 07:29:23</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , In one for your Jira update you mentioned.. Earlier releases (7.1 and prior) :  OSDs added using  ceph orch daemon add osd  were marked as unmanaged, but no corresponding OSD service specification was stored in the Cephadm service store. Si</div>
+<div class="tl-entry"><span class="tl-date">2026-06-09 10:30:28</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:   Case 1   Working node : On the working node, the service is unmanaged, but the customer didn&#x27;t do a manual export and reapply of the spec, so the service wasn&#x27;t known to cephadm and redeployment was happening. Logs: Basic spec after adding OSD as c</div>
+<div class="tl-entry"><span class="tl-date">2026-06-09 10:39:23</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:   The fix mentioned above, which was added in the 8.1 release, is under    and commit  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/50f18b9686d400c320d0a7afa7f2f381a5b16d7b  Also by default, if any OSDs are unmanaged, we should not perform any ce</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 06:38:27</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , We suggested removing the  unmanaged: true  flag from the OSD spec and reapplying the specification as a potential solution. However, before proceeding with this action, the customer has raised the following concerns: Response from Customer</div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 09:47:02</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Assigning this bug to  , as she has been working on this for quite some time.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 10:26:43</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [ Internal - Do no share with customer]  Our earlier workaround involved marking the OSD service as managed, which would result in a different OSD spec between the affected and non-affected nodes. Since the customer would like to keep the same OSD sp</div>
+<div class="tl-entry"><span class="tl-date">2026-06-15 06:46:21</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  Since the service is unmanaged, we should ask the user to mark it as managed, perform the required operation, and then mark it as unmanaged again. Instead of removing its entry from mon store.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 03:55:54</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:    Could you please ask the customer to use the workaround of marking the OSDs as managed if they need to perform orchestrator actions, instead of removing the key from the MON store? </div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 10:39:48</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:    , Also, the current spec from the affected node looks incorrect, as there are 196 OSDs but only one OSD has data devices and DB devices configured. This needs to be corrected by either setting  data_devices: all: true  or adding device paths for a</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 11:17:58</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , The customer has added data and DB devices for only one OSD, which is incorrect since there are 196 OSDs in total.  As we are suggesting a workaround to mark OSDs as managed when users need to perform ceph orch operations, adding  data_devi</div>
+<div class="tl-entry"><span class="tl-date">2026-06-18 01:36:01</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , As discussed with   on slack thread    we can procced with workaround mention in the comment  </div>
+<div class="tl-entry"><span class="tl-date">2026-06-23 02:03:07</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , After deleting the OSD spec from the cephadm config-key database and forcing an MGR failover, the orchestrator returned to its expected state. The customer was then able to successfully redeploy the affected OSD, confirming the issue has be</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 08:59:55</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Closing this issue, as the workaround was successful in the customer environment.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 09:00:05</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+</div>
+
+</body>
+</html>

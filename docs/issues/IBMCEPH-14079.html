@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14079 - [IBM_Support] Ceph RGW Multi-site Sync is failing due to loc</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14079: [IBM_Support] Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14079" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14079</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Matthew Benjamin</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rgw-multisite</dd>
+    <dt>Versions</dt><dd>8.1z3</dd>
+    <dt>Created</dt><dd>2026-04-20</dd>
+    <dt>Updated</dt><dd>2026-06-11</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rgw-multisite</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14079): [IBM_Support] Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;
+Affected version(s): 8.1z3
+Component(s): rgw-multisite
+Severity: normal
+
+Developer analysis from JIRA comments:
+Just a thought; Since we suspect the lock issue may be caused by multiple large buckets performing full sync simultaneously — leading to contention because they share the same datalog shards — would it make sense to try the following approach? Disable sync for all buckets Enable sync for one bucket
+Hello   , Do we have any backport Jira for this issue in 8.1? I wanted to check if there is a plan to backport this fix to 8.1
+I see that the fix indicated in previous comment was added to 9.1 via   .  If the fix is needed in 8.1 as well then , please get the Jira cloned and target it for 8.1z8.
+
+Key error indicators:
+  - Hello  , Could you please attach the case number to the Jira ticket? Also, let me know if this information is already available in eCureP and where I can find it. RGW logs of primary and secondary clu
+  - Hello    We have the RGW logs from secondary sites (these logs we collected after reducing the RGW instance count from 8 to 3) along with that we do have the sync error list and bucket stats from both
+  - Hello      As discussed over the slack the bucket sync init and sync run is still failing with the same error lock issue. The logs are available at the ecurep: (  /ecurep/sf/TS021/905/TS021905263/0-al
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1z3 cluster
+Component: RGW Multisite Replication
+Tools: radosgw-admin sync status, data/metadata sync verification, multi-zone s3 operations
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Deploy RGW service with required configuration
+  3. Create test user and bucket
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check RGW logs: ceph log last ceph-rgw</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/rgw/multisite
+
+Coverage gaps:
+  - Error handling test for the specific failure scenario
+
+Recommended tests:
+  - Add regression test to qa/suites/rgw/multisite covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (20 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-04-21 02:41:10</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello  , Could you please attach the case number to the Jira ticket? Also, let me know if this information is already available in eCureP and where I can find it. RGW logs of primary and secondary clusters sync error list number of buckets and object</div>
+<div class="tl-entry"><span class="tl-date">2026-04-21 03:43:55</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    We have the RGW logs from secondary sites (these logs we collected after reducing the RGW instance count from 8 to 3) along with that we do have the sync error list and bucket stats from both primary &amp; secondary site. Could you please attach</div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 09:15:33</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: hello      Here are the details we requested over the slack for this cluster from the customer. Since when this issue started to appear in this cluster? The cluster has been under observation since it was commissioned. Client operations have been act</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 08:46:30</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Based on the comments in the description, the list of top impacted buckets is mentioned; however, in the bucket stats output (both dc and dr) we only see the following buckets:  tcsecidels3arc-sir-s13-maharashtra
+tcsecidels3arc-sir-s01-andh</div>
+<div class="tl-entry"><span class="tl-date">2026-04-28 03:43:37</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    We have the bucket stats output for the whole buckets. Here are the file location which have all of the bucket stats on the ecurep path:  /ecurep/sf/TS021/905/TS021905263/0-all_data -rw-r-----+ 2 root     swsupt   10032836 Apr 17 05:22 rados</div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 07:48:32</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Thanks for confirming…</div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 07:54:49</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Could you please share if there are any updates from the customer’s side?  </div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 08:48:47</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    We have updated the customer about potential fix that could help us them to resolve the issue and when it is planning to be available. Currently customer didn’t updated about the information related to upgrade or fix as they said they will c</div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 22:47:28</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Thanks  for the update</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 11:26:04</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello      As discussed over the slack the bucket sync init and sync run is still failing with the same error lock issue. The logs are available at the ecurep: (  /ecurep/sf/TS021/905/TS021905263/0-all_data  ) -rw-r-----+ 2 root     swsupt       2065</div>
+<div class="tl-entry"><span class="tl-date">2026-05-11 02:56:31</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  Just a thought; Since we suspect the lock issue may be caused by multiple large buckets performing full sync simultaneously — leading to contention because they share the same datalog shards — would it make sense to try the following approach? Disab</div>
+<div class="tl-entry"><span class="tl-date">2026-05-12 15:09:51</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>:  even with that single large bucket that is doing full sync, you could expect contention. if all other buckets are already in incremental sync, there is no harm in trying. </div>
+<div class="tl-entry"><span class="tl-date">2026-06-02 06:59:25</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello        We got an update from the customer that they agree to upgrade this cluster and test the fixes as we likely hitting the same lock issue as described for other Jira ( for the same cluster but different cluster )    After this cluster upgra</div>
+<div class="tl-entry"><span class="tl-date">2026-06-02 07:26:53</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>:  I don’t think this Jira ticket is the appropriate place to share this kind of customer feedback.  Problems with the software, it’s validation, as well as our models for selling it--that induce the customer, e.g., to refuse upgrades, need to be evalu</div>
+<div class="tl-entry"><span class="tl-date">2026-06-08 04:04:50</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Both commits  from    are merged in ceph-9.1-rhe-patches on 23rd march   1.  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/3bc929439d1d3d14b4115324c1aab4b2d1d08d93  2.  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d70f423fd728e9d2f1e</div>
+<div class="tl-entry"><span class="tl-date">2026-06-08 07:51:09</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Do we have any backport Jira for this issue in 8.1? I wanted to check if there is a plan to backport this fix to 8.1</div>
+<div class="tl-entry"><span class="tl-date">2026-06-08 08:07:54</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I see that the fix indicated in previous comment was added to 9.1 via   .  If the fix is needed in 8.1 as well then , please get the Jira cloned and target it for 8.1z8.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-08 08:08:13</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  no, you are correct, both the fixes are in 9.1 branch</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 02:49:40</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  You mentioned the following three PRs in the hotfix email:         Out of these, I noticed that one PR is not present in 9.1 . The PR link is:     Should we proceed with creating a backport Jira for this PR as well?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+</div>
+
+</body>
+</html>

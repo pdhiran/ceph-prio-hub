@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12820 - [BZ#2430829] [GSS] Bucket never leaves PROCESSING state whil</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12820: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12820" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12820</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Versions</dt><dd>8.1</dd>
+    <dt>Created</dt><dd>2026-01-19</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>RH_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rgw</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-12820): [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.
+Affected version(s): 8.1
+Component(s): rgw
+Severity: major
+Related Bugzilla: BZ#2430829
+
+Developer analysis from JIRA comments:
+We will backport    to the downstream release, increase  rgw_lc_max_workers from 9 to 18, and double the LC shard count to evaluate whether these changes improve tag evaluation performance.
+- Could you please confirm if the fix is already merged to the DS ceph-9.1-rhel-patches branch ? If yes, please share the commit id/MR link.
+
+Escalation: L3 escalation</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+Component: RADOS Gateway (S3/Swift)
+Tools: s3cmd, aws-cli, boto3, radosgw-admin, s3tests
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Deploy RGW service with required configuration
+  3. Create test user and bucket
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check RGW logs: ceph log last ceph-rgw</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Related Bugzilla fixes: BZ#2430829 (check if regression tests exist)
+  - Component test suite: qa/suites/rgw, s3-tests
+
+Coverage gaps:
+  - Functional test for the reported scenario in rgw
+
+Recommended tests:
+  - Add regression test to qa/suites/rgw, s3-tests covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-02-08 00:25:11</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , The reason your deletion speed is roughly half of your ingress speed is that object creation is a single write operation, while lifecycle deletion is a read-evaluate-update workflow. When an object is created, RGW writes the data and updates t</div>
+<div class="tl-entry"><span class="tl-date">2026-02-08 06:16:37</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hello   ,  OK, so it makes sense if we have to do more work regarding bucket index on lifecycle processing that this might take longer, so let me get this straight: PUT: one insert into the corresponding index shard (BTW, how is the index shard deter</div>
+<div class="tl-entry"><span class="tl-date">2026-02-08 10:50:04</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: I just found I had started writing this in a comment and left it unposted in a tab, this is regarding the production cluster issue:  , I was reviewing the CU case, unfortunately I did not write down exactly if we used debug_rgw only or dbug_rgw + deb</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 05:00:51</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , Yes, your understanding is largely correct. when an object is written, its metadata is inserted into the appropriate bucket index shard, chosen by hashing the object key. Lifecycle (LC) processing later scans those shards, evaluates each objec</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 09:52:00</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hi   ,  thank you, it’s a bit clearer now, I have however still issues with this part: So the idea that “one thread takes a bucket until finished” isn’t quite right. 
+LC is organized by shards, not buckets. A shard can contain objects from multiple b</div>
+<div class="tl-entry"><span class="tl-date">2026-02-12 05:49:22</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hello  ,  So, CU came back with the question about debug_rgw_lifecycle: debug_rgw_lifecycle 20 is effective and I can now see active logging for the bucket in 
+question whilst the object count is NOT going down. You can see it trying each rule and sk</div>
+<div class="tl-entry"><span class="tl-date">2026-02-15 02:18:22</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , When an object is PUT into an RGW bucket, two things happen immediately. First, the object’s data is written into the bucket data pool. Second, a metadata entry for that object is written into a  bucket index shard  (one of the  .dir.bucket.* </div>
+<div class="tl-entry"><span class="tl-date">2026-02-15 02:38:44</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , Yes, your observations are correct.  debug_rgw_lifecycle 20  shows RGW iterating over all objects and rules. Objects that do not match a rule are skipped, which is why the object count does not decrease. You can see logging for each rule and o</div>
+<div class="tl-entry"><span class="tl-date">2026-02-17 02:46:50</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi @Raimund Sacherer, Based on the discussion so far, we are focusing on two main aspects: Bucket stuck in the “processing” state Since  debug_rgw_lifecycle  is already enabled, we can analyze the RGW logs to verify whether the bucket exits the lifec</div>
+<div class="tl-entry"><span class="tl-date">2026-02-17 03:26:53</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hi   ,  Thanks, I have blocked today time for GCHQ and will be working on your answers, I just want to quickly answer to your latest update, regarding point 2. I based my calculation only on evaluation, because from past experience we see that the pr</div>
+<div class="tl-entry"><span class="tl-date">2026-02-26 03:34:10</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>:  reminder: look at bucket stats for the amount of objects in buckets.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-26 04:58:21</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: , Check the output of  radosgw-admin lc list  to determine which bucket is assigned to which LC shard and which RGW instance is processing each shard.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-26 05:11:51</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hi  ,  I played around with this in my testing but did not see at any point which  RGW Instance  is processing which shard. Just the state is shown … Did you actually see the instance there? BR Raimund</div>
+<div class="tl-entry"><span class="tl-date">2026-02-26 06:15:46</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  , From the logs of a particular RGW instance, we can identify which bucket is being processed by that instance. Feb 15 01:18:37 dhikale-0 radosgw[2466]: lifecycle: RGWLC::process() process shard rollover lc_shard=lc.0 head.marker= head.shard_rollove</div>
+<div class="tl-entry"><span class="tl-date">2026-02-26 10:15:54</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: We will backport    to the downstream release, increase  rgw_lc_max_workers from 9 to 18, and double the LC shard count to evaluate whether these changes improve tag evaluation performance.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 07:45:20</span><span class="tl-badge comment">Comment</span> <strong>Sachin Yeshwanth</strong>:  - Could you please confirm if the fix is already merged to the DS ceph-9.1-rhel-patches branch ? If yes, please share the commit id/MR link.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 09:32:25</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  commit id is 2513cf06f7a6a033a90a4b9e01bcdd70825bc6f6</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 11:53:37</span><span class="tl-badge comment">Comment</span> <strong>Madhavi Kasturi</strong>: The ticket    seems to be a duplicate of this ticket.  Updating the status to verified accordingly.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-11 06:47:16</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hi    I was just reading over this ticket again, I am unsure if your comment about doubling the LC shard count and raising the max workers from 9 to 18 was because we talked to the CU about and CU said they would test this out, or if this comment is </div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 08:45:56</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.1 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 19:56:17</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+</div>
+
+</body>
+</html>

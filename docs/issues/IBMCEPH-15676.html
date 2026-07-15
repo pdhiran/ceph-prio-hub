@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-15676 - [IBM_Support]Multiple RGW crashes after ceph 8.1z5 to 9.9.0.</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-15676: [IBM_Support]Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15676" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15676</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Swati Thombe</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Versions</dt><dd>9.0z2</dd>
+    <dt>Created</dt><dd>2026-06-01</dd>
+    <dt>Updated</dt><dd>2026-07-09</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rgw</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-15676): [IBM_Support]Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade
+Affected version(s): 9.0z2
+Component(s): rgw
+Severity: major
+
+Developer analysis from JIRA comments:
+Hello   wanted to confirm if this fix is present in the version IBM Storage Ceph 9.9.0.3?
+Hi    This issue has been addressed in IBM Storage Ceph 9.9.1.0. To get the fix, you&#x27;ll need to upgrade to IBM Storage Ceph 9.9.1.0. We are not planning to backport this fix to IBM Storage Ceph 9.9.0.3. Thanks !
+
+Key error indicators:
+  - Hello team, CU confirmed that they are experiencing the crashes mostly on delete operations.   can we also have an update on the progress on this ticket
+  - This does look on a high level similar to the multi-object delete failures Shilpa and team have addressed.      do you concur?
+  - although searching above could not find an answer if the CU env is MS or not …  there  is  a comment above that the workload is a delete workload –  CU confirmed that they are experiencing the crashes
+  - Hello    Can we please have an update on this jira, if the hotfix created for issue    can also be used for this customer? The customer is pushing for a hotfix as they has 78 RGW crashes over the week
+  - Hello team, The customer confirmed that the hotfix successfully resolved their issue and they are no longer observing any RGW crashes in their cluster.
+
+Escalation: IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 9.0z2 cluster
+Component: RADOS Gateway (S3/Swift)
+Tools: s3cmd, aws-cli, boto3, radosgw-admin, s3tests
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Deploy RGW service with required configuration
+  3. Create test user and bucket
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check RGW logs: ceph log last ceph-rgw</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/rgw, s3-tests
+
+Coverage gaps:
+  - Upgrade/migration path testing for the specific version transition
+  - Pre/post upgrade validation checks
+  - Crash/assert scenario needs dedicated negative test
+  - Add crash dump analysis to regression suite
+
+Recommended tests:
+  - Add regression test to qa/suites/rgw, s3-tests covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Upgrade test: validate behavior across version boundary
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-06-05 07:28:22</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  currently no, we have asked CU to confirm the same. Also have asked them to upload the coredump files to a box folder. Will update here as soon as we receive them</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 05:14:37</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello team, CU confirmed that they are experiencing the crashes mostly on delete operations.   can we also have an update on the progress on this ticket</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 12:28:29</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Let me set up the debug environment and continue investigating this issue. Apologies for the delay from the L3 side.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-17 05:20:34</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: //  Internal Discussion, don’t share with customer  //                                                                                        Hi    Our investigation indicates that these two incidents are likely related and may be manifestations of t</div>
+<div class="tl-entry"><span class="tl-date">2026-06-19 04:16:13</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: This does look on a high level similar to the multi-object delete failures Shilpa and team have addressed.      do you concur?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-21 03:28:00</span><span class="tl-badge comment">Comment</span> <strong>Mark Kogan</strong>:   although searching above could not find an answer if the CU env is MS or not …  there  is  a comment above that the workload is a delete workload –  CU confirmed that they are experiencing the crashes mostly on delete operations. which is a possiti</div>
+<div class="tl-entry"><span class="tl-date">2026-06-22 01:30:03</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello    Can we please have an update on this jira, if the hotfix created for issue    can also be used for this customer? The customer is pushing for a hotfix as they has 78 RGW crashes over the weekend.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-22 02:14:09</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  before we can give that, can you confirm if they are having multisite set up?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-22 02:31:55</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  yes this is a multisite environment</div>
+<div class="tl-entry"><span class="tl-date">2026-06-22 05:21:31</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Below are the details of the hotfix related to this issue. Please proceed with applying the hotfix and let us know the outcome.   Thanks! Swati Thombe</div>
+<div class="tl-entry"><span class="tl-date">2026-06-24 01:28:07</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello   we have updated the CU with the hotfix image details. Will update here as soon as we hear from the CU regarding this.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 00:50:21</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello   wanted to confirm if this fix is present in the version IBM Storage Ceph 9.9.0.3?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 02:35:21</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    This issue has been addressed in IBM Storage Ceph 9.9.1.0. To get the fix, you&#x27;ll need to upgrade to IBM Storage Ceph 9.9.1.0. We are not planning to backport this fix to IBM Storage Ceph 9.9.0.3. Thanks !</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 03:36:13</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Thank you for the confirmation. Currently the customer is working on applying the hotfix in low priority environments.   Will update here as soon as we hear from the CU regarding this.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-01 00:03:24</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  Please note that, the RHEL 9.8/10.2 requirement applies starting from the 9.1 release onwards.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-01 00:09:03</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: ack   will update this to the CU, incase they plan to upgrade to 9.9.1.0.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-08 01:02:04</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello team, The customer confirmed that the hotfix successfully resolved their issue and they are no longer observing any RGW crashes in their cluster.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-08 03:46:00</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    , thanks for the update. Based on this, can we proceed with closing the case?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 01:48:13</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  surely we can close this</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 01:49:25</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 01:49:25</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  Thanks !</div>
+</div>
+
+</body>
+</html>

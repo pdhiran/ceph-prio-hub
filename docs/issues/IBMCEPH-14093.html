@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14093 - [8.1z Backport] Ceph MDS is crashing during the journal repl</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14093: [8.1z Backport] Ceph MDS is crashing during the journal replay phase.</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14093" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14093</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Jos Collin</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>cephfs</dd>
+    <dt>Versions</dt><dd>8.1</dd>
+    <dt>Created</dt><dd>2026-04-20</dd>
+    <dt>Updated</dt><dd>2026-05-18</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephfs</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14093): [8.1z Backport] Ceph MDS is crashing during the journal replay phase.
+Affected version(s): 8.1
+Component(s): cephfs
+Severity: normal
+
+Developer analysis from JIRA comments:
+Please let   know here when it is safe to backport the fix to downstream. I see that the test is going on for upstream PR for it.
+Whoever does the port, please ensure that the source is the corresponding upstream branch PR - there is a likelihood of bugs creeping in otherwise and the upstream backport PRs are the ones that are tested.
+sure.     please use the squid backport PR for 8.1z and tentecle backport PR of 9.0z. Do you use the upstream main PR for downstream backport.
+
+Key error indicators:
+  - The System test IO workflows ran for ~10hrs and I had not seen any component crashing in the cluster. Neither, there was any Issue reported in ceph status checks.
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+Component: CephFS (distributed filesystem)
+Tools: ceph fs commands, mount/fuse clients, MDS operations, subvolume management
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Create CephFS filesystem with MDS daemons
+  3. Mount filesystem via kernel or FUSE client
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/fs
+
+Coverage gaps:
+  - Crash/assert scenario needs dedicated negative test
+  - Add crash dump analysis to regression suite
+
+Recommended tests:
+  - Add regression test to qa/suites/fs covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-04-20 11:06:27</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I have set the severity as critical and marked this as blocker for 8.1z6 as there are already 8 customer issues reported for this issue. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-20 11:07:39</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:     Please let   know here when it is safe to backport the fix to downstream. I see that the test is going on for upstream PR for it. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 05:13:23</span><span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>:  we can go ahead with the downstream port. No issues found in upstream testing.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 05:19:24</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Thanks   . We will do it today. Are we good for 9.0z as well?</div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 05:27:33</span><span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>:  Yes. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 05:27:54</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  sure.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 05:58:27</span><span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>:  Whoever does the port, please ensure that the source is the corresponding upstream branch PR - there is a likelihood of bugs creeping in otherwise and the upstream backport PRs are the ones that are tested.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 06:00:37</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  sure.     please use the squid backport PR for 8.1z and tentecle backport PR of 9.0z. Do you use the upstream main PR for downstream backport.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-22 10:17:22</span><span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>:  Sure. I will work on this today.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 05:19:02</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: The backport patch is quite big and it will be safer to have it backported by the dev team. I had discussion with Mahesh on it and Jos will help here in  creating the downstream MR here. -Bipin</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 06:47:33</span><span class="tl-badge comment">Comment</span> <strong>Jos Collin</strong>:  MR is created.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 08:25:04</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  Thanks   . Please move the status to MODIFIED once the patch is merged. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 04:32:10</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1750  is merged.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-26 23:49:38</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: hi   Can you please help me know if build could be available in 8.1z6 for this fix?</div>
+<div class="tl-entry"><span class="tl-date">2026-04-27 01:45:12</span><span class="tl-badge comment">Comment</span> <strong>Gaurav Atre</strong>:  we will move this bug to ON_QA once build is delivered both at RH and IBM side. If you want to test at RH side you can test with NVR 363 which will be available today. cc :   </div>
+<div class="tl-entry"><span class="tl-date">2026-04-27 06:55:44</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>:  We need IBM CEPH image with fix for testing as execution would happen on nodes in Tuscon lab where RHCEPH repo urls are currently not accessible. cc:     </div>
+<div class="tl-entry"><span class="tl-date">2026-04-29 00:01:08</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Completed CephFS System test on 8.1z6 latest ceph build 19.2.1-363.el9cp, Logs:  http://[REDACTED-IP-9c467ce8]/logs/archive/ceph-qe-user-logs/sumar/cephfs_systest_apr28_2/  (Accessible with tuscon lab connectivity)</div>
+<div class="tl-entry"><span class="tl-date">2026-04-29 11:10:36</span><span class="tl-badge comment">Comment</span> <strong>Pavan Rallabhandi</strong>:  thanks for this, could you summarize the findings if any?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-04 04:55:26</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>:  The System test IO workflows ran for ~10hrs and I had not seen any component crashing in the cluster. Neither, there was any Issue reported in ceph status checks.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 16:32:46</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 8.1z6 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 16:32:47</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Jos Collin)</span></div>
+</div>
+
+</body>
+</html>

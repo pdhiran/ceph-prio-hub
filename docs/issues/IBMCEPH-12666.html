@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12666 - [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringSt</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12666: [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12666" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12666</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Brad Hubbard</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rados</dd>
+    <dt>Versions</dt><dd>9.0</dd>
+    <dt>Created</dt><dd>2025-12-01</dd>
+    <dt>Updated</dt><dd>2026-07-15</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rados</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-12666): [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;
+Affected version(s): 9.0
+Component(s): rados
+Severity: major
+Related Bugzilla: BZ#2418230
+
+Developer analysis from JIRA comments:
+(In reply to Radoslaw Zarzynski from comment #4) &gt;     &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, &gt;  &gt; This seems to be around an RC   of Tentacle. Does it reproduce on current &gt; version? We can try and check if the issue is reproducible with latest builds &gt; Was there a FastEC pool? No, there were no Fast
+
+Key error indicators:
+  - Core dump and logsa are copied here :  http://magna002.ceph.redhat.com/ceph-qe-logs/bz-2418230/
+  - We&#x27;re able to generate the OSD crashes on demand via CI runs :  http://magna002.ceph.redhat.com/cephci-jenkins/cephci-run-35QGLN [root@ceph-pdhiran-7gztjq-node6 ~]# ceph -s cluster: id:     7462100e-c
+  - We have observed 2 osds crashing with the same assertions in   ceph version 20.2.1-236.el9cp  during osd thrash testing debug_osd 20 logs:-     [root@ceph40 ~]# ceph crash info 2026-05-08T12:52:49.196
+  - /builddir/build/BUILD/ceph-20.2.1/src/osd/PeeringState.cc: 5149: ceph_abort_msg(&quot;we got a bad state machine event&quot;) That comes from here. src/osd/PeeringState.cc: 5236 /------Crashed-------/
+5237 Peer
+  - In looking at historical cases such as this the most likely answer is some sort of delayed event, but it is not clear at all what sort of delayed event and/or why. In the core I’ve looked at so far th
+
+Escalation: L3 escalation</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 9.0 cluster
+Component: RADOS (core storage layer)
+Tools: rados bench, ceph osd commands, PG analysis, osd crash dumps
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Create test pool with appropriate PG count
+  3. Verify OSD map and PG states
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+  2. From JIRA: &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, This seems to be around an RC   of Tentacle. Does it reproduce on current version? Was there a FastEC pool?
+  3. From JIRA: (In reply to Radoslaw Zarzynski from comment #4) &gt;     &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, &gt;  &gt; This seems to be around an RC   of Tentacle. Does it reproduce on current &gt; version? We can try and chec
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check OSD logs and crash dumps: ceph crash ls-new</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Related Bugzilla fixes: BZ#2418230 (check if regression tests exist)
+  - Component test suite: qa/suites/rados
+
+Coverage gaps:
+  - Crash/assert scenario needs dedicated negative test
+  - Add crash dump analysis to regression suite
+
+Recommended tests:
+  - Add regression test to qa/suites/rados covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (16 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2025-12-01 22:30:13</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: Created  attachment 2117038  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2117038&amp;action=edit ] cluster logs from node1</div>
+<div class="tl-entry"><span class="tl-date">2025-12-01 23:41:32</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: Core dump and logsa are copied here :  http://magna002.ceph.redhat.com/ceph-qe-logs/bz-2418230/</div>
+<div class="tl-entry"><span class="tl-date">2025-12-02 00:43:39</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: We&#x27;re able to generate the OSD crashes on demand via CI runs :  http://magna002.ceph.redhat.com/cephci-jenkins/cephci-run-35QGLN [root@ceph-pdhiran-7gztjq-node6 ~]# ceph -s cluster: id:     7462100e-ce95-11f0-b5f7-fa163e4dc65b health: HEALTH_WARN Red</div>
+<div class="tl-entry"><span class="tl-date">2025-12-11 14:50:16</span><span class="tl-badge comment">Comment</span> <strong>Radoslaw Zarzynski</strong>: &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, This seems to be around an RC   of Tentacle. Does it reproduce on current version? Was there a FastEC pool?</div>
+<div class="tl-entry"><span class="tl-date">2026-01-04 21:57:45</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: (In reply to Radoslaw Zarzynski from comment #4) &gt;     &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, &gt;  &gt; This seems to be around an RC   of Tentacle. Does it reproduce on current &gt; version? We can try and check if the issue is reproducible with latest builds </div>
+<div class="tl-entry"><span class="tl-date">2026-05-11 23:29:25</span><span class="tl-badge comment">Comment</span> <strong>Vipin M S</strong>: We have observed 2 osds crashing with the same assertions in   ceph version 20.2.1-236.el9cp  during osd thrash testing debug_osd 20 logs:-     [root@ceph40 ~]# ceph crash info 2026-05-08T12:52:49.196033Z_77dcc18e-58f3-452d-b8dc-38612ad1f535
+{
+    &quot;a</div>
+<div class="tl-entry"><span class="tl-date">2026-05-17 22:47:56</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>:  I get “This shared file or folder link has been removed or is unavailable to you.” when I try to access that link?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-17 23:35:48</span><span class="tl-badge comment">Comment</span> <strong>Vipin M S</strong>:  Sorry, I missed to update the expiration date of shared link. Here is the updated link  https://ibm.box.com/s/bjvj4hjh29brtqu5zp4fz2bj9g9zsofe</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 21:30:34</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: I would suggest this is highly likely to be related to    if not the same issue but looking at it in depth now.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 21:54:43</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: /builddir/build/BUILD/ceph-20.2.1/src/osd/PeeringState.cc: 5149: ceph_abort_msg(&quot;we got a bad state machine event&quot;) That comes from here. src/osd/PeeringState.cc: 5236 /------Crashed-------/
+5237 PeeringState::Crashed::Crashed(my_context ctx)
+5238   </div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 00:43:55</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: In looking at historical cases such as this the most likely answer is some sort of delayed event, but it is not clear at all what sort of delayed event and/or why. In the core I’ve looked at so far there is the thread that crashes that is operating o</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 18:55:14</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: It may be worth trying this again with debug_ms = 1 debug_osd = 20 to see if we can work out what messages are passing to the osd. Please also capture the cluster log and the monitor logs, thank you.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-22 13:52:58</span><span class="tl-badge comment">Comment</span> <strong>Parag Kamble</strong>: A similar issue was observed in the ODF 4.22 chaos tests. The test randomly kills  pods and hits the same assertion. must-gather log location :  https://magna002.ceph.redhat.com/ocsci-jenkins/openshift-clusters/pakamble-42-ec1/pakamble-42-ec1_2026061</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 20:48:09</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: After looking at this from multiple different angles and analysing the data we currently have (still waiting on debug data) I’m beginning to think that this is likely a downstream consequence of the issue being investigated in    Whilst I don’t have </div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 03:56:20</span><span class="tl-badge comment">Comment</span> <strong>Bill Scales</strong>: This is definitely  not  related to   , this is a bug in the Peering state machine - it has received a stimulus (peering event) while in a state which does not support that stimulus. This cannot be debugged from just a stack backtrace, debugging it f</div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 03:56:20</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Brad Hubbard)</span></div>
+</div>
+
+</body>
+</html>

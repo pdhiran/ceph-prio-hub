@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14337 - [8.1z Backport] [BZ#2420200] [GSS] [Ceph]  Ceph MGR crashing</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14337: [8.1z Backport] [BZ#2420200] [GSS] [Ceph]  Ceph MGR crashing frequently - ** Caught signal (Segmentation fault) ** &quot;in thread 7f3c302ac640 thread_name:mgr-fin&quot;</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14337" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14337</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Igor Golikov</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>cephfs</dd>
+    <dt>Versions</dt><dd>8.1</dd>
+    <dt>Created</dt><dd>2026-05-07</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephfs</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14337): [8.1z Backport] [BZ#2420200] [GSS] [Ceph]  Ceph MGR crashing frequently - ** Caught signal (Segmentation fault) ** &quot;in thread 7f3c302ac640 thread_name:mgr-fin&quot;
+Affected version(s): 8.1
+Component(s): cephfs
+Severity: major
+Related Bugzilla: BZ#2420200
+
+Developer analysis from JIRA comments:
+This is waiting on an upstream backport PR to fix windows related jenkins failure.
+Understood, and we do take the impact seriously. The protective fix we added — the DentryRef guard and assertion — was backported to both 8.1 and 9.1. On 9.1, we have not seen any crash since this fix was applied. On 8.1, however, with the fix already in place, QE has reproduced a new crash. The ass
+Raised new Jira bug    for the new mgr crash seen and discussed below, and added target_release as 8.1z8, please change as required. Marking this bug as Verified as dev confirm’s the issue is different.
+
+Key error indicators:
+  - This is waiting on an upstream backport PR to fix windows related jenkins failure.
+  - Mgr daemon crash similar to what is reported in this bug is seen after few hours of CephFS System test Client IO workload, hence reopening this bug for further investigation. Crash dir log file snippe
+  - CephFS System test runs by default for 8-10hrs. So I had marked the bug as Verified earlier as i did not notice this mgr crash.  But I had repeated System test Client IO workload on same setup yesterd
+  - The crash signature is the same: SIGSEGV in  xlist::front → LRU::adjust → lru_remove → Client::unlink → trim_cache . But the trigger path is different. The previous crash happened during unmount/shutd
+  - Additional investigation of the core dump: I examined the LRU state at the time of the crash. The crash occurs in  LRU::adjust()  when it attempts to access the front of an empty list. (gdb) p ((LRU*)
+
+Escalation: IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+Component: CephFS (distributed filesystem)
+Tools: ceph fs commands, mount/fuse clients, MDS operations, subvolume management
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Create CephFS filesystem with MDS daemons
+  3. Mount filesystem via kernel or FUSE client
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Related Bugzilla fixes: BZ#2420200 (check if regression tests exist)
+  - Component test suite: qa/suites/fs
+
+Coverage gaps:
+  - Crash/assert scenario needs dedicated negative test
+  - Add crash dump analysis to regression suite
+
+Recommended tests:
+  - Add regression test to qa/suites/fs covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (17 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-06-04 10:07:11</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:    All higher version seems to be in good shape now but this is still in POST state. Please merge the patch to 8.1 branch as well. </div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 11:50:01</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  This is waiting on an upstream backport PR to fix windows related jenkins failure.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-07 04:25:31</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  do we need bug fix text for this? if so, please update</div>
+<div class="tl-entry"><span class="tl-date">2026-06-08 09:55:18</span><span class="tl-badge comment">Comment</span> <strong>Pradnya Chikhale</strong>: ceph-19.2.1-374</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 03:35:48</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Ran system test on latest 8.1z7 ceph build 19.2.1-374.el9cp Execution logs:   </div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 05:07:26</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Mgr daemon crash similar to what is reported in this bug is seen after few hours of CephFS System test Client IO workload, hence reopening this bug for further investigation. Crash dir log file snippet:    -38&gt; 2026-06-11T10:00:07.979+0000 7f6aaa1ab6</div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 05:22:37</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: CephFS System test runs by default for 8-10hrs. So I had marked the bug as Verified earlier as i did not notice this mgr crash.  But I had repeated System test Client IO workload on same setup yesterday for other purpose and found it to crash mgr dae</div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 13:22:19</span><span class="tl-badge comment">Comment</span> <strong>Christopher Hoffman</strong>: Here’s a more detailed backtrace, looks like the same problem: #0  0x00007f701bbc421c in __pthread_kill_implementation () from /lib64/libc.so.6
+#1  0x00007f701bb76bb6 in raise () from /lib64/libc.so.6
+#2  0x0000563fc2d55482 in reraise_fatal (signum=1</div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 14:00:17</span><span class="tl-badge comment">Comment</span> <strong>Igor Golikov</strong>: The crash signature is the same: SIGSEGV in  xlist::front → LRU::adjust → lru_remove → Client::unlink → trim_cache . But the trigger path is different. The previous crash happened during unmount/shutdown, while this one happens from the tick thread, </div>
+<div class="tl-entry"><span class="tl-date">2026-06-13 13:22:25</span><span class="tl-badge comment">Comment</span> <strong>Igor Golikov</strong>: Additional investigation of the core dump: I examined the LRU state at the time of the crash. The crash occurs in  LRU::adjust()  when it attempts to access the front of an empty list. (gdb) p ((LRU*)0x563fea8a7620)-&gt;num_pinned
+$12 = 2
+
+(gdb) p ((LRU</div>
+<div class="tl-entry"><span class="tl-date">2026-06-13 14:05:04</span><span class="tl-badge comment">Comment</span> <strong>Manny Caldeira</strong>:  - This may be distinct, but we have a customer very upset about the Ceph MGR being unstable. And to be clear what I mean The Ceph MGR crashes
+The Ceph goes into a Warning State: &quot;1 daemon has crashed recently&quot;
+The whole of openShift goes into an Ale</div>
+<div class="tl-entry"><span class="tl-date">2026-06-13 14:28:37</span><span class="tl-badge comment">Comment</span> <strong>Igor Golikov</strong>: Understood, and we do take the impact seriously. The protective fix we added — the DentryRef guard and assertion — was backported to both 8.1 and 9.1. On 9.1, we have not seen any crash since this fix was applied. On 8.1, however, with the fix alread</div>
+<div class="tl-entry"><span class="tl-date">2026-06-13 15:58:23</span><span class="tl-badge comment">Comment</span> <strong>Manny Caldeira</strong>:  OK, then please share the new Jira Ticket and the customer TAM and I will need to manage messaging.  I will need to see what Bipin’s take is on this new twist and turn BR Manny</div>
+<div class="tl-entry"><span class="tl-date">2026-06-14 01:13:56</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Raised new Jira bug    for the new mgr crash seen and discussed below, and added target_release as 8.1z8, please change as required. Marking this bug as Verified as dev confirm’s the issue is different.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-14 11:54:06</span><span class="tl-badge comment">Comment</span> <strong>Manny Caldeira</strong>: Redacted</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 10:24:04</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 8.1z7 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 10:24:05</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Igor Golikov)</span></div>
+</div>
+
+</body>
+</html>

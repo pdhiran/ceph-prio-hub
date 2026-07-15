@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12883 - [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_comman</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12883: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12883" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12883</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Vivek Maurya</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>cephfs</dd>
+    <dt>Versions</dt><dd>8.1</dd>
+    <dt>Created</dt><dd>2026-01-21</dd>
+    <dt>Updated</dt><dd>2026-03-13</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span><span>RH_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephfs</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-12883): [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)
+Affected version(s): 8.1
+Component(s): cephfs
+Severity: major
+Related Bugzilla: BZ#2431671
+
+Key error indicators:
+  - Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It se
+  - Hello      Have a CU who is facing the same assert in IBM Ceph version 9.9.0.0 (20.1.0-144.el9cp) Case id:  TS021586859 Logs location in ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-s
+  - the fix was shipped as a part of 9.0z1. Can you ask customer to upgrade? How frequent they see the assert?
+
+Escalation: IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+Component: CephFS (distributed filesystem)
+Tools: ceph fs commands, mount/fuse clients, MDS operations, subvolume management
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Create CephFS filesystem with MDS daemons
+  3. Mount filesystem via kernel or FUSE client
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+  2. From JIRA: Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It se
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Related Bugzilla fixes: BZ#2431671 (check if regression tests exist)
+  - Component test suite: qa/suites/fs
+
+Coverage gaps:
+  - Crash/assert scenario needs dedicated negative test
+  - Add crash dump analysis to regression suite
+  - Error handling test for the specific failure scenario
+
+Recommended tests:
+  - Add regression test to qa/suites/fs covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (15 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-01-21 10:41:48</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption o</div>
+<div class="tl-entry"><span class="tl-date">2026-01-21 10:49:26</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Vivek, Please cross check if the fix already exists in 9.0 branch(as you mentioned on chat). -Bipin</div>
+<div class="tl-entry"><span class="tl-date">2026-01-22 03:48:46</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So moving it for QE test.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-02 17:46:40</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>:  Can you link to the code change that fixed this issue?</div>
+<div class="tl-entry"><span class="tl-date">2026-02-02 22:56:44</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So created this  BZ#2431671  for QA verification. Fix : https://github.com/ceph/ceph/commit/a291280de697abbba07ba7d975b59f853204a83e</div>
+<div class="tl-entry"><span class="tl-date">2026-02-06 15:26:14</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: We merged the z1 staging branch a week ago here:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1436 However, I don’t see the upstream commit referenced ( a291280de697abbba07ba7d975b59f853204a83e ) “mds: do not dump empty bufptr” in either</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 17:18:54</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: This was pulled into the 9.0 release branch from the tentacle rebase at the start of the 9.0 release cycle:  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/706eb26f560bfdd7c34c62445d27c9ebf7f7ad26</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 23:17:34</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Hi Justin,      The bug was kept intentionally open as we wanted to get this tested and verified as a part of 9.0z1. I understand that fix was part of 9.0 release but this issue wan’t explicitly tested. So lets keep it for 9.0z1 so that testing can b</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 23:17:50</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I have reopened the bug.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-17 03:03:37</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Verified fix on ceph build 20.1.0-155.el9cp , Logs:   </div>
+<div class="tl-entry"><span class="tl-date">2026-03-04 06:44:14</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello      Have a CU who is facing the same assert in IBM Ceph version 9.9.0.0 (20.1.0-144.el9cp) Case id:  TS021586859 Logs location in ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-sceph01-TS021586859-2026-03-04-ynrtbuv.tar.xz_unpac</div>
+<div class="tl-entry"><span class="tl-date">2026-03-04 06:53:03</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   the fix was shipped as a part of 9.0z1. Can you ask customer to upgrade? How frequent they see the assert?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-04 06:59:00</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Not a frequent issue. They faced this the first time. Ack will ask them to upgrade</div>
+<div class="tl-entry"><span class="tl-date">2026-03-04 07:05:36</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  ack, Please link you support case(case viewer link) as a web link here and apply the label IBM_Customer_issue to this ticket as well. </div>
+<div class="tl-entry"><span class="tl-date">2026-03-13 06:44:19</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Vivek Maurya)</span></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13341 - HEAD returns the object but Get requests fails with code 404</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13341: HEAD returns the object but Get requests fails with code 404 for multi-part upload</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:39 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13341" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13341</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Casey Bodley</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Versions</dt><dd>8.1z3</dd>
+    <dt>Created</dt><dd>2026-02-26</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>Hotfix_requested</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rgw</div>
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-13341): HEAD returns the object but Get requests fails with code 404 for multi-part upload
+Affected version(s): 8.1z3
+Component(s): rgw
+Severity: major
+
+Developer analysis from JIRA comments:
+Hi team, We reproduced the ghost object issue and confirmed it is caused by the multipart completion race condition. Test setup Tests were run on HDD-based clusters  cali010  and  cali022  while simulating slow storage by injecting delay on OSD operations. Config used: ceph tell osd.* config set osd
+A fix is available for testing in build ceph-20.2.1-108. Moving to ON_QA
+
+Key error indicators:
+  - Hi   , Even though the RCA was previously communicated through the support case and discussed in the meeting, the customer has requested a formal write‑up. Below is the RCA. Problem:  In a multipart u
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1z3 cluster
+Component: RADOS Gateway (S3/Swift)
+Tools: s3cmd, aws-cli, boto3, radosgw-admin, s3tests
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Deploy RGW service with required configuration
+  3. Create test user and bucket
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check RGW logs: ceph log last ceph-rgw</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/rgw, s3-tests
+
+Coverage gaps:
+  - Error handling test for the specific failure scenario
+
+Recommended tests:
+  - Add regression test to qa/suites/rgw, s3-tests covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-03-09 09:54:22</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  We are suspecting the changes in RGW multipart handling (rgw/multipart: use cls_version to avoid racing between part upload and multipart complete by jzhu116-bloomberg --  https://github.com/ceph/ceph/pull/58082)   causing this issue and it is obser</div>
+<div class="tl-entry"><span class="tl-date">2026-03-10 12:58:48</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>:  Customer is still looking for the exact trigger of the issue. Could you please help further on this? Mitigation / Workaround: Is there any configuration change we can apply to our clusters right now to prevent or reduce the likelihood of this race c</div>
+<div class="tl-entry"><span class="tl-date">2026-03-11 09:40:25</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>:   Need help with below queries from customer Data Loss: Should we assume this results in permanent data loss for those specific objects? dentification: What is the recommended way to identify these &quot;ghost objects&quot; in production? Recovery: Is there an</div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 10:25:23</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi   , Kindly review the below responses to the customer’s queries: Mitigation / Workaround: Is there any configuration change we can apply to our clusters right now to prevent or reduce the likelihood of this race condition? (For example, adjusting </div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 10:27:12</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  We need to check with the Apple team on Q3 to see whether they are open to using the workaround of increasing  rgw_mp_lock_max_time  to mitigate the issue, instead of a code fix.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 10:32:27</span><span class="tl-badge comment">Comment</span> <strong>Casey Bodley</strong>:  thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to finish regarding upstream fix, i did update   according to our design discussion yesterday, and i’ll </div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 10:37:24</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi   , Kindly review the below responses to the customer’s queries: 1. Data Loss: Should we assume this results in permanent data loss for those specific objects? Yes, for the affected objects this should be considered permanent data loss. In the obs</div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 10:39:03</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Thank you. Yes, we are investigating this further and also analyzing their storage router logs.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 10:49:58</span><span class="tl-badge comment">Comment</span> <strong>Casey Bodley</strong>:  looks good. only clarification is the final point about multisite replication - if a multipart object is corrupted such that it can’t serve GetObject requests, other zones won’t be able to replicate that so won’t corrupt their own copy</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 12:50:27</span><span class="tl-badge comment">Comment</span> <strong>Vidushi Mishra</strong>: Hi team, We reproduced the ghost object issue and confirmed it is caused by the multipart completion race condition. Test setup Tests were run on HDD-based clusters  cali010  and  cali022  while simulating slow storage by injecting delay on OSD opera</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 19:42:35</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi   , Even though the RCA was previously communicated through the support case and discussed in the meeting, the customer has requested a formal write‑up. Below is the RCA. Problem:  In a multipart upload scenario, the HEAD request succeeds with HTT</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 23:56:02</span><span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>: The hotfix build is ready for QE verification: $ podman pull  cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z5-0.hotfix.IBMCEPH13341 Ceph build inside container:  ceph-19.2.1-331.0.hotfix.IBMCEPH13341.el9cp Based on this 8.z15  -patches branch (b196766f6</div>
+<div class="tl-entry"><span class="tl-date">2026-03-27 06:40:39</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-20.2.1-108. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-03-29 14:38:51</span><span class="tl-badge comment">Comment</span> <strong>Vidushi Mishra</strong>: Hi team,         Please find the testing status so far:                                                                                                                                                     COMPLETED:     Bug Reproduction (TC-001):  Rep</div>
+<div class="tl-entry"><span class="tl-date">2026-03-29 14:40:11</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: yay</div>
+<div class="tl-entry"><span class="tl-date">2026-04-06 09:20:19</span><span class="tl-badge comment">Comment</span> <strong>Vidushi Mishra</strong>: Hi team,  We have completed the hotfix testing for the Apple data loss bug. ceph version ceph-19.2.1-331.0.hotfix.IBMCEPH13341.el9cp RGW Multipart Upload Hotfix Testing Summary Validated bug  IBMCEPH-13341  related to ghost object creation and HEAD/G</div>
+<div class="tl-entry"><span class="tl-date">2026-04-15 21:00:44</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>:  Apple is requesting for alternate options to reproduce the issue besides injecting delay with below options.  ceph tell osd.* config set osd_debug_inject_dispatch_delay_probability 1.0
+ceph tell osd.* config set osd_debug_inject_dispatch_delay_durat</div>
+<div class="tl-entry"><span class="tl-date">2026-04-16 23:26:23</span><span class="tl-badge comment">Comment</span> <strong>Vidushi Mishra</strong>: hi      We currently know of only the below config options that can help simulate the bug, and that too only on the buggy build: ceph tell osd.* config set osd_debug_inject_dispatch_delay_probability 1.0 ceph tell osd.* config set osd_debug_inject_di</div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 05:14:11</span><span class="tl-badge comment">Comment</span> <strong>Vidushi Mishra</strong>: This bug is seen not seen on 9.1 latest versions. ceph version 20.2.1-188.el9cp</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 08:47:42</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.1 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 19:58:39</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Casey Bodley)</span></div>
+</div>
+
+</body>
+</html>
