@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12866 - [BZ#2415877] [RFE] Orchestrator failed to remove service aft</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12866: [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12866" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12866</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Timothy Nguyen</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2025-11-19</dd>
+    <dt>Updated</dt><dd>2026-04-24</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>RFE</span></div>
+</div>
+
+<h2>Timeline (11 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2025-11-19 08:48:57</span> <span class="tl-badge comment">Comment</span> <strong>Prashant D</strong>: MGR logs : cephadm logs --fsid d077f48e-c0f4-11f0-b1f9-3cecef1a1dd2  --name mgr.dal1-qz2-sr2-rk044-s47.lqkipd &gt; mgr.log Nov 14 11:24:04 dal1-qz2-sr2-rk044-s47 ceph-d077f48e-c0f4-11f0-b1f9-3cecef1a1dd2</div>
+<div class="tl-entry"><span class="tl-date">2025-11-19 08:50:36</span> <span class="tl-badge comment">Comment</span> <strong>Prashant D</strong>: [ceph: root@dal1-qz2-sr2-rk044-s47 /]# ceph orch ps NAME                               HOST                    PORTS        STATUS        REFRESHED  AGE  MEM USE  MEM LIM  VERSION                     </div>
+<div class="tl-entry"><span class="tl-date">2025-12-11 13:44:34</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Issue reproduced, there appears to be some condition in mgr/cephadm/schedule.py that stops the removal of a service if it is the last one, will investigate further.</div>
+<div class="tl-entry"><span class="tl-date">2025-12-12 18:58:08</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: 2025-12-13T00:38:58.360+0000 7f14faec1640  0 log_channel(audit) log [DBG] : from=&#x27;client.14499 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;orch host label rm&quot;, &quot;hostname&quot;: &quot;ceph-host-2&quot;, &quot;label&quot;: &quot;node-</div>
+<div class="tl-entry"><span class="tl-date">2025-12-12 19:09:52</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Is the restriction on the removal of the last service using labels expected behavior? Currently we are assuming you should be able to remove all services by removing all labels.</div>
+<div class="tl-entry"><span class="tl-date">2026-01-21 01:30:23</span> <span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>: Currently the removal of service based on placement field is not allowed, like label removal, even if we change the placement count to 0, it does not remove the service.</div>
+<div class="tl-entry"><span class="tl-date">2026-01-22 14:16:49</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Should be treated as RFE now</div>
+<div class="tl-entry"><span class="tl-date">2026-03-20 11:38:01</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  , testing not complete, but initial tests work as intended, this is a progress update</div>
+<div class="tl-entry"><span class="tl-date">2026-04-03 13:39:01</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: PR:    Tracker:  https://tracker.ceph.com/issues/75867?next_issue_id=75866</div>
+<div class="tl-entry"><span class="tl-date">2026-04-20 04:54:18</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  the PR is not yet approved. This RFE should be moved to 10.0.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 09:44:09</span> <span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+</div>
+
+</body>
+</html>

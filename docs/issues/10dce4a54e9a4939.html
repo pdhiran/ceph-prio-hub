@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-15801 - [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-15801: [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_ignore_history_les=true</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15801" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15801</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Greg Farnum</dd>
+    <dt>Components</dt><dd>cephfs</dd>
+    <dt>Created</dt><dd>2026-06-09</dd>
+    <dt>Updated</dt><dd>2026-06-16</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-06-10 09:24:59</span> <span class="tl-badge comment">Comment</span> <strong>Rafael Rojas</strong>: Requested to CU below output, based on slack thread:     rados -p  ocs-storagecluster-cephfilesystem-metadata ls | grep -E &#x27;^500\.&#x27;</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 09:27:59</span> <span class="tl-badge comment">Comment</span> <strong>Rafael Rojas</strong>: We get this from CU: sh-5.1$ rados -p  ocs-storagecluster-cephfilesystem-metadata ls | grep -E &#x27;^500\.&#x27;
+500.00000000
+500.00001f2a</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 09:42:58</span> <span class="tl-badge comment">Comment</span> <strong>Dhairya Parmar</strong>: Since the cu has decided to force reset the journal, post the step i’d suggest running: After the journal has been reset, it may no longer be consistent with respect to the contents of the MDS tables </div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 15:36:42</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:    After the latest round of obejct removal: cephfs-journal-tool --rank ocs-storagecluster-cephfilesystem:0 journal reset --yes-i-really-really-mean-it
+
+rados -p ocs-storagecluster-cephfilesystem-meta</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 15:46:15</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: Current crash is debug     -2&gt; 2026-06-10T20:11:20.890+0000 7f48e950d640  0 mds.0.cache creating system inode with ino:0x606 debug     -1&gt; 2026-06-10T20:11:20.892+0000 7f48e950d640 -1 /builddir/build/</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 16:28:02</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:    MDS A Debugging logs:</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 16:29:20</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:    MDS B debugging logs:</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 17:37:13</span> <span class="tl-badge comment">Comment</span> <strong>Brandon McMurray</strong>:  Here’s the Current “ceph status” and “ceph fs dump” output as requested: ceph -s
+  cluster:
+    id:     641e87e2-96bd-482c-9392-b2e2905ca8b0
+    health: HEALTH_ERR
+            1 MDSs report damaged m</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 18:22:23</span> <span class="tl-badge comment">Comment</span> <strong>Brandon McMurray</strong>: Her’s fresh “damage ls” output as well: sh-5.1$ ceph tell mds.ocs-storagecluster-cephfilesystem:0 damage ls
+2026-06-10T23:09:30.425+0000 7f5c1e7fc640  0 client.86176360 ms_handle_reset on v2:[REDACTED</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 20:51:51</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Thanks  . The  damage ls  shows a single damaged directory fragment ( dir_frag ) at path  /volumes/csi/csi-vol-08541d11-12f7-4135-9534-d97444e95e5a/c03cb813-a33e-42d2-ac69-909ab5a486eb/checkpoint.0704</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 12:47:54</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:    The customer reported back that these are the following PVs they’re still having issues with.  pvc-ab471dae-7e06-4b3e-92a0-b1179ee72305
+StorageClass:    ocs-storagecluster-cephfs
+Status:          B</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 14:47:58</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:  current MDS logs, getting CSI logs via an ODF must-gather.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 15:34:49</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:  After restarting the CephFS CSI pods, we were able to get CephFS PVCs to create successfully. Currently, the issues the customer is facing seem to be only those four volumes mentioned  here , which l</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 16:04:14</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:  , we tried to mount volumes manually and were unsuccessful, getting the following error: Events:
+  Type     Reason       Age   From               Message
+  ----     ------       ----  ----           </div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 22:15:51</span> <span class="tl-badge comment">Comment</span> <strong>Tridibesh Chakraborty</strong>: Hi, Customer shared the latest MDS damage ls output. As per the output, I can see 2 CSI Vols (csi-vol-46377b22-f255-4fc2-b917-eef43a6d85b4 and csi-vol-08541d11-12f7-4135-9534-d97444e95e5a) are complai</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 11:02:21</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>: Just following up/finishing out, the customer deleted the two PVCs shown in the damage ls output. This resulted in the  openshift-logging  namespace and the  call-completion  namespace being impacted.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 11:10:00</span> <span class="tl-badge comment">Comment</span> <strong>Dhairya Parmar</strong>: [like]  Dhairya Parmar reacted to your message:</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 11:52:02</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Thanks,  . Is there anything still pending on this issue, or can we go ahead and close the bug?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 11:56:15</span> <span class="tl-badge comment">Comment</span> <strong>Craig Wayman</strong>:  we should be good to close, thanks again bud!</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 12:17:57</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: No CephFS issue was identified. The journal corruption was caused by incomplete PGs in the CephFS metadata pool and CephFS has been successfully recovered using advanced recovery steps. Two subvolumes</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 12:17:57</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Greg Farnum)</span></div>
+</div>
+
+</body>
+</html>

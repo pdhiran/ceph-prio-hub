@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14391 - MOD multisite promote secondary fails </title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14391: MOD multisite promote secondary fails </h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14391" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14391</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Shilpa Jagannath</dd>
+    <dt>Components</dt><dd>rgw-multisite</dd>
+    <dt>Created</dt><dd>2026-05-12</dd>
+    <dt>Updated</dt><dd>2026-06-21</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>RH_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-05-17 07:29:06</span> <span class="tl-badge comment">Comment</span> <strong>Uri Tanis</strong>:   ceph orch apply rgw test --realm=test_realm --zone=us-east-1 --zonegroup=us --placement=&quot;1 vmrgws-0&quot; The above command specifies invalid flags; --realm, --zonegroup and --zone. They all should be pr</div>
+<div class="tl-entry"><span class="tl-date">2026-05-17 08:05:25</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>:  100% correct.   </div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 00:13:16</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>:     As per the IBM document and the command I use for redeploying the Ceph Object daemon, the command is following: [root@vmrgw-0 ~]#  ceph orch apply rgw test --realm=test_realm --zone=us_east-2 --zo</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 03:10:57</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>:    Here’s the status with a bit of background as well regarding the environment: I’m pulling from a slack conversation: from    I did everything already but if I can summarize the status I’d say: one </div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 03:37:53</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>:  , did we try to redeploy the Ceph object daemon as per the document after the primary side was configured? Can we try to configure multisite as per the IBM doc?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 03:46:03</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>:  Let me see     can you please answer directly here? </div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 04:52:23</span> <span class="tl-badge comment">Comment</span> <strong>Uri Tanis</strong>:  I’m used to setup the RGWs using a .yaml file where all these settings are specified there, including the realm, zonegroup and zone. In that case, the key names are rgw_realm, rgw_zonegroup and rgw_z</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 05:00:29</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Currently trying to redeploy the Ceph object daemon as per the doc is enough. </div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 07:19:36</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   ,  As per our discussion, sharing the steps to configure multisite. Primary Cluster Configuration: Creating realm:
+#radosgw-admin realm create --rgw-realm=test_realm --default
+
+Creating zonegroup</div>
+<div class="tl-entry"><span class="tl-date">2026-05-25 09:10:47</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>: Guys, in the description i put in the following.   Theses are Shard Ids to my understanding,  the empty ones,  please correct me if i’m wrong but are simply shards that have not undergone a metadata c</div>
+<div class="tl-entry"><span class="tl-date">2026-06-09 07:05:18</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>: Can i get clarification on this?   I need to know why the empty markers.  if there’s an issue I need to understand.  </div>
+<div class="tl-entry"><span class="tl-date">2026-06-09 07:11:31</span> <span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: also, while assigning shilpa, not clear this is not a support or L3 issue </div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 01:22:48</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   , The support team fixed the secondary promotion issue.  Now the question:  After promoting a secondary (slave/non-master) zone to master in a Ceph RGW multisite setup, the  radosgw-admin period </div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 04:06:57</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>: my understanding is like you suggested, it’s a snapshot of what’s sync marker at that time.  if nothing has been been stored in the shard, it just creates an empty marker, since there’s nothing to syn</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 12:03:38</span> <span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>: yes, your understanding is correct. the empty entries mean there wasn’t any sync activity on those shards.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-15 01:18:57</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   , Can we close this issue if there are no further queries? Thanks</div>
+<div class="tl-entry"><span class="tl-date">2026-06-15 01:35:22</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>:  Let me verify with the customer first. and I’ll let you know.  Thanks for the help everybody. </div>
+<div class="tl-entry"><span class="tl-date">2026-06-15 01:38:23</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>:  Yes please close this case.  It seems resolved,   I’f there’s anything further I’ll let you know and we can decide how to move foreward.  </div>
+<div class="tl-entry"><span class="tl-date">2026-06-21 04:25:01</span> <span class="tl-badge comment">Comment</span> <strong>Uri Tanis</strong>:  did you get any clarification about these empty markers started to be reported when getting the period after a secondary zone is promoted to master?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-21 23:30:15</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Shilpa Jagannath)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-06-21 23:30:15</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>:  Please check   comments: “  “</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13591 - [IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13591: [IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13591" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13591</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Prashant Dhange</dd>
+    <dt>Components</dt><dd>rados</dd>
+    <dt>Created</dt><dd>2026-03-26</dd>
+    <dt>Updated</dt><dd>2026-06-11</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span><span>OSD</span></div>
+</div>
+
+<h2>Timeline (18 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-03-26 03:12:47</span> <span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: Two observations. osd_memory_target is not a hard limit (see documentation) and this is highly unlikely to be a memory leak so it might be a good idea to either provide definitive proof that it is, or</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 05:31:51</span> <span class="tl-badge comment">Comment</span> <strong>Deshpande Vaishnavi Renukadas</strong>: Hello Team, Hello Team, sos-report says that ceph-osd is consuming most of the memory there is not any other process which is consuming the memory as per the linux analysis, buffer_io and dentry usage</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 05:39:12</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi Team We got below query from customer. Could you please check it once. ----- We would like to share an additional finding from our investigation. We have formed the following hypothesis, though it </div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 06:06:21</span> <span class="tl-badge comment">Comment</span> <strong>Deshpande Vaishnavi Renukadas</strong>: Hello   , Memory used by ceph-osd  $ grep ceph-osd ps_auxwwwm | awk &#x27;{print $2, $4&quot;%&quot;, $6/1024 &quot; MB&quot;, $11}&#x27; | sort -k3 -nr
+
+7109 3.7% 9543.16 MB /usr/bin/ceph-osd
+6576 3.1% 8025.07 MB /usr/bin/ceph-os</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 09:49:17</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi All, Analysis of ceph-ssd-y130013 sosreport node,  sosreport location : /ecurep/sf/TS021/744/TS021744338/0-all_data/sosreport-ceph-ssd-y130013-2026-03-26-seucics.tar.xz_unpack/sosreport-ceph-ssd-y1</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 10:27:36</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: We need to enable page_owner tracking at kernel level – refer    for more information. I am suspecting memory leak in the ice driver but need page_owner data to conclude. JFYI, we reported one of ICE </div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 13:15:50</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: After spending 10+ hours confirming that ceph was not at fault, the issue was ultimately diagnosed at the kernel level by the Ceph team using  page_owner  data, which confirmed a memory leak in the IC</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 13:59:44</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: The  page_owner  data shows that approximately 30 GB of pages (out of 155 GB in use) were allocated via the ICE driver. It is not yet clear whether the memory leak is within the ICE driver itself or e</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 14:43:00</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: more than 90 GB of allocated pages are associated with ceph daemon processes. $ cat table_sorted_page_owner.txt |grep -e rocksdb -e osd -e bstore|awk &#x27;NR&gt;2 { sum += $4 } END { printf &quot;%.3f GiB\n&quot;, sum</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 22:10:54</span> <span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Hi Team, The customer performed a kernel downgrade to kernel-5.14.0-611.7.1.el9_7, this evening it was installed on all nodes, memory is holding firm between 27% - 34%  (69gb - 86gb). The RH kernel su</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 22:34:49</span> <span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>:   During the zoom call with GMO this evening they shared that they were scheduled to upgrade a second Ceph 5.3 cluster next weekend and provided specifics on this cluster highlighted below RHEL 9.7 wi</div>
+<div class="tl-entry"><span class="tl-date">2026-03-27 02:29:46</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi   / L3 team We have below queries from customer.  --- Need to summarize route cause of memory leak or Kernel memory accounting problem. Suggestions of their next two ceph cluster that would be upgr</div>
+<div class="tl-entry"><span class="tl-date">2026-03-30 06:59:48</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Case progress[30 March]: CU was facing issue of 22 pg stuck in down state. So we have gone in meeting with CU. MOM:  One osd.53 was down with bluestore corruption and 22 pgs were also in down state, c</div>
+<div class="tl-entry"><span class="tl-date">2026-03-30 09:22:23</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:   Customer request Root cause analysis of kernel panic which occurred on early morning about 1:30 at March 30 for 2-3 OSD hosts, they got crashed/ rebooted. if the system status is stable now, what ma</div>
+<div class="tl-entry"><span class="tl-date">2026-03-30 09:38:06</span> <span class="tl-badge comment">Comment</span> <strong>Deshpande Vaishnavi Renukadas</strong>: Hello   , Thank you for your update, for OSD crash we will raise a new Jira.  And for other issues, Red Hat linux team is already working on it, and they will provide the RCA. We identified that the m</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 02:50:43</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  Hey are we good to close this Jira?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 02:55:05</span> <span class="tl-badge comment">Comment</span> <strong>Deshpande Vaishnavi Renukadas</strong>: Hey    Yes we can close this jira, we have another Jira raise for bluestore issue.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span> <span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+</div>
+
+</body>
+</html>

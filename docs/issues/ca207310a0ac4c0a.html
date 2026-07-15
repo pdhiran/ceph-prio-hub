@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14336 - [9.0z Backport] [BZ#2420200] [GSS] [Ceph]  Ceph MGR crashing</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14336: [9.0z Backport] [BZ#2420200] [GSS] [Ceph]  Ceph MGR crashing frequently - ** Caught signal (Segmentation fault) ** &quot;in thread 7f3c302ac640 thread_name:mgr-fin&quot;</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14336" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14336</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Igor Golikov</dd>
+    <dt>Components</dt><dd>cephfs</dd>
+    <dt>Created</dt><dd>2026-05-07</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (16 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-05-07 10:29:06</span> <span class="tl-badge comment">Comment</span> <strong>Pavan Rallabhandi</strong>: moving it to 9.1z1</div>
+<div class="tl-entry"><span class="tl-date">2026-05-21 07:02:20</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I am pulling it back to 9.0z as we are near to patch completion and Proposing this as a blocker for 9.0z3 as per discussion here   </div>
+<div class="tl-entry"><span class="tl-date">2026-06-03 01:18:39</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1887  is merged.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 03:40:10</span> <span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Ran CephFS scale and system tests including clone workflow on latest 9.0z3 ceph build 20.1.0-220.el9cp. No mgr crash issues seen during test. Marking bug as Verified. logs -   </div>
+<div class="tl-entry"><span class="tl-date">2026-06-07 03:01:57</span> <span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  if this needs release notes text please update the release notes tab accordingly</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 01:18:46</span> <span class="tl-badge comment">Comment</span> <strong>Igor Golikov</strong>: Nope, this is low level bug, transparent to the user (i think we dont need to update on how internally things work?)</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 06:09:08</span> <span class="tl-badge comment">Comment</span> <strong>Manny Caldeira</strong>:  - This is hardly transparent.  The crash leaves the cluster “health warning” state, which the customer has to investigate and clear.  Then multiply this problem across all their environments, which i</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 07:32:04</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:    - for bug fixes in previous release which are being fixed now, we always provide a doc text regarding the bug which go into release notes (especially for crashes). Suggest providing the same.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 08:08:58</span> <span class="tl-badge comment">Comment</span> <strong>Igor Golikov</strong>: A use-after-free in the userspace CephFS client could cause the client daemon to crash during metadata cache trimming, particularly under heavy workloads or during unmount. The crash was caused by a m</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 08:21:09</span> <span class="tl-badge comment">Comment</span> <strong>Igor Golikov</strong>: Added release notes header to all clones of this task</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 03:02:20</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  Why did we set the Resolution to done on the verified state? resolution should be used while closing the Jira. I would suggest to revert the resolution. You may have to change the status to fix the r</div>
+<div class="tl-entry"><span class="tl-date">2026-06-16 04:59:46</span> <span class="tl-badge comment">Comment</span> <strong>Suma R</strong>:  It was done unintentionally, have corrected it now.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-17 06:48:41</span> <span class="tl-badge comment">Comment</span> <strong>Neha Gangadhar</strong>: This is being done via automation. Engineers are not setting it explicitly. When moved from onqa to verified, it is set in the background.  Please see query:  https://ibm-ceph.atlassian.net/issues?jql</div>
+<div class="tl-entry"><span class="tl-date">2026-06-17 07:00:18</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Thanks for clarifying   , let me check with Jira team. </div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 09:50:38</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.0z3 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 09:50:39</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Igor Golikov)</span></div>
+</div>
+
+</body>
+</html>

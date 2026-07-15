@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12413 - [BZ#2423641] [IBM_Support] [RGW] - s3 object corruption on s</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12413: [BZ#2423641] [IBM_Support] [RGW] - s3 object corruption on some objects in a bucket</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12413" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12413</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Matthew Benjamin</dd>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Created</dt><dd>2025-12-18</dd>
+    <dt>Updated</dt><dd>2026-05-27</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2025-12-19 16:53:39</span> <span class="tl-badge comment">Comment</span> <strong>Prashant D</strong>: (In reply to Prashant Dhange from comment #19) &gt; The bucket ged-object-storage-aa has versioning enabled, it appears that the &gt; most recent version of these problematic (possibly corrupted) keys is a </div>
+<div class="tl-entry"><span class="tl-date">2025-12-19 17:17:33</span> <span class="tl-badge comment">Comment</span> <strong>Prashant D</strong>: Hi Matt, I’ve thoroughly investigated this issue and initially suspected delete markers as the root cause. At this point, I’ve exhausted all possible avenues for troubleshooting and need your assistan</div>
+<div class="tl-entry"><span class="tl-date">2025-12-19 18:01:34</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: So the key question is whether the index is bad or whether the data objects are bad. For a known bad object, I&#x27;d like you to issue the following command: radosgw-admin object manifest --bucket=&lt;bucket</div>
+<div class="tl-entry"><span class="tl-date">2025-12-20 11:10:09</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Providing output for Comment#19 aws s3api head-object --profile ged-constellio-prod-aa --bucket ged-object-storage-aa --key voute_tenant3/contents/YtlW_fsyUvNJPkJNt0eRu4J9bZ4= --endpoint-url= http://s</div>
+<div class="tl-entry"><span class="tl-date">2025-12-20 12:08:40</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Outputs for the comment#22 Good object = b8AmqrD9_addWeXHuS3kexMZBQ4= Bad object   = YtlW_fsyUvNJPkJNt0eRu4J9bZ4= === Object: voute_tenant3/contents/b8AmqrD9_addWeXHuS3kexMZBQ4= -&gt; VersionId: vC5hP2kl</div>
+<div class="tl-entry"><span class="tl-date">2025-12-22 09:33:44</span> <span class="tl-badge comment">Comment</span> <strong>Matthew McComas</strong>: In regard to Erics response in #c22 it seems we can validate the health of the index, and validate all the respective objects are there. I see in #c24 for that &quot;Bad object&quot; there is one OID shows [MIS</div>
+<div class="tl-entry"><span class="tl-date">2025-12-22 10:57:36</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: So `radosgw-admin bucket check ...` with &quot;--fix&quot; is very safe and may produce useful information. The manifest is stored in the head object, so if &quot;manifest retrieval failed&quot; is the actual error messa</div>
+<div class="tl-entry"><span class="tl-date">2025-12-22 11:45:05</span> <span class="tl-badge comment">Comment</span> <strong>Matthew McComas</strong>: Hello Eric, Thank you for your response. Whats interesting is that the #c24 we see the (manifest retrieval failed) message displayed for both the good and the bad object Regarding history we do know t</div>
+<div class="tl-entry"><span class="tl-date">2025-12-22 12:38:29</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: From comment #24 I interpreted it as some versions of the object (b8AmqrD9_addWeXHuS3kexMZBQ4) are good (version id vC5hP2klLYFnnYEUkv7MVJGySv1MNbU) and some versions are bad (version id lWX302-8qNnxh</div>
+<div class="tl-entry"><span class="tl-date">2025-12-22 14:17:53</span> <span class="tl-badge comment">Comment</span> <strong>Matthew McComas</strong>: The customer believes the data was good up until nov. They highlighted they were able to backup the objects before offsite, and the end-user didn&#x27;t report an issue accessing the pdf files from the buc</div>
+<div class="tl-entry"><span class="tl-date">2025-12-23 09:24:15</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Customer informed they have to start the restore of the bucket as currently it has random broken files and would like to know if any other information is required from current state?</div>
+<div class="tl-entry"><span class="tl-date">2025-12-23 22:01:13</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: radosgw-admin bucket check --bucket=ged-object-storage-aa { &quot;invalid_multipart_entries&quot;: [], &quot;check_result&quot;: { &quot;existing_header&quot;: { &quot;usage&quot;: { &quot;rgw.main&quot;: { &quot;size&quot;: 1744330281030, &quot;size_actual&quot;: 17471</div>
+<div class="tl-entry"><span class="tl-date">2026-01-08 11:55:21</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: In comment #26 the following sentence was mis-worded: Said: So `radosgw-admin bucket check ...` with &quot;--fix&quot; is very safe and may produce useful information. Meant to say: So `radosgw-admin bucket che</div>
+<div class="tl-entry"><span class="tl-date">2026-01-08 11:56:39</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: (In reply to Shantanu Bhardwaj from comment #30) &gt; Customer informed they have to start the restore of the bucket as currently &gt; it has random broken files and would like to know if any other informat</div>
+<div class="tl-entry"><span class="tl-date">2026-02-04 12:13:34</span> <span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Hi Team,  This customer lost about 122,265 production files (these were restored) spanning  38 buckets: Bucket Name  &quot;bi-airflow&quot;  &quot;bucketun&quot;  &quot;cgmu&quot;  &quot;demande-permis-z9uwwz0l-prod-v2&quot;  &quot;depot-gen-dev</div>
+<div class="tl-entry"><span class="tl-date">2026-02-04 12:27:53</span> <span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Also, including the upgrade history here: – Jul/2025 - IBM ceph 5.3 -&gt; IBM ceph 7.1 – Oct/2025 - IBM ceph 7.1 -&gt; IBM ceph 8.1 The customer stated they thought objects were healthy up until Nov 2025 du</div>
+<div class="tl-entry"><span class="tl-date">2026-02-05 07:57:48</span> <span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Hi    The customer is requesting feedback by EOD this Friday so I want to see if we can solidify a theory/possibilities of what could have caused this object corruption. Reviewing the customer case I </div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 22:23:09</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Hello      Customer have below queries. Could you please share your response for them? What recovery options exist to restore the affected objects without relying on an external backup.
+How can they a</div>
+<div class="tl-entry"><span class="tl-date">2026-03-03 15:23:28</span> <span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>:  is there any open issue here? </div>
+<div class="tl-entry"><span class="tl-date">2026-05-27 00:23:05</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Closing as the support case is closed.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-27 00:25:13</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+</div>
+
+</body>
+</html>

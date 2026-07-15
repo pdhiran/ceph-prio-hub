@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12719 - [BZ#2427962] [IBM_Support] &quot;ceph orch ls&quot; is misreporting th</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12719: [BZ#2427962] [IBM_Support] &quot;ceph orch ls&quot; is misreporting the count for OSD services</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12719" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12719</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Timothy Nguyen</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2026-01-08</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-01-08 10:01:54</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Created  attachment 2121512  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2121512&amp;action=edit ] Output2</div>
+<div class="tl-entry"><span class="tl-date">2026-01-20 13:42:21</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Currently looking through sosreport, have not found source of misreporting issue yet.</div>
+<div class="tl-entry"><span class="tl-date">2026-01-21 09:51:53</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Could you please help to know if we have some analysis to share with customer as they are following up for updates?</div>
+<div class="tl-entry"><span class="tl-date">2026-01-22 02:26:59</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: We currently have two running theories, one is that the client may have accidentally triggered service_name change with cephadm update-osd-service --osd-ids OSD_IDS --service-name SERVICE_NAME or some</div>
+<div class="tl-entry"><span class="tl-date">2026-01-25 19:13:24</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Customer have the same issue in other clusters as well. Kindly refer to the outputs attached from the Dev cluster.</div>
+<div class="tl-entry"><span class="tl-date">2026-01-25 19:16:11</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Created  attachment 2123753  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2123753&amp;action=edit ] Dev-cluster-Outputs</div>
+<div class="tl-entry"><span class="tl-date">2026-01-27 21:43:26</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Considering the new information with unit.meta service_name being changed in the osds and that the customer didn&#x27;t call --update-osd-service or set-spec-affinity, we believe it is the second theory an</div>
+<div class="tl-entry"><span class="tl-date">2026-01-28 11:35:30</span> <span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Solution:  https://github.com/timqn22/ceph/tree/misreporting_count_osd_services Adam and Shweta, can we get your input on the RCA and possible patch.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-02 12:30:42</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  , waiting for confirmation from Adam or Shweta.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-03 00:13:15</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Adding summerized  details from slack thread discussion [  ] Timothy expect a review of RCA and patch.  Adam requested for some details  can we get the full output of  cephadm ls  on one of the nodes </div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 12:38:21</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Upstream Tracker:    PR:  https://github.com/ceph/ceph/pull/67315</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 22:20:35</span> <span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  This patch looks good to me.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-08 15:40:50</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: targeted release currently 9.1</div>
+<div class="tl-entry"><span class="tl-date">2026-03-11 06:57:56</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Code merged in 9.1 patches branch by  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1552</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 05:14:34</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  since the changes are merged into 9.1 branch. Please mark this as MODIFIED. You need to provide doc change related info when you do it.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 11:42:24</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Ack, by doc change related info, are you referring to the release section of the Jira?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-20 00:47:28</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Yes. Thanks!</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 08:54:23</span> <span class="tl-badge comment">Comment</span> <strong>Vinayak Papnoi</strong>: Build version:  20.2.1-207.el9cp [ceph: root@ceph-vpap-9-r91-o50al4-node1-installer /]# ceph orch ls
+NAME                       PORTS        RUNNING  REFRESHED   AGE  PLACEMENT  
+alertmanager         </div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 12:26:54</span> <span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>: moving to release notes not required - 9.0z3 will document this and it is releasing before 9.1</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 08:45:42</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.1 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 08:45:43</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+</div>
+
+</body>
+</html>

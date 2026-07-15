@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14388 - Increased CPU Utilization and load average on RGW nodes post</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14388: Increased CPU Utilization and load average on RGW nodes post upgrade to Ceph 9.0z2</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14388" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14388</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Swati Thombe</dd>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Created</dt><dd>2026-05-11</dd>
+    <dt>Updated</dt><dd>2026-07-09</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (17 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-05-11 21:54:29</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Let’s collect the perf data. Refer this BZ (comment#4)   for detailed steps to collect perf data. </div>
+<div class="tl-entry"><span class="tl-date">2026-05-12 08:45:38</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  PTAL.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-12 23:21:08</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: It seems to be the high RGW CPU usage after the upgrade to Ceph 9.0 may be related to the Usage Performance Counters feature, which is new in Ceph 9.0. In large deployments, enabling this feature can </div>
+<div class="tl-entry"><span class="tl-date">2026-05-12 23:27:12</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  You need to update the podman run command for the RGW daemon in the  unit.run  file and add  --cap-add=SYS_PTRACE  to allow ptrace‑based call tracing.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-13 09:24:25</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Kindly provide below script to customer to collect perf dump output for a rgw daemon which is consuming high CPU :  #!/bin/bash
+
+TS_BASE=$(date +%d%b%y_%H-%M-%S)
+BASE_DIR=&quot;/var/log/rgw_metrics_${TS_BA</div>
+<div class="tl-entry"><span class="tl-date">2026-05-13 13:08:40</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Running  perf record  inside the RGW container fails with  perf_event_open()  error (errno 38) due to seccomp filtering and missing kernel capabilities ( CAP_SYS_ADMIN ,  CAP_SYS_PTRACE ).  I was able</div>
+<div class="tl-entry"><span class="tl-date">2026-05-13 13:38:35</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Collect perf data :   Install perf command on the host # yum install perf -y Collect perf data, right after rgw daemon restart # perf record -F 99 -p &lt;rgw-pid&gt; --call-graph lbr sleep 900
+# cp perf.dat</div>
+<div class="tl-entry"><span class="tl-date">2026-05-14 08:33:38</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:   Please be informed that the shared steps are working fine overall. The below command is failing with: perf record -F 99 -p 417456 --call-graph lbr sleep 900 Error: cycles:P: PMU Hardware or event ty</div>
+<div class="tl-entry"><span class="tl-date">2026-05-14 08:53:06</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Collect perf data :  Install perf command on the host # yum install perf -y Collect perf data, right after rgw daemon restart # perf record -F 99 -p &lt;rgw-pid&gt; --call-graph lbr sleep 900
+         -----</div>
+<div class="tl-entry"><span class="tl-date">2026-05-15 15:28:04</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: We have another customer (Support case TS021921615) reporting this issue. However after performing below steps the resource utilization came down for both the customers. ceph config set client.rgw.${i</div>
+<div class="tl-entry"><span class="tl-date">2026-05-15 19:31:48</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  this is a single site. Was this cluster earlier configured for multisite ? The  rgw_run_sync_thread  is  set to true by default in 8.1 and 9.0z2.  Let’s confirm if sync threads are causing this high </div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 15:51:47</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , Based on the analysis and code comparison between RHCS 8.1z1 and 9.0, I donot see issue does not appear to be caused by any new RGW code change in 9.0 but suspecting a commit 37c1522bb39 might b</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 16:10:35</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  This cluster may have been previously configured for multisite sync. Let’s validate this with the customer and investigate further in that direction.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-23 10:11:25</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi   , do we have any latest updates on this?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 01:10:08</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi   since there haven&#x27;t been any recent updates on this case, please let us know if there are any remaining concerns. Otherwise, we can proceed with closing the case.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 05:55:54</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Hello   Customer has closed the support ticket, hence this Jira can be close as well. As Prashant mentioned, the cluster might have been part of multisite in the past because CPU utilization came down</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 09:14:10</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+</div>
+
+</body>
+</html>

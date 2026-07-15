@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12715 - [BZ#2427854] [GSS] Multisite - no progress with the data syn</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12715: [BZ#2427854] [GSS] Multisite - no progress with the data synchronization</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12715" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12715</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Karun Josy</dd>
+    <dt>Components</dt><dd>rgw-multisite</dd>
+    <dt>Created</dt><dd>2026-01-08</dd>
+    <dt>Updated</dt><dd>2026-05-06</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>RH_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-02-09 07:08:37</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>: From the sync-RGW current log:
+
+2026-02-09T12:00:09.200+0000 7fa422142640 0 -1 rgw async rados processor: ERROR: send_request (): get_sync policy_handler () returned -2
+2026-02-09T12:00:09.200+0000 7f</div>
+<div class="tl-entry"><span class="tl-date">2026-02-09 07:27:56</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:   There are errors reported in secondary sites for buckets that no longer exist. ERROR: failed to get bucket instance info for USER-1: int. crops [1) Is this normal? If not, how to clear them? Will ru</div>
+<div class="tl-entry"><span class="tl-date">2026-02-10 21:25:19</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Status update  We have removed the stale buckets metadata on the secondary site, those that were removed from the master site and the secondary sync-RGW kept trying to sync their data. As a result the</div>
+<div class="tl-entry"><span class="tl-date">2026-02-12 03:59:21</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Issue : prod.frames bucket has more objects in secondary than primary We do not have enough information to tell why secondary has more objects. Since MoD confirmed that they do periodic deletion of ob</div>
+<div class="tl-entry"><span class="tl-date">2026-02-12 04:54:36</span> <span class="tl-badge comment">Comment</span> <strong>Uri Tanis</strong>:  Based on the above and if I can summarize the current status, I’d say that sadly, we have no way to efficiently close this gap (running s3cmd list and compare the outputs makes no sense for me). In t</div>
+<div class="tl-entry"><span class="tl-date">2026-02-12 05:15:43</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  Can you suggest if there is something else that we can do?  Should we try bucket sync init/run ?</div>
+<div class="tl-entry"><span class="tl-date">2026-02-13 04:21:54</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Preliminary investigation [1] suggest that these extra objects in secondary are deleted objects in primary site which did not get removed in secondary site.  We also had seen the same symptom for buck</div>
+<div class="tl-entry"><span class="tl-date">2026-02-15 03:32:40</span> <span class="tl-badge comment">Comment</span> <strong>Uri Tanis</strong>: The next steps on our own will be extending the bucket objects comparison and investigation. Means that we’ll check up to the first 10M objects in each site and see, first of all, how many extra objec</div>
+<div class="tl-entry"><span class="tl-date">2026-02-16 00:26:08</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>: Hi, here are the latest comments on the the case.   
+
+I just completed another set of tests.
+I extracted the first 10M objects from each site for exactly the same bucket. This objects lists were saved</div>
+<div class="tl-entry"><span class="tl-date">2026-02-16 03:25:56</span> <span class="tl-badge comment">Comment</span> <strong>Uri Tanis</strong>:  as far as I understand neither  sync init  nor  sync status  evaluate and properly handle extra objects that failed to be removed. The  sync init  does  not  delete the actual data objects in the buc</div>
+<div class="tl-entry"><span class="tl-date">2026-02-16 03:47:33</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>:  i agree with you 100%,  simply throwing out a theory. my only concern is that there was consistent logging of errors over a long period of time.  Not sure that has anything to do with anything. ( rea</div>
+<div class="tl-entry"><span class="tl-date">2026-02-18 04:24:05</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Copying the update sent to prio mail :  The customer has now proceeded with deleting the pending objects from the secondary site. The end customer performs bulk delete operations approximately every 3</div>
+<div class="tl-entry"><span class="tl-date">2026-02-19 01:39:15</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Fyi; Opened a RFE Jira :   </div>
+<div class="tl-entry"><span class="tl-date">2026-02-22 23:27:28</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: All identified issues have been addressed, and the multi-site synchronization is now operating as expected. Copying update from slack from Uri : removed all the uncompleted multipart uploads and then:</div>
+<div class="tl-entry"><span class="tl-date">2026-02-23 03:37:03</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Fyi; Opened another RFE as discussed   </div>
+<div class="tl-entry"><span class="tl-date">2026-02-25 00:26:28</span> <span class="tl-badge comment">Comment</span> <strong>Michael Kadmiel</strong>: This is the comment in the case from the customer. there is  single object that isn’t syncing an they do not know how to find it.  they also highlighted what they understood the issues are that have b</div>
+<div class="tl-entry"><span class="tl-date">2026-02-25 03:50:45</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: this is a single object that has not been synchronized for several days (until now) We need to verify whether there is a genuine object that has not synced, or if this is merely a reporting discrepanc</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 11:19:39</span> <span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>:  any updates on this?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-06 10:27:07</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   any updates here?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-06 21:08:45</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Sorry I missed to update the Jira.  When executed the  --bucket-check  command, the object in question was immediately reported then customer proceeded to run the  --fix , which helped to correct it. </div>
+<div class="tl-entry"><span class="tl-date">2026-05-06 21:09:14</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Karun Josy)</span></div>
+</div>
+
+</body>
+</html>

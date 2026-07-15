@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-14176 - [IBM_Support] Acadia Ceph MGR Plugin Update Delays During OS</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-14176: [IBM_Support] Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14176" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14176</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Timothy Nguyen</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2026-04-27</dd>
+    <dt>Updated</dt><dd>2026-06-05</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (14 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-04-27 13:11:51</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  need access to ecurep data</div>
+<div class="tl-entry"><span class="tl-date">2026-04-27 23:08:32</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:   have given you the access to the ecurep case data. Please check and let me know if you are able to access it now</div>
+<div class="tl-entry"><span class="tl-date">2026-04-28 15:44:42</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Thank you I have access</div>
+<div class="tl-entry"><span class="tl-date">2026-04-28 16:41:57</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Looks like the mgr logs in the sosreport are only info level, to properly debug and understand the situation, we’ll need some addition logs from Acadia team. MGR Debug Logs: Set debug_mgr = 20 Set de</div>
+<div class="tl-entry"><span class="tl-date">2026-04-30 22:58:47</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  the CU is not expierincing at this moment, so not sure debug logs would be of much help.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-01 13:15:41</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Ack, got it, if they aren’t experiencing the issue currently then logs wouldn’t be useful, in the future if the issues occur again we should ask for these logs.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-01 14:00:04</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Looking at the current logs there’s a large amount of warnings for slow RBD ops from get_health_metric. get_health_metrics reporting 1 slow ops, oldest is osd_op(client.171448296.0:179212533 2.29d 2.5</div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 22:55:14</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  Have updated the same to the Cu. They are internally checking with their team regrading the Acadia MGR plugin code and will update here as soon as we get an update from them.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 06:48:07</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  The Cu has provided the following information, as we will need to first raise a Accesshub request to get access to the source code: Entitelment: VPC and Custom Storage - GHE Access Management
+role: g</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 12:31:18</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  I’m having an issue with access that I’m ensure how to resolve do you have information about this issue or of anyone who might know about this and can help?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-13 15:56:39</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Also after discussion with the rest of L3 team, we determined the issues regarding the Acadia custom plugin are not within our scope of responsibility, if access to code is not given, we’ll likely pa</div>
+<div class="tl-entry"><span class="tl-date">2026-05-14 01:13:37</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  We have informed the Cu to contact the team responsible for maintaining the Acadia plugin code to check this issue further.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 01:08:22</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:   as this issue falls out of scope for Ceph Engineering team, we can go ahead and close this jira</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 01:06:35</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+</div>
+
+</body>
+</html>

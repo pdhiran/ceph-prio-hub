@@ -25,3 +25,5 @@ state/
 *.token
 token_cache.json
 config.json
+.env
+.env.*

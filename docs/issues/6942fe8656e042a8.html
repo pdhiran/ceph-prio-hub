@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13200 - [Bucket_Notification]Bucket Notification is failing with htt</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13200: [Bucket_Notification]Bucket Notification is failing with https push server</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13200" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13200</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Matthew Benjamin</dd>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Created</dt><dd>2026-02-12</dd>
+    <dt>Updated</dt><dd>2026-03-19</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (9 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-02-16 03:27:29</span> <span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Hi Team,      We have done testing in the lab environment for  RGW Bucket Notification  using a self-signed certificate with a custom domain configured on the HTTPS push endpoint. The setup is working</div>
+<div class="tl-entry"><span class="tl-date">2026-02-16 06:57:41</span> <span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Hi Team, We have reproduced the same issue in the lab cluster. We have tested the https push server with  different custom domain name. DNS 2 is the customer&#x27;s DNS domain name. Custom DNS 1--&gt;  mydoma</div>
+<div class="tl-entry"><span class="tl-date">2026-02-17 10:59:28</span> <span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Hi Team,  Please find below the steps to reproduce the RGW bucket notification behavior. 1). Create RGW topic using the aws sns utility, #aws sns create-topic   --name https-topic-det   --endpoint-url</div>
+<div class="tl-entry"><span class="tl-date">2026-02-19 06:21:42</span> <span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Hi Team, we have  tried the two different domain name for the RGW bucket notification. 1).  https://ceph-pri-mreddem-ob4fzz-node5.apps.dsp01-svc-q.data.bdp.belastingdienst.nl:9001/    → RGW Bucket not</div>
+<div class="tl-entry"><span class="tl-date">2026-02-24 04:55:08</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: I see that recently we have started using  boost:uri  instead of  std::regex  to parse urls; which I expect to resolve  parsing issues if there are any    Can you check this Jira? If it is relevant ca</div>
+<div class="tl-entry"><span class="tl-date">2026-03-03 03:48:56</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  I tried to reproduce this on my end but I am not able to.  Domain name used :  ceph-pri-http-mreddem-ob4fzz-node5.apps.dsp01-svc-q.data.bdp.belastingdienst.nl Logs show notification successfully send</div>
+<div class="tl-entry"><span class="tl-date">2026-03-04 10:05:37</span> <span class="tl-badge comment">Comment</span> <strong>Yuval Lifshitz</strong>: did not manage to reproduce it on squid (that does not have the boost uri fix).i tried with “http” as well as dashes in the domain name, but did not see any issue. did not try with https, but if that </div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 04:02:56</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Thanks Yuval for looking into this one. Closing this Jira as we are not able to reproduce this when following correct steps.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-19 10:27:20</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+</div>
+
+</body>
+</html>

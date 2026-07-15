@@ -15,12 +15,23 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
+_env_file = Path(__file__).resolve().parents[3] / ".env"
+if _env_file.exists():
+    load_dotenv(_env_file)
+_issue_kb_env = Path.home() / "Projects" / "ceph-issue-kb" / ".env"
+if _issue_kb_env.exists():
+    load_dotenv(_issue_kb_env, override=False)
+
 from ceph_prio_hub.config import ServerConfig
+from ceph_prio_hub.dashboard.generator import generate_dashboard
 from ceph_prio_hub.graph.client import GraphClient, GraphAuthError
+from ceph_prio_hub.jira.client import JiraClient, JiraAuthError, parse_jira_issue
 from ceph_prio_hub.parser.issue_extractor import extract_issue_info
 from ceph_prio_hub.tracker.state import IssueStateDB
 
@@ -56,6 +67,7 @@ def create_mcp_server(
     )
 
     db = state_db or IssueStateDB(config.state_dir)
+    _jira_client: JiraClient | None = None
 
     def _get_graph() -> GraphClient:
         if graph:
@@ -66,6 +78,12 @@ def create_mcp_server(
                 "client_id and tenant_id. See README for Azure AD setup instructions."
             )
         return GraphClient(config.azure)
+
+    def _get_jira() -> JiraClient:
+        nonlocal _jira_client
+        if _jira_client is None:
+            _jira_client = JiraClient()
+        return _jira_client
 
     @mcp.tool()
     def fetch_prio_emails(
@@ -315,31 +333,209 @@ def create_mcp_server(
         }
 
     @mcp.tool()
+    def fetch_jira_issues(
+        labels: str = "Ceph_L3,IBM_Customer_Issue",
+        since: str = "",
+        status: str = "",
+        component: str = "",
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        """Fetch JIRA issues from IBMCEPH project with prio-list labels.
+
+        This is the primary data source. Pulls issues with Ceph_L3 and/or
+        IBM_Customer_Issue labels from ibm-ceph.atlassian.net.
+
+        Args:
+            labels: Comma-separated labels to filter by (default: Ceph_L3,IBM_Customer_Issue).
+            since: Only issues updated since this date (YYYY-MM-DD format, e.g. "2026-01-01").
+            status: Filter by JIRA status (e.g. "Open", "In Progress", "Resolved").
+            component: Filter by component name (e.g. "RGW", "CephFS").
+            limit: Maximum number of issues (default 100).
+        """
+        try:
+            jira = _get_jira()
+            label_list = [l.strip() for l in labels.split(",") if l.strip()]
+            raw_issues = jira.fetch_prio_issues(
+                labels=label_list,
+                since=since or None,
+                status=status or None,
+                component=component or None,
+                limit=limit,
+            )
+            results = []
+            for raw in raw_issues:
+                parsed = parse_jira_issue(raw)
+                results.append({
+                    "key": parsed["key"],
+                    "url": parsed["url"],
+                    "summary": parsed["summary"],
+                    "status": parsed["status"],
+                    "priority": parsed["priority"],
+                    "assignee": parsed["assignee"],
+                    "components": parsed["components"],
+                    "labels": parsed["labels"],
+                    "created": parsed["created"],
+                    "updated": parsed["updated"],
+                    "resolution": parsed["resolution"],
+                    "comment_count": len(parsed["comments"]),
+                })
+            return {"count": len(results), "issues": results}
+        except JiraAuthError as exc:
+            return {"error": str(exc)}
+
+    @mcp.tool()
+    def sync_jira_issues(
+        labels: str = "Ceph_L3,IBM_Customer_Issue",
+        since: str = "",
+        limit: int = 200,
+    ) -> dict[str, Any]:
+        """Sync JIRA prio-list issues into the consolidated state DB.
+
+        Fetches issues with specified labels, parses them, and merges into
+        the local state database. Supports incremental sync (uses last sync
+        timestamp if 'since' is not provided).
+
+        Args:
+            labels: Comma-separated labels (default: Ceph_L3,IBM_Customer_Issue).
+            since: Only sync issues updated since this date (YYYY-MM-DD).
+            limit: Maximum issues to fetch (default 200).
+        """
+        try:
+            jira = _get_jira()
+            label_list = [l.strip() for l in labels.split(",") if l.strip()]
+
+            sync_since = since or None
+            if not sync_since and db.last_sync:
+                sync_since = db.last_sync.strftime("%Y-%m-%d")
+
+            raw_issues = jira.fetch_prio_issues(
+                labels=label_list,
+                since=sync_since,
+                limit=limit,
+            )
+
+            new_issues = []
+            updated_issues = []
+
+            for raw in raw_issues:
+                parsed = parse_jira_issue(raw)
+                issue, is_new = db.add_jira_issue(parsed)
+                entry = {
+                    "issue_id": issue.issue_id,
+                    "jira_key": parsed["key"],
+                    "summary": parsed["summary"],
+                    "status": parsed["status"],
+                    "labels": parsed["labels"],
+                }
+                if is_new:
+                    new_issues.append(entry)
+                else:
+                    if entry not in updated_issues:
+                        updated_issues.append(entry)
+
+            db.update_sync_timestamp()
+            db.save()
+
+            return {
+                "synced_jira_issues": len(raw_issues),
+                "new_issues": new_issues,
+                "new_issue_count": len(new_issues),
+                "updated_issues": updated_issues,
+                "updated_issue_count": len(updated_issues),
+                "total_issues": len(db.get_all_issues()),
+            }
+        except JiraAuthError as exc:
+            return {"error": str(exc)}
+
+    @mcp.tool()
+    def get_jira_issue(issue_key: str) -> dict[str, Any]:
+        """Get full details for a JIRA issue including comments.
+
+        Args:
+            issue_key: JIRA issue key (e.g. IBMCEPH-16204).
+        """
+        try:
+            jira = _get_jira()
+            raw = jira.fetch_issue(issue_key)
+            return parse_jira_issue(raw)
+        except JiraAuthError as exc:
+            return {"error": str(exc)}
+
+    @mcp.tool()
+    def generate_dashboard_tool(
+        output_dir: str = "",
+    ) -> dict[str, Any]:
+        """Generate the HTML dashboard and per-issue reports from synced data.
+
+        Produces index.html (main dashboard) and issues/<id>.html (per-issue
+        detail pages) into the output directory.
+
+        Args:
+            output_dir: Directory to write generated files (default: ~/.ceph-prio-hub/site/).
+        """
+        out = Path(output_dir) if output_dir else config.state_dir.parent / "site"
+        try:
+            index_path = generate_dashboard(db, out)
+            issues_dir = out / "issues"
+            issue_count = len(list(issues_dir.glob("*.html"))) if issues_dir.exists() else 0
+            return {
+                "index_path": str(index_path),
+                "output_dir": str(out),
+                "issue_reports": issue_count,
+                "total_issues": len(db.get_all_issues()),
+            }
+        except Exception as exc:
+            return {"error": str(exc)}
+
+    @mcp.tool()
     def capabilities() -> dict[str, Any]:
         """Server capabilities: entity types, operations, and sources."""
         return {
             "schema_version": "1.0",
             "server": "ceph-prio-hub",
-            "description": "Prio-list email monitoring and issue consolidation for Ceph",
-            "entity_types": ["email", "consolidated_issue"],
+            "description": "Prio-list issue tracking for Ceph — JIRA + email consolidation",
+            "entity_types": ["jira_issue", "email", "consolidated_issue"],
+            "data_sources": {
+                "jira": {
+                    "url": "https://ibm-ceph.atlassian.net",
+                    "project": "IBMCEPH",
+                    "labels": ["Ceph_L3", "IBM_Customer_Issue"],
+                    "status": "primary",
+                },
+                "email": {
+                    "lists": ["ocs-prio-list", "ceph-prio-list", "odf-prio-list"],
+                    "status": "planned",
+                },
+            },
             "tools": [
+                "fetch_jira_issues", "sync_jira_issues", "get_jira_issue",
+                "generate_dashboard",
                 "fetch_prio_emails", "get_email_details", "search_prio_emails",
                 "extract_issue_info", "get_prio_stats", "sync_issues",
                 "get_issue_timeline", "capabilities", "health",
             ],
-            "prio_lists": {
-                "ceph": ["ceph-prio-list@redhat.com", "ceph-prio-list@wwpdl.vnet.ibm.com"],
-                "ocs": ["ocs-prio-list@redhat.com"],
-                "odf": ["odf-prio-list@wwpdl.vnet.ibm.com"],
-            },
         }
 
     @mcp.tool()
     def health() -> dict[str, Any]:
-        """Health check — Azure config, state DB status, and connectivity."""
+        """Health check — JIRA connectivity, Azure config, state DB status."""
         stats = db.get_stats()
+
+        jira_ok = False
+        jira_msg = "not checked"
+        try:
+            jira = _get_jira()
+            jira_health = jira.health()
+            jira_ok = jira_health.get("ok", False)
+            jira_msg = f"connected as {jira_health.get('user', '?')}" if jira_ok else jira_health.get("error", "failed")
+        except JiraAuthError as exc:
+            jira_msg = str(exc)
+
+        overall = "healthy" if jira_ok else "degraded"
+
         return {
-            "status": "healthy" if config.azure.is_configured else "degraded",
+            "status": overall,
+            "jira": {"ok": jira_ok, "message": jira_msg},
             "azure_configured": config.azure.is_configured,
             "total_issues": stats["total_issues"],
             "last_sync": stats.get("last_sync"),

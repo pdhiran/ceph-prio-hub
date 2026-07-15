@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13320 - Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13320: Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13320" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13320</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Swati Thombe</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2026-02-25</dd>
+    <dt>Updated</dt><dd>2026-04-29</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (15 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-02-26 01:27:16</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    I’m currently trying to reproduce the reported issue on our end. Could you please confirm if there are any specific steps or sequence being followed to trigger the problem? It would be helpful t</div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 09:29:03</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi Team,  We currently do not have sufficient information to proceed with full analysis. The JIRA has been updated with the required logs and environment details, and we are awaiting inputs. From the </div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 10:17:00</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi Team, As we currently have limited information about the issue, I attempted to reproduce it in our lab environment. I installed the  8.1z3 version  and enabled the cephadm agent using the following</div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 10:20:31</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi Team, I’m able to reproduce this issue. I can see  peer dropped the TLS connection suddenly, during handshake,  after configuration, but ` cephadm ceph-volume` failed: Cannot decode JSON : is not g</div>
+<div class="tl-entry"><span class="tl-date">2026-03-08 23:52:43</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:   We investigated and reproduced the issue in our setup. It appears that  “Cephadm Agent: TLS connection dropped”  and  cephadm ceph-volume failed: Cannot decode JSON  are  two different issues . To i</div>
+<div class="tl-entry"><span class="tl-date">2026-03-09 10:42:18</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi      We attempted to reproduce the issue and observed the following log on our side. lost — peer dropped the TLS connection suddenly, during handshake:  (6, &#x27;TLS/SSL connection has been closed (EOF</div>
+<div class="tl-entry"><span class="tl-date">2026-03-17 22:15:50</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi   Can we have an update on this?    Hi    as shared earlier, kindly open another ticket for `cephadm ceph-volume` failed: Cannot decode JSON: with all the necessary logs and details?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 00:28:23</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  please look into this.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-20 11:45:52</span> <span class="tl-badge comment">Comment</span> <strong>Adam King</strong>: Do we have the logs from the individual agents that aren’t reporting in (they have their own systemd units so their should be journal logs) or some analysis on the ceph-volume failure? The log lines a</div>
+<div class="tl-entry"><span class="tl-date">2026-03-24 05:52:46</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Thanks    !!  We don’t currently have the individual agent journal logs from the nodes that aren’t reporting in. Since each agent runs as a systemd unit, we can collect them using  journalctl -u &lt;agen</div>
+<div class="tl-entry"><span class="tl-date">2026-04-16 05:52:48</span> <span class="tl-badge comment">Comment</span> <strong>Sahina Bose</strong>: Do we have the requested logs?</div>
+<div class="tl-entry"><span class="tl-date">2026-04-27 20:22:24</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We currently do not have sufficient logs to proceed with further investigation. Could you please confirm if we can close this case for now? If the issue reoccurs or you observe a similar instanc</div>
+<div class="tl-entry"><span class="tl-date">2026-04-28 20:55:22</span> <span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>:  Customer had removed the Cephadm agent as it had issues. Currently, it won’t be possible to collect logs from customer’s environment. Before closure, please let us know the commands outputs/logs to b</div>
+<div class="tl-entry"><span class="tl-date">2026-04-29 05:08:45</span> <span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-04-29 05:08:45</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Do we know what issue was seen?</div>
+</div>
+
+</body>
+</html>

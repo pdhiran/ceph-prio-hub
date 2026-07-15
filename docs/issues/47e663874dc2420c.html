@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-16079 - Cephadm not creating OSD daemons for few OSDs despite being </title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-16079: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16079" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16079</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Guillaume ABRIOUX</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2026-06-18</dd>
+    <dt>Updated</dt><dd>2026-07-14</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span><span>cephadm</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-06-23 04:50:14</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the Ceph volume logs below are the observation: Zapping /dev/nvme4n1  [2026-06-18 11:39:46,462][ceph_volume.main][INFO  ] Running command: ceph-volume  lvm zap /dev/nvme4n1 --destroy
+
+For 2 lvm:
+</div>
+<div class="tl-entry"><span class="tl-date">2026-06-24 06:13:46</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the sos report of node dal2-qz2-sr2-rk089-s18: lsblk : NAME                                                                                                  MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS</div>
+<div class="tl-entry"><span class="tl-date">2026-06-25 08:14:59</span> <span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi   , The dev environment has since been redeployed, so unfortunately, I don&#x27;t have the output of the requested commands captured after zapping nvme4 and when new LVM was created. When we initially a</div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 06:16:22</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  , Are both OSDs currently down? The lsblk output indicates that the LVMs referenced by the OSDs are no longer present and have been replaced with newly created LVMs. This could explain why the OSDs a</div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 06:19:33</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Could you please share the reproduction steps? The issue description mentions an 80% hit rate, and we&#x27;d like to understand how this was achieved.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-01 02:49:59</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:    , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  cephadm ? Sharing these logs will help us investigate further.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 05:03:13</span> <span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi   , The osds were down initially since the osd daemons were not created, so we tried to zap the disk nvme4, even then the osds daemons were not created successfully with the latest lvms.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 05:21:00</span> <span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. ceph orch set-unmanaged osd.default_dr</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 06:27:45</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  could you please share ceph-volume lvm list output?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 06:30:51</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cepha</div>
+<div class="tl-entry"><span class="tl-date">2026-07-05 21:39:16</span> <span class="tl-badge comment">Comment</span> <strong>G Sri Harsha</strong>: Issue appeared once again. Added attachment  ceph_osd_recreation_issue.pdf cc:      Note : didn’t noticed the ask in the ticket hence missed collecting debug logs during the steps execution.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-05 21:47:36</span> <span class="tl-badge comment">Comment</span> <strong>G Sri Harsha</strong>:  the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix</div>
+<div class="tl-entry"><span class="tl-date">2026-07-05 23:27:08</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the earlier logs, we observed that  cephadm  did not receive the OSD deployment request for two OSDs, which is why those OSDs remained down. On the other hand,  ceph-volume  successfully created </div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 01:05:26</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Analysis from earlier logs : From the logs, it appears that  osd.62  and  osd.63  are being skipped in  deploy_osd_daemons_for_existing_osds() ( src/pybind/mgr/cephadm/services/osd.py ) because they a</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 11:17:11</span> <span class="tl-badge comment">Comment</span> <strong>G Sri Harsha</strong>: Tried below: Zapping single LV where OSD is not deployed set to unmanaged zapped single LV ( ceph-volume lvm zap --destroy /dev/&lt;&gt;/&lt;&gt; ) set managed lv itself not got created  Zapping complete drive se</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 01:39:14</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Based on  the analysis mentioned in    we can confirm the from debug logs we observed the same behaviour. 2026-07-06T12:56:25.980+0000 7fdf9d7ba640  0 [cephadm DEBUG cephadm.services.osd] osd id 64 do</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 04:37:03</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Case 1: Zapping single LV where OSD is not deployed set to unmanaged zapped single LV ( ceph-volume lvm zap --destroy /dev/&lt;&gt;/&lt;&gt; ) set managed lv itself not got created  ---&gt; observation : when comple</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 05:57:38</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello  @SriHarsha , Could you please attach the logs from the production environment to the Jira ticket? As discussed, in the test cluster we observed that the OSDs are reported under the  root  bucke</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 11:54:44</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Based on the analysis of local reproducer env, the issue appears to be a cephadm deployment bug during OSD redeployment in an  osds_per_device  configuration, where cephadm generated the OSD deploymen</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 13:41:34</span> <span class="tl-badge comment">Comment</span> <strong>Adam King</strong>:  There’s a lot of info on here I’m trying to pick up. I saw this tracker    with a PR that includes this comment         # ceph-volume registers new OSDs with the monitor before returning.
+        # t</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 09:48:11</span> <span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
+</div>
+
+</body>
+</html>

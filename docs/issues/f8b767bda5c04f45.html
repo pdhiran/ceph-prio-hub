@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13491 - HTTP 409 error for Ceph RGW S3 requests</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13491: HTTP 409 error for Ceph RGW S3 requests</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13491" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13491</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Casey Bodley</dd>
+    <dt>Components</dt><dd>rgw</dd>
+    <dt>Created</dt><dd>2026-03-19</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (20 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-03-24 04:59:22</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Analysis  : Log file  : /ecurep/sf/TS021/679/TS021679843/0-all_data/debug-rgw-logs.tgz_unpack/debug/whds0026-ceph-client.rgw.debug_since44_till46.log There are 2 identical requests for the same byte r</div>
+<div class="tl-entry"><span class="tl-date">2026-03-24 10:08:42</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  I see that RGW logs from some other daemons have been shared as well. Is this the complete set of RGW daemons in the cluster? If not, could we collect logs from all RGW daemons? We suspect the issue </div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 08:38:24</span> <span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: in today’s downstream rgw meeting,   recalled that upstream contains fixes by Cory Snyder for potentially similar cases where internal ECANCELED errors are translated to 409.  These may be helpful to </div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 13:45:50</span> <span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: We identified two upstream PRs related to RGW S3 GET failures where ECANCELED is translating to 409 during concurrent ranged GET requests, https://github.com/ceph/ceph/pull/47187 https://github.com/ce</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 14:18:25</span> <span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: Thanks for reviewing.  We don’t  think  there are new commits, but this seems to be a similar incorrect behavior.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 14:36:19</span> <span class="tl-badge comment">Comment</span> <strong>Casey Bodley</strong>: based on  read 270223~524288]  from the osd read op, this looks like a bug with ranged GetObject requests that exists on main too: GetObject requests with a Range header disable prefetch here:  note t</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 14:44:33</span> <span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: I would prefer to fix the issue without a client retry, but I think it’s axiomatically true that we should have more correct error translation in general</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 15:39:04</span> <span class="tl-badge comment">Comment</span> <strong>Casey Bodley</strong>: this mapping from ECANCELED -&gt; 409 was technically a regression from IAM apis in  i proposed a change in   that prevents that mapping from applying outside of IAM, so that ECANCELED errors elsewhere l</div>
+<div class="tl-entry"><span class="tl-date">2026-03-25 16:32:30</span> <span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: So   has pushed see    for   which, I believe, potentially addresses this issue by returning a retryable HTTP error rather than 409.  Would the customer be able to deploy (in test or prod) a test fix </div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 06:08:08</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  Can you reach out to customer for this?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 23:07:55</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:    The CU has confirmed that they can test this fix in their non-prod cluster</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 23:54:35</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  thanks!  cc   </div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 00:48:59</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:   Just got an update from CU. They are planning to upgrade their non-prod cluster to 8.1z5 from 8.1z4 and want a fix released for that version. </div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 22:06:38</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  Does it mean they don’t want a testfix? 8.1z6 tentative GA date is May 2026. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-06 01:30:22</span> <span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:   We are working on backports to 8.1z6 and 9.0z2, fyi. The backport Jiras are linked to the current one.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-15 09:52:36</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-20.2.1-162. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-05-10 23:21:59</span> <span class="tl-badge comment">Comment</span> <strong>Hemanth Maheswarla</strong>: Verified this bz on ceph version 20.2.1-232.el9cp with below script log snippet: [cephuser@ceph-hsm-tentacle-ibm-kpgl8m-node6 ~]$ venv/bin/aws --endpoint-url http://[REDACTED-IP-e38129fb]:80 s3 cp log</div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 12:42:19</span> <span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>: This was fixed in 9.0z2. Moving to Release Notes Not Required</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 08:49:00</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.1 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 19:58:43</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Casey Bodley)</span></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13407 - [IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13407: [IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13407" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13407</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">In Progress</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
+    <dt>Components</dt><dd>ceph-dashboard</dd>
+    <dt>Created</dt><dd>2026-03-09</dd>
+    <dt>Updated</dt><dd>2026-07-08</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span><span>QE_triage_ACK_9_1</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-03-11 06:24:49</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , I tried reproducing the issue on ceph version 20.1.0-145.el9cp tentacle , and both  Cluster → Pool List  and  Block → Images  in the dashboard are accessible without any issues. To help with fu</div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 04:17:15</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello    The sos-report from MGR node with dashboard debug logs enabled is present below in ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-sceph03-TS021586859-2026-03-12-xxrllfk.tar.xz_</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 00:53:51</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello    Just checking in to see if there are any updates on this issue. Please let us know if you need any further information from CU side.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 01:24:04</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  , Thanks for sharing the logs. However, I need the debug logs captured while accessing the  Cluster → Pools  and  Block → Images  tabs in the dashboard. I do not see any log entries indicating that t</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 01:27:27</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:    Sure, I will reproduce the issue and capture the debug logs while accessing the  Cluster → Pools  and  Block → Images  tabs, and share them here.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 03:12:42</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello   I do see the following traceback when we see the HTTP 500 Internal server error for dashboard everytime: Mar 11 11:16:32 sceph03 ceph-mgr[4080682]: [dashboard ERROR exception] Internal Server </div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 05:14:25</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>:  the Cu has provided the sos-report again: it is present below on ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-sceph04-TS021586859-2026-03-16-jccpctf.tar.xz_unpack/sosreport-sceph04-T</div>
+<div class="tl-entry"><span class="tl-date">2026-03-19 00:33:56</span> <span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello    Just wanted to inform you that the customer was able to access the  Cluster → Pools  and  Block → Images  tabs after clearing the Progress module cache (&quot;ceph progress clear&quot;).</div>
+<div class="tl-entry"><span class="tl-date">2026-03-19 09:41:12</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [Internal Do not share with Customer]: Current Status:  Crash log:
+
+Mar 11 14:25:29 sceph03 ceph-mgr[3332502]: [dashboard ERROR exception] Internal Server Error#012Traceback (most recent call last):#0</div>
+<div class="tl-entry"><span class="tl-date">2026-03-19 11:20:26</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [Internal - Do not share with customer] From the logs, it is observed that  refs  is set to  [&#x27;mds&#x27;, &#x27;clone&#x27;] , which is causing the crash. Mar 12 08:58:33 sceph03 ceph-mgr[3390646]: [dashboard DEBUG </div>
+<div class="tl-entry"><span class="tl-date">2026-03-30 23:35:35</span> <span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:  are you fixing this in 9.1? If yes, move it to required status(assigned). If not, lets move it out to 9.2 or 10.0</div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 07:45:05</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  I’ve raised a review upstream for this issue and plan to backport it downstream once it’s approved. Could you please help get the review approved by the dashboard team?</div>
+<div class="tl-entry"><span class="tl-date">2026-04-20 00:43:43</span> <span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:  can you share the PR?</div>
+<div class="tl-entry"><span class="tl-date">2026-04-20 00:44:02</span> <span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:  Ignore, I found it.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 04:15:34</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Could you please help me get this reviewed?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 07:24:38</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Should I proceed with backporting    to downstream 9.2?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 07:41:00</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   better to create tentacle upstream backport first if not yet done. </div>
+<div class="tl-entry"><span class="tl-date">2026-07-08 03:01:28</span> <span class="tl-badge comment">Comment</span> <strong>Nizamudeen A</strong>: Sorry for missing this   , but yeah let’s backport it upstream first and then we need to backport it to 9.2 and 9.1z2</div>
+<div class="tl-entry"><span class="tl-date">2026-07-08 03:27:02</span> <span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:    can you create the backport bugzilla’s and mark them blockers. in respective releases</div>
+<div class="tl-entry"><span class="tl-date">2026-07-08 03:27:13</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Please create a clone of this and set the target version to 9.1z2.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-08 07:59:27</span> <span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+</div>
+
+</body>
+</html>

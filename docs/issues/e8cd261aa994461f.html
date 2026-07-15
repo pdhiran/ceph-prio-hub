@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-13187 - [9.0z Backport][IBM_Support] &quot;ceph orch ls&quot; is misreporting </title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-13187: [9.0z Backport][IBM_Support] &quot;ceph orch ls&quot; is misreporting the count for OSD services</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13187" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13187</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Timothy Nguyen</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2026-02-11</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (14 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-02-11 10:59:28</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  , waiting for confirmation from Adam or Shweta.</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 10:59:28</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Adding summerized  details from slack thread discussion [  ] Timothy expect a review of RCA and patch.  Adam requested for some details  can we get the full output of  cephadm ls  on one of the nodes </div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 10:23:43</span> <span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>: Below PR is approved and already merged in 9.1 by Timothy.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 11:47:06</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  should the status of this back port be changed?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-27 03:17:39</span> <span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  Is it merged in 9.0 branch?? i can’t find this commit in 9.0</div>
+<div class="tl-entry"><span class="tl-date">2026-03-27 15:33:52</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  I don’t believe it is, so I guess status should stay unchanged.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-02 00:46:01</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  I am moving this to 90z3 as discussed over slack.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 23:01:54</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1660</div>
+<div class="tl-entry"><span class="tl-date">2026-04-14 04:54:16</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  Kindly wait for 9.0z2 GA to be completed before we merge anything new in the 9.0z branch. </div>
+<div class="tl-entry"><span class="tl-date">2026-04-14 15:17:15</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  got it</div>
+<div class="tl-entry"><span class="tl-date">2026-04-16 10:57:48</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  9.0z2 is GA now, please go ahead and merge it to the 9.0 branch now. </div>
+<div class="tl-entry"><span class="tl-date">2026-05-21 07:23:38</span> <span class="tl-badge comment">Comment</span> <strong>Vinayak Papnoi</strong>: [ceph: root@ceph-vpap-i90-wvohzt-node1-installer /]# ceph version
+ceph version 20.1.0-210.el9cp (7d8b40571aaeb353983da227ce8632bf66bf7036) tentacle (stable - RelWithDebInfo)
+[ceph: root@ceph-vpap-i90-</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 09:49:51</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.0z3 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 09:49:52</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12929 - [BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12929: [BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due to custom alertmanager.yml</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12929" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12929</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Swati Thombe</dd>
+    <dt>Components</dt><dd>cephadm</dd>
+    <dt>Created</dt><dd>2026-01-27</dd>
+    <dt>Updated</dt><dd>2026-06-04</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>RH_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (18 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-01-27 03:31:29</span> <span class="tl-badge comment">Comment</span> <strong>Hui Huang</strong>: Hi team, Below is the error log: ~~~ [hhuan@supportshell-1 sosreport-tuc-odf0608-01u-01-04361717-2026-01-27-twbalpe]$ less var/log/messages: ... ... Jan 27 09:25:22 tuc-odf0608-01u-01 ceph-mgr[766691]</div>
+<div class="tl-entry"><span class="tl-date">2026-01-27 19:36:34</span> <span class="tl-badge comment">Comment</span> <strong>Hui Huang</strong>: Hi Adam, The issue maybe related to the &quot;default_webhook_urls&quot; section in alertmanager.yml. For checking and activation mechanism of the alertmanager, it seems rhcs8 cephadm is different from rhcs6 ce</div>
+<div class="tl-entry"><span class="tl-date">2026-02-02 23:58:25</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Assigning this bug to   to help on it from L3 side. </div>
+<div class="tl-entry"><span class="tl-date">2026-02-10 09:58:16</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi                                                                                                                                                                      While analyzing the upgrade fail</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 01:25:17</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi      Clarification Required – Backward Compatibility of  default_webhook_urls As per the commit message linked to issue  mgr/cephadm: fix custom alertmanager webhooks (42129dd6) · Commits · ceph / </div>
+<div class="tl-entry"><span class="tl-date">2026-02-24 02:41:46</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    This issue has been identified as expected behavior with legacy custom templates. Need to update the Release notes under the Known Issues section to document the required pre-upgrade action. Wit</div>
+<div class="tl-entry"><span class="tl-date">2026-02-24 19:32:57</span> <span class="tl-badge comment">Comment</span> <strong>Hui Huang</strong>:  Got it, we’ll let CU know this is a known issue, thanks for support! Thanks! BR/Hui</div>
+<div class="tl-entry"><span class="tl-date">2026-02-26 02:22:58</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We need to include this update in the Release Notes under  9.0z2  and  8.1z6 . The Release section has already been updated in the same JIRA for your reference. Kindly review and proceed with in</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 07:25:31</span> <span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  Is this relevant for both Red Hat and IBM?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 09:15:15</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  Yes, Thanks !</div>
+<div class="tl-entry"><span class="tl-date">2026-04-09 09:43:14</span> <span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  for this to be a part of the release notes - please leave it with the relevant development component to be included (not documentation) fyi   </div>
+<div class="tl-entry"><span class="tl-date">2026-04-10 05:17:01</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  done</div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 00:55:02</span> <span class="tl-badge comment">Comment</span> <strong>Prajesha Naidu</strong>:  here is the release note for this known issue  https://ibmdocs-test.dcs.ibm.com/docs/en/storage-ceph/9.9.0?topic=9902-known-issues#GUID-57387157-2131-4751-be97-3e22c0abec9d_ section_9title _1</div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 05:12:38</span> <span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Swati is the right assignee for this ticket.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 05:30:38</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   please review and give your ack but EOD.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 06:16:17</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Thanks for sharing the update—everything looks good and is as expected.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 13:53:25</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 9.0z2 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 13:56:06</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-12435 - [BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateB</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-12435: [BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12435" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12435</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
+    <dt>Components</dt><dd>rgw-multisite</dd>
+    <dt>Created</dt><dd>2025-10-30</dd>
+    <dt>Updated</dt><dd>2026-06-30</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-03-03 23:44:17</span> <span class="tl-badge comment">Comment</span> <strong>Manisha Reddem</strong>:   I tried multiple times to create the bucket using the secondary (zg2) endpoint with region zg2 via AWS CLI, and it fails consistently every time for this specific scenario with the same error: aws: </div>
+<div class="tl-entry"><span class="tl-date">2026-03-04 07:21:23</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  </div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 00:55:49</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: When attempting to create a bucket in the  secondary zonegroup  from the  secondary endpoint , we observe  intermittent failures followed by eventual success  when using  s3cmd , whereas the same oper</div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 23:26:03</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: We are encountering the below crash on primary endpoint RGW, after which the RGW service restarts. If additional retries remain, the operation may succeed during a subsequent attempt; otherwise, it wi</div>
+<div class="tl-entry"><span class="tl-date">2026-03-05 23:58:13</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , Based on my previous two comments, we were able to successfully test the PR for the  IllegalLocationConstraintException . However, we are encountering failures when creating a bucket from the  </div>
+<div class="tl-entry"><span class="tl-date">2026-03-09 00:45:49</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Also please let us know if we need to open separate bug to trace above crash.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 01:39:09</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , Based on your comment for 9.0,  “Buckets created through the secondary endpoint with region zg2 are being successfully created in the secondary zonegroup”  do you observe the same  InternalErro</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 02:27:04</span> <span class="tl-badge comment">Comment</span> <strong>Manisha Reddem</strong>: Hi  , In 9.0, while creating a bucket via the secondary endpoint with the secondary zonegroup, I did not observe the error  “argument of type &#x27;NoneType&#x27; is not iterable”  when using awscli. The bucket</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 02:28:25</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  could you please share command output for the same?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 02:30:38</span> <span class="tl-badge comment">Comment</span> <strong>Manisha Reddem</strong>:   Create bucket in zg2 via zg2 endpoint
+
+AWS
+# aws --endpoint-url http://[REDACTED-IP-5ef9622c]:80 s3api create-bucket --bucket test3-zg2 --region zg2 --create-bucket-configuration LocationConstraint=</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 02:32:00</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  could you share ceph version details for the same?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 02:39:59</span> <span class="tl-badge comment">Comment</span> <strong>Manisha Reddem</strong>:   ceph version 20.1.0-155.el9cp</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 08:24:40</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [Internal - Do not share with customer] Summary of the issue: Based on Ceph Pull Request    , QA tested three scenarios on ceph versions 8.1 and 9.0, and observed differing behavior in one test case. </div>
+<div class="tl-entry"><span class="tl-date">2026-03-26 01:26:41</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [ Internal - Do not share with customer] We need to backport   , as it addresses an issue we are currently observing. During bucket creation from a secondary zonegroup, when the request is forwarded t</div>
+<div class="tl-entry"><span class="tl-date">2026-03-27 06:29:44</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  I’m able to successfully create a bucket in the secondary zonegroup using the secondary endpoint. Could you please try this on your setup and confirm? Build is available at:   Please bootst</div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 22:43:20</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Any updates on testing from your end?</div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 23:42:55</span> <span class="tl-badge comment">Comment</span> <strong>Manisha Reddem</strong>:  I’ll test this on the downstream build once the fix is available there.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-06 03:49:16</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [ Internal Discussion - Do not share with customer ] The changes are now backported to ceph-8.1-rhel-patches. Commit ids are:   https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a33c8b02fa170c045c94e1c</div>
+<div class="tl-entry"><span class="tl-date">2026-04-14 06:38:11</span> <span class="tl-badge comment">Comment</span> <strong>Manisha Reddem</strong>: ceph version ceph version 19.2.1-354.el9cp (4797e5f1b4b942389212db56cb06722388c2d72f) squid (stable) 1. Create bucket in shared via primary endpoint AWS aws --endpoint-url  http://[REDACTED-IP-13fde82</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 16:31:31</span> <span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Closing as part of 8.1z6 release. See   for release information.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-30 18:21:18</span> <span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+</div>
+
+</body>
+</html>

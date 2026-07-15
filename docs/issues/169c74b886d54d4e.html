@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-9302 - [BZ#2297068] [CephFS - Snap Schedule] Add validation for Ret</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-9302: [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-9302" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-9302</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Vivek Maurya</dd>
+    <dt>Components</dt><dd>cephfs</dd>
+    <dt>Created</dt><dd>2024-07-10</dd>
+    <dt>Updated</dt><dd>2026-06-18</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>Ceph_L3</span></div>
+</div>
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2024-11-11 23:32:12</span> <span class="tl-badge comment">Comment</span> <strong>gregsfortytwo</strong>: Suma, is this still reproducible on later versions? I believe Milind has done a lot of work on the scheduling interface.</div>
+<div class="tl-entry"><span class="tl-date">2024-11-12 00:07:25</span> <span class="tl-badge comment">Comment</span> <strong>Milind Changire</strong>: FYI - well,  https://github.com/ceph/ceph/pull/57263  is still in the works for restricting the acceptable retention period specifiers</div>
+<div class="tl-entry"><span class="tl-date">2024-11-13 00:47:26</span> <span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Yes Greg, Issue is still seen with Squid release. Logs: [root@rhel94client1 ~]# ceph fs volume create cephfs [root@rhel94client1 ~]# ceph fs subvolume create cephfs sv1 [root@rhel94client1 ~]# ceph ve</div>
+<div class="tl-entry"><span class="tl-date">2024-11-13 04:28:45</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: The change is under review upstream. I think we can target this for 8.0z1 (when that shows up in BZ).</div>
+<div class="tl-entry"><span class="tl-date">2025-04-03 00:59:28</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: Pr is under test upstream. Moving out to z1.</div>
+<div class="tl-entry"><span class="tl-date">2025-06-12 11:09:40</span> <span class="tl-badge comment">Comment</span> <strong>gregsfortytwo</strong>: Pushing as z1 is a targeted release</div>
+<div class="tl-entry"><span class="tl-date">2025-07-17 09:39:57</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I see PR is still not merged upstream, can we have it merged so that we can pick it in 8.1z2 ? -Bipin</div>
+<div class="tl-entry"><span class="tl-date">2025-07-21 01:57:36</span> <span class="tl-badge comment">Comment</span> <strong>Milind Changire</strong>: (In reply to Bipin Kunal from comment #7) &gt; I see PR is still not merged upstream, can we have it merged so that we can &gt; pick it in 8.1z2 ? &gt;  &gt; -Bipin I&#x27;ve pinged Venky at the PR to pick up the PR f</div>
+<div class="tl-entry"><span class="tl-date">2025-09-01 03:06:54</span> <span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>: We are in &quot;blockers only&quot; for 8.1z3. The upstream PR for this BZ hasn&#x27;t been merged yet. Once the PR is merged, we will pick it up for z-stream releases. I&#x27;m moving it to 8.1z4 for now so that we don&#x27;</div>
+<div class="tl-entry"><span class="tl-date">2025-10-29 08:12:51</span> <span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>: @mchangir@redhat.com please take a look at this one. Moving to the next z stream for now since we are in blockers only for 8.1z4.</div>
+<div class="tl-entry"><span class="tl-date">2026-01-19 03:28:33</span> <span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>: Upstream backport PR not merged due to upstream lab issues  Need to move to the next z-stream. Re-assigning to @vmaurya@redhat.com.  Vivek - request you to raise a downstream backport MR once the squi</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 00:28:55</span> <span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: PR:   not merged in Upstream, waiting for it.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 10:47:12</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I am moving this to 9.2 instead of 10.0 as that is the next release.    PLease work with   to prioritize   .</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 00:04:43</span> <span class="tl-badge comment">Comment</span> <strong>Jos Collin</strong>:  That’s not the PR for 9.2. Let me give that. Hold on.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 00:20:33</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  ahh sorry, I picked the squid one. </div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 00:21:26</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Tentacle one is   </div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 00:29:35</span> <span class="tl-badge comment">Comment</span> <strong>Jos Collin</strong>:  No,    is the actual PR and it is under testing. Milind is not with IBM. So I’ve created another backport.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 00:47:39</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  ack</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 01:03:17</span> <span class="tl-badge comment">Comment</span> <strong>Jos Collin</strong>:  9.2 branch is not ready yet. So let’s wait until next week.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 01:10:32</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  sure. Meanwhile lets merge the upstream PR</div>
+<div class="tl-entry"><span class="tl-date">2026-06-18 10:29:30</span> <span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Vivek Maurya)</span></div>
+</div>
+
+</body>
+</html>

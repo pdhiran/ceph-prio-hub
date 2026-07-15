@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-16463 - SMB is extremely slow when trying to sync many small files b</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+.back:hover { text-decoration: underline; }
+h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
+.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
+.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
+.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-16463: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</h1>
+<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+
+<div class="meta">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16463" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16463</a></dd>
+    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Assignee</dt><dd>Anoop C S</dd>
+    <dt>Components</dt><dd>smb, smb/samba</dd>
+    <dt>Created</dt><dd>2026-07-09</dd>
+    <dt>Updated</dt><dd>2026-07-15</dd>
+  </dl></div>
+</div>
+
+<div style="margin:1rem 0;">
+  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+</div>
+
+<h2>Timeline (17 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-07-09 03:52:31</span> <span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: Ravinder,  Can you share the cluster configuration? ie. the output of the “ceph smb show” command? This will help us identify how the smb cluser is set up.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 03:57:47</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>:  checking with CU on case.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 04:20:20</span> <span class="tl-badge comment">Comment</span> <strong>Shachar Sharon</strong>:  Could you please provide information on average and max number of files per directory? </div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 04:28:22</span> <span class="tl-badge comment">Comment</span> <strong>Mohit Bisht</strong>:   Could you please also provide information regarding whether the subvolumes used for SMB shares have case sensitivity disabled? Note: Currently, to improve SMB performance, it is recommended to disab</div>
+<div class="tl-entry"><span class="tl-date">2026-07-12 09:55:49</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>:  Below are the SMB cluster details. -- ceph smb cluster ls [
+ &quot;smb1-production&quot;
+] ceph smb show ceph.smb.cluster.smb1-production {
+ &quot;resource_type&quot;: &quot;ceph.smb.cluster&quot;,
+ &quot;cluster_id&quot;: &quot;smb1-production</div>
+<div class="tl-entry"><span class="tl-date">2026-07-12 10:01:06</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi Team  We have additional details from customer as well.  -- The SMB performance issue remains. Ceph-side state during active Robocopy: Cluster health: HEALTH_OK All PGs active+clean except normal s</div>
+<div class="tl-entry"><span class="tl-date">2026-07-13 02:30:01</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: syscall_readdir_count: +8,094,073  Based on the count of  readdir  operations, we suspect this may be due to a missing case-insensitivity configuration on the subvolume side. Did they verify whether c</div>
+<div class="tl-entry"><span class="tl-date">2026-07-13 02:54:24</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>:  thanks. I asked same to Customer, waiting for their reply. Let me ask subvolumes list and info output to check this.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-13 13:35:40</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi   We got below reply from CU about case sensitivity. -- Here is the output from one of subvolume. $ ceph fs subvolume info production file-prd --group_name smb1-production
+{
+  &quot;atime&quot;: &quot;2026-07-03 </div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 00:40:41</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>:  Thank you; this confirms the additional slowdown pattern observed as the number of entries increases over time. SMB operates with case insensitive file name semantics, whereas CephFS is case sensitiv</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 02:10:59</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 02:32:36</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>:  Restoring the existing subvolumes to match an empty tree, as you would with a new subvolume, would require deleting all current entries - an operation that could be time consuming - hence the recomme</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 03:52:30</span> <span class="tl-badge comment">Comment</span> <strong>Ashish Singh</strong>: Hi   can we avoid threaded replies? We’re trying to move away from threaded replies as they are difficult to find and ordering of comments doesn&#x27;t happen which can be problematic while debugging this </div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 03:55:39</span> <span class="tl-badge comment">Comment</span> <strong>Xavi Hernandez</strong>: CephFS requires the subvolume to be empty before being able to change the case sensitivity option. If the subvolume already has many files, deleting them from Samba will be slow (it suffers from the s</div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 01:04:08</span> <span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Thanks Team!  We have small query from Customer. -- We will test the change proposed &quot;--casesensitive=0&quot; New subvolumegroup + subvolumes Like this ceph fs subvolumegroup create production smb1-product</div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 01:21:19</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: Question: creating subvolumegroup with --casesensitive=0 will that give automatic inheritance on subvolumes ?  Yes, that&#x27;s correct. Subvolumes created within a subvolume group inherit the case-sensiti</div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 01:30:31</span> <span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
+</div>
+
+</body>
+</html>

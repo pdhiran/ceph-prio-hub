@@ -322,6 +322,100 @@ class IssueStateDB:
             "sync_count": self._sync_metadata.get("sync_count", 0),
         }
 
+    def add_jira_issue(self, parsed: dict) -> tuple[ConsolidatedIssue, bool]:
+        """Add or update an issue from JIRA data.
+
+        Returns:
+            Tuple of (issue, is_new).
+        """
+        jira_key = parsed.get("key", "")
+
+        for issue in self._issues.values():
+            if jira_key in issue.jira_ids:
+                self._update_from_jira(issue, parsed)
+                return issue, False
+
+        for issue in self._issues.values():
+            clean = _clean_subject(parsed.get("summary", ""))
+            if clean and issue.subject and _clean_subject(issue.subject) == clean:
+                self._update_from_jira(issue, parsed)
+                return issue, False
+
+        issue = ConsolidatedIssue()
+        self._update_from_jira(issue, parsed)
+        self._issues[issue.issue_id] = issue
+        return issue, True
+
+    @staticmethod
+    def _update_from_jira(issue: ConsolidatedIssue, parsed: dict) -> None:
+        """Merge JIRA data into a consolidated issue."""
+        data = issue._data
+        jira_key = parsed.get("key", "")
+
+        if jira_key and jira_key not in data["jira_ids"]:
+            data["jira_ids"].append(jira_key)
+
+        if not data["subject"]:
+            data["subject"] = parsed.get("summary", "")
+
+        for comp in parsed.get("components", []):
+            if comp not in data["components"]:
+                data["components"].append(comp)
+        if parsed.get("components") and not data["component"]:
+            data["component"] = parsed["components"][0]
+
+        for label in parsed.get("labels", []):
+            if label not in data["jira_labels"]:
+                data["jira_labels"].append(label)
+
+        for ver in parsed.get("affected_versions", []):
+            if ver not in data["ceph_versions"]:
+                data["ceph_versions"].append(ver)
+
+        if parsed.get("priority") and not data["severity"]:
+            prio_map = {"Highest": "critical", "High": "high", "Medium": "medium", "Low": "low"}
+            data["severity"] = prio_map.get(parsed["priority"], parsed["priority"].lower())
+
+        if not data.get("first_seen") or (parsed.get("created", "") and parsed["created"] < data["first_seen"]):
+            data["first_seen"] = parsed.get("created", data["first_seen"])
+
+        data["last_updated"] = parsed.get("updated", "") or data["last_updated"]
+
+        status_entry = {
+            "type": "jira_status",
+            "date": parsed.get("updated", ""),
+            "status": parsed.get("status", ""),
+            "status_category": parsed.get("status_category", ""),
+            "assignee": parsed.get("assignee", ""),
+            "source_id": jira_key,
+            "url": parsed.get("url", ""),
+        }
+        existing = [
+            e for e in data["timeline"]
+            if e.get("type") == "jira_status" and e.get("source_id") == jira_key
+        ]
+        if not existing or existing[-1].get("status") != parsed.get("status"):
+            data["timeline"].append(status_entry)
+
+        for comment in parsed.get("comments", []):
+            cdate = comment.get("created", "")
+            dup = any(
+                e.get("type") == "jira_comment"
+                and e.get("source_id") == jira_key
+                and e.get("date") == cdate
+                for e in data["timeline"]
+            )
+            if not dup:
+                data["timeline"].append({
+                    "type": "jira_comment",
+                    "date": cdate,
+                    "author": comment.get("author", ""),
+                    "summary": comment.get("body", "")[:300],
+                    "source_id": jira_key,
+                })
+
+        data["timeline"].sort(key=lambda e: e.get("date", ""))
+
     def export_for_publishing(self) -> dict:
         """Export sanitized issues data for GitHub Pages publishing."""
         from ceph_prio_hub.sanitizer.redactor import sanitize_dict
