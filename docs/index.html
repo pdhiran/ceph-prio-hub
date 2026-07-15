@@ -81,17 +81,42 @@ body { font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-size: 14px;
 }
 .chart-title { font-size: 0.82rem; font-weight: 600; color: var(--ibm-gray-70); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em; }
 
-.filters {
-  display: flex; gap: 0.6rem; margin: 1.5rem 0; flex-wrap: wrap; align-items: center;
+.filter-bar {
+  margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
 }
-.filters select, .filters input {
-  font-family: inherit; font-size: 0.8rem; padding: 0.35rem 0.6rem;
+.filter-bar input[type="text"] {
+  font-family: inherit; font-size: 0.8rem; padding: 0.35rem 0.7rem;
   border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
-  color: var(--ibm-gray-90);
+  color: var(--ibm-gray-90); min-width: 180px;
 }
-.filters select:focus, .filters input:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
-.filters label { font-size: 0.75rem; color: var(--ibm-gray-70); font-weight: 500; }
+.filter-bar input:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
 .filter-count { font-size: 0.82rem; color: var(--ibm-gray-50); margin-left: auto; }
+.not-toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem;
+  color: var(--ibm-gray-70); cursor: pointer; user-select: none;
+  padding: 0.25rem 0.6rem; border-radius: 4px; border: 1px solid var(--ibm-gray-30);
+  background: #fff; transition: all 0.15s;
+}
+.not-toggle.active { background: var(--ibm-red); color: #fff; border-color: var(--ibm-red); }
+.filter-group { margin-bottom: 0.5rem; }
+.filter-group-label {
+  font-size: 0.68rem; font-weight: 600; color: var(--ibm-gray-50);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+  display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.72rem;
+  font-weight: 500; cursor: pointer; user-select: none; transition: all 0.12s;
+  border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
+}
+.chip:hover { border-color: var(--ibm-blue); color: var(--ibm-blue); }
+.chip.selected { background: var(--ibm-blue); color: #fff; border-color: var(--ibm-blue); }
+.chip.selected.not-mode { background: var(--ibm-red); border-color: var(--ibm-red); }
+.filters-panel {
+  background: var(--ibm-gray-10); border-radius: 6px; padding: 0.8rem 1rem;
+  margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
+}
+@media (max-width: 1000px) { .filters-panel { grid-template-columns: 1fr 1fr; } }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 th {
@@ -138,7 +163,7 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--ibm-gray-90); margin: 2re
 
 <div class="header">
   <h1>Ceph Prio-Hub &mdash; Customer Issue Dashboard</h1>
-  <span class="gen-date">Generated: 2026-07-15 16:31 UTC</span>
+  <span class="gen-date">Generated: 2026-07-15 16:33 UTC</span>
 </div>
 
 <div class="sidebar">
@@ -209,42 +234,46 @@ h2 { font-size: 1.1rem; font-weight: 600; color: var(--ibm-gray-90); margin: 2re
 <section id="issues">
   <h2>All Issues</h2>
 
-  <div class="filters">
-    <label>Status:
-      <select id="filter-status">
-        <option value="">All</option>
-        <option value="To Do">Open</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Done">Resolved</option>
-      </select>
-    </label>
-    <label>Priority:
-      <select id="filter-priority">
-        <option value="">All</option>
-        <option value="blocker">Blocker</option>
-        <option value="major">Major</option>
-        <option value="normal">Normal</option>
-        <option value="minor">Minor</option>
-      </select>
-    </label>
-    <label>QA Status:
-      <select id="filter-qa">
-        <option value="">All</option>
-        <option value="not_assessed">Not Assessed</option>
-        <option value="needs_analysis">Needs Analysis</option>
-        <option value="reproducing">Reproducing</option>
-        <option value="test_written">Test Written</option>
-        <option value="verified">Verified</option>
-        <option value="wont_fix">Won't Fix</option>
-      </select>
-    </label>
-    <label>Component:
-      <select id="filter-component"><option value="">All</option></select>
-    </label>
-    <label>
-      <input type="text" id="filter-search" placeholder="Search..." style="min-width:160px;">
-    </label>
+  <div class="filter-bar">
+    <span class="not-toggle" id="not-toggle" title="Toggle NOT mode: exclude selected values instead of including">
+      <span style="font-size:0.85rem;">&#8800;</span> NOT
+    </span>
+    <input type="text" id="filter-search" placeholder="Search issues...">
     <span class="filter-count" id="visible-count">231 issues</span>
+  </div>
+  <div class="filters-panel">
+    <div class="filter-group">
+      <div class="filter-group-label">Status</div>
+      <div class="chip-row" id="chips-status">
+        <span class="chip" data-val="To Do">Open</span>
+        <span class="chip" data-val="In Progress">In Progress</span>
+        <span class="chip" data-val="Done">Resolved</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Priority</div>
+      <div class="chip-row" id="chips-priority">
+        <span class="chip" data-val="blocker">Blocker</span>
+        <span class="chip" data-val="major">Major</span>
+        <span class="chip" data-val="normal">Normal</span>
+        <span class="chip" data-val="minor">Minor</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">QA Status</div>
+      <div class="chip-row" id="chips-qa">
+        <span class="chip" data-val="not_assessed">Not Assessed</span>
+        <span class="chip" data-val="needs_analysis">Needs Analysis</span>
+        <span class="chip" data-val="reproducing">Reproducing</span>
+        <span class="chip" data-val="test_written">Test Written</span>
+        <span class="chip" data-val="verified">Verified</span>
+        <span class="chip" data-val="wont_fix">Won't Fix</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Component</div>
+      <div class="chip-row" id="chips-component"></div>
+    </div>
   </div>
 
   <table id="issue-table">
@@ -4240,34 +4269,76 @@ makeChart('chart-priority', 'doughnut',
   Object.values(STATS.priority_counts),
   { colors: ['#0f62fe','#ff832b','#da1e28','#198038'] });
 
-// Populate component dropdown
+// Multi-select chip filters
+const selections = { status: new Set(), priority: new Set(), qa: new Set(), component: new Set() };
+let notMode = false;
+
+// Populate component chips
 const compSet = new Set();
 ISSUES.forEach(i => (i.components || []).forEach(c => compSet.add(c)));
-const compSel = document.getElementById('filter-component');
-[...compSet].sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; compSel.appendChild(o); });
+const compRow = document.getElementById('chips-component');
+[...compSet].sort().forEach(c => {
+  const sp = document.createElement('span');
+  sp.className = 'chip'; sp.dataset.val = c; sp.textContent = c;
+  compRow.appendChild(sp);
+});
+
+// NOT toggle
+document.getElementById('not-toggle').addEventListener('click', function() {
+  notMode = !notMode;
+  this.classList.toggle('active', notMode);
+  document.querySelectorAll('.chip.selected').forEach(ch => ch.classList.toggle('not-mode', notMode));
+  applyFilters();
+});
+
+// Chip click handlers
+document.querySelectorAll('.chip-row').forEach(row => {
+  const group = row.id.replace('chips-', '');
+  row.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const val = chip.dataset.val;
+    if (selections[group].has(val)) {
+      selections[group].delete(val);
+      chip.classList.remove('selected', 'not-mode');
+    } else {
+      selections[group].add(val);
+      chip.classList.add('selected');
+      if (notMode) chip.classList.add('not-mode');
+    }
+    applyFilters();
+  });
+});
 
 // Filtering
+function matchFilter(set, value, isNot) {
+  if (set.size === 0) return true;
+  const has = set.has(value);
+  return isNot ? !has : has;
+}
+
+function matchFilterMulti(set, values, isNot) {
+  if (set.size === 0) return true;
+  const has = values.some(v => set.has(v));
+  return isNot ? !has : has;
+}
+
 function applyFilters() {
-  const s = document.getElementById('filter-status').value;
-  const p = document.getElementById('filter-priority').value;
-  const q = document.getElementById('filter-qa').value;
-  const c = document.getElementById('filter-component').value;
   const t = document.getElementById('filter-search').value.toLowerCase();
   let vis = 0;
   document.querySelectorAll('.issue-row').forEach(row => {
     let show = true;
-    if (s && row.dataset.status !== s) show = false;
-    if (p && row.dataset.priority !== p) show = false;
-    if (q && row.dataset.qa !== q) show = false;
-    if (c && !row.dataset.component.includes(c)) show = false;
+    if (!matchFilter(selections.status, row.dataset.status, notMode)) show = false;
+    if (!matchFilter(selections.priority, row.dataset.priority, notMode)) show = false;
+    if (!matchFilter(selections.qa, row.dataset.qa, notMode)) show = false;
+    const comps = row.dataset.component ? row.dataset.component.split(',') : [];
+    if (!matchFilterMulti(selections.component, comps, notMode)) show = false;
     if (t && !row.children[1].textContent.toLowerCase().includes(t)) show = false;
     row.style.display = show ? '' : 'none';
     if (show) vis++;
   });
   document.getElementById('visible-count').textContent = vis + ' issues';
 }
-['filter-status','filter-priority','filter-qa','filter-component'].forEach(id =>
-  document.getElementById(id).addEventListener('change', applyFilters));
 document.getElementById('filter-search').addEventListener('input', applyFilters);
 
 // Column sorting
