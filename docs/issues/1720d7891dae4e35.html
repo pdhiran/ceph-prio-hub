@@ -14,70 +14,121 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
-.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
-.back:hover { text-decoration: underline; }
-h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
-.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
-.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
-.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
-h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
-.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
-.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
 .tl-badge {
-  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
 }
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
-.label-list span {
-  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
-  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
-}
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14352: NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</h1>
-<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:14 UTC</p>
 
-<div class="meta">
+<div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14352" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14352</a></dd>
-    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#da1e28;">New</span></dd>
-    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Swati Thombe</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Assignee</dt><dd>Swati Thombe</dd>
     <dt>Components</dt><dd>cephadm</dd>
+    <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-05-07</dd>
     <dt>Updated</dt><dd>2026-07-03</dd>
   </dl></div>
 </div>
 
-<div style="margin:1rem 0;">
-  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
   <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
 </div>
 
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
 <h2>Timeline (15 events)</h2>
 <div class="timeline">
-<div class="tl-entry"><span class="tl-date">2026-05-08 09:05:26</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We went through the logs and noticed that the failure on April 24th was caused by a timeout during the  ganesha-rados-grace  operation. The command timed out after 10 seconds: 2026-04-24T15:17:4</div>
-<div class="tl-entry"><span class="tl-date">2026-05-11 00:29:35</span> <span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , Mon and Mgr logs for April 24 are available at the following locations: Ecurep: Mon Logs:  /ecurep/sf/TS022/093/TS022093470/2026-05-01 Mgr Logs:  /ecurep/sf/TS022/093/TS022093470/2026-05-05 </div>
-<div class="tl-entry"><span class="tl-date">2026-05-14 01:25:30</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: //  Internal update, do not share with customer  // Connected with the NFS team and discussed this with Rajesh. They identified this as related to Ganesha MGR, so I further discussed it with @Shweta B</div>
-<div class="tl-entry"><span class="tl-date">2026-05-14 07:22:25</span> <span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , Thanks for the update. Could you please let us know if you still require the OSD logs from all OSD nodes for April 24th, when the customer encountered the issue? Thanks, Anita</div>
-<div class="tl-entry"><span class="tl-date">2026-05-15 00:54:39</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Yes,   please share the OSD logs from all OSD nodes for April 24th when the customer encountered the issue. They will be helpful for further investigation. Thanks.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-15 07:44:06</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  , Please be informed that, with the latest discussion, OSD logs are not required here.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-15 07:49:02</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: As discussed with    , we are not seeing any direct OSD down activity in the current logs. However, similar timeout behavior was previously observed when 2 node OSDs were down, where recovery/rebuild </div>
-<div class="tl-entry"><span class="tl-date">2026-05-15 08:05:01</span> <span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  yes, I think we can increase it to 30s.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-18 00:55:37</span> <span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   ,    I tried modifying the  ganesha-rados-grace  timeout value from 10 seconds to 30 seconds. Below are the steps I followed: Connected to the active MGR host. Navigated to the cephadm service</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 12:36:00</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We need to make proper code changes to modify the timeout value. This change will be included in the upcoming releases. We will share the details shortly. Thanks!</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 04:22:44</span> <span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , When making code-level changes for this parameter, instead of hardcoding the value to 30, we would recommend making this parameter configurable. This will allow customers to increase the tim</div>
-<div class="tl-entry"><span class="tl-date">2026-05-21 04:28:53</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Support team suggested one thought around this — instead of hardcoding the timeout value to 30 seconds, would it make sense to make this parameter configurable? The idea is that if customers sti</div>
-<div class="tl-entry"><span class="tl-date">2026-05-25 01:27:56</span> <span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  Yes, we can have it as configurable param with default value as 30s.</div>
-<div class="tl-entry"><span class="tl-date">2026-06-05 04:30:25</span> <span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: We are working on code changes. once we complete the changes &amp; local testing, we will share them for review.  </div>
-<div class="tl-entry"><span class="tl-date">2026-07-03 05:33:18</span> <span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 09:05:26</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We went through the logs and noticed that the failure on April 24th was caused by a timeout during the  ganesha-rados-grace  operation. The command timed out after 10 seconds: 2026-04-24T15:17:44.946+0000 [cephadm ERROR root] Hit an exception p</div>
+<div class="tl-entry"><span class="tl-date">2026-05-11 00:29:35</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , Mon and Mgr logs for April 24 are available at the following locations: Ecurep: Mon Logs:  /ecurep/sf/TS022/093/TS022093470/2026-05-01 Mgr Logs:  /ecurep/sf/TS022/093/TS022093470/2026-05-05 From the Mgr logs, we observe that the PGs were in</div>
+<div class="tl-entry"><span class="tl-date">2026-05-14 01:25:30</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: //  Internal update, do not share with customer  // Connected with the NFS team and discussed this with Rajesh. They identified this as related to Ganesha MGR, so I further discussed it with @Shweta Bhosale, who is handling Ganesha MGR. Their current</div>
+<div class="tl-entry"><span class="tl-date">2026-05-14 07:22:25</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , Thanks for the update. Could you please let us know if you still require the OSD logs from all OSD nodes for April 24th, when the customer encountered the issue? Thanks, Anita</div>
+<div class="tl-entry"><span class="tl-date">2026-05-15 00:54:39</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Yes,   please share the OSD logs from all OSD nodes for April 24th when the customer encountered the issue. They will be helpful for further investigation. Thanks.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-15 07:44:06</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  , Please be informed that, with the latest discussion, OSD logs are not required here.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-15 07:49:02</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: As discussed with    , we are not seeing any direct OSD down activity in the current logs. However, similar timeout behavior was previously observed when 2 node OSDs were down, where recovery/rebuild activity was suspected to be contributing to delay</div>
+<div class="tl-entry"><span class="tl-date">2026-05-15 08:05:01</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  yes, I think we can increase it to 30s.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-18 00:55:37</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   ,    I tried modifying the  ganesha-rados-grace  timeout value from 10 seconds to 30 seconds. Below are the steps I followed: Connected to the active MGR host. Navigated to the cephadm services path: cd /usr/share/ceph/mgr/cephadm/services/ T</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 12:36:00</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We need to make proper code changes to modify the timeout value. This change will be included in the upcoming releases. We will share the details shortly. Thanks!</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 04:22:44</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , When making code-level changes for this parameter, instead of hardcoding the value to 30, we would recommend making this parameter configurable. This will allow customers to increase the timeout dynamically if they still encounter timeout i</div>
+<div class="tl-entry"><span class="tl-date">2026-05-21 04:28:53</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Support team suggested one thought around this — instead of hardcoding the timeout value to 30 seconds, would it make sense to make this parameter configurable? The idea is that if customers still observe timeout issues in certain environments </div>
+<div class="tl-entry"><span class="tl-date">2026-05-25 01:27:56</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  Yes, we can have it as configurable param with default value as 30s.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 04:30:25</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: We are working on code changes. once we complete the changes &amp; local testing, we will share them for review.  </div>
+<div class="tl-entry"><span class="tl-date">2026-07-03 05:33:18</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
 </div>
 
 </body>

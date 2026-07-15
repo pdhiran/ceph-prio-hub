@@ -14,61 +14,114 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
-.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
-.back:hover { text-decoration: underline; }
-h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
-.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
-.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
-.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
-h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
-.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
-.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
 .tl-badge {
-  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
 }
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
-.label-list span {
-  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
-  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
-}
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14326: Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter</h1>
-<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:14 UTC</p>
 
-<div class="meta">
+<div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14326" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14326</a></dd>
-    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#da1e28;">New</span></dd>
-    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Prashant Dhange</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Assignee</dt><dd>Prashant Dhange</dd>
     <dt>Components</dt><dd>rados</dd>
+    <dt>Versions</dt><dd>6.1z2</dd>
     <dt>Created</dt><dd>2026-05-06</dd>
     <dt>Updated</dt><dd>2026-06-11</dd>
   </dl></div>
 </div>
 
-<div style="margin:1rem 0;">
-  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
   <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
 </div>
 
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
 <h2>Timeline (6 events)</h2>
 <div class="timeline">
-<div class="tl-entry"><span class="tl-date">2026-05-06 15:17:47</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , The documentation at   and   only describes scenarios where the arbiter (tiebreaker) monitor has failed or where a new arbiter monitor is being added. There are no documented steps for replacing</div>
-<div class="tl-entry"><span class="tl-date">2026-05-07 09:06:54</span> <span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>: Hi   , I took a look at the documents more closely and I can say that the procedure will be pretty much the same even without any outage. The part where we add a new monitor and  ceph mon set_new_tieb</div>
-<div class="tl-entry"><span class="tl-date">2026-05-07 11:58:13</span> <span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>: I just checked the code base and looks like my hypothesis is correct: ceph orch daemon rm  uses  ceph mon rm  under the hood: services/cephadmservice.py:     def pre_remove(self, daemon: DaemonDescrip</div>
-<div class="tl-entry"><span class="tl-date">2026-05-07 15:04:45</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Thank you,    for confirming the steps to be followed when replacing a healthy tie‑breaker monitor. Just to confirm, should we add a new monitor as the tie‑breaker first and then remove the existing t</div>
-<div class="tl-entry"><span class="tl-date">2026-05-08 08:28:02</span> <span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>:  Hi so the customer should spin up a new monitor in the tiebreaker site, after the new monitor joins the quorum, then use the command  ceph mon set_new_tiebreaker  on the new monitor. After the comman</div>
-<div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span> <span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-05-06 15:17:47</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , The documentation at   and   only describes scenarios where the arbiter (tiebreaker) monitor has failed or where a new arbiter monitor is being added. There are no documented steps for replacing a healthy tiebreaker monitor. What would be the s</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 09:06:54</span><span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>: Hi   , I took a look at the documents more closely and I can say that the procedure will be pretty much the same even without any outage. The part where we add a new monitor and  ceph mon set_new_tiebreaker  and then only delete the old tiebreaker on</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 11:58:13</span><span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>: I just checked the code base and looks like my hypothesis is correct: ceph orch daemon rm  uses  ceph mon rm  under the hood: services/cephadmservice.py:     def pre_remove(self, daemon: DaemonDescription) -&gt; None:
+        super().pre_remove(daemon)
+</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 15:04:45</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Thank you,    for confirming the steps to be followed when replacing a healthy tie‑breaker monitor. Just to confirm, should we add a new monitor as the tie‑breaker first and then remove the existing tie‑breaker monitor? The customer’s concern is that</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 08:28:02</span><span class="tl-badge comment">Comment</span> <strong>Kamoltat Sirivadhna</strong>:  Hi so the customer should spin up a new monitor in the tiebreaker site, after the new monitor joins the quorum, then use the command  ceph mon set_new_tiebreaker  on the new monitor. After the command successfully completed, remove the old monitor g</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
 </div>
 
 </body>

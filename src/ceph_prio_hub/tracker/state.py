@@ -65,6 +65,14 @@ class ConsolidatedIssue:
                 "error_messages": [],
                 "stack_traces": [],
                 "health_warnings": [],
+                "qa_status": "not_assessed",
+                "qa_assignee": "",
+                "internal_priority": "",
+                "qa_notes": "",
+                "analysis": "",
+                "repro_steps": "",
+                "test_coverage": "",
+                "hotfix_status": "",
             }
 
     @property

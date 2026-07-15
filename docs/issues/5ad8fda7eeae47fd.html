@@ -14,77 +14,128 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
-.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
-.back:hover { text-decoration: underline; }
-h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
-.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
-.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
-.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
-h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
-.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
-.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
 .tl-badge {
-  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
 }
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
-.label-list span {
-  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
-  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
-}
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14448: MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.</h1>
-<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:14 UTC</p>
 
-<div class="meta">
+<div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14448" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14448</a></dd>
-    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
-    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Venky Shankar</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Assignee</dt><dd>Venky Shankar</dd>
     <dt>Components</dt><dd>cephfs</dd>
+    <dt>Versions</dt><dd>8.0</dd>
     <dt>Created</dt><dd>2026-05-15</dd>
     <dt>Updated</dt><dd>2026-05-20</dd>
   </dl></div>
 </div>
 
-<div style="margin:1rem 0;">
-  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
   <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span></div>
 </div>
 
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
 <h2>Timeline (21 events)</h2>
 <div class="timeline">
-<div class="tl-entry"><span class="tl-date">2026-05-19 06:09:51</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: just sharing few information here which I saw on the escalation channels on the day of escalation. Not sure how much useful it is but let me add it here Issue: EIT Denali share mounts are failing in u</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 06:25:40</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: If the MDS internal heartbeat isn’t healthy, then the beacons won’t be sent, but then there should be log message[0] for that with dout(0) which I don’t see till now in the logs shared in ecurep. So, </div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 07:27:20</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: FWIW, upstream fs suite run has recently started reporting cap revoke warning for the cephfs client in ceph-mgr. Tracker:    Ganesha uses libcephfs to talk to ceph file system and its possible that we</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 12:06:16</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: In particular, 2026-05-14T19:42:40 client_request(client.72745998 ... #0x100013b9c56) currently failed to authpin, subtree is being exported means that a client request was blocked because of the expo</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 12:18:51</span> <span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: The MDS explicitly reports internal heartbeat failure and therefore skips beacon heartbeats: 2026-05-14T20:27:25 ... heartbeat_map is_healthy &#x27;MDSRank&#x27; had timed out after 15.000000954s
-2026-05-14T20:</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 13:06:16</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  - I will have to check. Haven’t seen Migrator code in a while. Will read through the code tomorrow.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 13:56:28</span> <span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: Monitor logs show the loss of 48 OSDs across two hosts within a short interval (~10 minutes), followed by PG degradation (peaking at ~10,500 PGs) and periods of reduced PG availability. Throughout the</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 16:17:35</span> <span class="tl-badge comment">Comment</span> <strong>Vikhyat Umrao</strong>:  and team - thank you for making good progress here, Indira, and team I remember from the remote session they have huge PG count, with ~500 OSDs or something.   can you please confirm how many OSDs an</div>
-<div class="tl-entry"><span class="tl-date">2026-05-19 18:31:03</span> <span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>:  We see that with rolling upgrade/maintenance causing repeated OSD outages, where insufficient recovery time between host disruptions leads to continuous PG degradation cycles and cluster instability.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 09:56:17</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  If the MDS scale down activity happened when the cluster was in a degraded state, the clients could be waiting on buffer data to be flushed for long (depending on what degradation actually happened) </div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 10:10:48</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>:  A merely “degraded” PG shouldn’t meaningfully impact our client performance. It’s possible, but the PGs are still active. This is probably not an issue?</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 10:24:46</span> <span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  I am being told that the cluster was healthy during MDS scale down and not degraded at all. So, the stuck cap revoke is likely a client side bug   </div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 10:31:07</span> <span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: hello    , As discussed over the slack about the PG states at the time of impact, sharing the details here for reference. During the time of the MDS started to scale down, all of the PG’s were healthy</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 11:45:12</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: I am looking at the number of slow requests the MDS reports, and I am seeing that the number does spike REALLY high, but it also comes back down. ceph-mds.cephfs0.syd1-qz1-sr3-rk069-s34.qkbksl.log.gz </div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 11:52:36</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: If you look at the client not revoking caps messages, there is only a single client — presumably the Ganesha with the busiest user? client.72745998 isn’t the Ceph-mgr, is it? $ zgrep &quot;isn&#x27;t responding</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 11:57:00</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: Or maybe 2026-05-14T20:01:21.974+0000 7f5d9b468640  1 mds.1.locker caps_tick more than 100 caps are laterevoking, ignoring subsequent caps means that my search here is completely meaningless? :/</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 13:10:43</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: 2026-05-15T04:12:22.882951+0000 mds.cephfs0.syd3-qz1-sr1-rk150-s48.fslwcc (mds.0) 14 : cluster [INF] Evicting (and blocklisting) client session 72745998 ([REDACTED-IP-ba158a7b]:0/349739318) Do we know</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 13:21:46</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: I gathered up all the inodes which got cap revoke warnings, and then looked at all the slow request warnings we had. The only one of the first ten revoke warnings we got which showed up in the logs el</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 13:38:19</span> <span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: client.72745998 ([REDACTED-IP-ba158a7b] → syd1-qz1-sr3-rk069-s08) is not ceph‑mgr. The active ceph‑mgr is running on syd2-qz1-sr2-rk014-s06 ([REDACTED-IP-4540ab1e]).</div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 13:48:26</span> <span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Venky Shankar)</span></div>
-<div class="tl-entry"><span class="tl-date">2026-05-20 13:48:26</span> <span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: Of the 5063 listed slow requests (which includes duplicates!), 4217 are internal ops. 274 are peer requests (from another mds). The remaining 572 are client requests. And in fact there are only 48 uni</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 06:09:51</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: just sharing few information here which I saw on the escalation channels on the day of escalation. Not sure how much useful it is but let me add it here Issue: EIT Denali share mounts are failing in us-east.  Creating new shares caused SMT to hang. T</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 06:25:40</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: If the MDS internal heartbeat isn’t healthy, then the beacons won’t be sent, but then there should be log message[0] for that with dout(0) which I don’t see till now in the logs shared in ecurep. So, the closest that comes near this behaviour is:    </div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 07:27:20</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: FWIW, upstream fs suite run has recently started reporting cap revoke warning for the cephfs client in ceph-mgr. Tracker:    Ganesha uses libcephfs to talk to ceph file system and its possible that we are running into this bug (at least what prevente</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 12:06:16</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: In particular, 2026-05-14T19:42:40 client_request(client.72745998 ... #0x100013b9c56) currently failed to authpin, subtree is being exported means that a client request was blocked because of the export-in-progress. This isn’t an error from the syste</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 12:18:51</span><span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: The MDS explicitly reports internal heartbeat failure and therefore skips beacon heartbeats: 2026-05-14T20:27:25 ... heartbeat_map is_healthy &#x27;MDSRank&#x27; had timed out after 15.000000954s
+2026-05-14T20:27:25 ... Skipping beacon heartbeat to monitors (l</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 13:06:16</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  - I will have to check. Haven’t seen Migrator code in a while. Will read through the code tomorrow.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 13:56:28</span><span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: Monitor logs show the loss of 48 OSDs across two hosts within a short interval (~10 minutes), followed by PG degradation (peaking at ~10,500 PGs) and periods of reduced PG availability. Throughout the day, MDS logs show repeated metadata access failu</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 16:17:35</span><span class="tl-badge comment">Comment</span> <strong>Vikhyat Umrao</strong>:  and team - thank you for making good progress here, Indira, and team I remember from the remote session they have huge PG count, with ~500 OSDs or something.   can you please confirm how many OSDs and PGs they have and what is the average pg count p</div>
+<div class="tl-entry"><span class="tl-date">2026-05-19 18:31:03</span><span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>:  We see that with rolling upgrade/maintenance causing repeated OSD outages, where insufficient recovery time between host disruptions leads to continuous PG degradation cycles and cluster instability. OSD/host disruption pattern Logs show repeated ho</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 09:56:17</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  If the MDS scale down activity happened when the cluster was in a degraded state, the clients could be waiting on buffer data to be flushed for long (depending on what degradation actually happened) upon the MDS revoking caps from clients. I am also</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 10:10:48</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>:  A merely “degraded” PG shouldn’t meaningfully impact our client performance. It’s possible, but the PGs are still active. This is probably not an issue?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 10:24:46</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  I am being told that the cluster was healthy during MDS scale down and not degraded at all. So, the stuck cap revoke is likely a client side bug   </div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 10:31:07</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: hello    , As discussed over the slack about the PG states at the time of impact, sharing the details here for reference. During the time of the MDS started to scale down, all of the PG’s were healthy and they were in active+clean state when looking </div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 11:45:12</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: I am looking at the number of slow requests the MDS reports, and I am seeing that the number does spike REALLY high, but it also comes back down. ceph-mds.cephfs0.syd1-qz1-sr3-rk069-s34.qkbksl.log.gz is up as rank 1 from 2026-05-14T12:20:35.394 until</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 11:52:36</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: If you look at the client not revoking caps messages, there is only a single client — presumably the Ganesha with the busiest user? client.72745998 isn’t the Ceph-mgr, is it? $ zgrep &quot;isn&#x27;t responding&quot; /ecurep/sf/TS022/194/TS022194311/0-all_data/mzon</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 11:57:00</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: Or maybe 2026-05-14T20:01:21.974+0000 7f5d9b468640  1 mds.1.locker caps_tick more than 100 caps are laterevoking, ignoring subsequent caps means that my search here is completely meaningless? :/</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 13:10:43</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: 2026-05-15T04:12:22.882951+0000 mds.cephfs0.syd3-qz1-sr1-rk150-s48.fslwcc (mds.0) 14 : cluster [INF] Evicting (and blocklisting) client session 72745998 ([REDACTED-IP-ba158a7b]:0/349739318) Do we know which node that IP is so we can see if it’s mgr o</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 13:21:46</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: I gathered up all the inodes which got cap revoke warnings, and then looked at all the slow request warnings we had. The only one of the first ten revoke warnings we got which showed up in the logs elsewhere was: 2026-05-14T18:51:53.912+0000 7f5d9b46</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 13:38:19</span><span class="tl-badge comment">Comment</span> <strong>Indira Sawant</strong>: client.72745998 ([REDACTED-IP-ba158a7b] → syd1-qz1-sr3-rk069-s08) is not ceph‑mgr. The active ceph‑mgr is running on syd2-qz1-sr2-rk014-s06 ([REDACTED-IP-4540ab1e]).</div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 13:48:26</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Venky Shankar)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-05-20 13:48:26</span><span class="tl-badge comment">Comment</span> <strong>Greg Farnum</strong>: Of the 5063 listed slow requests (which includes duplicates!), 4217 are internal ops. 274 are peer requests (from another mds). The remaining 572 are client requests. And in fact there are only 48 unique peer requests; they just get output a lot. Thi</div>
 </div>
 
 </body>

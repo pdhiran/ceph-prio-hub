@@ -14,77 +14,128 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
-.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
-.back:hover { text-decoration: underline; }
-h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
-.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
-.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
-.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
-h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
-.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
-.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
 .tl-badge {
-  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
 }
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
-.label-list span {
-  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
-  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
-}
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15751: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</h1>
-<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:14 UTC</p>
 
-<div class="meta">
+<div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15751" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15751</a></dd>
-    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#da1e28;">New</span></dd>
-    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#0f62fe;background:#0f62fe18;border:1px solid #0f62fe40;">normal</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
+    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
     <dt>Components</dt><dd>ceph-mgr/orchestrator</dd>
+    <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-06-05</dd>
     <dt>Updated</dt><dd>2026-07-14</dd>
   </dl></div>
 </div>
 
-<div style="margin:1rem 0;">
-  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
   <div class="label-list"><span>IBM_Customer_Issue</span></div>
 </div>
 
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
 <h2>Timeline (17 events)</h2>
 <div class="timeline">
-<div class="tl-entry"><span class="tl-date">2026-06-05 07:18:07</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   please have a look</div>
-<div class="tl-entry"><span class="tl-date">2026-06-08 06:52:17</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [Internal - do not share with customer] From the initial analysis looks like is_error() function in inventory.py assumes a strict nested dictionary structure (status[&#x27;status&#x27;[&#x27;health&#x27;]). However, data</div>
-<div class="tl-entry"><span class="tl-date">2026-06-10 02:43:14</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Could you please share the data collected from the customer&#x27;s environment?</div>
-<div class="tl-entry"><span class="tl-date">2026-06-10 02:55:34</span> <span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Helo    Yes, customer did provided the output we requested. Both of the commands output and sosreport from the mgr node are present at the following location on ecurep. Ecurep Path:  /ecurep/sf/TS022/</div>
-<div class="tl-entry"><span class="tl-date">2026-06-10 08:45:50</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Based on customer data, we are receiving null values for some devices from Redfish: &quot;Status&quot;: {         
+<div class="tl-entry"><span class="tl-date">2026-06-05 07:18:07</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   please have a look</div>
+<div class="tl-entry"><span class="tl-date">2026-06-08 06:52:17</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [Internal - do not share with customer] From the initial analysis looks like is_error() function in inventory.py assumes a strict nested dictionary structure (status[&#x27;status&#x27;[&#x27;health&#x27;]). However, data from node-proxy cache is sometimes malformed, con</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 02:43:14</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Could you please share the data collected from the customer&#x27;s environment?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 02:55:34</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Helo    Yes, customer did provided the output we requested. Both of the commands output and sosreport from the mgr node are present at the following location on ecurep. Ecurep Path:  /ecurep/sf/TS022/275/TS022275065/0-all_data Sharing the curl output</div>
+<div class="tl-entry"><span class="tl-date">2026-06-10 08:45:50</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Based on customer data, we are receiving null values for some devices from Redfish: &quot;Status&quot;: {         
     &quot;Health&quot;: null, 
     &quot;HealthRollup&quot;: null,
     &quot;State&quot;: &quot;Enabled&quot; 
 }
- I found a r</div>
-<div class="tl-entry"><span class="tl-date">2026-06-11 02:33:45</span> <span class="tl-badge comment">Comment</span> <strong>Guillaume ABRIOUX</strong>: Hello   , The issue is already fixed in 9.1 via  #74749  ( f5211073b7c34532af191efc2b4b1550627c1469 ): get_node_proxy_status_value() centralizes safe access to status.health / status.state in both Nod</div>
-<div class="tl-entry"><span class="tl-date">2026-06-11 07:37:15</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [ Internal - Do not share with Customer] Hello   , Thanks for looking into this. The changes are already available in 9.1 -  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/ce360a4a5f67329b95a4b75bc7</div>
-<div class="tl-entry"><span class="tl-date">2026-06-11 11:12:44</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:     But we can ask QE to validate it better. We can not say to customer choose the environment where we tested. We do not even support  standalone ceph deployments in VM’s.  If we can not backport the</div>
-<div class="tl-entry"><span class="tl-date">2026-06-11 13:24:15</span> <span class="tl-badge comment">Comment</span> <strong>Guillaume ABRIOUX</strong>:  From the beginning, I clearly stated that this feature was not intended to work on arbitrary hardware and that there was no guarantee it would work beyond a specific platform that I did not even have</div>
-<div class="tl-entry"><span class="tl-date">2026-06-18 04:31:21</span> <span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  Please advise the next steps for this issue.</div>
-<div class="tl-entry"><span class="tl-date">2026-07-06 06:35:46</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   who is the customer here?</div>
-<div class="tl-entry"><span class="tl-date">2026-07-06 06:37:58</span> <span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>:   who is the customer here?  it’s Datev eG</div>
-<div class="tl-entry"><span class="tl-date">2026-07-06 06:41:29</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: thanks   </div>
-<div class="tl-entry"><span class="tl-date">2026-07-07 06:38:23</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Hi       I had a discussion with PM and Engg management and this is what our stand is: This is a feature that is only tested on select hardware we have access to. We will not be able to call this feat</div>
-<div class="tl-entry"><span class="tl-date">2026-07-07 06:46:25</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  hey, please review my last comment and let me know how you want this to be handled. Should I simply make it a doc bug or a new Jira for doc needs to be raised?</div>
-<div class="tl-entry"><span class="tl-date">2026-07-14 09:53:38</span> <span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
-<div class="tl-entry"><span class="tl-date">2026-07-14 09:53:38</span> <span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: hello      We have checked with the customer and they update that the customer is using the storage ready nodes on the dell hardward. We validated the same in the logs as well that the server are dell</div>
+ I found a related issue in upstream where work was done to fi</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 02:33:45</span><span class="tl-badge comment">Comment</span> <strong>Guillaume ABRIOUX</strong>: Hello   , The issue is already fixed in 9.1 via  #74749  ( f5211073b7c34532af191efc2b4b1550627c1469 ): get_node_proxy_status_value() centralizes safe access to status.health / status.state in both NodeProxyCache.summary() and NodeProxyEndpoint, with </div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 07:37:15</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [ Internal - Do not share with Customer] Hello   , Thanks for looking into this. The changes are already available in 9.1 -  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/ce360a4a5f67329b95a4b75bc7b5e59dc7633637 . , would it be possible for the cu</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 11:12:44</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:     But we can ask QE to validate it better. We can not say to customer choose the environment where we tested. We do not even support  standalone ceph deployments in VM’s.  If we can not backport the same patch then we may need to have customized fi</div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 13:24:15</span><span class="tl-badge comment">Comment</span> <strong>Guillaume ABRIOUX</strong>:  From the beginning, I clearly stated that this feature was not intended to work on arbitrary hardware and that there was no guarantee it would work beyond a specific platform that I did not even have access to during development, which also meant I </div>
+<div class="tl-entry"><span class="tl-date">2026-06-18 04:31:21</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  Please advise the next steps for this issue.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 06:35:46</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   who is the customer here?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 06:37:58</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>:   who is the customer here?  it’s Datev eG</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 06:41:29</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: thanks   </div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 06:38:23</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Hi       I had a discussion with PM and Engg management and this is what our stand is: This is a feature that is only tested on select hardware we have access to. We will not be able to call this feature qualified on all h/w, our safest bet is to say</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 06:46:25</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  hey, please review my last comment and let me know how you want this to be handled. Should I simply make it a doc bug or a new Jira for doc needs to be raised?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 09:53:38</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-14 09:53:38</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: hello      We have checked with the customer and they update that the customer is using the storage ready nodes on the dell hardward. We validated the same in the logs as well that the server are dell servers.  $ less sosreport-lxcephdev01-TS02227506</div>
 </div>
 
 </body>

@@ -14,59 +14,110 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
-.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
-.back:hover { text-decoration: underline; }
-h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
-.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
-.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
-.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
-h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
-.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
-.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
 .tl-badge {
-  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
 }
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
-.label-list span {
-  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
-  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
-}
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15746: [9.2] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</h1>
-<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:14 UTC</p>
 
-<div class="meta">
+<div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15746" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15746</a></dd>
-    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#da1e28;">New</span></dd>
-    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Redouane Kachach</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Assignee</dt><dd>Redouane Kachach</dd>
     <dt>Components</dt><dd>cephadm</dd>
+    <dt>Versions</dt><dd>9.0z2</dd>
     <dt>Created</dt><dd>2026-06-04</dd>
     <dt>Updated</dt><dd>2026-07-10</dd>
   </dl></div>
 </div>
 
-<div style="margin:1rem 0;">
-  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
   <div class="label-list"><span>Ceph_L3</span><span>Hotfix_requested</span><span>IBM_Customer_Issue</span></div>
 </div>
 
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
 <h2>Timeline (21 events)</h2>
 <div class="timeline">
-<div class="tl-entry"><span class="tl-date">2026-06-05 01:43:08</span> <span class="tl-badge comment">Comment</span> <strong>Sahina Bose</strong>:  can you check - seems like a side effect of cert-mgr changes?</div>
-<div class="tl-entry"><span class="tl-date">2026-06-05 02:28:11</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Hi  , technically the field  rgw_frontend_ssl_certificate  is deprecated in new versions (ssl_cert/ssl_key) must be used. But cephadm and certmgr code has logic to support this legacy field (in case i</div>
-<div class="tl-entry"><span class="tl-date">2026-06-05 12:13:44</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: @rkachach   @adking  Kindly correct me if I’m mistaken. The  ceph orch certmgr  functionality was introduced in version 9. If a customer upgrades from version 8.1, updating the RGW service spec with  </div>
-<div class="tl-entry"><span class="tl-date">2026-06-11 23:13:38</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Customer has provided the rgw.spec file.  $ cat rgw.yml
+<div class="tl-entry"><span class="tl-date">2026-06-05 01:43:08</span><span class="tl-badge comment">Comment</span> <strong>Sahina Bose</strong>:  can you check - seems like a side effect of cert-mgr changes?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 02:28:11</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Hi  , technically the field  rgw_frontend_ssl_certificate  is deprecated in new versions (ssl_cert/ssl_key) must be used. But cephadm and certmgr code has logic to support this legacy field (in case it’s found it’s split into ssl_cert/ssl_key automat</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 12:13:44</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: @rkachach   @adking  Kindly correct me if I’m mistaken. The  ceph orch certmgr  functionality was introduced in version 9. If a customer upgrades from version 8.1, updating the RGW service spec with  ssl_key  /  ssl_cert  does not trigger RGW daemon </div>
+<div class="tl-entry"><span class="tl-date">2026-06-11 23:13:38</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Customer has provided the rgw.spec file.  $ cat rgw.yml
 #
 # THIS FILE IS GENERATED FROM ANSIBLE; DO NOT EDIT
 #
@@ -74,24 +125,26 @@ h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 
 #   https://github.pie.apple.com/tiered-object-storage/ceph-provisioning
 # 
 #
-</div>
-<div class="tl-entry"><span class="tl-date">2026-06-12 05:18:20</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: I think this issue should be solved by the PR   </div>
-<div class="tl-entry"><span class="tl-date">2026-06-18 15:37:10</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Based on the available logs and discussion with  , this issue is likely caused by incorrect configuration of the RGW SSL certificate ( rgw_frontend_ssl_certificate ) in the customer setup. Cephadm has</div>
-<div class="tl-entry"><span class="tl-date">2026-06-18 15:43:05</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Next Action Plan :  [1] QE Reproduction QE team to reproduce the issue based on the provided rgw.spec Validate workaround suggested to Apple team : A workaround is to proceed with the upgrade by first</div>
-<div class="tl-entry"><span class="tl-date">2026-06-22 18:41:34</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Summary of the discussion with apple in today&#x27;s call (22 Jun 2026)  : • The existing cephadm implementation already attempts certificate format translation, but it currently fails for certain PEM form</div>
-<div class="tl-entry"><span class="tl-date">2026-06-26 22:34:08</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hotfix build details : $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.1-0.hotfix.IBMCEPH15746 Ceph build in container:   ceph-20.2.1-294.0.hotfix.IBMCEPH15746.el9cp RPMs are here:   </div>
-<div class="tl-entry"><span class="tl-date">2026-06-29 14:59:08</span> <span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>: We had to make a respin of the hotfix due to IBMCEPH-16270: $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.1-1.hotfix.IBMCEPH15746 RPM repo:   </div>
-<div class="tl-entry"><span class="tl-date">2026-07-02 10:41:11</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hotfix container image based on 9.0z3 branch is available here: $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.0z3-0.hotfix.IBMCEPH15746 RPM hotfix repo:  </div>
-<div class="tl-entry"><span class="tl-date">2026-07-03 04:37:58</span> <span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>: [QE update - hotfix validation] ceph version 20.1.0-221.0.hotfix.IBMCEPH15746.el9cp (89c8bc646dca2128942d538967d03119c3436049) tentacle (stable - RelWithDebInfo) Steps performed - Scenario(a) - Reconf</div>
-<div class="tl-entry"><span class="tl-date">2026-07-03 06:31:07</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Thank Sayalee, the issue is caused by a different behavior between Python3.9 vs Python3.12, a type check which works correctly with Python3.12 doesn’t when version 3.9 is used. I fixed the issue by th</div>
-<div class="tl-entry"><span class="tl-date">2026-07-06 02:02:29</span> <span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>: [QE update - hotfix validation] $ podman pull  cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.0z3-1.hotfix.IBMCEPH15746   RPM repo:      ceph version 20.1.0-221.1.hotfix.IBMCEPH15746.el9cp (1035ac97d6305dd8</div>
-<div class="tl-entry"><span class="tl-date">2026-07-06 07:01:05</span> <span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Can you update the status of this Jira to reflect the current state?</div>
-<div class="tl-entry"><span class="tl-date">2026-07-07 06:15:18</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>:  right now QE is working on the testing. So far, no more actions/help is required from dev AFAIK.</div>
-<div class="tl-entry"><span class="tl-date">2026-07-09 09:21:49</span> <span class="tl-badge comment">Comment</span> <strong>Yuva Teja Sree Gayam</strong>: hi   , while testing the upgrade from  Squid [8.1z3] 19.2.1-274  to  Tentacle 20.1.0-221.1.hotfix , the cluster was HEALTH_OK before upgrade. RGW SSL is configured with an  EC private key  — on the cu</div>
-<div class="tl-entry"><span class="tl-date">2026-07-10 02:54:27</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>:  can you plz provide details about your testing setup? for example the RGW spec you used.  BTW: Is this cluster still available for debugging?</div>
-<div class="tl-entry"><span class="tl-date">2026-07-10 02:56:41</span> <span class="tl-badge comment">Comment</span> <strong>Yuva Teja Sree Gayam</strong>:  cluster ip [REDACTED-IP-5d011c70] password: [REDACTED-CREDENTIAL] and spec in the doc  https://docs.google.com/document/d/1i5L7cgKpXJ3VRLPFAXn4LJYOsWc-KhOd4Qgh1CdqXwg/edit?usp=sharing</div>
-<div class="tl-entry"><span class="tl-date">2026-07-10 04:52:16</span> <span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
-<div class="tl-entry"><span class="tl-date">2026-07-10 04:52:16</span> <span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: I fixed the issue with EC private keys check with the MRs: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2028  (9.0 branch) https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2029  (9</div>
+service_type: rgw
+service_id: rgw
+service_name: rg</div>
+<div class="tl-entry"><span class="tl-date">2026-06-12 05:18:20</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: I think this issue should be solved by the PR   </div>
+<div class="tl-entry"><span class="tl-date">2026-06-18 15:37:10</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Based on the available logs and discussion with  , this issue is likely caused by incorrect configuration of the RGW SSL certificate ( rgw_frontend_ssl_certificate ) in the customer setup. Cephadm has limitations in parsing certain PEM formats and th</div>
+<div class="tl-entry"><span class="tl-date">2026-06-18 15:43:05</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Next Action Plan :  [1] QE Reproduction QE team to reproduce the issue based on the provided rgw.spec Validate workaround suggested to Apple team : A workaround is to proceed with the upgrade by first upgrading only the MGR, then updating the RGW spe</div>
+<div class="tl-entry"><span class="tl-date">2026-06-22 18:41:34</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Summary of the discussion with apple in today&#x27;s call (22 Jun 2026)  : • The existing cephadm implementation already attempts certificate format translation, but it currently fails for certain PEM formats, leading to parsing issues.. • The upcoming fi</div>
+<div class="tl-entry"><span class="tl-date">2026-06-26 22:34:08</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hotfix build details : $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.1-0.hotfix.IBMCEPH15746 Ceph build in container:   ceph-20.2.1-294.0.hotfix.IBMCEPH15746.el9cp RPMs are here:   </div>
+<div class="tl-entry"><span class="tl-date">2026-06-29 14:59:08</span><span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>: We had to make a respin of the hotfix due to IBMCEPH-16270: $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.1-1.hotfix.IBMCEPH15746 RPM repo:   </div>
+<div class="tl-entry"><span class="tl-date">2026-07-02 10:41:11</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hotfix container image based on 9.0z3 branch is available here: $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.0z3-0.hotfix.IBMCEPH15746 RPM hotfix repo:  </div>
+<div class="tl-entry"><span class="tl-date">2026-07-03 04:37:58</span><span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>: [QE update - hotfix validation] ceph version 20.1.0-221.0.hotfix.IBMCEPH15746.el9cp (89c8bc646dca2128942d538967d03119c3436049) tentacle (stable - RelWithDebInfo) Steps performed - Scenario(a) - Reconfigure RGW spec to use  rgw_frontend_ssl_certificat</div>
+<div class="tl-entry"><span class="tl-date">2026-07-03 06:31:07</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Thank Sayalee, the issue is caused by a different behavior between Python3.9 vs Python3.12, a type check which works correctly with Python3.12 doesn’t when version 3.9 is used. I fixed the issue by the following MR: https://gitlab.cee.redhat.com/ceph</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 02:02:29</span><span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>: [QE update - hotfix validation] $ podman pull  cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:9.0z3-1.hotfix.IBMCEPH15746   RPM repo:      ceph version 20.1.0-221.1.hotfix.IBMCEPH15746.el9cp (1035ac97d6305dd81a01974b768f0baef6e011fd) tentacle (stable - RelWi</div>
+<div class="tl-entry"><span class="tl-date">2026-07-06 07:01:05</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Can you update the status of this Jira to reflect the current state?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-07 06:15:18</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>:  right now QE is working on the testing. So far, no more actions/help is required from dev AFAIK.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-09 09:21:49</span><span class="tl-badge comment">Comment</span> <strong>Yuva Teja Sree Gayam</strong>: hi   , while testing the upgrade from  Squid [8.1z3] 19.2.1-274  to  Tentacle 20.1.0-221.1.hotfix , the cluster was HEALTH_OK before upgrade. RGW SSL is configured with an  EC private key  — on the current  8.1 (z3)  build, those RGWs are up and  IO </div>
+<div class="tl-entry"><span class="tl-date">2026-07-10 02:54:27</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>:  can you plz provide details about your testing setup? for example the RGW spec you used.  BTW: Is this cluster still available for debugging?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-10 02:56:41</span><span class="tl-badge comment">Comment</span> <strong>Yuva Teja Sree Gayam</strong>:  cluster ip [REDACTED-IP-5d011c70] password: [REDACTED-CREDENTIAL] and spec in the doc  https://docs.google.com/document/d/1i5L7cgKpXJ3VRLPFAXn4LJYOsWc-KhOd4Qgh1CdqXwg/edit?usp=sharing</div>
+<div class="tl-entry"><span class="tl-date">2026-07-10 04:52:16</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-10 04:52:16</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: I fixed the issue with EC private keys check with the MRs: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2028  (9.0 branch) https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2029  (9.1 branch)</div>
 </div>
 
 </body>

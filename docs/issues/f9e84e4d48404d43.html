@@ -14,77 +14,129 @@
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
-.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
-.back:hover { text-decoration: underline; }
-h1 { font-size: 1.3rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
-.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 1rem 1.2rem; }
-.meta-card dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; }
-.meta-card dd { font-size: 0.95rem; margin-top: 0.2rem; }
-h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.75rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--ibm-gray-20); }
-.tl-entry { padding: 0.6rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.85rem; }
-.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; color: var(--ibm-gray-50); margin-right: 0.5rem; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
 .tl-badge {
-  display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 0.72rem;
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
   font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
 }
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
-.label-list span {
-  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
-  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
-}
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13484: [9.0] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.82rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:14 UTC</p>
 
-<div class="meta">
+<div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13484" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13484</a></dd>
-    <dt>Status</dt><dd><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.78rem;font-weight:500;color:#fff;background:#0f62fe;">POST</span></dd>
-    <dt>Priority</dt><dd><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#ff832b;background:#ff832b18;border:1px solid #ff832b40;">major</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Anoop C S</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Assignee</dt><dd>Anoop C S</dd>
     <dt>Components</dt><dd>smb</dd>
+    <dt>Versions</dt><dd>9.2</dd>
     <dt>Created</dt><dd>2026-03-18</dd>
     <dt>Updated</dt><dd>2026-07-10</dd>
   </dl></div>
 </div>
 
-<div style="margin:1rem 0;">
-  <strong style="font-size:0.82rem;color:var(--ibm-gray-70);">Labels:</strong>
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
   <div class="label-list"><span>IBM_Customer_Issue</span><span>cloud-smb</span></div>
 </div>
 
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
 <h2>Timeline (21 events)</h2>
 <div class="timeline">
-<div class="tl-entry"><span class="tl-date">2026-04-13 12:50:24</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hi team, Logs have been uploaded to the case. Location:  /ecurep/sf/TS021/606/TS021606977/0-all_data Uploaded files: sosreport-ceph01-services-p01-az1-TS021606977-2026-04-08-wrmxeom.tar.xz sosreport-c</div>
-<div class="tl-entry"><span class="tl-date">2026-04-17 17:44:03</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fa</div>
-<div class="tl-entry"><span class="tl-date">2026-04-20 15:39:12</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:   Thank you for the detailed information. I&#x27;ve shared the update with the customer and will follow up once we receive the requested logs.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-05 14:58:26</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      I reviewed the latest four sosreports uploaded after the customer applied the TasksMax workaround to the CTDB sidecar units: 2026-05-04/sosreport-ceph01-services-p06-az1-TS021606977-2026-05</div>
-<div class="tl-entry"><span class="tl-date">2026-05-05 21:58:14</span> <span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , &gt; Is the supported method to add the Podman pids limit to the SMB service spec, for example: extra_container_args:
-  - &quot;--pids-limit=4194304&quot; &gt;  followed by: ceph orch apply -i &lt;updated_smb_spec</div>
-<div class="tl-entry"><span class="tl-date">2026-05-07 06:08:21</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: Our team will set up a reproducible scenario for this issue, debug it further, and develop a RCA.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-07 15:56:45</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hi      Thanks for the updates. Before I provide the workaround to the customer, I would like to confirm the expected next step from your side. Since    was asked for any additional recommendations, s</div>
-<div class="tl-entry"><span class="tl-date">2026-05-08 12:25:20</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  The current guidance should be good enough to solve current forking issue, for the main issue of the SID-to-name resolution we would still likely need Active Directory Audit Logs to solve or we wait </div>
-<div class="tl-entry"><span class="tl-date">2026-05-08 12:57:20</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:  Thanks for the clarification.  I will proceed with the workaround for the forking issue.  Active Directory Audit Logs are still pending from the customer. I have requested them multiple times, but so</div>
-<div class="tl-entry"><span class="tl-date">2026-05-09 05:57:53</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: I think it should be straightforward to reproduce the issue, but to ensure we don&#x27;t encounter any surprises, it would be good to start by looking at the output of  ceph smb show ceph.smb.cluster.&lt;clus</div>
-<div class="tl-entry"><span class="tl-date">2026-05-11 18:13:16</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Ack,   can we request this command output as well from them?</div>
-<div class="tl-entry"><span class="tl-date">2026-05-12 14:59:25</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:  yes. I’ve already requested this from the customer. I’ll update the ticket once received. AD Audit Logs are still pending as well; I’m continuing to follow up on those in parallel. Thanks!</div>
-<div class="tl-entry"><span class="tl-date">2026-05-27 11:41:15</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      I&#x27;ve attached the output of the requested command that the customer shared.</div>
-<div class="tl-entry"><span class="tl-date">2026-05-27 13:53:24</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: team, also the customer shared the following sosreports: 2026-04-30/sosreport-ceph01-services-p06-az2-TS021606977-2026-04-30-rspfadj.tar.xz 2026-04-30/sosreport-ceph01-services-p06-az1-TS021606977-202</div>
-<div class="tl-entry"><span class="tl-date">2026-05-28 13:44:43</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  The PidsLimit = -1 is expected behavior from setting TaskMax to infinity, are the ctdb errors resolved then? I was under the impression that TaskMax wasn’t working but it seems to be, and unfortunate</div>
-<div class="tl-entry"><span class="tl-date">2026-05-28 13:46:06</span> <span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Is the customer possibly open to a meeting where they could show us Audit Logs, is there a reason they haven’t been responsive about it?</div>
-<div class="tl-entry"><span class="tl-date">2026-06-03 01:35:06</span> <span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>:    We have identified the root cause of the core issue: the SIDs are not being resolved correctly on the client side. There is a probable workaround that the customer can try to verify whether it reso</div>
-<div class="tl-entry"><span class="tl-date">2026-06-04 10:00:17</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:  I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</div>
-<div class="tl-entry"><span class="tl-date">2026-06-05 11:02:09</span> <span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      The customer confirmed that after performing the steps on the run directory of the SMB daemons, the corresponding account names are now displayed correctly. The Salesforce case has been clo</div>
-<div class="tl-entry"><span class="tl-date">2026-07-10 12:32:59</span> <span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: The patches required to fix this issue has been merged into 9.2.    If this is no longer an open customer case, can we go ahead and close this jira?</div>
-<div class="tl-entry"><span class="tl-date">2026-07-10 12:32:59</span> <span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 12:50:24</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hi team, Logs have been uploaded to the case. Location:  /ecurep/sf/TS021/606/TS021606977/0-all_data Uploaded files: sosreport-ceph01-services-p01-az1-TS021606977-2026-04-08-wrmxeom.tar.xz sosreport-ceph01-services-p05-az1-TS021606977-2026-04-08-uhph</div>
+<div class="tl-entry"><span class="tl-date">2026-04-17 17:44:03</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fail periodically every 2 hours. This could cause st</div>
+<div class="tl-entry"><span class="tl-date">2026-04-20 15:39:12</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:   Thank you for the detailed information. I&#x27;ve shared the update with the customer and will follow up once we receive the requested logs.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 14:58:26</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      I reviewed the latest four sosreports uploaded after the customer applied the TasksMax workaround to the CTDB sidecar units: 2026-05-04/sosreport-ceph01-services-p06-az1-TS021606977-2026-05-04-flkdcxm.tar.xz 2026-05-04/sosreport-ceph01-ser</div>
+<div class="tl-entry"><span class="tl-date">2026-05-05 21:58:14</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , &gt; Is the supported method to add the Podman pids limit to the SMB service spec, for example: extra_container_args:
+  - &quot;--pids-limit=4194304&quot; &gt;  followed by: ceph orch apply -i &lt;updated_smb_spec.yaml&gt;
+ceph orch redeploy smb.&lt;service_id&gt; The abo</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 06:08:21</span><span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: Our team will set up a reproducible scenario for this issue, debug it further, and develop a RCA.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-07 15:56:45</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hi      Thanks for the updates. Before I provide the workaround to the customer, I would like to confirm the expected next step from your side. Since    was asked for any additional recommendations, should we wait for his input before asking the cust</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 12:25:20</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  The current guidance should be good enough to solve current forking issue, for the main issue of the SID-to-name resolution we would still likely need Active Directory Audit Logs to solve or we wait for Anoop to reproduce. If Adam doesn’t respond in</div>
+<div class="tl-entry"><span class="tl-date">2026-05-08 12:57:20</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:  Thanks for the clarification.  I will proceed with the workaround for the forking issue.  Active Directory Audit Logs are still pending from the customer. I have requested them multiple times, but so far the customer has only provided sosreports. I </div>
+<div class="tl-entry"><span class="tl-date">2026-05-09 05:57:53</span><span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: I think it should be straightforward to reproduce the issue, but to ensure we don&#x27;t encounter any surprises, it would be good to start by looking at the output of  ceph smb show ceph.smb.cluster.&lt;cluster_id&gt;  where  &lt;cluster_id&gt;  is the cluster in wh</div>
+<div class="tl-entry"><span class="tl-date">2026-05-11 18:13:16</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Ack,   can we request this command output as well from them?</div>
+<div class="tl-entry"><span class="tl-date">2026-05-12 14:59:25</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:  yes. I’ve already requested this from the customer. I’ll update the ticket once received. AD Audit Logs are still pending as well; I’m continuing to follow up on those in parallel. Thanks!</div>
+<div class="tl-entry"><span class="tl-date">2026-05-27 11:41:15</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      I&#x27;ve attached the output of the requested command that the customer shared.</div>
+<div class="tl-entry"><span class="tl-date">2026-05-27 13:53:24</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: team, also the customer shared the following sosreports: 2026-04-30/sosreport-ceph01-services-p06-az2-TS021606977-2026-04-30-rspfadj.tar.xz 2026-04-30/sosreport-ceph01-services-p06-az1-TS021606977-2026-04-30-ztozxin.tar.xz From  /sosreport-ceph01-ser</div>
+<div class="tl-entry"><span class="tl-date">2026-05-28 13:44:43</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  The PidsLimit = -1 is expected behavior from setting TaskMax to infinity, are the ctdb errors resolved then? I was under the impression that TaskMax wasn’t working but it seems to be, and unfortunately there&#x27;s not much we can do without the audit lo</div>
+<div class="tl-entry"><span class="tl-date">2026-05-28 13:46:06</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Is the customer possibly open to a meeting where they could show us Audit Logs, is there a reason they haven’t been responsive about it?</div>
+<div class="tl-entry"><span class="tl-date">2026-06-03 01:35:06</span><span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>:    We have identified the root cause of the core issue: the SIDs are not being resolved correctly on the client side. There is a probable workaround that the customer can try to verify whether it resolves the problem before we implement the code fix.</div>
+<div class="tl-entry"><span class="tl-date">2026-06-04 10:00:17</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>:  I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</div>
+<div class="tl-entry"><span class="tl-date">2026-06-05 11:02:09</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      The customer confirmed that after performing the steps on the run directory of the SMB daemons, the corresponding account names are now displayed correctly. The Salesforce case has been closed. Thank you for your support   </div>
+<div class="tl-entry"><span class="tl-date">2026-07-10 12:32:59</span><span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: The patches required to fix this issue has been merged into 9.2.    If this is no longer an open customer case, can we go ahead and close this jira?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-10 12:32:59</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
 </div>
 
 </body>
