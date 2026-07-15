@@ -70,7 +70,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13769: [Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:33 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:37 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,20 +95,61 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephfs, rados</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-13769): [Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload
+Affected version(s): 9.0z2
+Component(s): cephfs, rados
+Severity: normal
+
+Developer analysis from JIRA comments:
+, Currently, the setup has been reimaged, so I no longer have access to collect the required logs from the previous state. Could you please help share a checklist of logs that need to be collected in case of a crash, so we can capture them properly if the issue is reproduced again?
+
+Key error indicators:
+  - We are hitting this issue in our scale runs more frequently.  Crashed osds are not recovering. Logs   http://magna002.ceph.redhat.com/ceph-qe-logs/amk/ec_crash_bz_logs/ This is on ceph version :  [cep
+  - Looking at this. Could you make available several of the coredumps listed in  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/ec_crash_bz_logs/core_dumps/  please   ?
+  - , Currently, the setup has been reimaged, so I no longer have access to collect the required logs from the previous state. Could you please help share a checklist of logs that need to be collected in 
+  - In the logs provided I see three separate crashes. $ ag &quot;: In function&quot;|cut -f2 -d&quot;&#x27;&quot; |sort -u
+virtual void ClientReadCompleter::finish_single_request(const hobject_t&amp;, ECCommon::read_result_t&amp;&amp;, ECCo
+  - , It is the same hardware as reported in 14368, but the Ceph version is different. We have also reported another MDS crash.Please let me know if this matches what you were looking for
+
+Escalation: L3 escalation</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 9.0z2 cluster
+Component: CephFS (distributed filesystem)
+Tools: ceph fs commands, mount/fuse clients, MDS operations, subvolume management
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Create CephFS filesystem with MDS daemons
+  3. Mount filesystem via kernel or FUSE client
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+  2. From JIRA: , Currently, the setup has been reimaged, so I no longer have access to collect the required logs from the previous state. Could you please help share a checklist of logs that need to be collected in
+  3. From JIRA: It’s hard to predict what might be required but, if you want to be confident, all ceph logs plus dmesg and syslog from each machine as well as any coredumps produced would be a good starting point. I
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/fs
+
+Coverage gaps:
+  - Error handling test for the specific failure scenario
+
+Recommended tests:
+  - Add regression test to qa/suites/fs covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
 
 
 

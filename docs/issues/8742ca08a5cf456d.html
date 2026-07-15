@@ -70,7 +70,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12931: [8.1z Backport][BZ#2433393] [IBM_Support] &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:33 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:37 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,20 +95,56 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: nfs-ganesha</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-12931): [8.1z Backport][BZ#2433393] [IBM_Support] &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export
+Affected version(s): 8.1
+Component(s): nfs-ganesha
+Severity: major
+Related Bugzilla: BZ#2433393
+
+Developer analysis from JIRA comments:
+The issue is being reported for all the users for different git repositories. &quot;git clone&quot; command runs fine in non-NFS directories like /tmp rama@usorlp7sp905x:~$   git clone git@github.com:different-ai/openwork.git ~/test Cloning into &#x27;/home/rama/test&#x27;... remote: Enumerating objects: 1858, done. re
+Hi, I attempted to reproduce the issue locally on a RHEL system, and the issue is reproducible. [root@dhikale-0 mnt]# cat /etc/redhat-release Red Hat Enterprise Linux release 9.7 (Plow) [root@dhikale-0 mnt]#  Steps to Reproduce 1. Create an NFS cluster. 2. Create an NFS export with the No_Root_Squas
+
+Key error indicators:
+  - [HotFix Request] [Ceph 8.1z4/w/hotfix] [Siemens Energy / WWT] [TS021250018] [NFS- CEPHFS] [BZ 2433393] Hello Team, We have a HF request for Siemens Energy INC    Issue Description: Running &quot;git clone&quot;
+  - RCA - ”git clone”, first opens a temporary file (read-write mode), writes into it. - till this point everything works fine. Then “git clone” reopens the file in readonly mode. - This is where Ganesha 
+
+Escalation: IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Configure component as described in the issue
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+  2. From JIRA: Hi, I attempted to reproduce the issue locally on a RHEL system, and the issue is reproducible. [root@dhikale-0 mnt]# cat /etc/redhat-release Red Hat Enterprise Linux release 9.7 (Plow) [root@dhikale-
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Related Bugzilla fixes: BZ#2433393 (check if regression tests exist)
+  - No specific test suite identified for this component
+
+Coverage gaps:
+  - Error handling test for the specific failure scenario
+
+Recommended tests:
+  - Add regression test to qa/suites/nfs-ganesha covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
 
 
 

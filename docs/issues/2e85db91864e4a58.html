@@ -70,7 +70,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12435: [BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:33 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:37 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,20 +95,63 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rgw-multisite</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-12435): [BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body
+Affected version(s): 8.1
+Component(s): rgw-multisite
+Severity: major
+Related Bugzilla: BZ#2407405
+
+Developer analysis from JIRA comments:
+[ Internal - Do not share with customer] We need to backport   , as it addresses an issue we are currently observing. During bucket creation from a secondary zonegroup, when the request is forwarded to the master zonegroup (i.e.,  bucket_zonegroup != &amp;my_zonegroup ),  createparams.zone_placement  ma
+I’ll test this on the downstream build once the fix is available there.
+[ Internal Discussion - Do not share with customer ] The changes are now backported to ceph-8.1-rhel-patches. Commit ids are:   https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a33c8b02fa170c045c94e1c89da3929d1e9e0f38 https://gitlab.cee.redhat.com/ceph/ceph/-/commit/1732c6773e1fa4ae8f695c03649f233d8
+
+Key error indicators:
+  - I tried multiple times to create the bucket using the secondary (zg2) endpoint with region zg2 via AWS CLI, and it fails consistently every time for this specific scenario with the same error: aws: [E
+  - When attempting to create a bucket in the  secondary zonegroup  from the  secondary endpoint , we observe  intermittent failures followed by eventual success  when using  s3cmd , whereas the same oper
+  - We are encountering the below crash on primary endpoint RGW, after which the RGW service restarts. If additional retries remain, the operation may succeed during a subsequent attempt; otherwise, it wi
+  - Hi   , Based on my previous two comments, we were able to successfully test the PR for the  IllegalLocationConstraintException . However, we are encountering failures when creating a bucket from the  
+  - Also please let us know if we need to open separate bug to trace above crash.
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1 cluster
+Component: RGW Multisite Replication
+Tools: radosgw-admin sync status, data/metadata sync verification, multi-zone s3 operations
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Deploy RGW service with required configuration
+  3. Create test user and bucket
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check RGW logs: ceph log last ceph-rgw</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Related Bugzilla fixes: BZ#2407405 (check if regression tests exist)
+  - Component test suite: qa/suites/rgw/multisite
+
+Coverage gaps:
+  - Functional test for the reported scenario in rgw-multisite
+
+Recommended tests:
+  - Add regression test to qa/suites/rgw/multisite covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
 
 
 

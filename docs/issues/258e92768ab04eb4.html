@@ -70,7 +70,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14237: cephadm-ansible IBM repo URL has whitespace bug leading to invalid path</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:33 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:37 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,20 +95,59 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephadm, ceph-ansible</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14237): cephadm-ansible IBM repo URL has whitespace bug leading to invalid path
+Affected version(s): 9.0
+Component(s): cephadm, ceph-ansible
+Severity: normal
+
+Developer analysis from JIRA comments:
+The package has been built, and the fix is now included in:  cephadm-ansible-5.0.3-1.el9cp.noarch.rpm
+
+Key error indicators:
+  - Updated  ceph_defaults_ceph_ibm_repo_baseurl  from multiline YAML ( &gt;- ) to a  single-line string  to prevent whitespace in the generated URL. This resolved invalid path issues (e.g.,  .../ceph/ 9/ rh
+  - We investigated cephadm-preflight failures for IBM Ceph 9 reported by IBM internal users. Analyzed Ansible logs shared by users. Identified a cephadm-ansible bug where the IBM Ceph repo base URL is de
+  - Hi    We tested the latest cephadm-ansible preflight playbook on both  RHEL 9 and RHEL 10  using their respective repositories. The preflight execution on RHEL 9 completed successfully and worked as e
+  - On RHEL10, preflight failure due to GPG key import ( rpm_key  unable to handle OpenPGP v6) is resolved after upgrading to  ansible-core-2.16.18 . The default  ansible-core  version on RHEL10 (2.16.14)
+  - We observed 2 issues on RHEL 10 while testing PR#365 and PR#366. Cephadm preflight on RHEL10 failed during execution due to two independent issues: [1] GPG key import failure [2] IBM license not accep
+
+Escalation: L3 escalation</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 9.0 cluster
+Component: Cephadm orchestrator
+Tools: cephadm shell, ceph orch commands, service deployment/upgrade validation
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Verify cephadm is functional on bootstrap node
+  3. Prepare service specs as described in issue
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check cephadm logs: ceph log last cephadm</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/cephadm, cephci deploy suites
+
+Coverage gaps:
+  - Functional test for the reported scenario in cephadm
+
+Recommended tests:
+  - Add regression test to qa/suites/cephadm, cephci deploy suites covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
 
 
 

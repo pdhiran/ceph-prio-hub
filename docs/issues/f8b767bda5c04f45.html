@@ -70,7 +70,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13491: HTTP 409 error for Ceph RGW S3 requests</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:33 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:37 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,20 +95,61 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rgw</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-13491): HTTP 409 error for Ceph RGW S3 requests
+Affected version(s): 8.1z4
+Component(s): rgw
+Severity: major
+
+Developer analysis from JIRA comments:
+in today’s downstream rgw meeting,   recalled that upstream contains fixes by Cory Snyder for potentially similar cases where internal ECANCELED errors are translated to 409.  These may be helpful to backport for this issue.
+We are working on backports to 8.1z6 and 9.0z2, fyi. The backport Jiras are linked to the current one.
+A fix is available for testing in build ceph-20.2.1-162. Moving to ON_QA
+
+Key error indicators:
+  - Analysis  : Log file  : /ecurep/sf/TS021/679/TS021679843/0-all_data/debug-rgw-logs.tgz_unpack/debug/whds0026-ceph-client.rgw.debug_since44_till46.log There are 2 identical requests for the same byte r
+  - I see that RGW logs from some other daemons have been shared as well. Is this the complete set of RGW daemons in the cluster? If not, could we collect logs from all RGW daemons? We suspect the issue m
+  - in today’s downstream rgw meeting,   recalled that upstream contains fixes by Cory Snyder for potentially similar cases where internal ECANCELED errors are translated to 409.  These may be helpful to 
+  - We identified two upstream PRs related to RGW S3 GET failures where ECANCELED is translating to 409 during concurrent ranged GET requests, https://github.com/ceph/ceph/pull/47187 https://github.com/ce
+  - I would prefer to fix the issue without a client retry, but I think it’s axiomatically true that we should have more correct error translation in general
+
+Escalation: L3 escalation, IBM customer impact</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.1z4 cluster
+Component: RADOS Gateway (S3/Swift)
+Tools: s3cmd, aws-cli, boto3, radosgw-admin, s3tests
+
+Pre-requisites:
+  1. Deploy Ceph cluster matching affected version
+  2. Deploy RGW service with required configuration
+  3. Create test user and bucket
+
+Reproduction steps:
+  1. Follow the scenario described in the JIRA summary
+
+Verification:
+  - Check cluster health: ceph health detail
+  - Check component logs for errors
+  - Check RGW logs: ceph log last ceph-rgw</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
+  - Component test suite: qa/suites/rgw, s3-tests
+
+Coverage gaps:
+  - Error handling test for the specific failure scenario
+
+Recommended tests:
+  - Add regression test to qa/suites/rgw, s3-tests covering this scenario
+  - Negative test: verify proper error handling for edge case
+  - Integration test: end-to-end validation with customer-like configuration</div>
 
 
 
