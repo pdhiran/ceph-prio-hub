@@ -41,9 +41,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .analysis-box {
   background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
   padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
 }
 .analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
 .analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
 
 .error-box {
   background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
@@ -70,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16134: [IBM_Customer][RBD] Unable to delete the RBD volume</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:40 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:55 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -106,41 +121,70 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-16134): [IBM_Customer][RBD] Unable to delete the RBD volume
-Affected version(s): 8.0
-Component(s): rbd
-Severity: normal
-
-Key error indicators:
-  - Hi team, Sharing the additional details, that for the same image we are not able to execute the  rbd status  or  rbd info  command as well. When executed with  debug-rbd=20  we see the openRequest cal
-  - What makes the customer think that an RBD volume with such a name exists?  Initially this image was present inside the trash with the watcher present on it ( because the trash purge command failed dur
-
-Escalation: IBM customer impact</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 8.0 cluster
-Component: RADOS Block Device
-Tools: rbd CLI, krbd module, rbd-nbd, librbd, rbd-mirror
-
-Pre-requisites:
-  1. Deploy Ceph cluster matching affected version
-  2. Create RBD pool and test image
-  3. Map image via krbd or rbd-nbd
-
-Reproduction steps:
-  1. Follow the scenario described in the JIRA summary
-
-Verification:
-  - Check cluster health: ceph health detail
-  - Check component logs for errors</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
-  - Component test suite: qa/suites/rbd
-
-Coverage gaps:
-  - Functional test for the reported scenario in rbd
-
-Recommended tests:
-  - Add regression test to qa/suites/rbd covering this scenario
-  - Negative test: verify proper error handling for edge case
-  - Integration test: end-to-end validation with customer-like configuration</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Customer][RBD] Unable to delete the RBD volume</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-16134</li>
+<li>Affected version(s): 8.0</li>
+<li>Component(s): rbd</li>
+<li>Severity: normal</li>
+<li>Escalation: IBM customer impact</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Hi team, Sharing the additional details, that for the same image we are not able to execute the  <code>rbd status  or  rbd info  command as well. When executed with  debug-rbd=20  we see the openRequest call been failed with  -2  return code # rbd status -</code></li>
+<li>What makes the customer think that an RBD volume with such a name exists?  Initially this image was present inside the trash with the watcher present on it ( because the trash purge command failed during the cleanup with watcher present message ) To</li>
+</ul>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>rbd ls &amp;lt;pool&amp;gt;</code></code></li>
+<li><code><code>rbd info &amp;lt;pool&amp;gt;/&amp;lt;image&amp;gt;</code></code></li>
+<li><code><code>rbd status &amp;lt;pool&amp;gt;/&amp;lt;image&amp;gt;</code></code></li>
+<li><code><code>rbd mirror pool status &amp;lt;pool&amp;gt;</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce rbd issue on IBM Ceph 8.0</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 8.0</li>
+<li>Component: RADOS Block Device</li>
+</ul>
+<div class="section-head">Setup</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy cluster with OSD pool for RBD</li>
+<li><span class="step-num">2.</span> Create pool: <code><code>ceph osd pool create rbdpool 32</code></code></li>
+<li><span class="step-num">3.</span> Enable RBD app: <code><code>ceph osd pool application enable rbdpool rbd</code></code></li>
+<li><span class="step-num">4.</span> Create image: <code><code>rbd create --size 1G rbdpool/testimg</code></code></li>
+</ul>
+<div class="section-head">Reproduce</div>
+<ul>
+<li><span class="step-num">1.</span> Follow the scenario described in the JIRA summary</li>
+</ul>
+<div class="section-head">Verify</div>
+<ul>
+<li>Check cluster health: <code><code>ceph health detail</code></code></li>
+<li>Check daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Check logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
+<li>Check crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Debug: <code><code>rbd ls &amp;lt;pool&amp;gt;</code></code></li>
+<li>Debug: <code><code>rbd info &amp;lt;pool&amp;gt;/&amp;lt;image&amp;gt;</code></code></li>
+<li>Debug: <code><code>rbd status &amp;lt;pool&amp;gt;/&amp;lt;image&amp;gt;</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rbd issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/rbd</code></li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Functional test covering the reported <code>rbd scenario</code></li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/rbd</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

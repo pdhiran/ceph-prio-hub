@@ -41,9 +41,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .analysis-box {
   background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
   padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
 }
 .analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
 .analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
 
 .error-box {
   background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
@@ -70,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14080: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:40 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:55 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -106,45 +121,78 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14080): [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode 
-Affected version(s): 7.1
-Component(s): ceph-mgr/crash
-Severity: normal
-
-Developer analysis from JIRA comments:
-Hi    As the issue is currently not reproducible, the inventory data does not provide significant insight in this case. To capture more meaningful data, we will run the inventory capture script before entering maintenance mode and stop it after exiting maintenance mode. We will share the collected d
-Hello    We have not received an update regarding the requested inventory data. As the issue is currently not reproducible, we are unable to proceed with further analysis. If the issue is no longer occurring, we would like to close this case. Should the issue reoccur, please reopen the case and shar
-
-Key error indicators:
-  - Ceph MGR log: 2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 log_channel(cluster) log [ERR] : Unhandled exception from module &#x27;cephadm&#x27; while running on mgr.host0.pncyox: &#x27;host194.obfuscateddomain1.wd&#x27;
-
-  - Even Though the hosts are not labeled with osd but it has the osd daemons #cat ceph_orch_host_ls | grep -v osd  HOST              ADDR      LABELS                       STATUS   host21.obfuscateddomai
-
-Escalation: IBM customer impact</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 7.1 cluster
-
-Pre-requisites:
-  1. Deploy Ceph cluster matching affected version
-  2. Configure component as described in the issue
-
-Reproduction steps:
-  1. Follow the scenario described in the JIRA summary
-  2. From JIRA: Hi Team,       We attempted to reproduce the issue in our lab environment. The cluster was upgraded from version 7.1z8 to 7.1z9. We intentionally removed the &quot;osd&quot; label from one of the hosts, even th
-
-Verification:
-  - Check cluster health: ceph health detail
-  - Check component logs for errors</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
-  - No specific test suite identified for this component
-
-Coverage gaps:
-  - Crash/assert scenario needs dedicated negative test
-  - Add crash dump analysis to regression suite
-
-Recommended tests:
-  - Add regression test to qa/suites/ceph-mgr/crash covering this scenario
-  - Negative test: verify proper error handling for edge case
-  - Integration test: end-to-end validation with customer-like configuration</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-14080</li>
+<li>Affected version(s): 7.1</li>
+<li>Component(s): ceph-mgr/crash</li>
+<li>Severity: normal</li>
+<li>Escalation: IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Hi    As the issue is currently not reproducible, the inventory data does not provide significant insight in this case. To capture more meaningful data, we will run the inventory capture script before entering maintenance mode and stop it after exiting maintenance mode. We will share the collected d</li>
+<li>Hello    We have not received an update regarding the requested inventory data. As the issue is currently not reproducible, we are unable to proceed with further analysis. If the issue is no longer occurring, we would like to close this case. Should the issue reoccur, please reopen the case and shar</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Ceph MGR log: 2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 log_channel(cluster) log [ERR] : Unhandled exception from module &#x27;cephadm&#x27; while running on mgr.host0.pncyox: &#x27;host194.obfuscateddomain1.wd&#x27;</li>
+</ul>
+<div>2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 ceph</div>
+<ul>
+<li>Even Though the hosts are not labeled with osd but it has the osd daemons #cat ceph_orch_host_ls | grep -v osd  HOST              ADDR      LABELS                       STATUS   host21.obfuscateddomain1.wd 26.64.85.18  ceph,sku_archive_v1     #grep h</li>
+</ul>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>ceph crash ls-new</code></code></li>
+<li><code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><code><code>ceph mgr module ls</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce ceph-mgr/crash issue on IBM Ceph 7.1</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 7.1</li>
+<li>Component: Ceph MGR Crash module</li>
+</ul>
+<div class="section-head">Setup</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy cluster with MGR</li>
+<li><span class="step-num">2.</span> Verify crash module: <code><code>ceph mgr module enable crash</code></code></li>
+</ul>
+<div class="section-head">Reproduce</div>
+<ul>
+<li><span class="step-num">1.</span> Follow the scenario described in the JIRA summary</li>
+<li><span class="step-num">2.</span> From JIRA: Hi Team,       We attempted to reproduce the issue in our lab environment. The cluster was upgraded from version 7.1z8 to 7.1z9. We intentionally removed the &quot;osd&quot; label from one of the hosts, even though it still had OSD daemons running. However, ma</li>
+<li><span class="step-num">3.</span> From JIRA: Hi        Thanks for the detailed informations and steps provided. We will reopen the Jira with the mentioned reports, if it occurs again. Thanks  Velmurugan</li>
+</ul>
+<div class="section-head">Verify</div>
+<ul>
+<li>Check cluster health: <code><code>ceph health detail</code></code></li>
+<li>Check daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Check logs: <code><code>cephadm shell -- ceph log last ceph-mgr</code></code></li>
+<li>Check crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Debug: <code><code>ceph crash ls-new</code></code></li>
+<li>Debug: <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li>Debug: <code><code>ceph mgr module ls</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for ceph-mgr/crash issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/rados</code></li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Crash/assert scenario needs dedicated negative test</li>
+<li>Crash dump analysis in regression suite</li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/rados</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

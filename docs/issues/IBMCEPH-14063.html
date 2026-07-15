@@ -41,9 +41,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .analysis-box {
   background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
   padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
 }
 .analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
 .analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
 
 .error-box {
   background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
@@ -70,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14063: Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:40 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:55 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -106,41 +121,68 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14063): Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side
-Affected version(s): 5.3z3
-Component(s): rgw
-Severity: major
-
-Developer analysis from JIRA comments:
-Hi Shantanu, The issue is a known issue reported in    and  . It is caused during dynamic bucket resharding in 5.1 that permanently altered bucket metadata formats. Customer currently seems to be running radosgw-admin command from version 5.0 : $ cat sosreport-esg4wng01301-2026-04-17-wjbjcae.tar.xz_
-
-Escalation: L3 escalation, IBM customer impact</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 5.3z3 cluster
-Component: RADOS Gateway (S3/Swift)
-Tools: s3cmd, aws-cli, boto3, radosgw-admin, s3tests
-
-Pre-requisites:
-  1. Deploy Ceph cluster matching affected version
-  2. Deploy RGW service with required configuration
-  3. Create test user and bucket
-
-Reproduction steps:
-  1. Follow the scenario described in the JIRA summary
-
-Verification:
-  - Check cluster health: ceph health detail
-  - Check component logs for errors
-  - Check RGW logs: ceph log last ceph-rgw</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
-  - Component test suite: qa/suites/rgw, s3-tests
-
-Coverage gaps:
-  - Functional test for the reported scenario in rgw
-
-Recommended tests:
-  - Add regression test to qa/suites/rgw, s3-tests covering this scenario
-  - Negative test: verify proper error handling for edge case
-  - Integration test: end-to-end validation with customer-like configuration</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-14063</li>
+<li>Affected version(s): 5.3z3</li>
+<li>Component(s): rgw</li>
+<li>Severity: major</li>
+<li>Escalation: L3 escalation, IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Hi Shantanu, The issue is a known issue reported in    and  . It is caused during dynamic bucket resharding in 5.1 that permanently altered bucket metadata formats. Customer currently seems to be running <code>radosgw-admin command from version 5.0 : $ cat sosreport-esg4wng01301-2026-04-17-wjbjcae.tar.xz_</code></li>
+</ul>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>ceph orch ps --daemon-type rgw</code></code></li>
+<li><code><code>radosgw-admin user list</code></code></li>
+<li><code><code>radosgw-admin sync status</code></code></li>
+<li><code><code>ceph config get rgw rgw_frontends</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce rgw issue on IBM Ceph 5.3z3</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 5.3z3</li>
+<li>Component: RADOS Gateway (S3/Swift)</li>
+</ul>
+<div class="section-head">Setup</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy cluster with RGW service</li>
+<li><span class="step-num">2.</span> Create test user: <code><code>radosgw-admin user create --uid=testuser --display-name=&amp;#x27;Test&amp;#x27;</code></code></li>
+<li><span class="step-num">3.</span> Verify endpoint: <code><code>curl -k https://&amp;lt;rgw-host&amp;gt;:443</code></code></li>
+</ul>
+<div class="section-head">Reproduce</div>
+<ul>
+<li><span class="step-num">1.</span> Follow the scenario described in the JIRA summary</li>
+</ul>
+<div class="section-head">Verify</div>
+<ul>
+<li>Check cluster health: <code><code>ceph health detail</code></code></li>
+<li>Check daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Check logs: <code><code>cephadm shell -- ceph log last ceph-rgw</code></code></li>
+<li>Check crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Debug: <code><code>ceph orch ps --daemon-type rgw</code></code></li>
+<li>Debug: <code><code>radosgw-admin user list</code></code></li>
+<li>Debug: <code><code>radosgw-admin sync status</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rgw issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/rgw, s3-tests</code></li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Functional test covering the reported <code>rgw scenario</code></li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/rgw, s3-tests</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

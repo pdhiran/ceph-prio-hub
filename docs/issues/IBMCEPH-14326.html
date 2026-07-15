@@ -41,9 +41,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .analysis-box {
   background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
   padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
 }
 .analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
 .analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
 
 .error-box {
   background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
@@ -70,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14326: Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:40 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:55 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -106,44 +121,74 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Customer-reported issue (IBMCEPH-14326): Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter
-Affected version(s): 6.1z2
-Component(s): rados
-Severity: normal
-
-Key error indicators:
-  - Hi  , The documentation at   and   only describes scenarios where the arbiter (tiebreaker) monitor has failed or where a new arbiter monitor is being added. There are no documented steps for replacing
-  - I just checked the code base and looks like my hypothesis is correct: ceph orch daemon rm  uses  ceph mon rm  under the hood: services/cephadmservice.py:     def pre_remove(self, daemon: DaemonDescrip
-
-Escalation: L3 escalation, IBM customer impact</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 6.1z2 cluster
-Component: RADOS (core storage layer)
-Tools: rados bench, ceph osd commands, PG analysis, osd crash dumps
-
-Pre-requisites:
-  1. Deploy Ceph cluster matching affected version
-  2. Create test pool with appropriate PG count
-  3. Verify OSD map and PG states
-
-Reproduction steps:
-  1. Follow the scenario described in the JIRA summary
-  2. From JIRA: Hi  , The documentation at   and   only describes scenarios where the arbiter (tiebreaker) monitor has failed or where a new arbiter monitor is being added. There are no documented steps for replacing
-  3. From JIRA: Thank you,    for confirming the steps to be followed when replacing a healthy tie‑breaker monitor. Just to confirm, should we add a new monitor as the tie‑breaker first and then remove the existing t
-
-Verification:
-  - Check cluster health: ceph health detail
-  - Check component logs for errors
-  - Check OSD logs and crash dumps: ceph crash ls-new</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing coverage:
-  - Component test suite: qa/suites/rados
-
-Coverage gaps:
-  - Functional test for the reported scenario in rados
-
-Recommended tests:
-  - Add regression test to qa/suites/rados covering this scenario
-  - Negative test: verify proper error handling for edge case
-  - Integration test: end-to-end validation with customer-like configuration</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-14326</li>
+<li>Affected version(s): 6.1z2</li>
+<li>Component(s): rados</li>
+<li>Severity: normal</li>
+<li>Escalation: L3 escalation, IBM customer impact</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Hi  , The documentation at   and   only describes scenarios where the arbiter (tiebreaker) monitor has failed or where a new arbiter monitor is being added. There are no documented steps for replacing a healthy tiebreaker monitor. What would be the s</li>
+<li>I just checked the code base and looks like my hypothesis is correct: <code>ceph orch daemon rm  uses  ceph mon rm  under the hood: services/cephadmservice.py:     def pre_remove(self</code>, daemon: DaemonDescription) -&gt; None:</li>
+</ul>
+<div>super().pre_remove(daemon)</div>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>ceph osd tree</code></code></li>
+<li><code><code>ceph osd pool ls detail</code></code></li>
+<li><code><code>ceph pg stat</code></code></li>
+<li><code><code>ceph health detail</code></code></li>
+<li><code><code>ceph crash ls-new</code></code></li>
+<li><code><code>ceph osd perf</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce rados issue on IBM Ceph 6.1z2</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 6.1z2</li>
+<li>Component: RADOS (core storage layer)</li>
+</ul>
+<div class="section-head">Setup</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy cluster with OSDs on all storage nodes</li>
+<li><span class="step-num">2.</span> Create test pool: <code><code>ceph osd pool create testpool 32</code></code></li>
+<li><span class="step-num">3.</span> Verify PG health: <code><code>ceph pg stat</code></code></li>
+</ul>
+<div class="section-head">Reproduce</div>
+<ul>
+<li><span class="step-num">1.</span> Follow the scenario described in the JIRA summary</li>
+<li><span class="step-num">2.</span> From JIRA: Hi  , The documentation at   and   only describes scenarios where the arbiter (tiebreaker) monitor has failed or where a new arbiter monitor is being added. There are no documented steps for replacing a healthy tiebreaker monitor. What would be the s</li>
+<li><span class="step-num">3.</span> From JIRA: Thank you,    for confirming the steps to be followed when replacing a healthy tie‑breaker monitor. Just to confirm, should we add a new monitor as the tie‑breaker first and then remove the existing tie‑breaker monitor? The customer’s concern is that</li>
+</ul>
+<div class="section-head">Verify</div>
+<ul>
+<li>Check cluster health: <code><code>ceph health detail</code></code></li>
+<li>Check daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Check logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
+<li>Check crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Debug: <code><code>ceph osd tree</code></code></li>
+<li>Debug: <code><code>ceph osd pool ls detail</code></code></li>
+<li>Debug: <code><code>ceph pg stat</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rados issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/rados</code></li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Functional test covering the reported <code>rados scenario</code></li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/rados</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 
