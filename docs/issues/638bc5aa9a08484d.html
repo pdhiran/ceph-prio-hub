@@ -70,7 +70,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15699: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:21 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 16:31 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,20 +95,67 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Customer-reported issue. Clone IBMCEPH-15734 created for 9.1z. Multiple related SSL/dashboard 500 errors exist across versions suggesting systemic issue with cert handling in dashboard backend.</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box">Dashboard returns 500 Internal Server Error when uploading/viewing RGW SSL certificates.
+
+Root Cause: The dashboard SSL certificate management UI makes API calls to the mgr module REST endpoint for certificate operations. The error occurs when the dashboard attempts to parse or validate the SSL certificate PEM file during upload. The mgr dashboard backend fails to handle the cert.pem file, producing a traceback in mgr logs (&quot;Error while calling Task(service/edit_mds/service_name)&quot; pattern seen in logs).
+
+Related Issues:
+- IBMCEPH-15734: Clone for 9.1z stream (same issue, Assigned)
+- IBMCEPH-13816: 500 error deploying RGW Ingress with SSL via Dashboard (Assigned, v9.0z2)
+- IBMCEPH-996 (BZ#1954645): &quot;ceph dashboard set-ssl-certificate{,-key} -i&quot; commands fail (Fixed in 5.0)
+- IBMCEPH-1330 (BZ#1987338): Invalid SSL certificate on creating RGW service with SSL (Fixed in 5.0)
+
+Known Issue: Confirmed as known issue in ceph-issue-kb (3 matches). No fix merged yet. Status: ON_QA in JIRA.
+
+Affected Version: IBM Ceph 9.0z2</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box">Environment: IBM Ceph 9.0z2 cluster with RGW service configured with SSL
+
+1. Deploy a Ceph cluster with cephadm (minimum: MON, MGR, OSD, RGW)
+2. Configure RGW service with SSL certificate:
+   ceph orch apply rgw &lt;service-id&gt; --placement=&lt;host&gt; --port=443 --ssl
+3. Generate or obtain a valid SSL certificate and key in PEM format
+4. Navigate to Ceph Dashboard -&gt; Cluster -&gt; Services -&gt; RGW service
+5. Attempt to view the configured SSL certificate
+   Expected: Certificate details are displayed
+   Actual: 500 Internal Server Error
+
+Alternative reproduction via CLI:
+6. Try uploading certificate via CLI:
+   ceph dashboard set-ssl-certificate -i /path/to/cert.pem
+   ceph dashboard set-ssl-certificate-key -i /path/to/key.pem
+7. Restart mgr: ceph mgr fail mgr
+
+Diagnostic commands:
+- Check mgr logs: ceph log last 100 --channel cluster | grep -i ssl
+- Check dashboard module: ceph mgr module ls | grep dashboard
+- Verify RGW SSL config: ceph config get rgw rgw_frontends</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box">Existing Coverage: Historical fixes exist for similar SSL cert issues (BZ#1954645 in 5.0, BZ#1987338 in 5.0) but no regression test for the current dashboard cert upload path.
+
+Test Gaps:
+1. No test for Dashboard UI SSL certificate upload/view for RGW services
+2. No test for &quot;ceph dashboard set-ssl-certificate -i&quot; with various PEM formats
+3. No negative test for invalid/expired certificates via Dashboard
+
+Recommended Tests:
+1. [Functional] Upload valid SSL cert via Dashboard UI, verify display and RGW service restart with new cert
+2. [Functional] Upload SSL cert via CLI (ceph dashboard set-ssl-certificate -i), verify mgr restart applies cert
+3. [Negative] Upload invalid/malformed PEM file, verify proper error message (not 500)
+4. [Negative] Upload expired certificate, verify warning/rejection
+5. [Integration] End-to-end: Deploy RGW with SSL spec (generate_cert: true), verify Dashboard can view auto-generated cert
+6. [Regression] Verify cert upload works after mgr failover
+
+Reference docs: https://docs.ceph.com/en/latest/mgr/dashboard/ (SSL/TLS Support section)</div>
 
 
 

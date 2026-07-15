@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-15T16:21:21.431369Z",
+  "generated": "2026-07-15T16:31:22.188829Z",
   "issues": [
     {
       "issue_id": "638bc5aa9a08484d",
@@ -7,9 +7,9 @@
       "summary": "[IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "37d1c7f9fd2e4e81",
