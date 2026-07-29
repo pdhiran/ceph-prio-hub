@@ -130,6 +130,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>hi   Can we prioritize the fix to be available downstream? Due to this issue, CephFS 7.1 to 9.1/9.2 upgrade test is having consistent impact, seen at different stages in each run, After cluster deploy, <code>ceph status reports “ 1 slow ops</code>, oldest one blocked for 775 sec, mon.ceph-cephfs2344-ss4t-abkgd2-</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph osd tree</code></code></li>

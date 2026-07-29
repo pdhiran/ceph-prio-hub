@@ -131,6 +131,15 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Related Bugzilla: BZ#2297068</li>
 <li>Escalation: L3 escalation</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>A fix is available for testing in build ceph-19.2.1-381. Moving to Test</li>
+<li>Verified the fix on <code>ceph build 19.2.1-382.el9cp</code>, Logs:</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Test Plan: Verify in Snap schedule and retention, only values M,m,h,d,w,m,y and n are acceptable as time designator. For any other alphabets or chars, appropriate error is reported</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph fs status</code></code></li>

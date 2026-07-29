@@ -162,6 +162,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">11.</span> Check permissions: <code>smbcacls //&amp;lt;host&amp;gt;/share1 / -U &amp;lt;user&amp;gt;%&amp;lt;pass&amp;gt;</code></li>
 <li><span class="step-num">12.</span> Modify ACL via MMC or smbcacls and verify</li>
 </ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>During validation on 9.0, the SMB share was mounted from a Windows client using AD credentials. The existing folders displayed raw SIDs instead of resolved user/group names, which reproduced the reported issue. The same cluster was then upgraded to 9</li>
+</ul>
 <div class="section-head">Validate</div>
 <ul>
 <li>Cluster health: <code><code>ceph health detail</code></code></li>

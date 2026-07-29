@@ -125,7 +125,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-16079</li>
-<li>Affected version(s): Not specified</li>
+<li>Affected version(s): 9.0</li>
 <li>Component(s): cephadm</li>
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation, IBM customer impact</li>
@@ -133,6 +133,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div>Developer Analysis (from JIRA comments):</div>
 <ul>
 <li>the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix/workaround.  Let us know your availability today for a call. cc:</li>
+<li>Hello   , should we procced backport upstream PR     in downstream 9.1?</li>
 </ul>
 <div class="section-head">Key Error Indicators</div>
 <ul>
@@ -147,15 +148,15 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><code><code>ceph health detail</code></code></li>
 <li><code><code>ceph versions</code></code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce cephadm issue on IBM Ceph Not specified</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce cephadm issue on IBM Ceph 9.0</div>
 <div class="section-head">Environment</div>
 <ul>
-<li>IBM Ceph version: Not specified</li>
+<li>IBM Ceph version: 9.0</li>
 <li>Component: Cephadm Orchestrator</li>
 </ul>
 <div class="section-head">Workflow</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph Not specified cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>

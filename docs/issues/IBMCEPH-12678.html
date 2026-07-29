@@ -135,7 +135,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <ul>
 <li>What is the output of coredumpctl list, and have you tried the steps in Comment #1? After applying the steps I am able to view a full list of my core dump files with coredumpctl list.</li>
 <li>Crash meta and log files are not being generated for <code>ceph daemon crashes because the directory /var/lib/ceph/crash is owned by root</code>, while <code>ceph daemons expect it to be owned by ceph:ceph. journalctl -xeu ceph-fc26abce-b86c-11f0-8b6e-fa163e57ddc9@cras</code></li>
+<li>The tracker has been verified by generating user-initiated crashes. I also verified the user permissions, and the current user is  <code>ceph . [root@ceph-bharath-9-2-evvd2q-node1-installer 97199828-89d0-11f1-8035-fa163e51bd38]# ls -lrt</code></li>
 </ul>
+<div>total 1592</div>
+<div>-rwxr--r</div>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>

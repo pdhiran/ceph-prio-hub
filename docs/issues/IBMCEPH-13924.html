@@ -133,6 +133,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="section-head">Key Error Indicators</div>
 <ul>
 <li>NFS Client side disabling caching would lead to performance hit for sure. By default the dentry caching is valid for min 30 secs upto 60 seconds. This might be leading to the failure. This caching time can be reduced by setting actimeo option in moun</li>
+<li>In another thread it was reported that the removal of the temp dir failed because it was not empty.   It contained some files with names that started with .nfs.   The files starting with .nfs represent files that were removed while a process still ha</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

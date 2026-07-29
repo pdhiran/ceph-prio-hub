@@ -130,6 +130,17 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: blocker</li>
 <li>Escalation: IBM customer impact</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Hello Team, Current Update:  I am currently testing the fixed image shared by Shubha. Steps Followed During Testing: Bootstrapped a Red Hat Ceph Storage 8 cluster. Upgraded the cluster to the image  quay.io/shubhjai/ceph1:hostname_changed_fix . Verified the upgrade status using  <code>ceph orch upgrade st</code></li>
+<li>Root Cause Identified: The upgrade failure is due to a Dockerfile issue in the test image, NOT a problem with the hostname normalization fix itself. The image incorrectly replaced the downstream <code>cephadm binary (/usr/sbin/cephadm) with the upstream version. The downstream MGR module uses cephadm exe</code></li>
+<li>Hello   , Can we get an update on this issue? Since it&#x27;s a high-priority issue, we&#x27;d appreciate an update on the upstream PR so that we can proceed with the downstream backport.</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Hello   ,  You mentioned that  <code>ceph orch ls --export  shows these services are configured with  host_pattern: &#x27;*&#x27;</code>, so the placement failure is not due to explicit hostnames in the service specs. However, this is not true. The placement failure occur</li>
+<li>Root Cause Identified: The upgrade failure is due to a Dockerfile issue in the test image, NOT a problem with the hostname normalization fix itself. The image incorrectly replaced the downstream <code>cephadm binary (/usr/sbin/cephadm) with the upstream v</code></li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>

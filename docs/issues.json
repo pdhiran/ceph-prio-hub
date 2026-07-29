@@ -1,5 +1,5 @@
 {
-  "generated": "2026-07-29T12:02:05.661868Z",
+  "generated": "2026-07-29T12:02:25.063103Z",
   "issues": [
     {
       "issue_id": "200b091b31ec4193",
@@ -67,9 +67,9 @@
       "summary": "why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "d27460d86b69436a",
@@ -77,9 +77,9 @@
       "summary": "Package installation fails inside container due to Codeready Builder repository 403 error.",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "afe1acd8b5554749",
@@ -87,9 +87,9 @@
       "summary": "MDS pod crash ceph_assert FAILED ceph_assert(_raw)",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "f1624007e4a14940",
@@ -97,9 +97,9 @@
       "summary": "Measure and expose BlueStore cache performance metrics to better understand cache effectiveness and provide data for future Priority Cache Manager improvements.",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "88d514d535a34c5f",
@@ -107,9 +107,9 @@
       "summary": "compression_min_blob_size accepts illegal values",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "98002efd47254c4f",
@@ -127,9 +127,9 @@
       "summary": "[RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard ",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "6977c40086b946e5",
@@ -137,9 +137,9 @@
       "summary": "[8.1z Backport] [GSS] Health Warning is missing the descriptive text",
       "status": "MODIFIED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "f69cf33d921f4e99",
@@ -147,9 +147,9 @@
       "summary": "[RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "c08ec049dbf140f8",
@@ -187,9 +187,9 @@
       "summary": "[9.1z Backport] [GSS] Health Warning is missing the descriptive text",
       "status": "MODIFIED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "0580c11c2b9c4477",
@@ -207,9 +207,9 @@
       "summary": "[9.1z backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P0"
     },
     {
       "issue_id": "d673cb677a1f4286",
@@ -227,9 +227,9 @@
       "summary": "[9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code",
       "status": "MODIFIED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "97834ac910cc4046",
@@ -237,9 +237,9 @@
       "summary": " mgmt-gateway continuously cycling on 9.9.1.0 code",
       "status": "MODIFIED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "9cc75a0c86a841f1",
@@ -307,9 +307,9 @@
       "summary": "Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "8d0ce214ffed403c",
@@ -337,9 +337,9 @@
       "summary": "CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map",
       "status": "ON_QA",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "c4065a9110884df2",
@@ -497,9 +497,9 @@
       "summary": "Benchmark nfs-ganesha read and write delegations exploring workloads",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "c029a91fe23d44d0",
@@ -627,9 +627,9 @@
       "summary": "For Successful MultipartComplete object, HEAD succeeds but can't be retrieved with GET",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "3bf368badcf54a39",
@@ -637,9 +637,9 @@
       "summary": " [RFE]Deprecate - get autoscale threshold set on the cluster",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "eeb58cead2d84288",
@@ -647,9 +647,9 @@
       "summary": "[RFE][BZ#2435240] Unable to start nfs container instance via \"cephadm shell --name <daemon_type.id>\" command",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "6af5964c2fad44d2",
@@ -667,9 +667,9 @@
       "summary": "[9.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "7441a7d78f874f8d",
@@ -677,9 +677,9 @@
       "summary": "[8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "8a917076ea4f4df8",
@@ -697,9 +697,9 @@
       "summary": "MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "cd0e9f27be064d69",
@@ -857,9 +857,9 @@
       "summary": "[Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "6a493daeb25d48d1",

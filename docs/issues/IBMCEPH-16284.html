@@ -130,6 +130,18 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: major</li>
 <li>Escalation: L3 escalation</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>HI   can i share the below workaround to customer ?  By setting setting  enabled: false  before running the  preflight  playbook. # cephadm-preflight.yml</li>
+<li>name: Ensure firewalld is enabled and running</li>
+</ul>
+<div>ansible.builtin.systemd:</div>
+<div>name: firewalld</div>
+<div>state: started</div>
+<div>enabled: false</div>
+<ul>
+<li>Hi    Yes, you can share it as a  temporary workaround . However, please make it clear that this is  not an ideal or permanent solution . You can mention that this workaround is intended only as an interim measure while we work on a proper fix to support environments where  firewalld  is intentional</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code>ansible --version</code></li>

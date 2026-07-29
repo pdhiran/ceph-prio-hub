@@ -110,20 +110,97 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephfs</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-16942</li>
+<li>Affected version(s): 9.1</li>
+<li>Component(s): cephfs</li>
+<li>Severity: normal</li>
+<li>Escalation: IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>[Internal do not share with customer] I identified three cascading ceph-mds crashes on <code>ceph 20.2.1-294.el9cp across nodes n05-az1</code>, n03-az2, and n03-az1 after going through mds logs. The root cause is a corrupt journal entry where a dentry&#x27;s alternate_name in memory did not match what was written in</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Hi   we are going through logs but in meantime is it possible to get coredump for crash analysis(mds).</li>
+<li>Hi    Thanks! Sure , Please let us know the steps to get coredump for crash analysis(mds). So that we would be sharing same with Customer.  Also please let us know if you need coredump on BOX or ecurep server is fine ? Regards Ravinder Kumar</li>
+<li>Multiple crashes happen at CU setup. 2026-07-19T02:09:33.620739Z_2476e6b9-539d-4efd-8a05-1c1c2e399e3c  mds.production.rhcs01-production-n03-az1.lxfgwa   *</li>
+</ul>
+<div>2026-07-19T02:09:45.477630Z_677abbd8-f992-46c2-9824-c36beb27cd69  mds.production.rhcs01-product</div>
+<ul>
+<li>- my bad. The MDS assert at the place the assert() was added in the above commit.</li>
+</ul>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>ceph fs status</code></code></li>
+<li><code><code>ceph mds stat</code></code></li>
+<li><code><code>ceph fs subvolumegroup ls &amp;lt;fsname&amp;gt;</code></code></li>
+<li><code><code>ceph fs subvolume ls &amp;lt;fsname&amp;gt; &amp;lt;group&amp;gt;</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce cephfs issue on IBM Ceph 9.1</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 9.1</li>
+<li>Component: CephFS (distributed filesystem)</li>
+<li>Issue type: crash, mds_failure</li>
+</ul>
+<div class="section-head">Workflow</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
+<li><span class="step-num">5.</span> Create filesystem: <code><code>ceph fs volume create testfs</code></code></li>
+<li><span class="step-num">6.</span> Wait for MDS: <code><code>ceph mds stat</code></code></li>
+<li><span class="step-num">7.</span> Mount via kernel: <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code>,secret=&amp;lt;key&amp;gt;</code></li>
+<li><span class="step-num">8.</span> Check MDS ranks: <code><code>ceph fs status</code></code></li>
+<li><span class="step-num">9.</span> Identify active MDS: <code><code>ceph mds stat</code></code></li>
+<li><span class="step-num">10.</span> Trigger MDS failover: <code><code>ceph mds fail &amp;lt;rank&amp;gt;</code></code></li>
+<li><span class="step-num">11.</span> Verify standby promotion: <code><code>ceph mds stat</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Hi    Thanks! Sure , Please let us know the steps to get coredump for crash analysis(mds). So that we would be sharing same with Customer.  Also please let us know if you need coredump on BOX or ecurep server is fine ? Regards Ravinder Kumar</li>
+<li>Hi   / Team , We have coredump from 3 nodes on Below BOX link now.   Could you please check it now.  Team, You should be able to view/download if using IBM email address. If you are using redhat email , let me know your email address . so i can invit</li>
+</ul>
+<div class="section-head">Validate</div>
+<ul>
+<li>Cluster health: <code><code>ceph health detail</code></code></li>
+<li>Daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Logs: <code><code>cephadm shell -- ceph log last ceph-mds</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for cephfs issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/fs</code></li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Crash/assert scenario needs dedicated negative test</li>
+<li>Crash dump analysis in regression suite</li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/fs</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

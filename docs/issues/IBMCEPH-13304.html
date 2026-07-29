@@ -117,7 +117,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: ceph</div>
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: ceph, documentation</div>
 </div>
 
 <h2>Analysis</h2>
@@ -125,20 +125,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-13304</li>
-<li>Affected version(s): 8.1</li>
-<li>Component(s): ceph</li>
+<li>Affected version(s): 8.1, 10.0</li>
+<li>Component(s): ceph, documentation</li>
 <li>Severity: normal</li>
 <li>Escalation: IBM customer impact</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce ceph issue on IBM Ceph 8.1</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce ceph issue on IBM Ceph 8.1, 10.0</div>
 <div class="section-head">Environment</div>
 <ul>
-<li>IBM Ceph version: 8.1</li>
+<li>IBM Ceph version: 8.1, 10.0</li>
 <li>Component: ceph</li>
 </ul>
 <div class="section-head">Workflow</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1, 10.0 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>

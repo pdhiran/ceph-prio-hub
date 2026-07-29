@@ -135,7 +135,9 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <ul>
 <li>We encountered this issue during the Apple cluster expansion. A detailed explanation of the root cause is available here:    Redeploying the MONs is not required. Instead, we need to reconfigure and restart the MONs to apply the newly added  public_network  changes.</li>
 <li>I asked him because usually we ask the ticket assignee for the input. Known issues require different information than bug fixes (such as workaround). If you can provide if there was a workaround for the issue that would be helpful. thanks</li>
+<li>Verified the fix with 9.2 build - <code>ceph version 20.2.2-118.el10cp Upon setting the public_network at global level</code>, the mon daemons honour the new settings after restart, as can be seen in the output of <code>ceph config show command. # ceph config help public_network</code></li>
 </ul>
+<div>public_network - Network(s) from which</div>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>
