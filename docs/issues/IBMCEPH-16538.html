@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16538: [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16538" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16538</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">blocker</span></dd>
-    <dt>Assignee</dt><dd>Adam King</dd>
+    <dt>Assignee</dt><dd>SHUBHA JAIN</dd>
   </dl></div>
   <div class="meta-card"><dl>
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-07-14</dd>
-    <dt>Updated</dt><dd>2026-07-14</dd>
+    <dt>Updated</dt><dd>2026-07-28</dd>
   </dl></div>
 </div>
 
@@ -186,9 +186,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-14 07:24:06</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Adam King)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 07:13:36</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>: Since this is a regression, it’s a blocker.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 06:52:00</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: Final Update: Tested the hostname normalization changes using the custom image ( quay.io/shubhjai/ceph1:hostname-normalize-fix-issue ) on an upgraded cluster. Verified fixes: ceph orch host ls  displays normalized lowercase hostnames. ceph orch host </div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 12:51:51</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: PR:    9.1z2 MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2166</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 13:36:05</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(SHUBHA JAIN)</span></div>
 </div>
 
 </body>

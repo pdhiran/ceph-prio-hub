@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12678: [BZ#2413725] Daemon crashes observed, but crash files are not generated in the expected directory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12678" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12678</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ON_QA</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2025-11-10</dd>
-    <dt>Updated</dt><dd>2026-07-10</dd>
+    <dt>Updated</dt><dd>2026-07-27</dd>
   </dl></div>
 </div>
 
@@ -194,7 +194,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (11 events)</h2>
+<h2>Timeline (13 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2025-11-10 08:21:25</span><span class="tl-badge comment">Comment</span> <strong>Prashant D</strong>: Refer  https://bugzilla.redhat.com/show_bug.cgi?id=2170213  for configuring node to generate a coredump successfully.</div>
 <div class="tl-entry"><span class="tl-date">2025-11-12 00:45:59</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: What is the output of coredumpctl list, and have you tried the steps in Comment #1? After applying the steps I am able to view a full list of my core dump files with coredumpctl list.</div>
@@ -207,6 +207,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-08 11:30:24</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Yes, updating.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 13:44:56</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Merged:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2025</div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 09:25:00</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 11:17:43</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>: The tracker has been verified by generating user-initiated crashes. I also verified the user permissions, and the current user is  ceph . [root@ceph-bharath-9-2-evvd2q-node1-installer 97199828-89d0-11f1-8035-fa163e51bd38]# ls -lrt
+total 1592
+-rwxr--r</div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 11:17:54</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

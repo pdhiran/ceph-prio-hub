@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16535: hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16535" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16535</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">blocker</span></dd>
     <dt>Assignee</dt><dd>SHUBHA JAIN</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-07-14</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-07-28</dd>
   </dl></div>
 </div>
 
@@ -192,7 +192,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (7 events)</h2>
+<h2>Timeline (28 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-14 10:05:55</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Thanks  for sharing reproducing steps. I attempted to reproduce the issue using the steps provided. During reproducer, I observed an additional regression: after upgrading to IBM Ceph 9.0, the orchestrator silently lowercased the hostname in its stor</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 05:01:32</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,   introduced hostname normalization ( normalize_hostname() , i.e.  .lower() ) into  HostSpec.__init__()  and  HostSpec.normalize_json() . HostSpec  is not only created when parsing CLI or YAML input it is also constructed whenever cephadm r</div>
@@ -201,6 +201,31 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-15 05:39:52</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  Hi Aarti, thanks for sharing the details. I still can&#x27;t reproduce the same starting state with the dashboard quick-bootstrap environment—my 8.1 cluster stores the inventory in lowercase even before the upgrade. Would it be possible for me to SSH int</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 06:09:41</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(SHUBHA JAIN)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 06:09:41</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Let me try to reproduce the setup in the test environment for you. However, I&#x27;m not sure whether you&#x27;ll be able to access it since it&#x27;s hosted in the Tucson lab and requires VPN access. Yes, you can share the test build with me, and I&#x27;ll ve</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 03:46:53</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  Thanks for the steps!! Reproduced the issue by manually creating an IBM Ceph 8.1 cluster with uppercase hostnames ( CEPH-NODE-* ), deploying OSDs, and upgrading to IBM Ceph 9.9.1. Observed after upgrade: ceph orch host ls  displays hostnames in lowe</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 07:35:36</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  You mentioned that  ceph orch ls --export  shows these services are configured with  host_pattern: &#x27;*&#x27; , so the placement failure is not due to explicit hostnames in the service specs. However, this is not true. The placement failure occur</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 23:29:03</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello Team, Current Update:  I am currently testing the fixed image shared by Shubha. Steps Followed During Testing: Bootstrapped a Red Hat Ceph Storage 8 cluster. Upgraded the cluster to the image  quay.io/shubhjai/ceph1:hostname_changed_fix . Verif</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 23:35:54</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  Root Cause Identified: The upgrade failure is due to a Dockerfile issue in the test image, NOT a problem with the hostname normalization fix itself. The image incorrectly replaced the downstream cephadm binary (/usr/sbin/cephadm) with the upstream v</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 23:40:01</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Thanks for the clarification.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 03:07:19</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  I tested the branch you shared. Below are my observations: Steps Followed During Testing: Bootstrapped a Red Hat Ceph Storage 8 cluster. [root@AARTINODE-0 ~]# ceph -s
+  cluster:
+    id:     d1857d86-84b9-11f1-84fe-5254003e8899
+    health: </div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 08:52:42</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Sharing the test results from the image you shared:   quay.io/shubhjai/ceph1:hostname-upgrade-fix-ds After upgrading,  ceph orch host rm  correctly recognizes both uppercase and lowercase hostnames. [root@AARTISD-0 ~]# ceph orch host rm AAR</div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 09:37:13</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  Hi Aarti, Thank you for the detailed testing. Building a new image with fixes for the three remaining issues you identified: ceph orch host rm drain message— will now echo back the same hostname case you typed (e.g.,ceph orch host drain AARTISD-0) c</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 03:12:36</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Sharing the test results from the image you shared:  quay.io/shubhjai/ceph1:hostname-regression-fix After upgrading,  ceph config-key dump | grep inventory  correctly displays hostnames in lowercase after normalization. [root@AARTIRT-0 ~]# </div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 03:58:34</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: Verified the latest downstream image with the hostname normalization fixes. The primary issue is resolved: Inventory is normalized to lowercase after upgrade. ceph orch host rm  works with both uppercase and lowercase hostnames. The suggested  ceph o</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 03:57:44</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello Team, The proposed fix mentioned in   is not working completely. Although it compares hostnames in a case-insensitive manner, it subsequently adds the host in lowercase. I&#x27;m currently investigating this corner case and working on a possible fix</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 05:49:40</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Sharing the test results from the image you shared:  quay.io/shubhjai/ceph1:hostname-normalize-fix-issue After upgrading, some command still shows hostname in uppercase after normalisation. [root@AARTIOP-0 ~]# ceph mon stat
+e6: 3 mons at {A</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 05:55:45</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  Thanks, Aarti. The  ceph orch  outputs look good with the current changes ( ceph orch host ls ,  ceph orch ps ,  ceph orch ls --export  are all using normalized lowercase hostnames). The remaining commands ( ceph mon stat ,  ceph quorum_status ,  ce</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 06:27:33</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: Final Update: Tested the hostname normalization changes using the custom image ( quay.io/shubhjai/ceph1:hostname-normalize-fix-issue ) on an upgraded cluster. Verified fixes: ceph orch host ls  displays normalized lowercase hostnames. ceph orch host </div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 06:51:17</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: PR:  https://github.com/ceph/ceph/pull/70346</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 10:31:00</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Based on our discussion on Slack, I&#x27;m sharing the test results after purging the existing OSDs and deploying new OSDs on the same node. osd is deployed under same host crush bucket. 1. osd tree before purge [root@AARTIOP-0 ~]# ceph osd tree</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 10:57:05</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  Thanks, Verified the behavior after upgrading the cluster with the hostname normalization fix. Additional validation was performed by purging an existing OSD and redeploying a new OSD on the same host. Observations: Existing monitor names and CRUSH </div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 01:24:40</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Can we get an update on this issue? Since it&#x27;s a high-priority issue, we&#x27;d appreciate an update on the upstream PR so that we can proceed with the downstream backport.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 09:00:36</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  hello, the PR is under review, will update once it is approved!! Thanks</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 12:26:56</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: PR:    9.2 MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2162 9.1z2 MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2166</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 14:29:14</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(SHUBHA JAIN)</span></div>
 </div>
 
 </body>

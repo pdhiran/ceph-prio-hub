@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16418: Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16418" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16418</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
-    <dt>Assignee</dt><dd>Adam King</dd>
+    <dt>Assignee</dt><dd>Ujjawal Anand</dd>
   </dl></div>
   <div class="meta-card"><dl>
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-07-08</dd>
-    <dt>Updated</dt><dd>2026-07-13</dd>
+    <dt>Updated</dt><dd>2026-07-29</dd>
   </dl></div>
 </div>
 
@@ -182,7 +182,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (8 events)</h2>
+<h2>Timeline (18 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-08 04:13:50</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: PFA for  1. ceph orch ps 2. ceph-volume lvm list</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 06:23:23</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Since the MGR logs do not show any deployment  [ceph-mgr.dal3-qz1-sr3-rk251-s06.dbaczx.log] or reconfiguration [ceph-mgr.dal4-qz1-sr1-rk157-s06.dlqjnc.log] activity for the OSDs that are currently in the  down  state, and the cephadm and ceph-volume </div>
@@ -193,6 +193,16 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-09 08:26:29</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: The  unit.run  file was not created for the OSDs that are in the  down  state. This suggests that the issue differs from what we observed in my test cluster.    [ceph: root@dal1-qz1-sr2-rk132-s06 /]# ceph osd tree down
 ID    CLASS  WEIGHT      TYPE N</div>
 <div class="tl-entry"><span class="tl-date">2026-07-13 01:16:01</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Adam King)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 06:38:15</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Documenting procedure discussed in slack : Please follow the procedure below to bring back the OSDs that are in the down state. I discussed this approach with the team, and it looks good to proceed. Scenario:  Out of 19 OSDs, 15 OSDs have both peers </div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 10:25:32</span><span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi   /   , Please find the validation details for  ceph orch osd rm &lt;osd-id&gt; --force --zap  performed in the development environment to validate the command behavior when the OSD daemon is present and when the OSD daemon is not present. When attempti</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 10:26:21</span><span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: In the production environment, the OSDs that are in the down state and require redeployment do not have the corresponding OSD daemon entries,  unit.run  files, or daemon directories available.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 12:10:00</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , This is expected behavior.  cephadm  only removes daemons that it deployed. It validates the daemon&#x27;s presence by looking it up in its in-memory cache, which is populated by running  cephadm ls  on each host. Since OSD 63,55,41,33 were neve</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 00:58:42</span><span class="tl-badge comment">Comment</span> <strong>Gorantla Ramya Sree</strong>: Hi   , Thanks for the clarification. If that&#x27;s the expected behavior ,my understanding is that in production environment, the OSDs that need to be redeployed do not have the corresponding cephadm-managed daemons,  unit.run  files, or OSD daemon direc</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 01:41:43</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  yes  ceph orch osd rm &lt;osd-id&gt; --force --zap  will not work for production.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 03:09:40</span><span class="tl-badge comment">Comment</span> <strong>Madhusudhan B</strong>: We are unable to ZAP the drive because the operation fails with a  &quot;resource busy&quot;  error. The error is attached below. It appears that some metadata on the drive is preventing the ZAP operation from completing successfully. attached the logs in the </div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 03:10:42</span><span class="tl-badge comment">Comment</span> <strong>Madhusudhan B</strong>: </div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 05:11:37</span><span class="tl-badge comment">Comment</span> <strong>Ujjawal Anand</strong>: Relevant discussion:    This issue is a known race condition in the cephadm OSD deployment logic. During large scale concurrent OSD deployments, cephadms internal OSD map can temporarily lag behind the latest OSD map registered by ceph-volume with th</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 05:11:37</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Ujjawal Anand)</span></div>
 </div>
 
 </body>

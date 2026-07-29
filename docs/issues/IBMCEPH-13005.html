@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13005: [8.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13005" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13005</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Vivek Maurya</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephfs</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-02-05</dd>
-    <dt>Updated</dt><dd>2026-06-18</dd>
+    <dt>Updated</dt><dd>2026-07-23</dd>
   </dl></div>
 </div>
 
@@ -185,11 +185,16 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (3 events)</h2>
+<h2>Timeline (8 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-03 04:28:37</span><span class="tl-badge comment">Comment</span> <strong>Mahesh Mohan</strong>:  can you take a look at this bug?</div>
 <div class="tl-entry"><span class="tl-date">2026-06-18 10:26:44</span><span class="tl-badge comment">Comment</span> <strong>Pavan Rallabhandi</strong>: We are past 8.1z7 RC timelines, moving it to z8.   please provide an update if this is on track.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-18 10:29:23</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Vivek Maurya)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 03:11:28</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Merge Request:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2072</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 22:14:29</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-19.2.1-381. Moving to Test</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 01:36:53</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Test Plan: Verify in Snap schedule and retention, only values M,m,h,d,w,m,y and n are acceptable as time designator. For any other alphabets or chars, appropriate error is reported</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 02:07:45</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: Verified the fix on ceph build 19.2.1-382.el9cp, Logs:   </div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 02:08:47</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Vivek Maurya)</span></div>
 </div>
 
 </body>

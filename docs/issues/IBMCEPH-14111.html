@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14111: [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14111" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14111</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Matthew Benjamin</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-04-21</dd>
-    <dt>Updated</dt><dd>2026-07-09</dd>
+    <dt>Updated</dt><dd>2026-07-21</dd>
   </dl></div>
 </div>
 
@@ -195,7 +195,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (6 events)</h2>
+<h2>Timeline (8 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-08 03:35:50</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , I am able to reproduce this issue locally. Below are the logs along with my analysis of the corresponding code path. Logs: 1.  Bucket stats from Primary and Archive zone Primary zone: [root@aartim-0 ~]# radosgw-admin bucket stats --bucket=j</div>
 <div class="tl-entry"><span class="tl-date">2026-06-08 04:50:01</span><span class="tl-badge comment">Comment</span> <strong>Jose Enrique Gutierrez Mazon</strong>:  thank you very much for your deep dive about the design flow, but, could be added a new bucket attribute to reflect the latest bucket recreation date?. Regards, José Enrique Gutiérrez.</div>
@@ -203,6 +203,8 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-09 00:32:46</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Can we proceed with backporting this PR (  ) to the upstream Umbrella and Tentacle branches? Once it&#x27;s backported upstream, we can then backport it to the downstream branches.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 01:42:55</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 01:42:55</span><span class="tl-badge comment">Comment</span> <strong>Jose Enrique Gutierrez Mazon</strong>: Hi   , Thank you for the update I will ping the customer. Regards, José Enrique Gutiérrez.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 04:02:18</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 04:02:18</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Could you help me with this? We&#x27;d like to backport these changes to the downstream branch.</div>
 </div>
 
 </body>

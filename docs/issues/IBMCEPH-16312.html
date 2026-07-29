@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16312: [Denali]NFS daemons crashing with error &quot;Expected a number, got a double quoted string&quot; while upgrading from version 8 to 9</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16312" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16312</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
-    <dt>Assignee</dt><dd>Sachin Punadikar</dd>
+    <dt>Assignee</dt><dd>Naresh Chillarege</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Components</dt><dd>nfs-ganesha</dd>
+    <dt>Components</dt><dd>nfs-ganesha, cephadm</dd>
     <dt>Versions</dt><dd>N/A</dd>
     <dt>Created</dt><dd>2026-06-30</dd>
-    <dt>Updated</dt><dd>2026-07-08</dd>
+    <dt>Updated</dt><dd>2026-07-28</dd>
   </dl></div>
 </div>
 
@@ -190,12 +190,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (3 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-30 10:03:20</span><span class="tl-badge comment">Comment</span> <strong>Ashish Singh</strong>: Here’s the log sequence for this issue: Logs sequence: Upgrade is triggered Jun 30 07:10:36 multi80-site1 ceph-mon[2640540]: Upgrade: Started with target cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:latest &lt;--- Upgrade started
 Jun 30 07:10:36 multi80-site1 cep</div>
 <div class="tl-entry"><span class="tl-date">2026-07-02 06:54:03</span><span class="tl-badge comment">Comment</span> <strong>Manimaran M</strong>: Steps to Reproduce from QE Environment Cluster:  ceph-mani-ibm-81z7 Source version(8.1z7):  ceph version 19.2.1-375.el9cp  (squid / Ceph 8) Target version(9.0z3):  ceph version 20.1.0-221.el9cp  (tentacle / Ceph 9) Source image:  cp.stg.icr.io/cp/ibm</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 01:17:13</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Sachin Punadikar)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 05:35:18</span><span class="tl-badge comment">Comment</span> <strong>Neha Gangadhar</strong>:  can you please port the fix to 9.2 branch as well. thank you.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 09:39:42</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Naresh Chillarege)</span></div>
 </div>
 
 </body>

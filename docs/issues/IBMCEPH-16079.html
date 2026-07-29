@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16079: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16079" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16079</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Guillaume ABRIOUX</dd>
   </dl></div>
   <div class="meta-card"><dl>
     <dt>Components</dt><dd>cephadm</dd>
-    <dt>Versions</dt><dd>N/A</dd>
+    <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-06-18</dd>
-    <dt>Updated</dt><dd>2026-07-14</dd>
+    <dt>Updated</dt><dd>2026-07-24</dd>
   </dl></div>
 </div>
 
@@ -196,7 +196,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (26 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-23 04:50:14</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the Ceph volume logs below are the observation: Zapping /dev/nvme4n1  [2026-06-18 11:39:46,462][ceph_volume.main][INFO  ] Running command: ceph-volume  lvm zap /dev/nvme4n1 --destroy
 
@@ -226,6 +226,11 @@ loop0                                            </div>
 <div class="tl-entry"><span class="tl-date">2026-07-07 13:41:34</span><span class="tl-badge comment">Comment</span> <strong>Adam King</strong>:  There’s a lot of info on here I’m trying to pick up. I saw this tracker    with a PR that includes this comment         # ceph-volume registers new OSDs with the monitor before returning.
         # the mgr&#x27;s view of the osd map can briefly lag, so g</div>
 <div class="tl-entry"><span class="tl-date">2026-07-14 09:48:11</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 13:51:03</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , I don&#x27;t believe the stale OSD UUID/LV reference scenario is related to  Bug #75965 . In  Bug#75965 , the issue appears to be that cephadm skips deployment because the newly created OSD IDs are temporarily missing from  osd_uuid_map  due to an O</div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 14:00:47</span><span class="tl-badge comment">Comment</span> <strong>Adam King</strong>:  okay, has anyone tried reproducing this on an upstream main image? Even if the issues are different having that known issue also related to incorrect UUIDs present makes this harder to debug. Even when we figure out what’s happening in this separate</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 03:51:47</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,   and     were created to track the issue that the Acadia team encountered in both the production and test environments. In both cases, the OSD deployment was skipped, and the  unit.run  file for the affected OSDs was not created. From the </div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 06:51:12</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , should we procced backport upstream PR     in downstream 9.1?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 08:05:56</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
 </div>
 
 </body>

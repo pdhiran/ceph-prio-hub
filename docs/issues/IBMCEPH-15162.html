@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15162: In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log message.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>8.1z6</dd>
     <dt>Created</dt><dd>2026-05-24</dd>
-    <dt>Updated</dt><dd>2026-06-24</dd>
+    <dt>Updated</dt><dd>2026-07-23</dd>
   </dl></div>
 </div>
 
@@ -189,7 +189,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (6 events)</h2>
+<h2>Timeline (7 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-05-24 10:36:38</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>: Log Details: OSD logs generated with debug level 20 -    Automation log -    Automation script location -   </div>
 <div class="tl-entry"><span class="tl-date">2026-06-04 14:17:09</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  I have some questions about the problem description, in the user-initiated scrub operation test, you have to set osd_scrub_load_threshold to 0, however, if you do such a thing scrub_load_below_threshold:.* = no , should be what you are receiving in </div>
@@ -197,6 +197,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-17 17:36:35</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Issue appears to be that the code which generates “operator-requested” log was introduced only in ceph 9.x and is not present in ceph 8.x,  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/2b6e1dd90b73bf1db16f9ee1b7ad519be3ca97ba . Will need to furth</div>
 <div class="tl-entry"><span class="tl-date">2026-06-24 17:31:20</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  I’ve confirmed that ceph 8.x functionality is fine, it’s just the logging is different due to the new SchedEntry system in ceph 9.x that introduces “operator-requested”, I think we should update the ceph ci script to look for both “operator-requeste</div>
 <div class="tl-entry"><span class="tl-date">2026-06-24 17:36:04</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 19:05:33</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  any updates on this?</div>
 </div>
 
 </body>

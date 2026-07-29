@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13663: Mon slow ops due to forwarded log entry stuck waiting on leader mon response</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-03-31</dd>
-    <dt>Updated</dt><dd>2026-06-30</dd>
+    <dt>Updated</dt><dd>2026-07-29</dd>
   </dl></div>
 </div>
 
@@ -190,7 +190,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (15 events)</h2>
+<h2>Timeline (19 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-04-01 16:58:19</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: Could you make the logs from at least all of the monitors available please   ?</div>
 <div class="tl-entry"><span class="tl-date">2026-04-02 00:38:30</span><span class="tl-badge comment">Comment</span> <strong>Kinjal Dhaduk</strong>: Hi   , Could you please let me know what all logs are needed? ( ceph daemon mon.&lt;&gt; ops  from all mon?) We do not have the setup now. I need to reproduce the issue and collect logs.</div>
@@ -207,6 +207,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-04-23 16:40:24</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1734</div>
 <div class="tl-entry"><span class="tl-date">2026-06-30 09:28:36</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: Moving to 7.1z11 as 7.1z10 has been released. See   for 7.1z10 release information.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-30 21:12:39</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(Brad Hubbard)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 01:17:05</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: hi   Can we prioritize the fix to be available downstream? Due to this issue, CephFS 7.1 to 9.1/9.2 upgrade test is having consistent impact, seen at different stages in each run, After cluster deploy, ceph status reports “ 1 slow ops, oldest one blo</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 20:10:50</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>:  Are you saying you need it  before  the z11 release?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 23:37:12</span><span class="tl-badge comment">Comment</span> <strong>Suma R</strong>: hi   fix availability with 7.1z11 is fine, as we found the upgrade to succeed with high-end ibmc cloud profile. So, we will run through it until issue is fixed.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 02:37:33</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: Bumping priority since it has been promised for z11</div>
 </div>
 
 </body>

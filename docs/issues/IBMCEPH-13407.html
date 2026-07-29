@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13407: [IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13407" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13407</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-dashboard</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-03-09</dd>
-    <dt>Updated</dt><dd>2026-07-08</dd>
+    <dt>Updated</dt><dd>2026-07-27</dd>
   </dl></div>
 </div>
 
@@ -203,7 +203,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (24 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-03-11 06:24:49</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , I tried reproducing the issue on ceph version 20.1.0-145.el9cp tentacle , and both  Cluster → Pool List  and  Block → Images  in the dashboard are accessible without any issues. To help with further debugging, could you please provide the  Cep</div>
 <div class="tl-entry"><span class="tl-date">2026-03-12 04:17:15</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello    The sos-report from MGR node with dashboard debug logs enabled is present below in ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-sceph03-TS021586859-2026-03-12-xxrllfk.tar.xz_unpack/sosreport-sceph03-TS021586859-2026-03-12-xx</div>
@@ -228,6 +228,9 @@ Mar 11 14:25:29 sceph03 ceph-mgr[3332502]: [dashboard ERROR exception] Internal 
 <div class="tl-entry"><span class="tl-date">2026-07-08 03:27:02</span><span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:    can you create the backport bugzilla’s and mark them blockers. in respective releases</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 03:27:13</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Please create a clone of this and set the target version to 9.1z2.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 07:59:27</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 04:25:12</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Downstream PR link:  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/5a09367ba311a2eb06a720aa0d4d7859c8617c99</div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 13:27:24</span><span class="tl-badge comment">Comment</span> <strong>Vinayak Papnoi</strong>: Build version: 20.2.2-124.el10cp The dashboard is loading as expected and there is no “500” error observed while accessing the &quot;Cluster/Pool List&quot; and &quot;Block/Images&quot; pages. Hence, moving the bug to VERIFIED.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 13:27:28</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 </div>
 
 </body>

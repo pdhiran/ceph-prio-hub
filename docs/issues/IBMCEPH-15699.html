@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15699: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15699" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15699</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Abhishek Desai</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-dashboard, management &amp; ui</dd>
     <dt>Versions</dt><dd>9.0z2</dd>
     <dt>Created</dt><dd>2026-06-03</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-07-20</dd>
   </dl></div>
 </div>
 
@@ -200,7 +200,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (17 events)</h2>
+<h2>Timeline (23 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-03 01:39:10</span><span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: while uploading the cert.pem file, we are encountering the error appeared in the screenshot.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-03 03:02:42</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>:  can you upload mgr logs ?</div>
@@ -221,6 +221,12 @@ Traceback (most recent call last):
 <div class="tl-entry"><span class="tl-date">2026-07-02 10:42:48</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Desai</strong>:  yes</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 10:42:40</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: If we haven’t fixed anything in 9.2 branch then I am not sure why build team even picked this Jira.   As the issue is not seen with 9.2, issue is already fixed in current release or we can say it is not a bug for 9.2.  Ideally in these kind of  situa</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 10:59:08</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Abhishek Desai)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 14:41:09</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Desai</strong>: I have raised a revert PR for the changes :  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2051</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 01:57:43</span><span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Hi       We did some investigation in lab on this, identified that the issue appears to be related to the SSL trust store available inside the  ceph-mgr  container rather than the RGW service itself. Observations: The RGW endpoint is configured with </div>
+<div class="tl-entry"><span class="tl-date">2026-07-19 00:53:45</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues? The Dashboard does not display the SSL certificate configured for the RGW service. Uploading an SS</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 03:20:19</span><span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Hi       We verified that uploading the RGW certificate (PEM file) through the Dashboard was successful after mounting the required certificate files inside the  ceph-mgr  container. During our testing, we did  not  encounter the HTTP 500 Internal Se</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 06:38:06</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Thanks   for the update. closing the Jira as issue is resolved in  9.9.1.0.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 06:38:33</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Abhishek Desai)</span></div>
 </div>
 
 </body>

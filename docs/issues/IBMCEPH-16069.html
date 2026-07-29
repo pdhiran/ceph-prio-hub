@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16069: During upgrade from 8.1z3 to 8.1z5, monitor state is changing to managed from unmanaged</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16069" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16069</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
-    <dt>Assignee</dt><dd>Adam King</dd>
+    <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
   <div class="meta-card"><dl>
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>N/A</dd>
     <dt>Created</dt><dd>2026-06-17</dd>
-    <dt>Updated</dt><dd>2026-07-10</dd>
+    <dt>Updated</dt><dd>2026-07-24</dd>
   </dl></div>
 </div>
 
@@ -195,7 +195,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (7 events)</h2>
+<h2>Timeline (9 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-18 12:04:22</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello, I tried reproducing this issue locally by upgrading the cluster from 8.1z3 to 8.1z6, but the issue is not reproducible at my end. The MONs remained unmanaged after the upgrade. Logs: [root@aartimon-0 ~]# ceph orch ls
 NAME           PORTS      </div>
@@ -205,6 +205,8 @@ NAME           PORTS      </div>
 <div class="tl-entry"><span class="tl-date">2026-06-24 07:43:04</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Based on the output of  ceph quorum_status ,  mon dump ,  ceph orch ps --daemon-type mon , and  cephadm ls , it appears that the MON daemons are deployed successfully. We can see that all five MONs are up and running. [ceph: root@dal1-qz1-s</div>
 <div class="tl-entry"><span class="tl-date">2026-06-24 07:57:07</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , With the current logs, we are unable to confirm whether the MON service transitioned from an unmanaged to a managed state. For further investigation, would it be possible to reproduce the issue and share the logs from before and after the u</div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 04:05:49</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Adam King)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 11:08:26</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Can we close this issue for now? If the same issue is encountered again in the future, we can reopen it. Based on the current logs, we can&#x27;t confirm whether the monitor transitioned from unmanaged to managed state.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 11:08:33</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 </div>
 
 </body>

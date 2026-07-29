@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>6.1, 8.1</dd>
     <dt>Created</dt><dd>2026-04-24</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-07-29</dd>
   </dl></div>
 </div>
 
@@ -194,7 +194,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (28 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-18 03:45:35</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  The upgrade is currently on hold due to CVE remediation. Please let us know if there is any additional data we should collect.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-18 05:18:54</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this </div>
@@ -217,6 +217,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-15 00:10:19</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,   and I discussed this issue internally, and we&#x27;d like to access the setup where you reproduced the issue. Could you please share the setup details?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 03:00:01</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 03:00:01</span><span class="tl-badge comment">Comment</span> <strong>Kenji Fujii</strong>:   Hi Aarti, Thank you for your message. Yuka is currently on leave, and it appears that the test environment used for the reproduction has already been removed, so it is no longer available for direct access. Could you please clarify what specific in</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 05:24:34</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hi   , Thanks for the update. In the meantime, I&#x27;ll go through the debug logs. If possible, could you set up this environment again? That would be helpful in identifying the root cause of the issue.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 03:05:17</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  First, I would like to correct my previous statement. We confirmed that the ceph-mon CPU usage is trending upward on both the server currently being upgraded from Ceph 6.1 and the Ceph 8.1 server. The two graphs attached to the JIRA ticket show thes</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 04:21:19</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:   The Ceph 6.1 setup has been completed. The server information is the same as above. Thank you.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-24 11:01:30</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: We confirmed that the ceph-mon CPU usage is trending upward on both the server currently being upgraded from Ceph 6.1 and the Ceph 8.1 server. The two graphs attached to the JIRA ticket show these trends. They contain approximately one week of data. </div>
+<div class="tl-entry"><span class="tl-date">2026-07-26 20:37:14</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hello  ,  Your understanding of the first scenario is correct. For the second scenario, the Ceph 8.1 environment was newly deployed rather than upgraded from Ceph 6.1. We also observed the upward trend in MON CPU usage in this newly deployed environm</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 05:23:10</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hello   , The customer asked me to pass along the following message: They are currently upgrading to Ceph 8.1. Once the upgrade is complete, they will be able to collect any required data. Please share the commands you would like them to run.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 06:49:00</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Thanks for the update on the customer environment. For your test environment, could you please share the following details? I can see the CPU usage is around 40% on the leader MON running Ceph 6.1. Lead Mon: [root@ceph-0 ~]# ceph version
+ce</div>
 </div>
 
 </body>

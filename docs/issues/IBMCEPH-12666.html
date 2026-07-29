@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12666: [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -212,7 +212,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (16 events)</h2>
+<h2>Timeline (17 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2025-12-01 22:30:13</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: Created  attachment 2117038  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2117038&amp;action=edit ] cluster logs from node1</div>
 <div class="tl-entry"><span class="tl-date">2025-12-01 23:41:32</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: Core dump and logsa are copied here :  http://magna002.ceph.redhat.com/ceph-qe-logs/bz-2418230/</div>
@@ -234,6 +234,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-14 20:48:09</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>: After looking at this from multiple different angles and analysing the data we currently have (still waiting on debug data) I’m beginning to think that this is likely a downstream consequence of the issue being investigated in    Whilst I don’t have </div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 03:56:20</span><span class="tl-badge comment">Comment</span> <strong>Bill Scales</strong>: This is definitely  not  related to   , this is a bug in the Peering state machine - it has received a stimulus (peering event) while in a state which does not support that stimulus. This cannot be debugged from just a stack backtrace, debugging it f</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 03:56:20</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Brad Hubbard)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-15 16:45:52</span><span class="tl-badge comment">Comment</span> <strong>Brad Hubbard</strong>:  OK, thanks for your thoughts. If you don’t think it is possible the proc_lease race may be producing corrupted state that then manifests as a bad stimulus then we will await further data or developments then.</div>
 </div>
 
 </body>

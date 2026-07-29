@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16176: RGW cluster brownout and GetObject latency observed (10+ minutes)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-06-23</dd>
-    <dt>Updated</dt><dd>2026-06-30</dd>
+    <dt>Updated</dt><dd>2026-07-21</dd>
   </dl></div>
 </div>
 
@@ -182,12 +182,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (4 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-23 23:00:12</span><span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Questions customer provided in case How do we debug this? What logs, perf counters, or commands should we run to figure out where the 11 minutes were being spent? (RGW request logs, OSD slow-op dumps, bucket-index state, network counters, anything el</div>
 <div class="tl-entry"><span class="tl-date">2026-06-23 23:01:37</span><span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Reviewed with Prashant and he provided the following analysis from the first set of logs: We do not see any GET op taken more than 2min to complete. Based on the provided logs, we do not observe any GET operations blocked at the RADOS/RGW layer for d</div>
 <div class="tl-entry"><span class="tl-date">2026-06-24 00:02:43</span><span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Customer has provided additional logs in the following  upload on ecurep /ecurep/sf/TS022/306/TS022306910/0-all_data/IBM_TS022306910_2026-05-20-case-window_correction_2.zip_unpack/IBM_TS022306910_2026-05-20-case-window_correction files included -  bu</div>
 <div class="tl-entry"><span class="tl-date">2026-06-30 05:25:47</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 14:55:28</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>:    given this diagnosis from support, can we please re-assign this in some way?  There doesn’t seem to be evidence of an engineering defect in RGW.</div>
 </div>
 
 </body>

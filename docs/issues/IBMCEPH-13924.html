@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13924: NFS client caching causes getattr error in clustered ganesha</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>nfs-ganesha</dd>
     <dt>Versions</dt><dd>8.0</dd>
     <dt>Created</dt><dd>2026-04-13</dd>
-    <dt>Updated</dt><dd>2026-04-20</dd>
+    <dt>Updated</dt><dd>2026-07-28</dd>
   </dl></div>
 </div>
 
@@ -188,10 +188,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (2 events)</h2>
+<h2>Timeline (3 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-04-20 03:07:00</span><span class="tl-badge comment">Comment</span> <strong>Sachin Punadikar</strong>: NFS Client side disabling caching would lead to performance hit for sure. By default the dentry caching is valid for min 30 secs upto 60 seconds. This might be leading to the failure. This caching time can be reduced by setting actimeo option in moun</div>
 <div class="tl-entry"><span class="tl-date">2026-04-20 04:19:22</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Sachin Punadikar)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 13:29:50</span><span class="tl-badge comment">Comment</span> <strong>Jeff Smith</strong>: In another thread it was reported that the removal of the temp dir failed because it was not empty.   It contained some files with names that started with .nfs.   The files starting with .nfs represent files that were removed while a process still ha</div>
 </div>
 
 </body>

@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10122: [BZ#2321531] CBT Help output refers to a command which does not exist.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2024-10-24</dd>
-    <dt>Updated</dt><dd>2026-07-12</dd>
+    <dt>Updated</dt><dd>2026-07-23</dd>
   </dl></div>
 </div>
 
@@ -191,7 +191,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (6 events)</h2>
+<h2>Timeline (10 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2024-10-24 10:35:17</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Also, I forgot to mention: ``` [quickcluster@mgmt-0 ~]$ sudo ceph tell osd.1 bluestore allocator fragmentation block { &quot;fragmentation_rating&quot;: 0.38713202856918694 } [quickcluster@mgmt-0 ~]$ sudo ceph tell osd.1 bluestore allocator score block { &quot;frag</div>
 <div class="tl-entry"><span class="tl-date">2025-08-06 13:57:37</span><span class="tl-badge comment">Comment</span> <strong>Radoslaw Zarzynski</strong>: Hi @jprakash@redhat.com! Would you mind taking a look? If need help, please reach out to me anytime.</div>
@@ -199,6 +199,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-12 04:01:32</span><span class="tl-badge comment">Comment</span> <strong>Prachi Lasurkar</strong>: Regarding ‘fragmentation_rating’ changes, I’ve created an upstream tracker for that.    We have new Jira created for this issue-    I’ll make the changes in upstream and backport it to latest downstream version.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-30 04:30:43</span><span class="tl-badge comment">Comment</span> <strong>Prachi Lasurkar</strong>: The  free-fragmentation  issue has been fixed in the latest Ceph version ( 20.1.0 / tentacle ). I have also confirmed that the fix is present in the 9.1 downstream version. However, the fix is  not present in 8.1 . Could you please advise whether thi</div>
 <div class="tl-entry"><span class="tl-date">2026-07-12 23:53:05</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prachi Lasurkar)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 01:44:33</span><span class="tl-badge comment">Comment</span> <strong>Prachi Lasurkar</strong>:  The change is already present in the 9.1 downstream branch. Would you recommend cherry-picking it into the 8.1 downstream branch as well? Based on your recommendation, I&#x27;ll either proceed with the cherry-pick or close this Jira ticket.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 16:51:21</span><span class="tl-badge comment">Comment</span> <strong>Radosław Zarzyński</strong>: When it comes to backporting, there is a comment in similar ticket:   .</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 09:16:31</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: I suppose that it would make sense to backport to 8.1, as the main issue we faced in the past with fragmentation is MOD, and it would be a while until they upgrade to 9.1. So if it’s only cherrypicking and not much work, then I’d be happy if we can g</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 09:16:41</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: @rados, sorry, forgot to ping you</div>
 </div>
 
 </body>

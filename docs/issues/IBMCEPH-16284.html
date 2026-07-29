@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16284: Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-ansible</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-06-29</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-07-23</dd>
   </dl></div>
 </div>
 
@@ -180,12 +180,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (4 events)</h2>
+<h2>Timeline (12 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-29 09:01:22</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>: We can skip Skip firewalld: ansible-playbook -i hosts cephadm-preflight.yml \ --extra-vars &quot;ceph_origin=rhcs cephadm_preflight_manage_firewall=false&quot;</div>
 <div class="tl-entry"><span class="tl-date">2026-06-29 09:07:23</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>: Reference: [1]     [2]   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 05:30:15</span><span class="tl-badge comment">Comment</span> <strong>Raimund Sacherer</strong>: Hello   ,  That looks good to me. It is sensible to have a variable to deactivate startup of the firewall if one does not desire firewalld to be running.  The pre-flight ansible script should be an idempotent script checking if all necessary conditio</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 08:15:40</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 00:31:55</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi Team, I&#x27;m looking into this and will provide an update shortly. Thanks!</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 23:36:31</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Please be informed that we are addressing this use case as part of the ongoing PR associated with.  [IBMCEPH-13852] Preflight playbook should not force-enable firewalld (make it configurable/conditional) - Jira  The related Jira ticket is alrea</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 23:46:18</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>: Hi   , Thanks for the update. Just to confirm, we will track the progress of this issue over on the Jira    further right? If so , are we good to close this Jira then ?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 00:40:02</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi @KISHORE KUMAR S, Once the PR is approved and merged, we can close both JIRAs. Thanks!</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 00:45:21</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>: Hi    Yea sure. Thanks for the update .</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 20:13:32</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>: HI   can i share the below workaround to customer ?  By setting setting  enabled: false  before running the  preflight  playbook. # cephadm-preflight.yml
+- name: Ensure firewalld is enabled and running
+  ansible.builtin.systemd:
+    name: firewalld
+ </div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 00:21:20</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Yes, you can share it as a  temporary workaround . However, please make it clear that this is  not an ideal or permanent solution . You can mention that this workaround is intended only as an interim measure while we work on a proper fix to sup</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 00:24:21</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>: Hi    Thanks for the confimation</div>
 </div>
 
 </body>

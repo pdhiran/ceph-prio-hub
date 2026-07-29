@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15751: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15751" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15751</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-mgr/orchestrator</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-06-05</dd>
-    <dt>Updated</dt><dd>2026-07-14</dd>
+    <dt>Updated</dt><dd>2026-07-29</dd>
   </dl></div>
 </div>
 
@@ -193,7 +193,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (17 events)</h2>
+<h2>Timeline (23 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-05 07:18:07</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   please have a look</div>
 <div class="tl-entry"><span class="tl-date">2026-06-08 06:52:17</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [Internal - do not share with customer] From the initial analysis looks like is_error() function in inventory.py assumes a strict nested dictionary structure (status[&#x27;status&#x27;[&#x27;health&#x27;]). However, data from node-proxy cache is sometimes malformed, con</div>
@@ -217,6 +217,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-07 06:46:25</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  hey, please review my last comment and let me know how you want this to be handled. Should I simply make it a doc bug or a new Jira for doc needs to be raised?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-14 09:53:38</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-14 09:53:38</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: hello      We have checked with the customer and they update that the customer is using the storage ready nodes on the dell hardward. We validated the same in the logs as well that the server are dell servers.  $ less sosreport-lxcephdev01-TS02227506</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 08:15:20</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Yes, please. Ask the customer to test on 9.1 before they upgrade this cluster.   And this information should have come right at the time when we started talking if we can support this hardware or not.  We just wasted almost a month sitting on it. </div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 08:58:34</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  Is this a specific Ready Nodes issue? I think that we can just add a statement there.  please take a look as well</div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 09:06:02</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Yes, please. Ask the customer to test on 9.1 before they upgrade this cluster. Sure, Bipin. I&#x27;ll update the customer accordingly and get back to you with the results. And this information should have come right at the time when we started talking if </div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 05:48:17</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello     , We checked with the customer, they informed that they are currently on plan to upgrade 8.1 and they do not have any plans to upgrade their clusters to 9.x release. So they agreed to wait until they are ready to install the 9.1 release and</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 05:54:23</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Thanks    Thanks for the update. Closing the Jira for now. We&#x27;ll open a new issue if the customer encounters the same issue after upgrading to 9.x.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 05:54:34</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 </div>
 
 </body>

@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16552: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16552" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16552</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0z2</dd>
     <dt>Created</dt><dd>2026-07-15</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-07-23</dd>
   </dl></div>
 </div>
 
@@ -182,9 +182,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (11 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-15 08:08:47</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-16 16:57:43</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: RCA: It’s hard to determine exactly what caused this runtime condition due to the logs not being during the failure event, but the traceback makes it clear that the stored specs was changed during the serve loop&#x27;s orphan daemon clean up, so likely a </div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 00:27:51</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello   , We have some questions/concerns from the cloud engineering for which they would like some clarification as currently they had done the mgr fail to resolve the health warning. Hi Team,
+Could you please help us with answers to the below quest</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 18:29:35</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:   While the cephadm module is in the failed (HEALTH_ERR) state, are any cephadm-driven operations (daemon placement, OSD addition/removal, service reconciliation, host inventory updates, etc.) skipped, queued, or blocked? Once ceph mgr fail is execut</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 18:50:02</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:   - Could you please help us understand the customer impact and data path impact of the following issue? Data path shouldn’t be impacted unless other daemons go down while cephadm module is down, the direct affects of cephadm module down is control p</div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 18:51:46</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  let me know if you’re confused by any of the responses and I can clarify more.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-20 01:33:12</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>:  let me know if you’re confused by any of the responses and I can clarify more. Thank you   for clarifying the questions. They all make sense to me, and I will get back if have any follow ups. Regards, Kritik Sachdeva</div>
+<div class="tl-entry"><span class="tl-date">2026-07-21 18:46:34</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: PR:    Change should fix the general issue of  RuntimeError: dictionary changed size during iteration</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 05:48:18</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  The PR is for ceph:main. So would this ticket be used for 9.2 target version?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 11:39:38</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  The PR is for ceph:main. So would this ticket be used for 9.2 target version?  Yes</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 12:04:47</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

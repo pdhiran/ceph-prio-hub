@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15003: [8.1z Backport] Mon daemons do not get updated with public_network set via config set upon restart</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15003" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15003</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ON_QA</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-05-20</dd>
-    <dt>Updated</dt><dd>2026-07-09</dd>
+    <dt>Updated</dt><dd>2026-07-27</dd>
   </dl></div>
 </div>
 
@@ -183,11 +183,15 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (3 events)</h2>
+<h2>Timeline (7 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-07 04:11:57</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  is this still being fixed for 8.1z7? If yes - if it needs to be documented, we can use the RN doc fix text provided from 9.1z1 Cause: mon daemon configs don&#x27;t update dynamically Consequence: when a user updates a config like public_network it won&#x27;t </div>
 <div class="tl-entry"><span class="tl-date">2026-06-08 10:27:41</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Likely not, 8.1z7 is on blocker and I was waiting for 9.1z1 to avoid regression. Moving to 8.1z8.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 13:52:06</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 06:58:06</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Are you still planning to fix this in 8.1z8? If not, please move to 8.1z9. Since the 9.2 PR is merged, probably you should backport even when not a blocker, but I think it&#x27;s a regression, hence blocker.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 12:42:02</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  will do</div>
+<div class="tl-entry"><span class="tl-date">2026-07-23 12:46:52</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Merged:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2105</div>
+<div class="tl-entry"><span class="tl-date">2026-07-27 15:41:55</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

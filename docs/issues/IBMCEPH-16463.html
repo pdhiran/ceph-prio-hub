@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16463: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>smb, smb/samba</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-07-09</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-07-28</dd>
   </dl></div>
 </div>
 
@@ -187,7 +187,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (17 events)</h2>
+<h2>Timeline (18 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-09 03:52:31</span><span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: Ravinder,  Can you share the cluster configuration? ie. the output of the “ceph smb show” command? This will help us identify how the smb cluser is set up.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 03:57:47</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>:  checking with CU on case.</div>
@@ -216,6 +216,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-15 01:04:08</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Thanks Team!  We have small query from Customer. -- We will test the change proposed &quot;--casesensitive=0&quot; New subvolumegroup + subvolumes Like this ceph fs subvolumegroup create production smb1-production_ci --casesensitive=0 ceph fs subvolume create </div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 01:21:19</span><span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>: Question: creating subvolumegroup with --casesensitive=0 will that give automatic inheritance on subvolumes ?  Yes, that&#x27;s correct. Subvolumes created within a subvolume group inherit the case-sensitivity attribute from the group&#x27;s properties.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 01:30:31</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-17 01:12:50</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Thank you so much   and Team. We got below reply from Customer. Its working well for them now. We would like keep this JIRA open for a week or until their sync does not complete. As disscussed, I also informed them now to create new subvolume. --part</div>
 </div>
 
 </body>

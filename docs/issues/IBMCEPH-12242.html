@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12242: [BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12242" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12242</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ON_QA</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2025-09-30</dd>
-    <dt>Updated</dt><dd>2026-07-10</dd>
+    <dt>Updated</dt><dd>2026-07-28</dd>
   </dl></div>
 </div>
 
@@ -193,7 +193,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (20 events)</h2>
+<h2>Timeline (22 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2025-09-30 01:55:11</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: This bug report has Keywords: Regression or TestBlocker. Since no regressions or test blockers are allowed between releases, it is being proposed as a blocker for this release. Please resolve \triage ASAP.</div>
 <div class="tl-entry"><span class="tl-date">2025-09-30 01:57:29</span><span class="tl-badge comment">Comment</span> <strong>Pawan Dhiran</strong>: Radik, can you please take a look?  The issue was seen in 8.1, 9.0 &amp; Upstream tentacle builds as well. ceph version ceph version 19.2.1-274.el9cp (3a2f1cec313e6abbd90d9260bd5e0e866817c3c7) squid (stable) ceph version ceph version 20.1.0-27.el9cp (265</div>
@@ -215,6 +215,8 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-08 10:23:00</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  I&#x27;ll update the new release note. </div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 13:29:18</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Merged:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2024</div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 09:26:09</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 02:14:00</span><span class="tl-badge comment">Comment</span> <strong>Harsh Kumar</strong>: Verified the fix with 9.2 build - ceph version 20.2.2-118.el10cp Upon setting the public_network at global level, the mon daemons honour the new settings after restart, as can be seen in the output of ceph config show command. # ceph config help publ</div>
+<div class="tl-entry"><span class="tl-date">2026-07-28 23:39:46</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

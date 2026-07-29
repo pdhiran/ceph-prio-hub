@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15746: [9.2] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-15 17:00 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,13 +98,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0z2</dd>
     <dt>Created</dt><dd>2026-06-04</dd>
-    <dt>Updated</dt><dd>2026-07-10</dd>
+    <dt>Updated</dt><dd>2026-07-22</dd>
   </dl></div>
 </div>
 
 <div style="margin:0.5rem 0;">
   <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
-  <div class="label-list"><span>Ceph_L3</span><span>Hotfix_requested</span><span>IBM_Customer_Issue</span></div>
+  <div class="label-list"><span>Ceph_L3</span><span>Hotfix_requested</span><span>IBM_Customer_Issue</span><span>Hotfix_Delivered</span></div>
 </div>
 
 <div class="qa-section">
@@ -198,7 +198,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (23 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-05 01:43:08</span><span class="tl-badge comment">Comment</span> <strong>Sahina Bose</strong>:  can you check - seems like a side effect of cert-mgr changes?</div>
 <div class="tl-entry"><span class="tl-date">2026-06-05 02:28:11</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Hi  , technically the field  rgw_frontend_ssl_certificate  is deprecated in new versions (ssl_cert/ssl_key) must be used. But cephadm and certmgr code has logic to support this legacy field (in case it’s found it’s split into ssl_cert/ssl_key automat</div>
@@ -231,6 +231,10 @@ service_name: rg</div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 02:56:41</span><span class="tl-badge comment">Comment</span> <strong>Yuva Teja Sree Gayam</strong>:  cluster ip [REDACTED-IP-5d011c70] password: [REDACTED-CREDENTIAL] and spec in the doc  https://docs.google.com/document/d/1i5L7cgKpXJ3VRLPFAXn4LJYOsWc-KhOd4Qgh1CdqXwg/edit?usp=sharing</div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 04:52:16</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 04:52:16</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: I fixed the issue with EC private keys check with the MRs: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2028  (9.0 branch) https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2029  (9.1 branch)</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 09:29:05</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Hotfix testing was completed and hotfix was passed to the customer prior to testing qualification for parallel testing For bookkeeping, I am adding the hotfix details here : Initial request : Hello Team,
+
+We have a HF request for customer Apple https</div>
+<div class="tl-entry"><span class="tl-date">2026-07-22 09:33:43</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   This is a proposed blocker for 9.2. Now that hotfix testing is complete, please merge your patches to 9.2 branch as soon as possible. </div>
 </div>
 
 </body>

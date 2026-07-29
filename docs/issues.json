@@ -1,116 +1,6 @@
 {
-  "generated": "2026-07-15T17:00:02.066703Z",
+  "generated": "2026-07-29T12:02:05.661868Z",
   "issues": [
-    {
-      "issue_id": "638bc5aa9a08484d",
-      "jira_key": "IBMCEPH-15699",
-      "summary": "[IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "37d1c7f9fd2e4e81",
-      "jira_key": "IBMCEPH-15734",
-      "summary": "[9.1z] [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error",
-      "status": "Closed",
-      "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "f68839753d3d4a26",
-      "jira_key": "IBMCEPH-16564",
-      "summary": "Ceph Stretch Cluster Upgrade RHCS 6.1z6 -> RHCS 6.1z9 -> IBM Ceph 6.1z9 -> IBM Ceph 8.1z6",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "83f803e5b4f04719",
-      "jira_key": "IBMCEPH-12594",
-      "summary": "[BZ#2425712] [IBM_Support] [SMB] Access control for SMB AD share",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "8a917076ea4f4df8",
-      "jira_key": "IBMCEPH-16284",
-      "summary": "Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "ca4d93bcb1634ac7",
-      "jira_key": "IBMCEPH-16552",
-      "summary": "Module 'cephadm' has failed: dictionary changed size during iteration",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "2dc4800fe1b14321",
-      "jira_key": "IBMCEPH-16468",
-      "summary": "The Ceph Grafana dashboard is not showing any data for RGW and RBD.",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "7ec24a4047a44fe0",
-      "jira_key": "IBMCEPH-16535",
-      "summary": "hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P0"
-    },
-    {
-      "issue_id": "7d6cf5990f11420e",
-      "jira_key": "IBMCEPH-13197",
-      "summary": "Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "923e011cedae4081",
-      "jira_key": "IBMCEPH-12666",
-      "summary": "[BZ#2418230] Several OSDs crashed in assert_func: \"PeeringState::Crashed::Crashed\"",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "6a6ecd7c35054a2a",
-      "jira_key": "IBMCEPH-13721",
-      "summary": "Ceph-CSI RBD Volume Mount Failure After Update to 3.16 \u2013 \"rbd: sysfs write failed\"",
-      "status": "Closed",
-      "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
     {
       "issue_id": "200b091b31ec4193",
       "jira_key": "IBMCEPH-14166",
@@ -120,6 +10,156 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
+    },
+    {
+      "issue_id": "2fc7803cb1ac4148",
+      "jira_key": "IBMCEPH-15751",
+      "summary": "[IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "edf784e5bc034c36",
+      "jira_key": "IBMCEPH-13541",
+      "summary": "[Dashboard][CephFS][SMB] SMB cluster recreation with a different name fails due to existing earmark on CephFS subvolume",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "2dc4800fe1b14321",
+      "jira_key": "IBMCEPH-16468",
+      "summary": "The Ceph Grafana dashboard is not showing any data for RGW and RBD.",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "09cee741a8a442ba",
+      "jira_key": "IBMCEPH-16418",
+      "summary": "Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "20f8ab39d40e4ebc",
+      "jira_key": "IBMCEPH-13208",
+      "summary": "Increase default value for mon_config_key_max_entry_size to 1048576 (1MB)",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "97a61316993f4efc",
+      "jira_key": "IBMCEPH-17253",
+      "summary": "why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "d27460d86b69436a",
+      "jira_key": "IBMCEPH-17252",
+      "summary": "Package installation fails inside container due to Codeready Builder repository 403 error.",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "afe1acd8b5554749",
+      "jira_key": "IBMCEPH-16928",
+      "summary": "MDS pod crash ceph_assert FAILED ceph_assert(_raw)",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "f1624007e4a14940",
+      "jira_key": "IBMCEPH-17244",
+      "summary": "Measure and expose BlueStore cache performance metrics to better understand cache effectiveness and provide data for future Priority Cache Manager improvements.",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "88d514d535a34c5f",
+      "jira_key": "IBMCEPH-17251",
+      "summary": "compression_min_blob_size accepts illegal values",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "98002efd47254c4f",
+      "jira_key": "IBMCEPH-13663",
+      "summary": "Mon slow ops due to forwarded log entry stuck waiting on leader mon response",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "bc87fbc1c3a44f72",
+      "jira_key": "IBMCEPH-17107",
+      "summary": "[RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard ",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "6977c40086b946e5",
+      "jira_key": "IBMCEPH-17204",
+      "summary": "[8.1z Backport] [GSS] Health Warning is missing the descriptive text",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "f69cf33d921f4e99",
+      "jira_key": "IBMCEPH-17234",
+      "summary": "[RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "c08ec049dbf140f8",
+      "jira_key": "IBMCEPH-12242",
+      "summary": "[BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
     },
     {
       "issue_id": "6eb11b216f634ef0",
@@ -132,69 +172,29 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "1b4ab90264344a20",
-      "jira_key": "IBMCEPH-14213",
-      "summary": "Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9",
-      "status": "ON_QA",
+      "issue_id": "7ec24a4047a44fe0",
+      "jira_key": "IBMCEPH-16535",
+      "summary": "hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed",
+      "status": "MODIFIED",
       "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "2ee48bcd7c3f4dd4",
-      "jira_key": "IBMCEPH-15903",
-      "summary": "[IBM_Customer][RGW] Dynamic Resharding is not triggered for versioned bucket at 1/3 of objects count",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "2fc7803cb1ac4148",
-      "jira_key": "IBMCEPH-15751",
-      "summary": "[IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "47e663874dc2420c",
-      "jira_key": "IBMCEPH-16079",
-      "summary": "Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "cfcae000df1340fc",
-      "jira_key": "IBMCEPH-16427",
-      "summary": "[9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "d673cb677a1f4286",
-      "jira_key": "IBMCEPH-16538",
-      "summary": "[9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed",
-      "status": "New",
-      "status_category": "To Do",
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P0"
     },
     {
-      "issue_id": "13aedf55ecc041b2",
-      "jira_key": "IBMCEPH-16005",
-      "summary": "Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone",
+      "issue_id": "5b0a81241af74050",
+      "jira_key": "IBMCEPH-17205",
+      "summary": "[9.1z Backport] [GSS] Health Warning is missing the descriptive text",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "0580c11c2b9c4477",
+      "jira_key": "IBMCEPH-13924",
+      "summary": "NFS client caching causes getattr error in clustered ganesha",
       "status": "ASSIGNED",
       "status_category": "In Progress",
       "qa_status": "needs_analysis",
@@ -202,10 +202,170 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "119b408dc6c54527",
-      "jira_key": "IBMCEPH-16019",
-      "summary": "OSDMap: FAILED ceph_assert(num_down_in_osds <= num_in_osds)",
+      "issue_id": "5a86e8eaac064809",
+      "jira_key": "IBMCEPH-17225",
+      "summary": "[9.1z backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "d673cb677a1f4286",
+      "jira_key": "IBMCEPH-16538",
+      "summary": "[9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed",
       "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P0"
+    },
+    {
+      "issue_id": "b3b1e52e6d18466b",
+      "jira_key": "IBMCEPH-17209",
+      "summary": "[9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "97834ac910cc4046",
+      "jira_key": "IBMCEPH-16963",
+      "summary": " mgmt-gateway continuously cycling on 9.9.1.0 code",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "9cc75a0c86a841f1",
+      "jira_key": "IBMCEPH-15015",
+      "summary": "[Security] Private keys in the Ceph images",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "0a0afe82342c4c1f",
+      "jira_key": "IBMCEPH-16318",
+      "summary": "[RFE] CephFS File Activity Auditing and Monitoring from Server/CephFS Side",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "e04e3e5395204e2c",
+      "jira_key": "IBMCEPH-16027",
+      "summary": "SMB: User/group names missing for permissions",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "572b9052a37a438a",
+      "jira_key": "IBMCEPH-15780",
+      "summary": "[9.1] SMB: User/group names missing for permissions",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "540ff2436fad436f",
+      "jira_key": "IBMCEPH-16312",
+      "summary": "[Denali]NFS daemons crashing with error \"Expected a number, got a double quoted string\" while upgrading from version 8 to 9",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "29a7449f330d481b",
+      "jira_key": "IBMCEPH-15874",
+      "summary": "Both `fragmentation` and `score` have the same label",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "a38a07c15c524ecd",
+      "jira_key": "IBMCEPH-16942",
+      "summary": "Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "8d0ce214ffed403c",
+      "jira_key": "IBMCEPH-12017",
+      "summary": "[BZ#2391835] [IBM_Support] Ceph RGW Data POOL utilization is higher compare to actual data written to buckets",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "cfcae000df1340fc",
+      "jira_key": "IBMCEPH-16427",
+      "summary": "[9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "294cc9f0e1d840bd",
+      "jira_key": "IBMCEPH-17115",
+      "summary": "CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "c4065a9110884df2",
+      "jira_key": "IBMCEPH-15003",
+      "summary": "[8.1z Backport] Mon daemons do not get updated with public_network set via config set upon restart",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "1ba3257a560b4b20",
+      "jira_key": "IBMCEPH-15000",
+      "summary": "[8.1z Backport] Daemon crashes observed, but crash files are not generated in the expected directory",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "fabcc0a948894e70",
+      "jira_key": "IBMCEPH-13407",
+      "summary": "[IBM_Support]Ceph Dashboard menus fail with HTTP 500 error",
+      "status": "Verified",
       "status_category": "In Progress",
       "qa_status": "needs_analysis",
       "qa_assignee": "",
@@ -222,9 +382,169 @@
       "internal_priority": "P0"
     },
     {
-      "issue_id": "15bc2aab6743420a",
-      "jira_key": "IBMCEPH-16490",
-      "summary": "[BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database",
+      "issue_id": "ed59a7b0402d4cc2",
+      "jira_key": "IBMCEPH-12678",
+      "summary": "[BZ#2413725] Daemon crashes observed, but crash files are not generated in the expected directory",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "1e9adaf2f1954a99",
+      "jira_key": "IBMCEPH-11650",
+      "summary": "[BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in \"/proc/self/cgroup\"` logged in the Journal.",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P0"
+    },
+    {
+      "issue_id": "6733eeffbc394dff",
+      "jira_key": "IBMCEPH-15793",
+      "summary": "MOD LC processes not finishing stuck in processing.",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "69271f5662a14ab6",
+      "jira_key": "IBMCEPH-15775",
+      "summary": "[8.1 backport] [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "169c74b886d54d4e",
+      "jira_key": "IBMCEPH-9302",
+      "summary": "[BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "119b408dc6c54527",
+      "jira_key": "IBMCEPH-16019",
+      "summary": "OSDMap: FAILED ceph_assert(num_down_in_osds <= num_in_osds)",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "0a35150696e241ba",
+      "jira_key": "IBMCEPH-13004",
+      "summary": "[9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "b3d15d6af5c241c5",
+      "jira_key": "IBMCEPH-15786",
+      "summary": "[8.1z Backport] [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P0"
+    },
+    {
+      "issue_id": "1e2a7d8adb714233",
+      "jira_key": "IBMCEPH-16123",
+      "summary": "Ceph Orchestrator CLI Extremely Slow at 400+ Hosts (9+ Minutes for Host List)",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "1a991d9dfb4a423c",
+      "jira_key": "IBMCEPH-16122",
+      "summary": "[Scale][Agent]Cephadm MGR SSH Connection Exhaustion at 400+ Hosts",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "ebf0840bf738478d",
+      "jira_key": "IBMCEPH-16121",
+      "summary": "[scale] Cephadm Agent CherryPy HTTPS Listener Saturated at ~90+ Hosts",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "ee621cc8e0ff4691",
+      "jira_key": "IBMCEPH-17126",
+      "summary": "Benchmark nfs-ganesha read and write delegations exploring workloads",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "c029a91fe23d44d0",
+      "jira_key": "IBMCEPH-16069",
+      "summary": "During upgrade from 8.1z3 to 8.1z5, monitor state is changing to managed from unmanaged",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "0c5e2b762d8d4222",
+      "jira_key": "IBMCEPH-13304",
+      "summary": "Improve field experience with Ceph Ready Node deployments",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "305d79d8cc82439a",
+      "jira_key": "IBMCEPH-14151",
+      "summary": "Increasing value of \"osd_max_omap_entries_per_request\" for improving Bucket-Index Operations",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "47e663874dc2420c",
+      "jira_key": "IBMCEPH-16079",
+      "summary": "Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "2ee48bcd7c3f4dd4",
+      "jira_key": "IBMCEPH-15903",
+      "summary": "[IBM_Customer][RGW] Dynamic Resharding is not triggered for versioned bucket at 1/3 of objects count",
       "status": "In Progress",
       "status_category": "In Progress",
       "qa_status": "needs_analysis",
@@ -242,6 +562,356 @@
       "internal_priority": "P1"
     },
     {
+      "issue_id": "59a5d98fe790418d",
+      "jira_key": "IBMCEPH-15162",
+      "summary": "In 8.x, the user-initiated scrub operation does not generate the expected \"operator-requested\" log message.",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "acf8acd6220f4a12",
+      "jira_key": "IBMCEPH-14898",
+      "summary": "[9.1z Backport][MGR][Balancer] Reduce repetitive INFO-level logs from health checks",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P3"
+    },
+    {
+      "issue_id": "de3fd5dbf54b4c22",
+      "jira_key": "IBMCEPH-14999",
+      "summary": "[9.1z Backport] Daemon crashes observed, but crash files are not generated in the expected directory",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "5e8245f128a34872",
+      "jira_key": "IBMCEPH-15002",
+      "summary": "[9.1z Backport] Mon daemons do not get updated with public_network set via config set upon restart",
+      "status": "MODIFIED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "ca4d93bcb1634ac7",
+      "jira_key": "IBMCEPH-16552",
+      "summary": "Module 'cephadm' has failed: dictionary changed size during iteration",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "5c420ab619694f86",
+      "jira_key": "IBMCEPH-10122",
+      "summary": "[BZ#2321531] CBT Help output refers to a command which does not exist.",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P3"
+    },
+    {
+      "issue_id": "58d8e72b05774356",
+      "jira_key": "IBMCEPH-17050",
+      "summary": "For Successful MultipartComplete object, HEAD succeeds but can't be retrieved with GET",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "3bf368badcf54a39",
+      "jira_key": "IBMCEPH-17039",
+      "summary": " [RFE]Deprecate - get autoscale threshold set on the cluster",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "eeb58cead2d84288",
+      "jira_key": "IBMCEPH-12976",
+      "summary": "[RFE][BZ#2435240] Unable to start nfs container instance via \"cephadm shell --name <daemon_type.id>\" command",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "6af5964c2fad44d2",
+      "jira_key": "IBMCEPH-13005",
+      "summary": "[8.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "9e449f67e10441d5",
+      "jira_key": "IBMCEPH-16612",
+      "summary": "[9.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "7441a7d78f874f8d",
+      "jira_key": "IBMCEPH-16610",
+      "summary": "[8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "8a917076ea4f4df8",
+      "jira_key": "IBMCEPH-16284",
+      "summary": "Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "8c4f0ad20e8f4ac8",
+      "jira_key": "IBMCEPH-17022",
+      "summary": "MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "cd0e9f27be064d69",
+      "jira_key": "IBMCEPH-14348",
+      "summary": "[RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "d6daa0f8a72a4bc6",
+      "jira_key": "IBMCEPH-15746",
+      "summary": "[9.2] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "1a476c0e875c4ac6",
+      "jira_key": "IBMCEPH-16113",
+      "summary": "[9.1z Backport] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "13aedf55ecc041b2",
+      "jira_key": "IBMCEPH-16005",
+      "summary": "Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "8ec863b79ae742ac",
+      "jira_key": "IBMCEPH-13320",
+      "summary": "Cephadm Agent : TLS connection dropped \"peer dropped the TLS connection suddenly\"",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "f846507330d74298",
+      "jira_key": "IBMCEPH-16339",
+      "summary": "RGW service not restarting/reloading certificates in large cluster",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "7f000e18043942bf",
+      "jira_key": "IBMCEPH-16176",
+      "summary": "RGW cluster brownout and GetObject latency observed (10+ minutes)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "83f803e5b4f04719",
+      "jira_key": "IBMCEPH-12594",
+      "summary": "[BZ#2425712] [IBM_Support] [SMB] Access control for SMB AD share",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "cfd6a15849d24d2e",
+      "jira_key": "IBMCEPH-13142",
+      "summary": "[IBM_Support][RGW] Modify/Rotate the RGW multisite replication user credentials",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P3"
+    },
+    {
+      "issue_id": "9f55e914c3634a0c",
+      "jira_key": "IBMCEPH-13240",
+      "summary": "[BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "d00fcb3ee3be4de5",
+      "jira_key": "IBMCEPH-13422",
+      "summary": "[RFE] Extend ceph-volume batch command to handle fast devices with existing lvm",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "0cbda29057404e20",
+      "jira_key": "IBMCEPH-14111",
+      "summary": "[BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "638bc5aa9a08484d",
+      "jira_key": "IBMCEPH-15699",
+      "summary": "[IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "4beb95e560cf4e7b",
+      "jira_key": "IBMCEPH-13458",
+      "summary": "[BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "30cd44deee364ff7",
+      "jira_key": "IBMCEPH-13852",
+      "summary": "Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "14b1e6995d0f47af",
+      "jira_key": "IBMCEPH-16611",
+      "summary": "[Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "6a493daeb25d48d1",
+      "jira_key": "IBMCEPH-16476",
+      "summary": "[9.2z Backport][MGR][Balancer] Reduce repetitive INFO-level logs from health checks",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P3"
+    },
+    {
+      "issue_id": "e138891ed78c46cc",
+      "jira_key": "IBMCEPH-15779",
+      "summary": "[8.1] SMB: User/group names missing for permissions",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "174a4fcf73994f54",
+      "jira_key": "IBMCEPH-15797",
+      "summary": "[8.1z Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "2782ce77744b4be3",
+      "jira_key": "IBMCEPH-16034",
+      "summary": "[8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds <= num_in_osds)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "ef251cc71208498d",
+      "jira_key": "IBMCEPH-16020",
+      "summary": "[9.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds <= num_in_osds)",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
       "issue_id": "f64a5cf263f34468",
       "jira_key": "IBMCEPH-16458",
       "summary": "[9.1z backport]- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0",
@@ -250,6 +920,116 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
+    },
+    {
+      "issue_id": "624aaa2fe34e4e70",
+      "jira_key": "IBMCEPH-14996",
+      "summary": "Scrub operations start even when osd_scrub_load_threshold is set to 0 in 8.x",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "37d1c7f9fd2e4e81",
+      "jira_key": "IBMCEPH-15734",
+      "summary": "[9.1z] [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "8d2b4590a95543cc",
+      "jira_key": "IBMCEPH-13281",
+      "summary": "CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "923e011cedae4081",
+      "jira_key": "IBMCEPH-12666",
+      "summary": "[BZ#2418230] Several OSDs crashed in assert_func: \"PeeringState::Crashed::Crashed\"",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "f68839753d3d4a26",
+      "jira_key": "IBMCEPH-16564",
+      "summary": "Ceph Stretch Cluster Upgrade RHCS 6.1z6 -> RHCS 6.1z9 -> IBM Ceph 6.1z9 -> IBM Ceph 8.1z6",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "d8c5272e55924767",
+      "jira_key": "IBMCEPH-16219",
+      "summary": "[IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "946265c203c444a5",
+      "jira_key": "IBMCEPH-16314",
+      "summary": "[9.1z Backport] [Denali]NFS daemons crashing with error \"Expected a number, got a double quoted string\" while upgrading from version 8 to 9",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "7d6cf5990f11420e",
+      "jira_key": "IBMCEPH-13197",
+      "summary": "Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "6a6ecd7c35054a2a",
+      "jira_key": "IBMCEPH-13721",
+      "summary": "Ceph-CSI RBD Volume Mount Failure After Update to 3.16 \u2013 \"rbd: sysfs write failed\"",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "1b4ab90264344a20",
+      "jira_key": "IBMCEPH-14213",
+      "summary": "Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "15bc2aab6743420a",
+      "jira_key": "IBMCEPH-16490",
+      "summary": "[BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
     },
     {
       "issue_id": "0022c2cd0e734f8b",
@@ -272,91 +1052,11 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "09cee741a8a442ba",
-      "jira_key": "IBMCEPH-16418",
-      "summary": "Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "29a7449f330d481b",
-      "jira_key": "IBMCEPH-15874",
-      "summary": "Both `fragmentation` and `score` have the same label",
-      "status": "POST",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "5c420ab619694f86",
-      "jira_key": "IBMCEPH-10122",
-      "summary": "[BZ#2321531] CBT Help output refers to a command which does not exist.",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P3"
-    },
-    {
-      "issue_id": "20f8ab39d40e4ebc",
-      "jira_key": "IBMCEPH-13208",
-      "summary": "Increase default value for mon_config_key_max_entry_size to 1048576 (1MB)",
-      "status": "POST",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
       "issue_id": "f9e84e4d48404d43",
       "jira_key": "IBMCEPH-13484",
       "summary": "[9.0] SMB: User/group names missing for permissions",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "c08ec049dbf140f8",
-      "jira_key": "IBMCEPH-12242",
-      "summary": "[BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "ed59a7b0402d4cc2",
-      "jira_key": "IBMCEPH-12678",
-      "summary": "[BZ#2413725] Daemon crashes observed, but crash files are not generated in the expected directory",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "6a493daeb25d48d1",
-      "jira_key": "IBMCEPH-16476",
-      "summary": "[9.2z Backport][MGR][Balancer] Reduce repetitive INFO-level logs from health checks",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P3"
-    },
-    {
-      "issue_id": "d6daa0f8a72a4bc6",
-      "jira_key": "IBMCEPH-15746",
-      "summary": "[9.2] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2",
-      "status": "New",
-      "status_category": "To Do",
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
@@ -382,91 +1082,11 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "c029a91fe23d44d0",
-      "jira_key": "IBMCEPH-16069",
-      "summary": "During upgrade from 8.1z3 to 8.1z5, monitor state is changing to managed from unmanaged",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "f846507330d74298",
-      "jira_key": "IBMCEPH-16339",
-      "summary": "RGW service not restarting/reloading certificates in large cluster",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "1ba3257a560b4b20",
-      "jira_key": "IBMCEPH-15000",
-      "summary": "[8.1z Backport] Daemon crashes observed, but crash files are not generated in the expected directory",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "c4065a9110884df2",
-      "jira_key": "IBMCEPH-15003",
-      "summary": "[8.1z Backport] Mon daemons do not get updated with public_network set via config set upon restart",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "5e8245f128a34872",
-      "jira_key": "IBMCEPH-15002",
-      "summary": "[9.1z Backport] Mon daemons do not get updated with public_network set via config set upon restart",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "de3fd5dbf54b4c22",
-      "jira_key": "IBMCEPH-14999",
-      "summary": "[9.1z Backport] Daemon crashes observed, but crash files are not generated in the expected directory",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "acf8acd6220f4a12",
-      "jira_key": "IBMCEPH-14898",
-      "summary": "[9.1z Backport][MGR][Balancer] Reduce repetitive INFO-level logs from health checks",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P3"
-    },
-    {
       "issue_id": "b52c1294de0f4f96",
       "jira_key": "IBMCEPH-15832",
       "summary": "MOD: Large omaps on bucket with 1.6B objects radosgw-admin status commands hang",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "624aaa2fe34e4e70",
-      "jira_key": "IBMCEPH-14996",
-      "summary": "Scrub operations start even when osd_scrub_load_threshold is set to 0 in 8.x",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
@@ -512,36 +1132,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "0cbda29057404e20",
-      "jira_key": "IBMCEPH-14111",
-      "summary": "[BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "30cd44deee364ff7",
-      "jira_key": "IBMCEPH-13852",
-      "summary": "Preflight playbook should not force-enable firewalld (make it configurable/conditional)",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "69271f5662a14ab6",
-      "jira_key": "IBMCEPH-15775",
-      "summary": "[8.1 backport] [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
       "issue_id": "963ae220093d48d7",
       "jira_key": "IBMCEPH-13157",
       "summary": "[IBM_Support] High mon DB size and failure to automatically compact",
@@ -552,51 +1142,11 @@
       "internal_priority": "P1"
     },
     {
-      "issue_id": "1e2a7d8adb714233",
-      "jira_key": "IBMCEPH-16123",
-      "summary": "Ceph Orchestrator CLI Extremely Slow at 400+ Hosts (9+ Minutes for Host List)",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "1a991d9dfb4a423c",
-      "jira_key": "IBMCEPH-16122",
-      "summary": "[Scale][Agent]Cephadm MGR SSH Connection Exhaustion at 400+ Hosts",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "ebf0840bf738478d",
-      "jira_key": "IBMCEPH-16121",
-      "summary": "[scale] Cephadm Agent CherryPy HTTPS Listener Saturated at ~90+ Hosts",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "f28db45dd64e4330",
       "jira_key": "IBMCEPH-16134",
       "summary": "[IBM_Customer][RBD] Unable to delete the RBD volume",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "fabcc0a948894e70",
-      "jira_key": "IBMCEPH-13407",
-      "summary": "[IBM_Support]Ceph Dashboard menus fail with HTTP 500 error",
-      "status": "In Progress",
-      "status_category": "In Progress",
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
@@ -615,16 +1165,6 @@
       "issue_id": "756bd53ae7dd4e43",
       "jira_key": "IBMCEPH-16032",
       "summary": "Cephadm agent enters dead state when MGR failover occurs while the agent is down",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "540ff2436fad436f",
-      "jira_key": "IBMCEPH-16312",
-      "summary": "[Denali]NFS daemons crashing with error \"Expected a number, got a double quoted string\" while upgrading from version 8 to 9",
       "status": "New",
       "status_category": "To Do",
       "qa_status": "needs_analysis",
@@ -672,36 +1212,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "edf784e5bc034c36",
-      "jira_key": "IBMCEPH-13541",
-      "summary": "[Dashboard][CephFS][SMB] SMB cluster recreation with a different name fails due to existing earmark on CephFS subvolume",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "d8c5272e55924767",
-      "jira_key": "IBMCEPH-16219",
-      "summary": "[IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "1a476c0e875c4ac6",
-      "jira_key": "IBMCEPH-16113",
-      "summary": "[9.1z Backport] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
       "issue_id": "e11b0d88c56b47d3",
       "jira_key": "IBMCEPH-16338",
       "summary": "1 Unfound and lost object reported during Deep-Scrub",
@@ -710,26 +1220,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
-    },
-    {
-      "issue_id": "0a0afe82342c4c1f",
-      "jira_key": "IBMCEPH-16318",
-      "summary": "[RFE] CephFS File Activity Auditing and Monitoring from Server/CephFS Side",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "98002efd47254c4f",
-      "jira_key": "IBMCEPH-13663",
-      "summary": "Mon slow ops due to forwarded log entry stuck waiting on leader mon response",
-      "status": "MODIFIED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
     },
     {
       "issue_id": "f8b767bda5c04f45",
@@ -922,16 +1412,6 @@
       "internal_priority": "P1"
     },
     {
-      "issue_id": "946265c203c444a5",
-      "jira_key": "IBMCEPH-16314",
-      "summary": "[9.1z Backport] [Denali]NFS daemons crashing with error \"Expected a number, got a double quoted string\" while upgrading from version 8 to 9",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "c14d13b009654269",
       "jira_key": "IBMCEPH-15536",
       "summary": "[9.0z Backport] logrotate templates do not include ceph-exporter in the postrotate signal list",
@@ -975,16 +1455,6 @@
       "issue_id": "52cfa7c2fe154418",
       "jira_key": "IBMCEPH-13740",
       "summary": "[9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump",
-      "status": "Closed",
-      "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "8d2b4590a95543cc",
-      "jira_key": "IBMCEPH-13281",
-      "summary": "CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks",
       "status": "Closed",
       "status_category": "Done",
       "qa_status": "needs_analysis",
@@ -1182,36 +1652,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "7f000e18043942bf",
-      "jira_key": "IBMCEPH-16176",
-      "summary": "RGW cluster brownout and GetObject latency observed (10+ minutes)",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "e04e3e5395204e2c",
-      "jira_key": "IBMCEPH-16027",
-      "summary": "SMB: User/group names missing for permissions",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "6733eeffbc394dff",
-      "jira_key": "IBMCEPH-15793",
-      "summary": "MOD LC processes not finishing stuck in processing.",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "24932594c07949fc",
       "jira_key": "IBMCEPH-10180",
       "summary": "[BZ#2323804] [GSS] RHCS 7.1z1 Ceph Dashboard Graphs show \"No Data\" for many objects",
@@ -1262,26 +1702,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "59a5d98fe790418d",
-      "jira_key": "IBMCEPH-15162",
-      "summary": "In 8.x, the user-initiated scrub operation does not generate the expected \"operator-requested\" log message.",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "9cc75a0c86a841f1",
-      "jira_key": "IBMCEPH-15015",
-      "summary": "[Security] Private keys in the Ceph images",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "54bfa003017644b9",
       "jira_key": "IBMCEPH-15785",
       "summary": "[9.1z Backport] [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as <unknown>",
@@ -1295,16 +1715,6 @@
       "issue_id": "2cba91279d374dbe",
       "jira_key": "IBMCEPH-14392",
       "summary": "Grafana Certificate Replacement is failing ",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "4beb95e560cf4e7b",
-      "jira_key": "IBMCEPH-13458",
-      "summary": "[BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr",
       "status": "New",
       "status_category": "To Do",
       "qa_status": "needs_analysis",
@@ -1342,36 +1752,6 @@
       "internal_priority": "P1"
     },
     {
-      "issue_id": "169c74b886d54d4e",
-      "jira_key": "IBMCEPH-9302",
-      "summary": "[BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "6af5964c2fad44d2",
-      "jira_key": "IBMCEPH-13005",
-      "summary": "[8.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "0a35150696e241ba",
-      "jira_key": "IBMCEPH-13004",
-      "summary": "[9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
       "issue_id": "134484d18f144355",
       "jira_key": "IBMCEPH-14409",
       "summary": "ceph orch ps shows the MGR port more than one time",
@@ -1390,46 +1770,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
-    },
-    {
-      "issue_id": "ef251cc71208498d",
-      "jira_key": "IBMCEPH-16020",
-      "summary": "[9.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds <= num_in_osds)",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "2782ce77744b4be3",
-      "jira_key": "IBMCEPH-16034",
-      "summary": "[8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds <= num_in_osds)",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "572b9052a37a438a",
-      "jira_key": "IBMCEPH-15780",
-      "summary": "[9.1] SMB: User/group names missing for permissions",
-      "status": "POST",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "e138891ed78c46cc",
-      "jira_key": "IBMCEPH-15779",
-      "summary": "[8.1] SMB: User/group names missing for permissions",
-      "status": "POST",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
     },
     {
       "issue_id": "bb4d42d9d7c74d20",
@@ -1470,16 +1810,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
-    },
-    {
-      "issue_id": "b3d15d6af5c241c5",
-      "jira_key": "IBMCEPH-15786",
-      "summary": "[8.1z Backport] [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P0"
     },
     {
       "issue_id": "01a04f8029ef4554",
@@ -1542,16 +1872,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "cd0e9f27be064d69",
-      "jira_key": "IBMCEPH-14348",
-      "summary": "[RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "d253c8e155844dd3",
       "jira_key": "IBMCEPH-13156",
       "summary": "[ibm_support] RFE: Supportability cron job",
@@ -1560,16 +1880,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P3"
-    },
-    {
-      "issue_id": "174a4fcf73994f54",
-      "jira_key": "IBMCEPH-15797",
-      "summary": "[8.1z Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
     },
     {
       "issue_id": "74438c31e27e4bfe",
@@ -1605,16 +1915,6 @@
       "issue_id": "8f2e9b5c13854e15",
       "jira_key": "IBMCEPH-14326",
       "summary": "Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "305d79d8cc82439a",
-      "jira_key": "IBMCEPH-14151",
-      "summary": "Increasing value of \"osd_max_omap_entries_per_request\" for improving Bucket-Index Operations",
       "status": "New",
       "status_category": "To Do",
       "qa_status": "needs_analysis",
@@ -1712,16 +2012,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "9f55e914c3634a0c",
-      "jira_key": "IBMCEPH-13240",
-      "summary": "[BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "bc0e6a5753d54922",
       "jira_key": "IBMCEPH-13193",
       "summary": "[BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but it doesn\u2019t provide creation dates when the radosgw admin API is used",
@@ -1742,16 +2032,6 @@
       "internal_priority": "P1"
     },
     {
-      "issue_id": "cfd6a15849d24d2e",
-      "jira_key": "IBMCEPH-13142",
-      "summary": "[IBM_Support][RGW] Modify/Rotate the RGW multisite replication user credentials",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P3"
-    },
-    {
       "issue_id": "191cd63638ac4d65",
       "jira_key": "IBMCEPH-13128",
       "summary": "OSD_UNREACHABLE alerts in ceph post cluster expansion",
@@ -1760,26 +2040,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
-    },
-    {
-      "issue_id": "8d0ce214ffed403c",
-      "jira_key": "IBMCEPH-12017",
-      "summary": "[BZ#2391835] [IBM_Support] Ceph RGW Data POOL utilization is higher compare to actual data written to buckets",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "1e9adaf2f1954a99",
-      "jira_key": "IBMCEPH-11650",
-      "summary": "[BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in \"/proc/self/cgroup\"` logged in the Journal.",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P0"
     },
     {
       "issue_id": "6e56376998a9463b",
@@ -2152,16 +2412,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "8ec863b79ae742ac",
-      "jira_key": "IBMCEPH-13320",
-      "summary": "Cephadm Agent : TLS connection dropped \"peer dropped the TLS connection suddenly\"",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "15b81b2dc7dc4a39",
       "jira_key": "IBMCEPH-12866",
       "summary": "[BZ#2415877] [RFE] Orchestrator failed to remove service after label removal",
@@ -2187,26 +2437,6 @@
       "summary": "Ceph orchestrator restart commands not restarting the Daemons",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "d00fcb3ee3be4de5",
-      "jira_key": "IBMCEPH-13422",
-      "summary": "[RFE] Extend ceph-volume batch command to handle fast devices with existing lvm",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "0580c11c2b9c4477",
-      "jira_key": "IBMCEPH-13924",
-      "summary": "NFS client caching causes getattr error in clustered ganesha",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
@@ -2295,16 +2525,6 @@
       "issue_id": "d3b8e75d61214cca",
       "jira_key": "IBMCEPH-13268",
       "summary": "[Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON ",
-      "status": "Closed",
-      "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "0c5e2b762d8d4222",
-      "jira_key": "IBMCEPH-13304",
-      "summary": "Improve field experience with Ceph Ready Node deployments",
       "status": "Closed",
       "status_category": "Done",
       "qa_status": "needs_analysis",
