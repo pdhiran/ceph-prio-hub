@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16963:  mgmt-gateway continuously cycling on 9.9.1.0 code</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16963" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16963</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Redouane Kachach</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-07-20</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-03</dd>
   </dl></div>
 </div>
 
@@ -192,7 +192,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (8 events)</h2>
+<h2>Timeline (17 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-22 12:06:45</span><span class="tl-badge comment">Comment</span> <strong>Rigoberto Padilla Peña</strong>: Hello   , Is there any workaround we can share with the customer? Thanks</div>
 <div class="tl-entry"><span class="tl-date">2026-07-27 04:07:20</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , I tried to reproduce this issue in my test environment, and I was able to reproduce it consistently. [root@aartisa-0 ~]# ceph orch ps --daemon-type mgmt-gateway
@@ -204,6 +204,17 @@ ssl_stapling {{ spec.ssl_stapling </div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 01:13:56</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I am marking this as blocker for 9.2 and I have created its clone for 9.1z backport and have marked it as blocker as well.  -Bipin Kunal</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 11:56:12</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>: MR for 9.2:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 11:56:51</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 07:44:26</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-20.2.2-150. Moving to Test</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 11:52:21</span><span class="tl-badge comment">Comment</span> <strong>Rigoberto Padilla Peña</strong>:  Hello, thanks for the update. I’ll let the customer know, please let us know once the release is available.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 12:06:47</span><span class="tl-badge comment">Comment</span> <strong>Rigoberto Padilla Peña</strong>: In addition  , regarding   question, can we advise the customer to set the  unmanaged  flag as a temporary workaround? Thanks</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 23:45:32</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  Redo is out this week, and I missed   comment earlier. As a temporary workaround, we can mark the service as unmanaged. Since the reconciliation loop does not perform any operations on unmanaged services, the service will not be reconfigured repeate</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 00:16:15</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , As approved by    we can use workaround of marking the  management gateway service as unmanaged. Since the reconciliation loop does not perform any operations on unmanaged services, the service will not be reconfigured repeatedly.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 10:34:57</span><span class="tl-badge comment">Comment</span> <strong>Rigoberto Padilla Peña</strong>:  Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the downstream releases (9.9.2.x and the 9.9.1.x backport)?, or could you please ping me here once the upd</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 03:47:54</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , The changes have been merged into the downstream 9.1 and 9.2 branches and are currently undergoing testing. They will be available in the upcoming Ceph 9.1 and 9.2 releases.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 10:25:59</span><span class="tl-badge comment">Comment</span> <strong>Vinayak Papnoi</strong>: [ceph: root@ceph-vpap-i92-ubh5bh-node1-installer /]# ceph version
+ceph version 20.2.2-169.el10cp (66fbfb699cd9a638760ee43f277ab44317d2a56f) tentacle (stable - RelWithDebInfo) release 9.9.2.0
+[ceph: root@ceph-vpap-i92-ubh5bh-node1-installer /]# ceph o</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 10:26:18</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
 </div>
 
 </body>

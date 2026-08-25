@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17107: [RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -95,10 +95,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Assignee</dt><dd>Afreen Misbah</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Components</dt><dd>ceph-dashboard</dd>
+    <dt>Components</dt><dd>ceph-dashboard, cephadm</dd>
     <dt>Versions</dt><dd>10.0</dd>
     <dt>Created</dt><dd>2026-07-23</dd>
-    <dt>Updated</dt><dd>2026-07-29</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -184,10 +184,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (2 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-24 05:51:14</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>: We have already added upgrades improvement for Vampire  https://pad.ceph.com/p/dashboard-vampire</div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 01:25:31</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Afreen Misbah)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 01:05:13</span><span class="tl-badge comment">Comment</span> <strong>Gaurav Sitlani</strong>: Hi   I think it will be great to have a discussion about this RFE…. Also, It will be great to know which customer is requesting for this enhancement. cc   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-21 02:15:57</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>: Moving this RFE to backlog as it was not prioritized by PMs in 10.0 readout. cc: </div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 00:27:52</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:   We already support upgrade using just one command from cephadm already -  ceph orch upgrade start This command uses ok-to-stop way of upgrading OSDs underneath. We don’t plan to replace ok-to-stop by ok-to-upgrade in 10.0 release. We also have depe</div>
 </div>
 
 </body>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-10803 - [BZ#2351112] [IBM Support] [RFE] include NFS services/resour</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-10803: [BZ#2351112] [IBM Support] [RFE] include NFS services/resources in &quot;ceph status&quot; output</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-10803" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-10803</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Sreedhar Agraharam</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>nfs-ganesha/ceph</dd>
+    <dt>Versions</dt><dd>8.0</dd>
+    <dt>Created</dt><dd>2025-03-10</dd>
+    <dt>Updated</dt><dd>2026-08-11</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>FutureFeature</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2025-08-06 23:06:40</span><span class="tl-badge comment">Comment</span> <strong>Sachin Punadikar</strong>: Thanks Sreedhar, This should help in getting the NFS status.</div>
+<div class="tl-entry"><span class="tl-date">2025-10-23 08:48:07</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: I see this has been merged upstream, is it available downstream?</div>
+<div class="tl-entry"><span class="tl-date">2026-02-03 22:48:48</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>: We have few PR’s implemented to achieve this requirement. https://gerrithub.io/c/ffilz/nfs-ganesha/+/1225081 https://gerrithub.io/c/ffilz/nfs-ganesha/+/1225140 https://gerrithub.io/c/ffilz/nfs-ganesha/+/1230117 The best needs to be picked. Still revi</div>
+<div class="tl-entry"><span class="tl-date">2026-02-11 14:00:11</span><span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>: The “Fix Version” needs to be changed from 9.0z1 to 9.0z2, as the upstream PRs referenced by Sreedhar last week haven’t yet merged downstream.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 02:32:12</span><span class="tl-badge comment">Comment</span> <strong>Pradnya Chikhale</strong>:  , could you please let us know the status of this Bug if the fix is merged downstream ? and also let us know if this is a blocker? </div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 03:03:37</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:  Yes in downstream fix is merged :  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/a4b1b85f7b7c1e35be879285cb59de3ac9800825     (branch  :  ceph-9.1-rhel-patches) But to test this feature. We need to add few configs at this part of ceph code</div>
+<div class="tl-entry"><span class="tl-date">2026-04-09 04:28:13</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>: I tested this in 9.0z2 but found that this RFE/bug not supported in 9.0z2 as of now, after connecting with    The fix itself not available in 9.0z2. The fix went in to nfs version 9.x . But in 9.0z2 we have nfs_ganesha version 7.x.   Can you confirm </div>
+<div class="tl-entry"><span class="tl-date">2026-04-09 08:31:45</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:  , Thanks for testing the changes. But the fix is available in ceph-9.1-rhel-patches downstream branch which has ganesha9.7 version. Changing the target version to 9.1</div>
+<div class="tl-entry"><span class="tl-date">2026-04-09 09:25:42</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>: Also tested this in 9.1, and not working as expected [root@ceph-harish-vm-vypv4o-node4 ~]# ceph version ceph version 20.2.1-142.el9cp (e17f3b9254e360aaf1665d3a5c87b1b87c5f18f2) tentacle (stable - RelWithDebInfo) release 9.9.1.0 libnfsidmap-2.5.4-38.e</div>
+<div class="tl-entry"><span class="tl-date">2026-04-09 09:29:13</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:   Thanks for testing with 9.1 ganesha version. As per offline discussion, Thanks for sharing the clusters. Debugging why nfs service not showing in ceph -s command. Will come up with the update soon.  </div>
+<div class="tl-entry"><span class="tl-date">2026-04-13 21:33:47</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:  , Changes from cephadm team are on there way :  PR:    MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1673 Once the they gets merged you can test this feature.  , Please update once they gets merged. Thank you.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-17 01:59:51</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>: Hi   , Cephadm changes are merged in downstream :  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1673 You can test from your side now.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 03:05:25</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>:   i have tested this in 9.1  ceph version 20.2.1-188.el9cp (16f00458acd41804dee86597af3b2e9d332387af) tentacle (stable - RelWithDebInfo) release 9.9.1.0 [ceph: root@ceph-harish-live-rv20rh-node1-installer /]# rpm -qa | grep nfs libnfsidmap-2.5.4-38.e</div>
+<div class="tl-entry"><span class="tl-date">2026-04-24 00:21:21</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:   Thanks for testing and for sharing the details. Yes, this behavior is expected. The NFS service appears in ceph -s only after at least one NFS export is created. This is because the Ceph FSAL is loaded and initialized in the NFS-Ganesha service onl</div>
+<div class="tl-entry"><span class="tl-date">2026-04-27 21:43:39</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:  , Can you share the results of tests here please!</div>
+<div class="tl-entry"><span class="tl-date">2026-04-30 07:05:58</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>:   [root@ceph-harish-live-rv20rh-node4 ~]# ceph -s   cluster:     id:     9969b8f8-3e47-11f1-9927-fa163e2560ac     health: HEALTH_WARN             1 failed cephadm daemon(s)   services:     mon: 3 daemons, quorum ceph-harish-live-rv20rh-node1-installe</div>
+<div class="tl-entry"><span class="tl-date">2026-04-30 10:16:41</span><span class="tl-badge comment">Comment</span> <strong>Sreedhar Agraharam</strong>:  ,  tested the same feature, We have same ticket for this  feature :    She is able to see the output.</div>
+<div class="tl-entry"><span class="tl-date">2026-04-30 10:34:47</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>:  I will test in the latest build and will share the information</div>
+<div class="tl-entry"><span class="tl-date">2026-04-30 10:40:20</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>:  Then i think we need document this behavior. CC:       </div>
+<div class="tl-entry"><span class="tl-date">2026-05-04 04:46:11</span><span class="tl-badge comment">Comment</span> <strong>Harish Acharya</strong>:  I am finding the issue as mention in below.   I think i will hold this ticket until the above Jira is fixed. assigning ticket to you back.      </div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 06:26:05</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Sreedhar Agraharam)</span></div>
+</div>
+
+</body>
+</html>

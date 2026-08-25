@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16022: Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1z2</dd>
     <dt>Created</dt><dd>2026-06-16</dd>
-    <dt>Updated</dt><dd>2026-07-08</dd>
+    <dt>Updated</dt><dd>2026-08-21</dd>
   </dl></div>
 </div>
 
@@ -182,10 +182,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (2 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-16 22:39:54</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>: Logs  :   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 01:19:19</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Ashwin Joshi)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 05:50:18</span><span class="tl-badge comment">Comment</span> <strong>Kushal Deb</strong>: I reviewed the issue and agree that the agent should handle the MGR rejection more clearly. Currently, the MGR rejects the metadata because of the invalid keyring, but since the response is returned with HTTP 200, the agent continues running and no c</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 06:31:21</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>:   Agreed this was reproduced by fault-injecting a bad agent keyring; we are not claiming keyrings commonly go bad on their own during upgrade/redeploy/rotation. The issue we want fixed is the failure handling: MGR rejects the metadata but still retur</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 07:55:44</span><span class="tl-badge comment">Comment</span> <strong>Kushal Deb</strong>:  Thanks, agreed that the failure handling itself is valid. Once the MGR rejects the metadata, the agent should not treat the request as successful, and there should be a clearer indication that metadata from the host is no longer being accepted. In t</div>
 </div>
 
 </body>

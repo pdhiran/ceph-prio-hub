@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15779: [8.1] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15779" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15779</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Anoop C S</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>smb</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-06-08</dd>
-    <dt>Updated</dt><dd>2026-07-16</dd>
+    <dt>Updated</dt><dd>2026-08-20</dd>
   </dl></div>
 </div>
 
@@ -184,9 +184,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (11 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-17 03:14:07</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-14 16:21:05</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: This was included with the 8.1z1 release</div>
+<div class="tl-entry"><span class="tl-date">2026-08-14 16:21:13</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: This was released as part of the 8.1z1 release: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/60301194da158412478e3b825db3d4b76e2b27a3</div>
+<div class="tl-entry"><span class="tl-date">2026-08-17 04:40:51</span><span class="tl-badge comment">Comment</span> <strong>Anoop C S</strong>:  This is a different issue. See upstream PR already linked for more details.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-17 18:08:15</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>:  My apologies, you are correct, I thought it was the same commit. We just made the 2nd RC for 8.1z8 so I guess we’ll need to respin that again once this gets merged downstream if this is a blocker for 8.1z8</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 00:56:27</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   why was this not moved to modified yet? This was proposed blocker from very long and yet we left it at POST state. Please merge the downstream PR asap so that RC respin can be done. cc    -Bipin Kunal</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 04:26:57</span><span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: Copying over the release notes text from    for 9.1z2.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 04:27:42</span><span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: The fix is now merged into the  ceph-8.1-rhel-patches  branch.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 07:08:35</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-19.2.1-402. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 06:11:00</span><span class="tl-badge comment">Comment</span> <strong>Aditya Roshan Ramteke</strong>: Backport for SID issue is now resolved for the following build:  [ceph: root@pluto007 /]# ceph -v
+ceph version 19.2.1-403.el9cp (120d52586b6bfffbef72ee0d64f762fa1384ee94) squid (stable)</div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 06:11:06</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
 </div>
 
 </body>

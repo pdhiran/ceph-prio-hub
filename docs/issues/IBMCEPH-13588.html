@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13588: Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solution</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13588" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13588</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Vivek Maurya</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph, nfs-ganesha/cloud, performance</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-03-25</dd>
-    <dt>Updated</dt><dd>2026-06-11</dd>
+    <dt>Updated</dt><dd>2026-08-24</dd>
   </dl></div>
 </div>
 
@@ -180,7 +180,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (26 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-04-23 04:12:06</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  For the rolling reboot, I am expecting logs similar to what were shared during the previous reboot,  the complete Jenkins job log files. From the logs shared earlier, I do not see any OSD logs. Could you please recheck and share them again?</div>
 <div class="tl-entry"><span class="tl-date">2026-04-23 04:27:23</span><span class="tl-badge comment">Comment</span> <strong>Afroz Khan I</strong>:  Sure here they are.    </div>
@@ -210,6 +210,11 @@ ceph nfs export info</div>
 <div class="tl-entry"><span class="tl-date">2026-05-08 03:56:44</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   , Provided logs are not enough to analyze the issue. Please test as per the document and collect all logs as soon as the step finishes.  Before Redeploying NFS   Modify OSD &amp; MDS op complaint timeout. ceph config set mds mds_op_complaint_time 5 </div>
 <div class="tl-entry"><span class="tl-date">2026-05-11 00:46:20</span><span class="tl-badge comment">Comment</span> <strong>Afroz Khan I</strong>: Hi  , We have some high priority task in progress and I think for above requests it will take little time for us to share the results.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Vivek Maurya)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 10:01:17</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   anything pending on this?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-17 01:45:14</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   , Are we still facing performance issues?  If yes, please share logs, or can we close this issue?  Thanks Vivek </div>
+<div class="tl-entry"><span class="tl-date">2026-08-17 02:43:54</span><span class="tl-badge comment">Comment</span> <strong>Afroz Khan I</strong>: Hi   , We are currently chasing ~5 minutes outage issue seen with the platform upgrade[IBMCEPH-17180], because of that we had to deprioritise this issue and once outage problem is resolved, we will shift our focus back to this ticket. Thank you! Rega</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 01:27:08</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: I am closing this issue. Once you get the logs, please reopen jira with log. Thanks</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 01:27:08</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Vivek Maurya)</span></div>
 </div>
 
 </body>

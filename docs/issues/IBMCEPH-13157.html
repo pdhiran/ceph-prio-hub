@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13157: [IBM_Support] High mon DB size and failure to automatically compact</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-02-08</dd>
-    <dt>Updated</dt><dd>2026-07-08</dd>
+    <dt>Updated</dt><dd>2026-08-24</dd>
   </dl></div>
 </div>
 
@@ -200,7 +200,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (18 events)</h2>
+<h2>Timeline (21 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-02-08 13:29:07</span><span class="tl-badge comment">Comment</span> <strong>Anjana Sriram</strong>: Anthony D&#x27;Atri  2025-11-18 14:23:42 UTC CONFIDENTIAL Created  attachment 2114998  [ [details] | https://bugzilla.redhat.com/attachment.cgi?id=2114998&amp;action=edit ] graph   Comment 2   Anthony D&#x27;Atri  2025-11-18 14:24:09 UTC CONFIDENTIAL Created  atta</div>
 <div class="tl-entry"><span class="tl-date">2026-03-03 16:02:37</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: Hello   We finally got the store.db grabbed and uploaded here:  https://ecurep.mainz.de.ibm.com/ae5/#id=TS019671746&amp;path=TS019671746/2026-02-12/&amp;filepath=TS019671746/2026-02-12/store_db.zip You will need access to ecurep in order to access this file.</div>
@@ -235,6 +235,9 @@ total 15878733
 <div class="tl-entry"><span class="tl-date">2026-06-22 07:52:33</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: Script provided to Workday while onsite and answered questions for them. They will deploy the script in several environments in which they are seeing mondb inflation WITHOUT rebalancing occurring and will provide the data outputs once we capture what</div>
 <div class="tl-entry"><span class="tl-date">2026-06-30 21:09:17</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , Analysis of Recently Collected Data :  The cluster cannot trim its osdmap history. All 3060 OSDs are pinned at oldest_map epoch 2386327 and this did not move by a single epoch over the entire 3 hour 17 minute window. New maps continued accumula</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 16:55:55</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 09:48:47</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: SOS Report from MON AFTER to issuing compaction after completion of 2 week run of test: /ecurep/sf/TS019/671/TS019671746/2026-07-29/sosreport-s-3ybxnk3-2026-07-29-pfgaxnn.tar.xz_unpack Logs from the test:  /ecurep/sf/TS019/671/TS019671746/2026-07-29/</div>
+<div class="tl-entry"><span class="tl-date">2026-08-17 13:15:17</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  , Analysis of Data The cluster appears to not be able to trim the osdmap history because of a stray osd holding the epoch at  2386407 . {   &quot;osdmap_first_committed&quot;: 2386327,   &quot;osdmap_last_committed&quot;: 2613056,   &quot;osdmap_clean_epochs&quot;: {     &quot;min_la</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 13:17:12</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: Hello Team, I have met with Workday and reviewed the analyzed findings. In the cluster we can find no current instances of osd.3112 in the crush map.  I have a couple of theories here… After the customer captured all of the log data, including the ce</div>
 </div>
 
 </body>

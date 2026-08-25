@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12766: [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-dashboard</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-01-14</dd>
-    <dt>Updated</dt><dd>2026-07-27</dd>
+    <dt>Updated</dt><dd>2026-08-24</dd>
   </dl></div>
 </div>
 
@@ -207,7 +207,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (29 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-02-06 09:21:24</span><span class="tl-badge comment">Comment</span> <strong>STEVEN Sroczynski</strong>: This was the Latest response from Eng in the L3 Collab Channel: I am not sure I can provide any other useful feedback here as a workaround, as stated in the  official docs  we are only officially supporting Red Hat Single-Sign-On and IBM Security Ver</div>
 <div class="tl-entry"><span class="tl-date">2026-02-19 07:33:34</span><span class="tl-badge comment">Comment</span> <strong>STEVEN Sroczynski</strong>: Jira Update: Wanted to update the Jira after discussing this with Michael.  Looks like we want to target support for Entra ID in 9.1.</div>
@@ -234,6 +234,14 @@ Error EINVAL: Traceb</div>
 <div class="tl-entry"><span class="tl-date">2026-06-09 08:38:47</span><span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>: Based on a comment from  , it seems to be a configuration issue. I also believe this bug is not a release blocker. Once we have the enterprise version of Microsoft Entra ID, we can test it. I’m moving this bug to 9.1z1 for now.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-11 10:35:38</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>: Moving to ON_QA based on this.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-14 00:41:00</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Pedro Gonzalez)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 06:39:31</span><span class="tl-badge comment">Comment</span> <strong>Ashish Singh</strong>: Hi Team, Since, we already have a patch. We can build a DS image and provide it to the Customer with an understanding that this is a TestFix and has not been QA’ed by us, so they can use this image to verify the fix in a non-Prod environment. We’ve g</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 07:43:18</span><span class="tl-badge comment">Comment</span> <strong>STEVEN Sroczynski</strong>: Hi Team, Will you be able to attach the TestFix here to the Jira along with instructions?  Once I have it, I will send it to the customer for testing. Thanks for the help! Steve</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 07:57:54</span><span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:      Can you provide the instructions for the user?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 06:21:41</span><span class="tl-badge comment">Comment</span> <strong>Pentakota Divya Gowri</strong>: Hi  , TestFix Validation Instructions Deploy the provided  TestFix DS image  in a  non-Production environment . Configure the  OAuth2 Proxy  with Microsoft Entra ID as the Identity Provider, following the existing OAuth2 configuration documentation. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 12:49:16</span><span class="tl-badge comment">Comment</span> <strong>STEVEN Sroczynski</strong>:   Thanks for providing the instructions along with a testfix. Quick question on the testfix, where would I actually find that and how do I get it to the customer?  Do you have an exact location for this? Your instructions mention that it is attached/</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 11:08:27</span><span class="tl-badge comment">Comment</span> <strong>Vivek Das</strong>:  Can you help here with the testfix </div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 11:21:12</span><span class="tl-badge comment">Comment</span> <strong>Ankush Behl</strong>:  Can your team provide a test build the customer can use to validate the patch?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 13:33:57</span><span class="tl-badge comment">Comment</span> <strong>Hector Javier Delgado Neveu</strong>:  Hi   our latest test build from today should be useful to validate the patch. Let me know if you have any doubts: IBM: We have created the next IBM Ceph snapshot, intended for IBM Ceph 9.9.1.2. This includes ceph-20.2.1-398.el9cp, matching the lates</div>
 </div>
 
 </body>

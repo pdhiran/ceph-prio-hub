@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17050: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw</dd>
     <dt>Versions</dt><dd>8.1z4</dd>
     <dt>Created</dt><dd>2026-07-22</dd>
-    <dt>Updated</dt><dd>2026-07-23</dd>
+    <dt>Updated</dt><dd>2026-07-31</dd>
   </dl></div>
 </div>
 
@@ -181,10 +181,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (2 events)</h2>
+<h2>Timeline (6 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-22 11:39:40</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: It seems  CompleteMultiPartUpload  request took 1 hour 43 minutes to complete. Customer has set  rgw_mp_lock_max_time 1800  but this request crossed that value and as a result ended up with ghost object. Also it was found, around the span of 6 minute</div>
 <div class="tl-entry"><span class="tl-date">2026-07-23 09:14:19</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 12:46:42</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw_mp_lock_max_time = 1800 (30 min) The analysis of </div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 12:50:46</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: During last week&#x27;s call with Anh, we agreed to investigate the issue on two parallel tracks: Ghost Object RCA Current evidence continues to match  IBMCEPH-13341   overlapping  CompleteMultipartUpload  requests completion time exceeded  rgw_mp_lock_ma</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 12:03:01</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Summary of the 29th July call :  1) As informed to us during the call, there was an index pool migration activity to move index pool to SSD drives due to which cluster was not healthy and this is the reason for the observed increased latency in RGW o</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 13:36:07</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Finally, Mohini acknowledged and understood the limitations we face in providing a definitive RCA in this case. As discussed during today&#x27;s call, the Splunk logs provided contain only the communication between the Storage Router and the RGW daemon. T</div>
 </div>
 
 </body>

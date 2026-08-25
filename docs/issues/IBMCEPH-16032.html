@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16032: Cephadm agent enters dead state when MGR failover occurs while the agent is down</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16032" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16032</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Ashwin Joshi</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1z2</dd>
     <dt>Created</dt><dd>2026-06-17</dd>
-    <dt>Updated</dt><dd>2026-07-08</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -182,9 +182,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (12 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-08 01:19:19</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Ashwin Joshi)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 04:33:41</span><span class="tl-badge comment">Comment</span> <strong>Ashwin Joshi</strong>: PR raised   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 11:19:12</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-20.2.2-176. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 12:28:32</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>: Hi   , Verified that the MGR configuration is now pushed correctly to a stopped agent, and the fix is working as expected. One behavior I noticed is that during an MGR failover, the agent service is also restarted using  systemctl . As a result, an a</div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 03:03:02</span><span class="tl-badge comment">Comment</span> <strong>Ashwin Joshi</strong>:   thanks for verification for the original issue. Reenabling a stopped agent sounds like a defect, but can be targeted for 10.0 for further analysis.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 09:59:25</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Ashwin Joshi)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 09:59:25</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>:  , I have marked the Jira issue as verified. I also opened the following low-priority bug for tracking:  </div>
+<div class="tl-entry"><span class="tl-date">2026-08-21 04:02:55</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>: Moving back to Assigned. This is consistently failing on automation. Manually when tried the same steps it works seamlessly.  In all CI runs and local re-runs of the suite we hit the same issue: after ceph mgr fail, agent.json target_ip on the stoppe</div>
+<div class="tl-entry"><span class="tl-date">2026-08-21 05:22:56</span><span class="tl-badge comment">Comment</span> <strong>Ashwin Joshi</strong>: Looks like the manual repro is working but the automation isn&#x27;t. We can try to figure out the differences mostly it can be timing specific. I am attaching the script “repro_ibmceph_16032_agent_failover.sh“ that I used for unit testing the fix. The fi</div>
+<div class="tl-entry"><span class="tl-date">2026-08-21 07:43:30</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>: Hi   , As discussed, I increased the wait time between stopping the agent and MGR failover from  5s to 180s . The test is now passing consistently; with 5s, it was failing consistently. Only change:  wait time increased from 5s to 180s . http://magna</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 02:35:36</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Ashwin Joshi)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 02:35:36</span><span class="tl-badge comment">Comment</span> <strong>Ashwin Joshi</strong>:   This looks as designed. If the agent is not alive during failover, the subsequent http from mgr will have connection failures since the agents are not listening due to stoppage. Once the agent timeout (20*3 or whatever configured) elapses on failed</div>
 </div>
 
 </body>

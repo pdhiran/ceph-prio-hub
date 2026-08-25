@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16079: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16079" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16079</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Guillaume ABRIOUX</dd>
   </dl></div>
@@ -98,13 +98,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-06-18</dd>
-    <dt>Updated</dt><dd>2026-07-24</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
 <div style="margin:0.5rem 0;">
   <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
-  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span><span>cephadm</span></div>
+  <div class="label-list"><span>Ceph_L3</span><span>IBM_Customer_Issue</span><span>cephadm</span><span>FailedQA</span></div>
 </div>
 
 <div class="qa-section">
@@ -197,7 +197,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (26 events)</h2>
+<h2>Timeline (33 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-23 04:50:14</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: From the Ceph volume logs below are the observation: Zapping /dev/nvme4n1  [2026-06-18 11:39:46,462][ceph_volume.main][INFO  ] Running command: ceph-volume  lvm zap /dev/nvme4n1 --destroy
 
@@ -232,6 +232,18 @@ loop0                                            </div>
 <div class="tl-entry"><span class="tl-date">2026-07-16 03:51:47</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,   and     were created to track the issue that the Acadia team encountered in both the production and test environments. In both cases, the OSD deployment was skipped, and the  unit.run  file for the affected OSDs was not created. From the </div>
 <div class="tl-entry"><span class="tl-date">2026-07-17 06:51:12</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , should we procced backport upstream PR     in downstream 9.1?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-24 08:05:56</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 19:59:23</span><span class="tl-badge comment">Comment</span> <strong>Hector Javier Delgado Neveu</strong>: A fix is available for testing in build ceph-20.2.1-330. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 19:59:23</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 06:48:25</span><span class="tl-badge comment">Comment</span> <strong>Aditya Roshan Ramteke</strong>: [QE Update] Re-tested the scenario on IBM Storage Ceph 9.9.1. [ceph: root@ceph-smb-9-9-1-391-verification-byslpa-node1-installer /]# ceph -v
+ceph version 20.2.1-391.el9cp (014e8d16be066af1356f3551eb860d1018a3eae7) tentacle (stable) OSD spec used: ser</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 06:52:00</span><span class="tl-badge comment">Comment</span> <strong>Aditya Roshan Ramteke</strong>: QE Result: FAILED The issue is reproducible on: IBM Storage Ceph 9.9.1 ceph-20.2.1-391.el9cp The newly added host matched the existing host_pattern: &#x27;*&#x27; OSD specification, but no OSD daemons were created on the eligible devices. Marking as failed_qa.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 04:07:38</span><span class="tl-badge comment">Comment</span> <strong>Guillaume ABRIOUX</strong>:  no OSDs were created because the host has no device available: [root@ceph-smb-9-9-1-391-verification-byslpa-node4 ~]# lsblk
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sr0     11:0    1  498K  0 rom
+vda    252:0    0   40G  0 disk
+├─vda1 252:1    0 </div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 04:09:26</span><span class="tl-badge comment">Comment</span> <strong>Aditya Roshan Ramteke</strong>: The earlier observation where no OSDs were created on the newly added host was due to that host not having the required eligible HDDs. After adding another node with the required HDDs, the existing OSD spec with  host_pattern: &#x27;*&#x27;  and  osds_per_devi</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 04:09:29</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Guillaume ABRIOUX)</span></div>
 </div>
 
 </body>

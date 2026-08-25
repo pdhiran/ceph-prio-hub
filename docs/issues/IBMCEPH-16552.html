@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16552: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,13 +98,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0z2</dd>
     <dt>Created</dt><dd>2026-07-15</dd>
-    <dt>Updated</dt><dd>2026-07-23</dd>
+    <dt>Updated</dt><dd>2026-08-14</dd>
   </dl></div>
 </div>
 
 <div style="margin:0.5rem 0;">
   <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
-  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+  <div class="label-list"><span>IBM_Customer_Issue</span><span>Ceph_L3</span></div>
 </div>
 
 <div class="qa-section">
@@ -197,7 +197,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (11 events)</h2>
+<h2>Timeline (14 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-15 08:08:47</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-16 16:57:43</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: RCA: It’s hard to determine exactly what caused this runtime condition due to the logs not being during the failure event, but the traceback makes it clear that the stored specs was changed during the serve loop&#x27;s orphan daemon clean up, so likely a </div>
@@ -211,6 +211,9 @@ Could you please help us with answers to the below quest</div>
 <div class="tl-entry"><span class="tl-date">2026-07-23 05:48:18</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  The PR is for ceph:main. So would this ticket be used for 9.2 target version?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-23 11:39:38</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  The PR is for ceph:main. So would this ticket be used for 9.2 target version?  Yes</div>
 <div class="tl-entry"><span class="tl-date">2026-07-23 12:04:47</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-02 07:15:19</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  We will start blocker only phase from 5th August. Please backport before that.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 13:29:14</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Moving to 10.0 release, will not meet deadline for 9.2 block phase.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-14 03:03:56</span><span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>: [QE update] RCA: A CLI command (ceph orch apply or ceph orch rm) mutated the stored specs dictionary while the serve loop was iterating it during orphan daemon cleanup. The race window is microseconds wide. Fix: mgr/cephadm: protect against dict size</div>
 </div>
 
 </body>

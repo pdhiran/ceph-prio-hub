@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16034: [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16034" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16034</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Radosław Zarzyński</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-06-17</dd>
-    <dt>Updated</dt><dd>2026-07-16</dd>
+    <dt>Updated</dt><dd>2026-08-20</dd>
   </dl></div>
 </div>
 
@@ -188,9 +188,23 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (12 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-17 11:26:47</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Radosław Zarzyński)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:51:17</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Hey, this is proposed blocker for 8.1z8, please merge the patch quickly. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 09:58:20</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   hey, Prashant is on leave, Could you please do the needful?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 13:54:59</span><span class="tl-badge comment">Comment</span> <strong>Radosław Zarzyński</strong>: : the MR is merged. Done!</div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 21:57:13</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-19.2.1-400. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-08-14 06:40:58</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Thanks   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 02:18:03</span><span class="tl-badge comment">Comment</span> <strong>Vipin M S</strong>: verified the fix in ceph version 19.2.1-401.el9cp. We did not observe monitor crashes.
+
+1) Reproduced the issue in ceph version 19.2.1-396.el9cp, by having down_in OSDs + new OSDs &gt; in osds.
+Automation Logs:- http://takshashila.cephbt.tadn.ibm.com/lo</div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 06:39:02</span><span class="tl-badge comment">Comment</span> <strong>Vipin M S</strong>: Hi  @radoslaw.adam.zarzyns , Could you please add the release note for this bug. corresponding bugs for 9.1z2 and 9.2 will also require release note updates:    IBMCEPH-16020 cc:       </div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 09:09:40</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  Note that only 9.1z2 will need RN input but 9.2 will not, as 9.1z2 is being released prior to 9.2</div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 03:23:12</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:    In the meantime, with the help of Rovo and other AI tools, I created release notes text. please review and update, if needed. Also - I notice in the description -This caused repeated monitor crashes, preventing quorum formation. One monitor also e</div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 13:04:40</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Radosław Zarzyński)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 13:04:40</span><span class="tl-badge comment">Comment</span> <strong>Radosław Zarzyński</strong>: : I slightly modified the release note. Please have a look.</div>
 </div>
 
 </body>

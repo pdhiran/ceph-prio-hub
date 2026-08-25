@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16942: Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephfs</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-07-20</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-24</dd>
   </dl></div>
 </div>
 
@@ -204,7 +204,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (30 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-20 12:17:50</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: </div>
 <div class="tl-entry"><span class="tl-date">2026-07-21 02:16:04</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi Team  We got new sos reports from Customer for below nodes on ecurep server “ /ecurep/sf/TS022/632/TS022632815/0-all_data “. Node list of sos reports :  rhcs01-production-n02-az2 - mon/mgr node (have ceph fs commands output.) rhcs01-production-n05</div>
@@ -242,6 +242,16 @@ The al</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 01:15:17</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Discussing the issue in the cephfs channel, it looks like a corner case where code is missing a setting of alternate_name, or it is not loaded correctly. Need more time to analyze it.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 03:21:19</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prachi Lasurkar)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 03:21:19</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi   and    We have below query from customer about damaged records are safe to clear ? Could you please it once? -- Follow-up as of 2026-07-28 09:05 CEST: active production MDS reports 8 dir_frag damage records under /volumes/nfs1-production/sarepta</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 00:10:13</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>:  Have you tried scrubbing the file system to see if scrub is able to fix the damages? While just removing the damage entries will clear the damage list and make the cluster health back to HEALTH_OK, it doesn’t address the underlying issue of why some</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 01:32:45</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi Venky Thanks! I have requested customer to do filesystem scrub and provide us mds logs. Once we get response from Customer. Will update here. Command for scrub:  $ date ; ceph tell mds.production:0 scrub start / recursive,force,repair Reference do</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 06:02:30</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi    cc    Customer initially run the scrub but did not waited for scrub completion. So they do not have scrub completion time and complete logs initially. So we asked them logs again.  Log attached on Jira or ecurep path are the complete logs. 1st </div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 08:43:20</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi    did you check the scrub related logs? Please let us know if anything else is needed? Regards Ravinder Kumar</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 05:22:21</span><span class="tl-badge comment">Comment</span> <strong>Prachi Lasurkar</strong>: [Internal do not share with customer] Filesystem Scrub log analysis: Scrub identified 8 damaged inodes, all under the same parent directory in the nfs1-production/sarepta subvolume path at mellombalanse/2026/00/. Affected entries are 78.old and 77/93</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 05:58:09</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Scrub Start at: Jul 31 11:00:54 rhcs01-production-n03-az2 ceph-mds[286386]: mds.production.rhcs01-production-n03-az2.xylpnm asok_command: scrub start {path=/,prefix=scrub start,scrubops=[recursive,force,repair]} (starting...)
+Jul 31 11:00:54 rhcs01-p</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 06:15:22</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: These 8 inodes missing as per logs(_ fetched missing object for) Jul 20-22 Line  30452: Jul 20 17:59:53 rhcs01-production-n03-az2 ceph-mds[286386]: mds.0.cache.dir(0x3000000c706) _fetched missing object for [dir 0x3000000c706 .../nfs1-production/sare</div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 04:34:58</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Recovery steps:  Phase 1: Take Filesystem Offline &amp; Backup Journal 1. Prevent new clients from joining or reconnecting ceph fs set production joinable false 2. Mark the filesystem down to stop active MDS daemons ceph fs fail production 3. Stop the MD</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 14:29:30</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:    I don&#x27;t think advanced recovery ( cephfs-data-scan ) is needed here. The filesystem is up, scrub repaired most issues and the remaining damage is limited to 8 dirfrags under a single subtree.  Let&#x27;s review the latest damage ls outputs and then dec</div>
 </div>
 
 </body>

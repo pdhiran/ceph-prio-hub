@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16219: [IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16219" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16219</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Shweta Bhosale</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-06-25</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-08-04</dd>
   </dl></div>
 </div>
 
@@ -194,7 +194,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (7 events)</h2>
+<h2>Timeline (9 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-25 08:39:32</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello team, Sharing the details on the internal lab testing: + On checking the RADOS level configuration on the IBM Ceph 8 cluster and found that the  qos_type  is set to an integer value ---- [ceph: root@ceph-node-1 /]# ceph nfs cluster qos  enable </div>
 <div class="tl-entry"><span class="tl-date">2026-06-26 03:33:46</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: [ Internal] From ceph 8.1 code:     class QOSType(Enum):
@@ -206,6 +206,8 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-30 00:12:17</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>: Yes, as discussed on slack in migration we updated qos_type for int to string -   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-02 10:29:45</span><span class="tl-badge comment">Comment</span> <strong>Manimaran M</strong>: Repro Steps from QE: Same as    Tried to set the config(workaround) before upgrade and the workflow succeeded Detailed logs attached</div>
 <div class="tl-entry"><span class="tl-date">2026-07-02 10:29:45</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Shweta Bhosale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 07:38:37</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>: Closing this jira, as we have different tickets to track the issues found in upgrade.      </div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 00:35:54</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Shweta Bhosale)</span></div>
 </div>
 
 </body>

@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16314: [9.1z Backport] [Denali]NFS daemons crashing with error &quot;Expected a number, got a double quoted string&quot; while upgrading from version 8 to 9</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16314" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16314</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
-    <dt>Assignee</dt><dd>Sachin Punadikar</dd>
+    <dt>Assignee</dt><dd>Naresh Chillarege</dd>
   </dl></div>
   <div class="meta-card"><dl>
     <dt>Components</dt><dd>nfs-ganesha</dd>
     <dt>Versions</dt><dd>N/A</dd>
     <dt>Created</dt><dd>2026-06-30</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-08-16</dd>
   </dl></div>
 </div>
 
@@ -186,9 +186,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-30 10:16:25</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Sachin Punadikar)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 09:16:06</span><span class="tl-badge comment">Comment</span> <strong>Naresh Chillarege</strong>: This issue has been fixed in 9.1z2 with commit-id: 7fe4a8ce55f09107189e370982329a21bdb5e078</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 19:15:37</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Naresh Chillarege)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-16 14:10:53</span><span class="tl-badge comment">Comment</span> <strong>Manish Singh</strong>: Update – Issue Verified as Resolved Test Environment: Cluster created with IBM Cloud Hotfix build: text ceph version 19.2.1-292.1.hotfix.bz2405397.el9cp (474220ee7febe83aa8b50a7519f8e6de2fb9b84a) squid (stable) NFS-Ganesha packages: text nfs-ganesha-</div>
+<div class="tl-entry"><span class="tl-date">2026-08-16 14:10:57</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Naresh Chillarege)</span></div>
 </div>
 
 </body>

@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15746: [9.2] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15746" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15746</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Redouane Kachach</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0z2</dd>
     <dt>Created</dt><dd>2026-06-04</dd>
-    <dt>Updated</dt><dd>2026-07-22</dd>
+    <dt>Updated</dt><dd>2026-08-16</dd>
   </dl></div>
 </div>
 
@@ -198,7 +198,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (23 events)</h2>
+<h2>Timeline (31 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-05 01:43:08</span><span class="tl-badge comment">Comment</span> <strong>Sahina Bose</strong>:  can you check - seems like a side effect of cert-mgr changes?</div>
 <div class="tl-entry"><span class="tl-date">2026-06-05 02:28:11</span><span class="tl-badge comment">Comment</span> <strong>Redouane Kachach</strong>: Hi  , technically the field  rgw_frontend_ssl_certificate  is deprecated in new versions (ssl_cert/ssl_key) must be used. But cephadm and certmgr code has logic to support this legacy field (in case it’s found it’s split into ssl_cert/ssl_key automat</div>
@@ -235,6 +235,14 @@ service_name: rg</div>
 
 We have a HF request for customer Apple https</div>
 <div class="tl-entry"><span class="tl-date">2026-07-22 09:33:43</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   This is a proposed blocker for 9.2. Now that hotfix testing is complete, please merge your patches to 9.2 branch as soon as possible. </div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 18:19:04</span><span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>:  Just another ping to add the Apple hotfixes to the  ceph-9.2-rhel-patches  branch for 9.2.   did this for 9.1z2 when Redouane was out. Thanks.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-02 08:04:16</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  are you sure the changes are present in  ceph-9.2-rhel-patches  branch? You have marked this ON_QA with build name.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-02 14:58:06</span><span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>:  I’m not sure what happened. The fixes aren’t in yet for 9.2, so I just moved out of ON_QA. Still pending on Adam King/Redouane Kachach.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 00:48:36</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2211 Cc:   Cc:   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 10:19:27</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Thanks!</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 06:32:04</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-16 23:39:43</span><span class="tl-badge comment">Comment</span> <strong>Yuva Teja Sree Gayam</strong>: Verified the bug: upgraded from 8.1, 7.1, and 8.0 to Ceph 9.2 (20.2.2-220.el10cp). No issues were seen. Hence, moving the bug to  Verified .</div>
+<div class="tl-entry"><span class="tl-date">2026-08-16 23:40:40</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Redouane Kachach)</span></div>
 </div>
 
 </body>

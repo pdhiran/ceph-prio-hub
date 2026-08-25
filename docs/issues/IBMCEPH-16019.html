@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16019: OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16019" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16019</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ON_QA</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Prashant Dhange</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-06-16</dd>
-    <dt>Updated</dt><dd>2026-07-27</dd>
+    <dt>Updated</dt><dd>2026-08-18</dd>
   </dl></div>
 </div>
 
@@ -201,7 +201,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (8 events)</h2>
+<h2>Timeline (10 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-06 07:13:41</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Do we have upstream tracker/PR of it? This crash issue would be considered blocker for 9.2. Please prioritize it. </div>
 <div class="tl-entry"><span class="tl-date">2026-07-06 09:15:43</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Yes, We have upstream tentacle backport PR :    </div>
@@ -212,6 +212,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-22 12:57:54</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi  , Sorry for the delay. I have successfully backported the changes to the  ceph-9.2-rhel-patches  branch.:  $ git log -n4 --pretty=oneline
 c9126c2eb75151ff99bbf55b44650e9623c70594 (HEAD -&gt; ceph-9.2-rhel-patches, patches/ceph-9.2-rhel-patches) osd:</div>
 <div class="tl-entry"><span class="tl-date">2026-07-27 06:01:53</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 01:56:31</span><span class="tl-badge comment">Comment</span> <strong>Vipin M S</strong>: verified the fix in ceph version 20.2.2-220.el10cp. We did not observe monitor crashes and cluster was accessible.
+
+1) Reproduced the Monitor crash in ceph version 20.2.2-124.el10cp, by having down_in OSDs + new OSDs &gt; in_osds.
+Automation Logs:- http</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 23:08:15</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
 </div>
 
 </body>

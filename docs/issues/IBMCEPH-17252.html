@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17252: Package installation fails inside container due to Codeready Builder repository 403 error.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-17252" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-17252</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Justin Caratzas</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>build</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-07-29</dd>
-    <dt>Updated</dt><dd>2026-07-29</dd>
+    <dt>Updated</dt><dd>2026-08-04</dd>
   </dl></div>
 </div>
 
@@ -178,11 +178,19 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (3 events)</h2>
+<h2>Timeline (9 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-29 02:36:25</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Looks like the issue is not with all the IBM images. It works on some of the IBM ceph images and it doesn’t work for some. I feel this is something to do with how ceph images have been created.   Successful run :   Image used - Ceph 8.1z1 [root@local</div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 02:36:58</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: If we use RH images, it just works fine. </div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 04:15:46</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Justin Caratzas)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 09:33:26</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: The working example here (8.1) was built via RH OSBS, while the latter was built via IBM SPS, despite both images being IBM Ceph containers. We’ll make changes to make the containers built via SPS be able to install packages via  microdnf -y install </div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 02:01:03</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: thanks   . So, Can I expect this to work well for all the release going forward?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 15:17:42</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>:  Can you test this image:  cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:v9.1-IBMCEPH-17252</div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 17:08:41</span><span class="tl-badge comment">Comment</span> <strong>Justin Caratzas</strong>: CI Update:  https://github.ibm.com/ceph/ceph-pipeline-configs/pull/311 Container changes:  https://github.ibm.com/ceph/ibm-ceph-container/pull/40</div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 23:14:55</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Justin Caratzas)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 23:14:55</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Package installation inside the container is working with the image  cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:v9.1-IBMCEPH-17252 . root@ceph87:/tmp/testdir
+# podman run -it --rm -v $(pwd):/working:z ad3ab3ffaffc
+[root@23307c2a999a /]# microdn</div>
 </div>
 
 </body>

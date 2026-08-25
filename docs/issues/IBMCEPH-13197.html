@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13197: Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13197" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13197</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Afreen Misbah</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-dashboard</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-02-12</dd>
-    <dt>Updated</dt><dd>2026-07-15</dd>
+    <dt>Updated</dt><dd>2026-08-19</dd>
   </dl></div>
 </div>
 
@@ -182,7 +182,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (6 events)</h2>
+<h2>Timeline (17 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-02-18 03:25:13</span><span class="tl-badge comment">Comment</span> <strong>Anmol Babu</strong>: Copying my analysis from chat thread: I see the earlier fix code intact and not replaced by my changes. The customer&#x27;s metric name is ceph_data_sync_from_zone_abc_fetch_bytes_sum with source_zone=&quot;int&quot;. This means their actual zone name is likely int</div>
 <div class="tl-entry"><span class="tl-date">2026-05-20 08:27:51</span><span class="tl-badge comment">Comment</span> <strong>Sergii Mykhailushko</strong>: Hello team, Could you please share if there has been any progress on this recently? I’d need to set the customer expectations on ETA for the resolution, or at least they would appreciate any news on the work on their issue. Thank in advance!</div>
@@ -190,6 +190,17 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-13 08:28:56</span><span class="tl-badge comment">Comment</span> <strong>Anmol Babu</strong>: Apologies for the delay here. This depends on   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-13 08:31:44</span><span class="tl-badge comment">Comment</span> <strong>Sergii Mykhailushko</strong>: Thanks for a quick reply, i really appreciate it. In this case, could you please share how  IBMCEPH-14085  is progressing?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 05:52:22</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Afreen Misbah)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 02:08:45</span><span class="tl-badge comment">Comment</span> <strong>Sergii Mykhailushko</strong>:     Guys, could you please update on this?</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 02:16:41</span><span class="tl-badge comment">Comment</span> <strong>Anmol Babu</strong>: Tagging   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 05:06:43</span><span class="tl-badge comment">Comment</span> <strong>Ujjawal Anand</strong>:  I don&#x27;t have much of an update on this ticket  IBMCEPH-14085  as it has been moved to 10.0. Is this ticket blocking or a dependency for any other work? If yes, then i can prioritize it.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 06:49:05</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>:  Looks like automation added me, but as I am coming new to this can help if needed   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 06:55:06</span><span class="tl-badge comment">Comment</span> <strong>Sergii Mykhailushko</strong>:  I’ve tagged you as i saw you were the assignee for this one. I need some info on the progress to pass it to the customer, as they have started to become somewhat unpatient as having no updates so far.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 07:19:47</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>:  Makes sense, I am raising a fix in a while</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 15:02:08</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>: https://github.com/ceph/ceph/pull/70801  </div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 15:04:15</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>:     raides a fix for this, removed regex match completely as its fragile and have both perf group and counter passed instead to construc metric name, need to verify the fix now</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 15:05:48</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>:  I hope to fix this in any coming z streams and will try for 9.2 if possible as blocker phase is  . Will keep you updated</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 08:02:24</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Afreen Misbah)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 08:02:24</span><span class="tl-badge comment">Comment</span> <strong>Anmol Babu</strong>:  PTAL at   </div>
 </div>
 
 </body>

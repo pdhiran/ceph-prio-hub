@@ -85,20 +85,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13852: Preflight playbook should not force-enable firewalld (make it configurable/conditional)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13852" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13852</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Swati Thombe</dd>
   </dl></div>
   <div class="meta-card"><dl>
-    <dt>Components</dt><dd>ceph-ansible</dd>
+    <dt>Components</dt><dd>ceph-ansible, cephadm</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-04-09</dd>
-    <dt>Updated</dt><dd>2026-07-17</dd>
+    <dt>Updated</dt><dd>2026-08-12</dd>
   </dl></div>
 </div>
 
@@ -192,7 +192,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (9 events)</h2>
+<h2>Timeline (12 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-04-15 19:33:11</span><span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>:  - The other part this customer encountered was with selinux setting to enforcing mode when the customer uses selinux in permissive mode.  Let me know if I should open a new Jira for this part or if we can include here.. I did a quick test in lab and</div>
 <div class="tl-entry"><span class="tl-date">2026-04-15 23:57:30</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    Thanks for sharing this. Since SELinux behavior seems to be a separate issue, I think it would be better to open another Jira to track it independently. Thanks !</div>
@@ -206,6 +206,9 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
   ansible.b</div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 01:13:54</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: PR is under review   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 01:14:37</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 02:36:14</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-11 03:02:45</span><span class="tl-badge comment">Comment</span> <strong>KISHORE KUMAR S</strong>:  do we have any update on this?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-12 08:47:19</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Given that PR is not yet merged in upstream, I am moving this out to 10.0. please continue to prioritize so that this can be taken in one of the z streams. -Bipin Kunal</div>
 </div>
 
 </body>

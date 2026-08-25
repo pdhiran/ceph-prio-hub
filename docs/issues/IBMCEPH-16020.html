@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16020: [9.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16020" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16020</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Prashant Dhange</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-06-16</dd>
-    <dt>Updated</dt><dd>2026-07-16</dd>
+    <dt>Updated</dt><dd>2026-08-18</dd>
   </dl></div>
 </div>
 
@@ -188,9 +188,17 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-17 11:27:09</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:50:36</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Hey, this is proposed blocker for 9.1z2, please merge the patch quickly. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 12:11:08</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-20.2.1-382. Moving to ON_QA</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 23:13:22</span><span class="tl-badge comment">Comment</span> <strong>Vipin M S</strong>: verified the fix in ceph version 20.2.1-383
+
+1) Reproduced the issue in ceph version 20.2.1-324 by having down_in OSDs + new OSDs &gt; in osds.
+Monitors crashed and ceph commands began to timeout. 
+Automation Logs:- http://takshashila.cephbt.tadn.ibm.co</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 23:13:38</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Prashant Dhange)</span></div>
 </div>
 
 </body>

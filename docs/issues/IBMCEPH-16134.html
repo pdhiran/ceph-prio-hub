@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16134: [IBM_Customer][RBD] Unable to delete the RBD volume</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16134" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16134</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Ilya Dryomov</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rbd</dd>
     <dt>Versions</dt><dd>8.0</dd>
     <dt>Created</dt><dd>2026-06-22</dd>
-    <dt>Updated</dt><dd>2026-07-08</dd>
+    <dt>Updated</dt><dd>2026-08-03</dd>
   </dl></div>
 </div>
 
@@ -189,7 +189,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (9 events)</h2>
+<h2>Timeline (14 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-22 05:21:34</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hi team, Sharing the additional details, that for the same image we are not able to execute the  rbd status  or  rbd info  command as well. When executed with  debug-rbd=20  we see the openRequest call been failed with  -2  return code # rbd status -</div>
 <div class="tl-entry"><span class="tl-date">2026-06-22 05:42:12</span><span class="tl-badge comment">Comment</span> <strong>Ilya Dryomov</strong>:  What makes the customer think that an RBD volume with such a name exists?</div>
@@ -203,6 +203,11 @@ csi-vol-a6e</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 08:55:02</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Ilya Dryomov)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 08:55:02</span><span class="tl-badge comment">Comment</span> <strong>Ilya Dryomov</strong>: # rbd rm --pool rbd_pool --namespace rke-prd csi-vol-a6e6b619-70ae-11ed-a0b5-b22f74a001b7
 ### no output, neither when the host was down nor when it came back up What is meant my &quot;no output&quot;?  Did &quot;rbd rm&quot; command hang?  If not, what was its exit stat</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 08:13:35</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    What is meant my &quot;no output&quot;?  Did &quot;rbd rm&quot; command hang?  If not, what was its exit status? Yes the command is stuck with no output. When we executed the command with --debug-ms 1 and --debug-rbd 20 option we observed that  rbd rm  command </div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 08:53:11</span><span class="tl-badge comment">Comment</span> <strong>Ilya Dryomov</strong>: I tried to study and found that for the rbd data objects to trim or delete there object_map which stores this information. However, for this image i do not see such entry in logs. It’s because this image doesn&#x27;t have  object-map  feature enabled:   &quot;</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 04:41:45</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    Thank you for clarifying the doubts. It now makes sense why it was not getting deleted quickly earlier. How was this determined? We executed the  rados ls  command on the pool and with grep for the image ID. In that output we only found one </div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 07:30:27</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    Customer agreed to keep this one stale image as it is. Thank you for your help, and we can close this jira. Regards, Kritik Sachdeva</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 07:38:07</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Ilya Dryomov)</span></div>
 </div>
 
 </body>

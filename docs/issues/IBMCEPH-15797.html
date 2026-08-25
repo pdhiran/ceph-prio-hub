@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15797: [8.1z Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw-multisite</dd>
     <dt>Versions</dt><dd>8.0</dd>
     <dt>Created</dt><dd>2026-06-09</dd>
-    <dt>Updated</dt><dd>2026-07-16</dd>
+    <dt>Updated</dt><dd>2026-08-07</dd>
   </dl></div>
 </div>
 
@@ -188,9 +188,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (4 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 10:29:56</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Hi    I see you have moved the Jira to 8.1z9 but I would request to review and check if any fix is really needed in 8.1z branch or just the fix at 9.1 and 9.2 is good enough.  We have the fix added to 9.2 and 9.1 already via Jira [1][2] respectively.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 07:34:25</span><span class="tl-badge comment">Comment</span> <strong>Madhavi Kasturi</strong>:  , I think it would be good to backport the hotfix patches, as the delete usecase is common.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 07:47:20</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Thanks    .    can we take that in 8.1z8? We are right now waiting on couple of other patches as well, so if we can quickly do this, we can close it in 8.1z8.</div>
 </div>
 
 </body>

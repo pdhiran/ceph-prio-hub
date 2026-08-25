@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16535: hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16535" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16535</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">blocker</span></dd>
     <dt>Assignee</dt><dd>SHUBHA JAIN</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-07-14</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-05</dd>
   </dl></div>
 </div>
 
@@ -203,7 +203,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (28 events)</h2>
+<h2>Timeline (36 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-14 10:05:55</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Thanks  for sharing reproducing steps. I attempted to reproduce the issue using the steps provided. During reproducer, I observed an additional regression: after upgrading to IBM Ceph 9.0, the orchestrator silently lowercased the hostname in its stor</div>
 <div class="tl-entry"><span class="tl-date">2026-07-15 05:01:32</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   ,   introduced hostname normalization ( normalize_hostname() , i.e.  .lower() ) into  HostSpec.__init__()  and  HostSpec.normalize_json() . HostSpec  is not only created when parsing CLI or YAML input it is also constructed whenever cephadm r</div>
@@ -237,6 +237,14 @@ e6: 3 mons at {A</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 09:00:36</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>:  hello, the PR is under review, will update once it is approved!! Thanks</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 12:26:56</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: PR:    9.2 MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2162 9.1z2 MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2166</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 14:29:14</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(SHUBHA JAIN)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 01:49:53</span><span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>: Hello    Is this Jira a duplicate of    ? Because both have same  Target Version  and  Fixed in Build Is yes, we can close this one because    is already verified by QE; thanks! cc   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 02:53:28</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: Hello   sure we can close it, but one has to have 9.1 target version and one for 9.2, can you check once regarding the version and target build , otherwise we can close it! Thanks</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 03:12:48</span><span class="tl-badge comment">Comment</span> <strong>Sayalee Raut</strong>:  Okay, thanks! Hey    Can you please review and change the   Fixed in Build  because it was added by you for both the Jiras. I think the  Fixed in Build  and  Target Version  for    should be in accordance with the summary of this Jira which states “</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 04:00:03</span><span class="tl-badge comment">Comment</span> <strong>Sachin Yeshwanth</strong>: - Both the JIRA’s    and   has same target version as 9.2, that’s the reason both tickets are updated with the same Ceph version in the  Fixed in Build  parameter.  - Please check and verify the  Target Version  for both the JIRA’s ?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 05:04:37</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: ticket    holds Target version as 9.2 ticket    holds Target version as 9.1z2 I have updated the Target version on both tickets, please let me know , Thanks Cc:   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 11:11:16</span><span class="tl-badge comment">Comment</span> <strong>SHUBHA JAIN</strong>: Follow up fix MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2191</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 11:52:11</span><span class="tl-badge comment">Comment</span> <strong>Anushree Hallur</strong>: Hi Team, QE Verified the fix in 8.1 GA build(ceph version 19.2.1-375.el9cp), upgraded to 9.9.2 build(ceph version 20.2.2-181.el10cp) , observed the following: Deployed ceph cluster with uppercase hostnames in 8.1 Upgraded to 9.9.2 build Cluster succe</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 11:52:27</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(SHUBHA JAIN)</span></div>
 </div>
 
 </body>

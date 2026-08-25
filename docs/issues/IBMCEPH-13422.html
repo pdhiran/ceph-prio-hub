@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13422: [RFE] Extend ceph-volume batch command to handle fast devices with existing lvm</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13422" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13422</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-volume</dd>
     <dt>Versions</dt><dd>8.1z4</dd>
     <dt>Created</dt><dd>2026-03-11</dd>
-    <dt>Updated</dt><dd>2026-07-21</dd>
+    <dt>Updated</dt><dd>2026-08-03</dd>
   </dl></div>
 </div>
 
@@ -180,9 +180,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (1 events)</h2>
+<h2>Timeline (3 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-04-20 12:15:32</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 12:33:13</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Closing, discussion with Guillaume Abrioux concluded with the understanding that batch working only on clean devices is intentional, allowing batching on not clean devices leads to many destructive edge cases which will be an overall negative to the </div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 12:33:36</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15000: [8.1z Backport] Daemon crashes observed, but crash files are not generated in the expected directory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15000" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15000</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ON_QA</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-05-20</dd>
-    <dt>Updated</dt><dd>2026-07-27</dd>
+    <dt>Updated</dt><dd>2026-08-06</dd>
   </dl></div>
 </div>
 
@@ -188,7 +188,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (6 events)</h2>
+<h2>Timeline (8 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-07 04:14:38</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  if this needs to be documented for 8.1z7 release notes please update accordingly. It is still in assigned state. if it will be a known issue that needs to be documneted, please update. if it will be fixed before release, we can use the bug fix provi</div>
 <div class="tl-entry"><span class="tl-date">2026-06-08 11:40:25</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  Likely not, 8.1z7 is on blocker and I was waiting for 9.1z1 to avoid regression. Moving to 8.1z8.</div>
@@ -196,6 +196,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-23 07:24:01</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Can you port the changes that are merged into 9.2? We are in clokers only phase already.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-23 13:04:08</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Merged:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2107</div>
 <div class="tl-entry"><span class="tl-date">2026-07-27 15:41:19</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 03:13:35</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>: Verified the bug by executing the following steps: ceph status   [ceph: root@ceph-bharath-9-2-ckrwch-node1-installer /]# ceph -s
+  cluster:
+    id:     57cd4142-8ef3-11f1-b1f7-fa163ed2fa4a
+    health: HEALTH_OK
+
+  services:
+    mon: 3 daemons, quorum</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 12:11:50</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

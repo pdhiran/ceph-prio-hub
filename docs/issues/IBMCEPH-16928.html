@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16928: MDS pod crash ceph_assert FAILED ceph_assert(_raw)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephfs</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-07-17</dd>
-    <dt>Updated</dt><dd>2026-07-29</dd>
+    <dt>Updated</dt><dd>2026-08-06</dd>
   </dl></div>
 </div>
 
@@ -197,13 +197,22 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (5 events)</h2>
+<h2>Timeline (14 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-17 15:10:06</span><span class="tl-badge comment">Comment</span> <strong>Zbigniew Cofala</strong>: The customer provided the following analysis of the case including the contents of the file: /ecurep/sf/TS022/559/TS022559107/IBM_Ceph_MDS_Case_Summary.txt IBM Case Summary – CephFS MDS Cache Oversized and MDS Crash Investigation Environment Ceph ver</div>
 <div class="tl-entry"><span class="tl-date">2026-07-24 04:04:09</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   , Please share the core dump for analysis. Share it on BOX. Thanks Vivek</div>
 <div class="tl-entry"><span class="tl-date">2026-07-24 11:21:24</span><span class="tl-badge comment">Comment</span> <strong>Manya Dogra</strong>: I cross checked the fix commits, they’re present in 8.1, 9.0, and 9.1 . Also verified that the call stack of the current bug matches the reference bug IBMCEPH-12861. Will be needing core dump to proceed further.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 03:56:36</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Manya Dogra)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 03:56:36</span><span class="tl-badge comment">Comment</span> <strong>Manya Dogra</strong>: Hello  , Could you please help with two things: Could you share the core dump file(s) so we can proceed with further analysis? Could you clarify why and what triggered the dump tree admin socket command at the time crash? For example, was it run manu</div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 13:17:37</span><span class="tl-badge comment">Comment</span> <strong>Zbigniew Cofala</strong>: Hi    I&#x27;m not sure if they even have core dumps from these crashes, I sent a question, still waiting for a reply, I&#x27;ll let you know when I get it.  As for the second part, I know that the first crash occurred on its own, and the second one while crea</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 07:04:35</span><span class="tl-badge comment">Comment</span> <strong>Manya Dogra</strong>: Hi  yes, please let me know what reply you get from them. Thank you!</div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 12:54:50</span><span class="tl-badge comment">Comment</span> <strong>Zbigniew Cofala</strong>: Hi    They don’t have it unfortunately, here is the answer for my question if they have a  core dump : “Sorry, we do not. Could we analyze the mds cache size to see if it needs to be increased?”</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 05:48:56</span><span class="tl-badge comment">Comment</span> <strong>Manya Dogra</strong>: [Internal do not share with customer] After doing a thorough log analysis, these are my findings:-  The MDS main thread froze approximately 20 seconds before the first heartbeat timeout was logged at ~08:10:35. The heartbeat counter then increased co</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 01:55:46</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: The MDS crash that this ticket has in its description has been fixed. I guess the build that is being used does not have the fix. I haven’t looked at the other details in this ticket as of now.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 01:56:36</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: This is the fix:  https://tracker.ceph.com/issues/68243</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 01:57:06</span><span class="tl-badge comment">Comment</span> <strong>Venky Shankar</strong>: cc   to check for RHCS versions where the fix is available downstream.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 05:44:32</span><span class="tl-badge comment">Comment</span> <strong>Vivek Maurya</strong>: Hi   ,   , and I checked; the fix is already present in the downstream where the issue was reproduced. That&#x27;s why we need a core dump to analyze the crash.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 11:10:32</span><span class="tl-badge comment">Comment</span> <strong>Zbigniew Cofala</strong>: Hi      Thanks. I&#x27;ll send the customer a link to a document on how to configure their system so they can obtain a core dump in the event of a future crash. </div>
 </div>
 
 </body>

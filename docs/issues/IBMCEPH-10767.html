@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10767: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-10767" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-10767</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Swati Thombe</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>8.0</dd>
     <dt>Created</dt><dd>2025-03-07</dd>
-    <dt>Updated</dt><dd>2026-07-13</dd>
+    <dt>Updated</dt><dd>2026-08-06</dd>
   </dl></div>
 </div>
 
@@ -196,7 +196,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (9 events)</h2>
+<h2>Timeline (14 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2025-11-10 22:04:33</span><span class="tl-badge comment">Comment</span> <strong>Nizamudeen A</strong>: this on and the other one are similar. The error is actually originating from cephadm itself. Maybe you can reproduce it by doing `ceph orch upgrade ls` command inside the cephadm shell.</div>
 <div class="tl-entry"><span class="tl-date">2025-11-11 13:54:48</span><span class="tl-badge comment">Comment</span> <strong>Anthony D&#x27;Atri</strong>: &gt;this on and the other one are similar.  I don&#x27;t know what that means. The claim is that a CLI upgrade works, so I am uncertain what running that would tell us here.</div>
@@ -207,6 +207,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-30 02:02:48</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Bug #77780: 400 Client Error: Bad Request for url when attempting to update ISC 8.0 - Ceph - Ceph Tracker</div>
 <div class="tl-entry"><span class="tl-date">2026-07-02 09:33:06</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    I&#x27;ve raised the PR here:   . Could someone from the team please review it? Thanks!</div>
 <div class="tl-entry"><span class="tl-date">2026-07-13 01:37:09</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 08:29:06</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   PLease expedite on it. You just have 1 week to get this merged in 9.2 branch. Please let me know if you think that would be possible. Looking at the latest comment on PR, I feel we may miss the bug. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 08:35:46</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  Sure, I&#x27;m on it.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:17:32</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:    Since the PR has many comments and ticket is not marked blocker, I moved it to 10.0. Do we think we need to take this into 9.2?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:38:01</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:38:01</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Since the PR has many comments and ticket is not marked blocker, I moved it to 10.0. Do we think we need to take this into 9.2? Lets continue to work on PR and once PR is merged we can see decide the release target. For now, lets keep it in 10.0. Onl</div>
 </div>
 
 </body>

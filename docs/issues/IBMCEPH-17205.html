@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17205: [9.1z Backport] [GSS] Health Warning is missing the descriptive text</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-17205" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-17205</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>N/A</dd>
     <dt>Created</dt><dd>2026-07-27</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-11</dd>
   </dl></div>
 </div>
 
@@ -184,10 +184,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (2 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-28 09:08:34</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Changes are back ported to ceph-9.1-rhel-patches via  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/2c091b5b207d0d409b53b5a45a1bc1a4a774ede9</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 13:54:17</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 00:33:05</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-11 09:52:23</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>: Verified the bug by executing the following steps- Set the  bluestore_warn_on_free_fragmentation  value to low to generate the “ high free space fragmentation of BlueStore ” message [ceph: root@ceph-bharath-9-2-hfpca5-node1-installer /]# ceph config </div>
+<div class="tl-entry"><span class="tl-date">2026-08-11 09:53:44</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 </div>
 
 </body>

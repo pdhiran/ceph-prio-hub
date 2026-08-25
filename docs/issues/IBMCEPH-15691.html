@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15691: [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15691" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15691</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Swati Thombe</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.1</dd>
     <dt>Created</dt><dd>2026-06-02</dd>
-    <dt>Updated</dt><dd>2026-07-13</dd>
+    <dt>Updated</dt><dd>2026-08-06</dd>
   </dl></div>
 </div>
 
@@ -191,7 +191,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (11 events)</h2>
+<h2>Timeline (18 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-02 08:35:49</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Please take a look at this issue. Let me know if you need any help on this.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-02 08:37:45</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  sure, looking into it   </div>
@@ -204,6 +204,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-26 00:51:41</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    PR raised related this   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-13 01:35:51</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-13 01:35:51</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>:  Thanks for the PR. I am assigning this bug to you.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 04:27:15</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>: This is not an agent functionality issue. Rejecting this as a blocker. Since the PR is still under review, moving this out to 10.0.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 07:29:08</span><span class="tl-badge comment">Comment</span> <strong>K Amarnath Reddy</strong>:  , If agent shows the version as  unkonwn , we miss out on upgrades.  This makes it difficult for us to check if upgrades really have taken affect on agent daemon can we at least tag the ceph version which makes better than unknown how other daemons </div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 01:20:42</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   The PR is almost ready in upstream. All testing is done, It would be good to expedite the merge. we should take this in 9.2 based on comment from   .</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:12:47</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Thanks for the explanation! I have moved it back into 9.2.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:40:51</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Thanks    for moving it back to 9.2.    please  get the fix merged quickly and have it backported. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:44:12</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:44:12</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>:  Noted, I’ll do the needful   </div>
 </div>
 
 </body>

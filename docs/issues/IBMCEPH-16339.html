@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16339: RGW service not restarting/reloading certificates in large cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16339" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16339</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Timothy Nguyen</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm, rgw</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-07-01</dd>
-    <dt>Updated</dt><dd>2026-07-21</dd>
+    <dt>Updated</dt><dd>2026-08-03</dd>
   </dl></div>
 </div>
 
@@ -196,7 +196,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (17 events)</h2>
+<h2>Timeline (19 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-01 21:10:59</span><span class="tl-badge comment">Comment</span> <strong>Stephen Baldwin</strong>: Including the customer feedback from the case TS0223606 regarding the data captured for this case and other details on this issue. Attaching the first two requested artifacts from our production cluster sro-us-east-1-ceph-prod-003 (Storage Ceph 8.1.0</div>
 <div class="tl-entry"><span class="tl-date">2026-07-01 21:29:25</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: The issue occurred on June 9, whereas the logs provided are from June 15, so they may not capture the actual failure event. Could you please ask the Apple team to reproduce the issue and collect the relevant logs during or immediately after reproduct</div>
@@ -217,6 +217,8 @@ service_id: rgw.s</div>
 <div class="tl-entry"><span class="tl-date">2026-07-21 15:05:46</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>: This feels much more like a cephadm/orchestration issue than one with RGW.  Is anyone (e.g.  ) looking at this from that team?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-21 15:20:55</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-21 15:20:55</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  I’m handling this from L3 team, and yes its more of a cephadm/orchestrator issue then RGW, component is changed so looks good to me.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 18:39:24</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Closing, customer case auto-closed, and we lack information and logs for a proper RCA. Re-open if there are future incidents similar to this one.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-03 18:40:30</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
 </div>
 
 </body>

@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13006: RGW objects get deleted inspite of object lock being set</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13006" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13006</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Matthew Benjamin</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw</dd>
     <dt>Versions</dt><dd>8.1z3, 8.1z4</dd>
     <dt>Created</dt><dd>2026-02-05</dd>
-    <dt>Updated</dt><dd>2026-06-09</dd>
+    <dt>Updated</dt><dd>2026-08-07</dd>
   </dl></div>
 </div>
 
@@ -188,7 +188,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (7 events)</h2>
+<h2>Timeline (10 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-02-05 02:55:53</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Adding the RGW debug logs from the issue reproducer in my local environment.  We tried to capture the debug logs in customer’s environment however were the logs were not captured due to rate limiting while object deletion.</div>
 <div class="tl-entry"><span class="tl-date">2026-02-05 09:16:16</span><span class="tl-badge comment">Comment</span> <strong>Raja Sharma</strong>: support has filed an issue   against 8.1z4 that appears to show that object lock for compliance is not being enforced.  I need to identify someone to help look at this.  To start with  @user-U04HJ7RSGQ4  could you help confirm that the scenario makes</div>
@@ -197,6 +197,9 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-02-06 03:04:43</span><span class="tl-badge comment">Comment</span> <strong>Vidushi Mishra</strong>: Ack, this is expected behavior, and the same behavior is also seen in ceph version 8.1z5(19.2.1-329.el9cp) . In COMPLIANCE mode, object versions are retained until the configured retention period expires. Any attempt to delete a specific versioned ob</div>
 <div class="tl-entry"><span class="tl-date">2026-02-25 00:59:42</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: We have communicated the same to the customer and will keep you posted on any further updates.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-09 03:45:08</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 06:55:26</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Is anything pending on this? Can we close it? cc   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 06:57:26</span><span class="tl-badge comment">Comment</span> <strong>Varuni Sawant</strong>: Hello   , We no nothing is pending. We can close this Jira out.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 07:49:43</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
 </div>
 
 </body>

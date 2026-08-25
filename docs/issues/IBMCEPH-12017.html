@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12017: [BZ#2391835] [IBM_Support] Ceph RGW Data POOL utilization is higher compare to actual data written to buckets</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-12017" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-12017</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Matthew Benjamin</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2025-08-29</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-05</dd>
   </dl></div>
 </div>
 
@@ -186,12 +186,15 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (4 events)</h2>
+<h2>Timeline (7 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2025-08-29 12:37:17</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>: Support Case for Apple : TS020173088</div>
 <div class="tl-entry"><span class="tl-date">2025-08-29 14:46:56</span><span class="tl-badge comment">Comment</span> <strong>Michael Kidd</strong>: Hi Shantanu, There are two most likely reasons why the raw space usage may be higher than the data written to the RGW: 1. A bug where s3 server-side copy is used, then the original copy ( and subsequently the 2nd copy ) of the object are deleted, but</div>
 <div class="tl-entry"><span class="tl-date">2026-03-03 15:38:39</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>:    do we have any traction on this?</div>
 <div class="tl-entry"><span class="tl-date">2026-06-11 11:17:02</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 10:52:36</span><span class="tl-badge comment">Comment</span> <strong>Matthew Benjamin</strong>:    can this be closed?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 10:54:14</span><span class="tl-badge comment">Comment</span> <strong>Michael Kidd</strong>: Closing due to lack of data.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 10:54:14</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Matthew Benjamin)</span></div>
 </div>
 
 </body>

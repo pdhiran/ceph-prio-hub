@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13484: [9.0] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13484" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13484</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Anoop C S</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>smb</dd>
     <dt>Versions</dt><dd>9.2</dd>
     <dt>Created</dt><dd>2026-03-18</dd>
-    <dt>Updated</dt><dd>2026-07-10</dd>
+    <dt>Updated</dt><dd>2026-08-18</dd>
   </dl></div>
 </div>
 
@@ -205,7 +205,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (22 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-04-13 12:50:24</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hi team, Logs have been uploaded to the case. Location:  /ecurep/sf/TS021/606/TS021606977/0-all_data Uploaded files: sosreport-ceph01-services-p01-az1-TS021606977-2026-04-08-wrmxeom.tar.xz sosreport-ceph01-services-p05-az1-TS021606977-2026-04-08-uhph</div>
 <div class="tl-entry"><span class="tl-date">2026-04-17 17:44:03</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>: Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fail periodically every 2 hours. This could cause st</div>
@@ -230,6 +230,7 @@ ceph orch redeploy smb.&lt;service_id&gt; The abo</div>
 <div class="tl-entry"><span class="tl-date">2026-06-05 11:02:09</span><span class="tl-badge comment">Comment</span> <strong>Maria Fernanda Salas Villaseñor</strong>: Hello      The customer confirmed that after performing the steps on the run directory of the SMB daemons, the corresponding account names are now displayed correctly. The Salesforce case has been closed. Thank you for your support   </div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 12:32:59</span><span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: The patches required to fix this issue has been merged into 9.2.    If this is no longer an open customer case, can we go ahead and close this jira?</div>
 <div class="tl-entry"><span class="tl-date">2026-07-10 12:32:59</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 00:46:05</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Anoop C S)</span></div>
 </div>
 
 </body>

@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12678: [BZ#2413725] Daemon crashes observed, but crash files are not generated in the expected directory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2025-11-10</dd>
-    <dt>Updated</dt><dd>2026-07-27</dd>
+    <dt>Updated</dt><dd>2026-08-12</dd>
   </dl></div>
 </div>
 
@@ -197,7 +197,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (13 events)</h2>
+<h2>Timeline (14 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2025-11-10 08:21:25</span><span class="tl-badge comment">Comment</span> <strong>Prashant D</strong>: Refer  https://bugzilla.redhat.com/show_bug.cgi?id=2170213  for configuring node to generate a coredump successfully.</div>
 <div class="tl-entry"><span class="tl-date">2025-11-12 00:45:59</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: What is the output of coredumpctl list, and have you tried the steps in Comment #1? After applying the steps I am able to view a full list of my core dump files with coredumpctl list.</div>
@@ -214,6 +214,8 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 total 1592
 -rwxr--r</div>
 <div class="tl-entry"><span class="tl-date">2026-07-27 11:17:54</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Timothy Nguyen)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-02 22:45:11</span><span class="tl-badge comment">Comment</span> <strong>Srinivasa Bharath Kanta</strong>: Verified the bug by following the additional validation steps:-  First User-Initiated Crash Generation [root@ceph-bharath-9-2-e3ezdh-node2 ~]# ps -ef | grep ceph-mgr
+root      319706  319704  0 Jul30 ?        00:00:00 /run/podman-init -- /usr/bin/cep</div>
 </div>
 
 </body>

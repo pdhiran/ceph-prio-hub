@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15775: [8.1 backport] [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-15775" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-15775</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">In Progress</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">POST</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-06-08</dd>
-    <dt>Updated</dt><dd>2026-07-27</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -186,11 +186,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (3 events)</h2>
+<h2>Timeline (5 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-09 07:35:55</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , As discussed in  , we are planning to deprecate the  set  and  get threshold  commands in 8.1 and 9.1   The  ceph osd pool set threshold &lt;value&gt;  command is not pool-specific and simply updates the global PG autoscaler threshold. The same f</div>
 <div class="tl-entry"><span class="tl-date">2026-07-09 00:28:51</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-27 06:18:30</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 09:51:09</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Moving it out to next z-release as the patch is not yet merged in upstream.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 02:03:36</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 </div>
 
 </body>

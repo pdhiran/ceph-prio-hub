@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13151:  	[IBM_Support] MGR Daemon failing frequently post upgrade to 8.1</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-13151" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-13151</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Radosław Zarzyński</dd>
   </dl></div>
@@ -98,13 +98,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-02-08</dd>
-    <dt>Updated</dt><dd>2026-06-11</dd>
+    <dt>Updated</dt><dd>2026-08-06</dd>
   </dl></div>
 </div>
 
 <div style="margin:0.5rem 0;">
   <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
-  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+  <div class="label-list"><span>IBM_Customer_Issue</span><span>Ceph_L3</span></div>
 </div>
 
 <div class="qa-section">
@@ -187,12 +187,16 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (2 events)</h2>
+<h2>Timeline (6 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-02-08 11:17:56</span><span class="tl-badge comment">Comment</span> <strong>Anjana Sriram</strong>: Shantanu Bhardwaj  2025-12-15 20:38:22 UTC CONFIDENTIAL IBM Case : TS020992388 (Apple)
 
  Comment 2   Prashant Dhange  2025-12-15 21:48:54 UTC CONFIDENTIAL Here is the analysis of mon and mgr logs provided earlier. We will need debug logs from mgr and</div>
 <div class="tl-entry"><span class="tl-date">2026-06-11 11:17:56</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Radosław Zarzyński)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 10:11:51</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Are we good to close this issue, or is the customer still facing the issue and requires further debugging?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 10:18:00</span><span class="tl-badge comment">Comment</span> <strong>Shantanu Bhardwaj</strong>:  We are good to close this issue. The issue was resolved with below work around: $ ceph config set mon mon_mgr_beacon_grace 300</div>
+<div class="tl-entry"><span class="tl-date">2026-08-05 11:22:33</span><span class="tl-badge comment">Comment</span> <strong>Neha Ojha</strong>: Closing based on   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 02:14:11</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Radosław Zarzyński)</span></div>
 </div>
 
 </body>

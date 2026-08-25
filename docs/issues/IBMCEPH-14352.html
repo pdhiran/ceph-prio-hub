@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14352: NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-14352" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-14352</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#da1e28;">New</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ON_QA</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Swati Thombe</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-05-07</dd>
-    <dt>Updated</dt><dd>2026-07-03</dd>
+    <dt>Updated</dt><dd>2026-08-19</dd>
   </dl></div>
 </div>
 
@@ -196,7 +196,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (15 events)</h2>
+<h2>Timeline (25 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-05-08 09:05:26</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi    We went through the logs and noticed that the failure on April 24th was caused by a timeout during the  ganesha-rados-grace  operation. The command timed out after 10 seconds: 2026-04-24T15:17:44.946+0000 [cephadm ERROR root] Hit an exception p</div>
 <div class="tl-entry"><span class="tl-date">2026-05-11 00:29:35</span><span class="tl-badge comment">Comment</span> <strong>Anita Pandey</strong>: Hello   , Mon and Mgr logs for April 24 are available at the following locations: Ecurep: Mon Logs:  /ecurep/sf/TS022/093/TS022093470/2026-05-01 Mgr Logs:  /ecurep/sf/TS022/093/TS022093470/2026-05-05 From the Mgr logs, we observe that the PGs were in</div>
@@ -213,6 +213,16 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-05-25 01:27:56</span><span class="tl-badge comment">Comment</span> <strong>Shweta Bhosale</strong>:  Yes, we can have it as configurable param with default value as 30s.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-05 04:30:25</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: We are working on code changes. once we complete the changes &amp; local testing, we will share them for review.  </div>
 <div class="tl-entry"><span class="tl-date">2026-07-03 05:33:18</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-31 01:12:01</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Created new PR:   </div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 09:40:25</span><span class="tl-badge comment">Comment</span> <strong>Sachin Yeshwanth</strong>:  - The MR linked in this ticket is not yet merged :  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2267 Moving the bug to POST state, and move it to MODIFIED once the MR is merged.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 09:40:46</span><span class="tl-badge status">Status</span> POST <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 01:24:39</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  , Swati and Shweta were unable to merge the code. Is there someone else who can help in getting it merged?    can build team merge it?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 02:43:21</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Kane</strong>:  Looks like Rakshitha has merged the MR  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2307 . I am moving this ticket to MODIFIED state.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 03:22:10</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   I have fixed the Downstream PR link but Upstream PR link mentioned is wrong as well. Please fix that. The PR mentioned in one of the below comment is closed, so I haven’t used that. please update the field with correct link.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 03:24:11</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: yes, I sat with her to get that merged. Thanks for changing the state. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 03:29:27</span><span class="tl-badge comment">Comment</span> <strong>Swati Thombe</strong>: Hi   , I’ve updated the field with the correct upstream PR link. Thanks for pointing it out!</div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 05:28:08</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Swati Thombe)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 05:28:08</span><span class="tl-badge comment">Comment</span> <strong>storage-cloud-admins-ceph-odf storage-cloud-admins-ceph-odf</strong>: A fix is available for testing in build ceph-20.2.2-255. Moving to ON_QA</div>
 </div>
 
 </body>

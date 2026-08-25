@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15015: [Security] Private keys in the Ceph images</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>security</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-05-21</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-12</dd>
   </dl></div>
 </div>
 
@@ -177,7 +177,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (13 events)</h2>
+<h2>Timeline (16 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-05-21 04:16:33</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: This issue has been created for the DFBUGS   as we would like get security team’s involvement at least for the images shipped with ceph.</div>
 <div class="tl-entry"><span class="tl-date">2026-05-21 10:44:29</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Slack thread discussion:    Marcus Watts  [1:36 PM] Wow.  That is interesting.  I believe this is only (supposed) to be used by &quot;ceph-post-file&quot; which was intended to allow sites to upload crash dumps and logs to    back in the day.   @dmick  will be</div>
@@ -192,6 +192,9 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-06-19 09:08:36</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:  ack, but I still feel this should be treated as priority. This can be a compliance issue for customer and this Jira was created on behalf of a customer only. </div>
 <div class="tl-entry"><span class="tl-date">2026-06-19 11:47:20</span><span class="tl-badge comment">Comment</span> <strong>Sage McTaggart</strong>:  I understand. We have a lot on our plates right now, and this is a compliance issue, not a security breach, and we have many security issues we need to attend to first, that pose real security risks with known exploits to customers, including some f</div>
 <div class="tl-entry"><span class="tl-date">2026-06-23 13:40:01</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">()</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-06 03:13:26</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>:   Is there any upstream tracker for it? Is someone working to prioritize it?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 15:02:37</span><span class="tl-badge comment">Comment</span> <strong>Sage McTaggart</strong>:  I will do this when I have a chance to learn how to do upstream PRs. It is a low priority per discussion with Alex and Christina, unfortunately. Feel free to follow up occasionally though</div>
+<div class="tl-entry"><span class="tl-date">2026-08-12 11:53:47</span><span class="tl-badge comment">Comment</span> <strong>Marcus Watts</strong>: To make downstream PR&#x27;s, sorta briefly, prereqs, 0/ acquire a suitable dev machine.  min: 32g ram, 8cpu; ideal: 128g ram, 32cpu.         must have fedora.  should have big screen; via ssh only is ok. 1/ learn to build upstream ceph.  Lots of info on </div>
 </div>
 
 </body>

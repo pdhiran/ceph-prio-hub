@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-9372 - [BZ#2298858] [IBM_Support][RFE][Testathon][NvmeOF] Unable to</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-9372: [BZ#2298858] [IBM_Support][RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host list&quot; using single command</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-9372" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-9372</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Unassigned</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>nvmeof</dd>
+    <dt>Versions</dt><dd>7.1</dd>
+    <dt>Created</dt><dd>2024-07-19</dd>
+    <dt>Updated</dt><dd>2026-08-07</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>FutureFeature</span><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
+<h2>Timeline (15 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2024-07-19 09:24:43</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Here are the test results with an exmaple: Example: ---------- when we add multiple client&#x27;s NQN via single command by using &quot;host add&quot; for nvme subsystem, it fails with error  Note: We tried both expressions with space or without space in between of</div>
+<div class="tl-entry"><span class="tl-date">2024-07-24 00:52:21</span><span class="tl-badge comment">Comment</span> <strong>Aviv Caro</strong>: This is not a bug. You cannot add multiple NQNs in the same command.</div>
+<div class="tl-entry"><span class="tl-date">2024-07-25 06:27:36</span><span class="tl-badge comment">Comment</span> <strong>Gaurav Sitlani</strong>: Converting this BZ into a RFE as discussed with Aviv in the Testathon chat.</div>
+<div class="tl-entry"><span class="tl-date">2024-07-25 12:32:52</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: Currently we only allow one host NQN (or &quot;*&quot;) in the &quot;host add&quot; and &quot;host del&quot; commands. If there is a demand we can change that for future version. But we need to define the exact behavior of the new code. First there is the issue of compatibility b</div>
+<div class="tl-entry"><span class="tl-date">2024-08-22 07:19:21</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: This was handled here:  https://github.com/ceph/ceph-nvmeof/pull/817 We now allow passing a list of host NQNs in host add/del commands. Notice that the NQNs should be separated by spaces, not commas. In case you add hosts using PSK keys, the two list</div>
+<div class="tl-entry"><span class="tl-date">2024-09-17 02:27:00</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: We have an issue in the case of using security keys to the host in the &quot;add host&quot; command. Using a list of host NQNs complicates things when we also need to define security keys for these hosts. So, we will only allow one host in case a PSK or DHCHAP</div>
+<div class="tl-entry"><span class="tl-date">2024-09-30 08:54:34</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: @rlepaksh@redhat.com why was this issue re-opened? Did you find any problem? I don&#x27;t see a comment about that.</div>
+<div class="tl-entry"><span class="tl-date">2024-10-03 02:55:33</span><span class="tl-badge comment">Comment</span> <strong>Rahul Lepakshi</strong>: @gbregman@redhat.com I did not re-open this issue. This is pointed to 8.1 and is not ON_QA.</div>
+<div class="tl-entry"><span class="tl-date">2024-11-13 06:00:03</span><span class="tl-badge comment">Comment</span> <strong>Aviv Caro</strong>: This is already fixed, but I see for 8.0z1 for QE validation.</div>
+<div class="tl-entry"><span class="tl-date">2024-11-14 01:39:12</span><span class="tl-badge comment">Comment</span> <strong>Thomas Serlin</strong>: Re-target 8.0z1 BZs to z2. The 8.0z1 release will be for a single CVE BZ.</div>
+<div class="tl-entry"><span class="tl-date">2025-01-14 08:58:00</span><span class="tl-badge comment">Comment</span> <strong>Rahul Lepakshi</strong>: @acaro@redhat.com With below version I still see issue with nqn&#x27;s seperated by spaces/ comma. Moving back to assigned ceph version 19.2.0-58.el9cp (d4780295dda9ca9810286810bd5254843dbd55e5) squid (stable) [ceph: root@ceph-8-2-nvmeof-mam2xx-node1-inst</div>
+<div class="tl-entry"><span class="tl-date">2025-01-19 04:58:01</span><span class="tl-badge comment">Comment</span> <strong>Former user</strong>: @rlepaksh@redhat.com you are using the CLI incorrectly. The host NQNs should be separated by spaces, not commas and you shouldn&#x27;t use &quot;&quot; to surround the NQNs. Doing so will pass all the NQNs as one big NQN which pass the NQN validity checks. Here&#x27;s a</div>
+<div class="tl-entry"><span class="tl-date">2025-01-21 07:49:57</span><span class="tl-badge comment">Comment</span> <strong>Rahul Lepakshi</strong>: Thanks @gbregman@redhat.com. Moving it to verified  [root@ceph-8-0-2-2sltv6-node3 ~]# podman run --quiet --rm  cp.stg.icr.io/cp/ibm-ceph/nvmeof-cli-rhel9:1.3.3-1  --server-address [REDACTED-IP-e259c8b8] --server-port 5500 host list  --subsystem nqn.2</div>
+<div class="tl-entry"><span class="tl-date">2025-01-26 05:11:29</span><span class="tl-badge comment">Comment</span> <strong>Rivka Pollack</strong>: Thanks, I&#x27;ve opened  https://jsw.ibm.com/browse/ISCE-1802  to track doc updates</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 08:00:09</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">()</span></div>
+</div>
+
+</body>
+</html>

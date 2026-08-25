@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBMCEPH-11997 - [BZ#2390722] [IBM_Support] Ceph RGW Multi-site Sync is slow</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ibm-blue: #0f62fe; --ibm-dark: #001d6c; --ibm-teal: #009d9a;
+  --ibm-gray-10: #f4f4f4; --ibm-gray-20: #e0e0e0; --ibm-gray-50: #8d8d8d;
+  --ibm-gray-70: #525252; --ibm-gray-90: #262626; --ibm-gray-100: #161616;
+  --ibm-red: #da1e28; --ibm-green: #198038; --ibm-purple: #8a3ffc; --ibm-orange: #ff832b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--ibm-gray-90); background: #fff; padding: 2rem; max-width: 960px; margin: 0 auto; }
+a.back { font-size: 0.85rem; color: var(--ibm-blue); text-decoration: none; }
+a.back:hover { text-decoration: underline; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
+h2 { font-size: 1rem; font-weight: 600; margin: 2rem 0 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--ibm-gray-20); }
+h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--ibm-gray-70); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 500; white-space: nowrap; }
+.badge-outline { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; white-space: nowrap; border: 1px solid; }
+
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+.meta-card { background: var(--ibm-gray-10); border-radius: 6px; padding: 0.9rem 1rem; }
+.meta-card dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ibm-gray-50); font-weight: 600; margin-top: 0.5rem; }
+.meta-card dt:first-child { margin-top: 0; }
+.meta-card dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.qa-section {
+  background: var(--ibm-light-blue); border: 1px solid rgba(15,98,254,0.15);
+  border-radius: 8px; padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+}
+.qa-section h3 { color: var(--ibm-blue); margin: 0 0 0.75rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.qa-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+.qa-field dt { font-size: 0.7rem; text-transform: uppercase; color: var(--ibm-gray-50); font-weight: 600; }
+.qa-field dd { font-size: 0.88rem; margin-top: 0.1rem; }
+
+.analysis-box {
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
+}
+.analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
+.analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
+
+.error-box {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
+  border-radius: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.5rem 0; white-space: pre-wrap; word-break: break-all;
+}
+
+.label-list span {
+  display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem;
+  background: var(--ibm-gray-10); border: 1px solid var(--ibm-gray-20); margin: 2px;
+}
+
+.tl-entry { padding: 0.5rem 0; border-bottom: 1px solid var(--ibm-gray-20); font-size: 0.82rem; }
+.tl-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ibm-gray-50); margin-right: 0.4rem; }
+.tl-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.68rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.3rem;
+}
+.tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
+.tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
+.tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back">&larr; Back to Dashboard</a>
+<h1>IBMCEPH-11997: [BZ#2390722] [IBM_Support] Ceph RGW Multi-site Sync is slow</h1>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+
+<div class="meta-grid">
+  <div class="meta-card"><dl>
+    <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-11997" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-11997</a></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
+    <dt>Assignee</dt><dd>Shilpa Jagannath</dd>
+  </dl></div>
+  <div class="meta-card"><dl>
+    <dt>Components</dt><dd>rgw-multisite</dd>
+    <dt>Versions</dt><dd>7.1</dd>
+    <dt>Created</dt><dd>2025-08-25</dd>
+    <dt>Updated</dt><dd>2026-08-10</dd>
+  </dl></div>
+</div>
+
+<div style="margin:0.5rem 0;">
+  <strong style="font-size:0.78rem;color:var(--ibm-gray-70);">Labels:</strong>
+  <div class="label-list"><span>IBM_Customer_Issue</span></div>
+</div>
+
+<div class="qa-section">
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  <div class="qa-grid">
+    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+  </div>
+  
+</div>
+
+<h2>Analysis</h2>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+
+
+
+<h2>Timeline (21 events)</h2>
+<div class="timeline">
+<div class="tl-entry"><span class="tl-date">2026-03-06 01:38:10</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello       Customer did the alternate option of scaling down the RGW instances on secondary site to ONE for and observe the bucket stats for 24 hours. Unfortunately, there is no change observed in the bucket stats objects count. Further in the logs,</div>
+<div class="tl-entry"><span class="tl-date">2026-03-06 08:24:27</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:   Even with single RGW sync daemon it shows  couldn&#x27;t lock fbd.rgw.log:bucket.full-sync-status.8b96aea5-c763-40a3-8430-efd67cff0c62:tcsecidels3arc-b1 Can you review the debug log file here: /ecurep/sf/TS019/738/TS019738008/2026-03-03/ceph-client.rgw.</div>
+<div class="tl-entry"><span class="tl-date">2026-03-10 03:42:39</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    Customer re-uploaded the logs and lock info from the RADOS object and unfortunately we still seeing the  couldn&#x27;t lock fbd.rgw.log:bucket.full-sync-status.8b96aea5-c763-40a3-8430-efd67cff0c62:tcsecidels3arc-b1:8b96aea5-c763-40a3-8430-efd67cf</div>
+<div class="tl-entry"><span class="tl-date">2026-03-11 03:53:21</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    As discussed over the slack while the number of RGW instances on Secondary site is ONE, we executed the following command output and it also failed with the same log message of lock. 2026-03-11T01:05:50.823-0400 7f8a2cf1f900 20 cr:s=0x564f36</div>
+<div class="tl-entry"><span class="tl-date">2026-03-12 12:41:52</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>: the log messages that you pointed out are normal. these are objects that have been sent to sync error repo for retrying upon failure. these also need lock to sync. so its just another source for sync beside the normal path:  2026-03-10T05:08:38.865+0</div>
+<div class="tl-entry"><span class="tl-date">2026-03-16 16:40:40</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>:      on the secondary site, assuming that ‘rgw_sync_lease_period&#x27; is set to default 2 minutes, can we get the following: sample ‘lock info’ cmd on &#x27; bucket.full-sync-status ’ object every 2 minutes? around 3-4 such samples should be enough.  during t</div>
+<div class="tl-entry"><span class="tl-date">2026-03-18 21:56:55</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  Thanks for the action plan. We have a few questions: Do we need to collect debug logs from all OSDs across both clusters? If we can narrow down what exactly we’re looking for, we could extract only the relevant logs from their environment. Collectin</div>
+<div class="tl-entry"><span class="tl-date">2026-03-19 03:30:38</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  If we only require the debug logs of OSDs associated with  the specific object  bucket.full-sync-status.8b96aea5-c763-40a3-8430-efd67cff0c62:tcsecidels3arc-b1:8b96aea5-c763-40a3-8430-efd67cff0c62.20010.7 then we can map this object --&gt; PGs → OSDs us</div>
+<div class="tl-entry"><span class="tl-date">2026-03-19 15:08:47</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>: hi    we would just want to collect the osd logs serving the rgw pool, and yes, specifically the object  bucket.full-sync-status.8b96aea5-c763-40a3-8430-efd67cff0c62:tcsecidels3arc-b1 . I’m not very familiar with osd perf metrics, but maybe a osd per</div>
+<div class="tl-entry"><span class="tl-date">2026-03-23 05:21:23</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:     Can you collect these information from customer environment :  Make sure that the  rgw_sync_lease_period  is set to default 2 minutes and  rgw_num_async_rados_threads  are at 32 Example: #ceph config get client.rgw.multisite rgw_num_async_rados_t</div>
+<div class="tl-entry"><span class="tl-date">2026-03-24 23:41:24</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>: I have a potential fix for the lease issues in  https://github.com/ceph/ceph/pull/67962 . it might help with the frequent errors related to lease renewal we have been seeing with this customer and some others as well.  lock/unlock operations can bloc</div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 05:26:32</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello      Customer recently updated all of the required logs on the ecurep. Here are my analysis on the provided data + From rgw one of the instance logs, the first occurrence of the failed to take lease 2026-03-30T05:49:42.309+0000 7fb482e22640 20 </div>
+<div class="tl-entry"><span class="tl-date">2026-03-31 09:59:39</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello       Customer had shared the output of the  ceph osd map  command and it confirm that OSD.77 is the primary OSD. Also, since I requested the fresh bucket stats output from both sites we do observed an increase in the number of objects been syn</div>
+<div class="tl-entry"><span class="tl-date">2026-04-03 02:07:49</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello      Customer had shared the bucket stats output again upon asking by us while keeping the RGW instances count to 3. We do observe an increase but only for few objects been synced --- March 31st ----
+[ksachdev@itclin82 2026-03-31]$ less tcsecid</div>
+<div class="tl-entry"><span class="tl-date">2026-04-07 09:40:39</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello    As per discussion on the slack we have collected the debug-ms in the lock info command output and we do see that osd.77 is the primary OSD 2026-04-06T08:58:56.046-0400 7fa50107f640  1 -- [REDACTED-IP-c5f89a23]:0/4185743666 &lt;== osd.77 v2:[RED</div>
+<div class="tl-entry"><span class="tl-date">2026-04-15 00:02:46</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>:    thanks for all the logs! the op latencies are negligible, within a few milliseconds on the osds. the slow_op_count is all 0. the queue_lat and dequeue_lat difference, op_latency counters are all within a few ms.  I don’t find anything odd in the o</div>
+<div class="tl-entry"><span class="tl-date">2026-04-15 07:44:44</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>:  thanks for the feedback. if the fix does not help, we will need to ask the customer to break the bucket into smaller ones. I would expect a question from them; what is the maximum number of objects/shards per bucket we support in multi-site environm</div>
+<div class="tl-entry"><span class="tl-date">2026-04-16 03:07:08</span><span class="tl-badge comment">Comment</span> <strong>Kritik Sachdeva</strong>: Hello       Thank you for the update. I have few questions before sharing it with the customer could you please help me to clarify the same. Since this customer is having buckets high on primary &amp; less on secondary. Should we be doing to decrease tha</div>
+<div class="tl-entry"><span class="tl-date">2026-04-23 18:05:59</span><span class="tl-badge comment">Comment</span> <strong>Shilpa Jagannath</strong>:   I don’t think we should be changing their bucket shard count. we should just leave it as it is and see if the fix helps. what is this PG serving? rgw logs or bucket index? if it is lesser than the recommended value, then I don’t see any harm in inc</div>
+<div class="tl-entry"><span class="tl-date">2026-05-06 21:16:10</span><span class="tl-badge comment">Comment</span> <strong>Karun Josy</strong>: Customer reported similar issue for their another cluster    Full sync looks to be stuck for multiple buckets. But in this environment they have smaller buckets with same symptoms.  There was a discussion in Slack thread to see if they can reinitiate</div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 07:06:58</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Shilpa Jagannath)</span></div>
+</div>
+
+</body>
+</html>

@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16418: Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16418" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16418</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">ASSIGNED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#198038;">Closed</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#ff832b;background:#ff832b18;border-color:#ff832b40;">major</span></dd>
     <dt>Assignee</dt><dd>Ujjawal Anand</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephadm</dd>
     <dt>Versions</dt><dd>8.1z5</dd>
     <dt>Created</dt><dd>2026-07-08</dd>
-    <dt>Updated</dt><dd>2026-07-29</dd>
+    <dt>Updated</dt><dd>2026-07-30</dd>
   </dl></div>
 </div>
 
@@ -190,7 +190,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (18 events)</h2>
+<h2>Timeline (22 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-08 04:13:50</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: PFA for  1. ceph orch ps 2. ceph-volume lvm list</div>
 <div class="tl-entry"><span class="tl-date">2026-07-08 06:23:23</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Since the MGR logs do not show any deployment  [ceph-mgr.dal3-qz1-sr3-rk251-s06.dbaczx.log] or reconfiguration [ceph-mgr.dal4-qz1-sr1-rk157-s06.dlqjnc.log] activity for the OSDs that are currently in the  down  state, and the cephadm and ceph-volume </div>
@@ -211,6 +211,10 @@ ID    CLASS  WEIGHT      TYPE N</div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 03:10:42</span><span class="tl-badge comment">Comment</span> <strong>Madhusudhan B</strong>: </div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 05:11:37</span><span class="tl-badge comment">Comment</span> <strong>Ujjawal Anand</strong>: Relevant discussion:    This issue is a known race condition in the cephadm OSD deployment logic. During large scale concurrent OSD deployments, cephadms internal OSD map can temporarily lag behind the latest OSD map registered by ceph-volume with th</div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 05:11:37</span><span class="tl-badge status">Status</span> ASSIGNED <span style="color:var(--ibm-gray-50);">(Ujjawal Anand)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-07-29 10:56:20</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Based on slack thread discussion    can we close this issue, as the customer able to recover the OSDs that were in the down state? cc:   </div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 05:18:30</span><span class="tl-badge comment">Comment</span> <strong>Ravinder Kumar</strong>: Hi    Sorry earlier i was not part of this slack channel. Now i can see the thread.  Yes we can close this issue now.  Also i would suggest it would be better to use below command that remove and zap the osd using ceph orch. Than we do not need  lvm </div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 06:28:37</span><span class="tl-badge comment">Comment</span> <strong>Ujjawal Anand</strong>: Thanks for the confirmation   , I am closing this issue as per the last comment.</div>
+<div class="tl-entry"><span class="tl-date">2026-07-30 07:34:19</span><span class="tl-badge status">Status</span> Closed <span style="color:var(--ibm-gray-50);">(Ujjawal Anand)</span></div>
 </div>
 
 </body>

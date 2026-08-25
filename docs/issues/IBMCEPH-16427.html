@@ -85,12 +85,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16427: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
     <dt>JIRA</dt><dd><a href="https://ibm-ceph.atlassian.net/browse/IBMCEPH-16427" target="_blank" style="color:var(--ibm-blue);">IBMCEPH-16427</a></dd>
-    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">MODIFIED</span></dd>
+    <dt>Status</dt><dd><span class="badge" style="white-space:nowrap;color:#fff;background:#0f62fe;">Verified</span></dd>
     <dt>Priority</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#0f62fe;background:#0f62fe18;border-color:#0f62fe40;">normal</span></dd>
     <dt>Assignee</dt><dd>Aarti Dhikale</dd>
   </dl></div>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>ceph-dashboard</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-07-08</dd>
-    <dt>Updated</dt><dd>2026-07-28</dd>
+    <dt>Updated</dt><dd>2026-08-14</dd>
   </dl></div>
 </div>
 
@@ -190,12 +190,17 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (4 events)</h2>
+<h2>Timeline (9 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-07-14 07:57:12</span><span class="tl-badge comment">Comment</span> <strong>Pentakota Divya Gowri</strong>: We encountered a similar  500 Internal Server Error  issue. However, we were able to navigate through all the Dashboard submenus, and there was no functional impact. Sharing the Jira for reference:    We&#x27;ll also perform another round of validation wi</div>
 <div class="tl-entry"><span class="tl-date">2026-07-14 07:57:13</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 02:10:20</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Code changes are backported to 9.1 via  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/c241bba042bb3d92fd9c8e3c5335887fcedb161e</div>
 <div class="tl-entry"><span class="tl-date">2026-07-28 02:14:04</span><span class="tl-badge status">Status</span> MODIFIED <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 09:09:54</span><span class="tl-badge comment">Comment</span> <strong>Vinayak Papnoi</strong>: Hi    We are not able to reproduce this issue in QE env. The menus mentioned in the description are accessible and we are not observing any 500 status code. Can you please provide an RCA for this issue? Also can you please let us know if there is any</div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 12:24:24</span><span class="tl-badge comment">Comment</span> <strong>Afreen Misbah</strong>:  This happens when the format of progress events is just off - and it can be replicated with fs clone - try to create a clone for a subvolume and you can visit - pools or images page and see the error. </div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 12:24:24</span><span class="tl-badge status">Status</span> ON_QA <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
+<div class="tl-entry"><span class="tl-date">2026-08-14 00:35:34</span><span class="tl-badge comment">Comment</span> <strong>Venkatesh Ravula</strong>: Reproduced the issue on Ceph release 9.9.1.1 version  20.2.1-324.el9cp . After clone of sub-volume snapshot in  File -&gt; File Systems , navigating to  Block → Images  page threw  http 500 Internal server error  on summary api Verified the issue on  Ce</div>
+<div class="tl-entry"><span class="tl-date">2026-08-14 00:36:29</span><span class="tl-badge status">Status</span> Verified <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 </div>
 
 </body>

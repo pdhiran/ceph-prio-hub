@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>6.1, 8.1</dd>
     <dt>Created</dt><dd>2026-04-24</dd>
-    <dt>Updated</dt><dd>2026-07-29</dd>
+    <dt>Updated</dt><dd>2026-08-24</dd>
   </dl></div>
 </div>
 
@@ -195,7 +195,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (28 events)</h2>
+<h2>Timeline (42 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-18 03:45:35</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  The upgrade is currently on hold due to CVE remediation. Please let us know if there is any additional data we should collect.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-18 05:18:54</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this </div>
@@ -226,6 +226,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-07-29 05:23:10</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hello   , The customer asked me to pass along the following message: They are currently upgrading to Ceph 8.1. Once the upgrade is complete, they will be able to collect any required data. Please share the commands you would like them to run.</div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 06:49:00</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Thanks for the update on the customer environment. For your test environment, could you please share the following details? I can see the CPU usage is around 40% on the leader MON running Ceph 6.1. Lead Mon: [root@ceph-0 ~]# ceph version
 ce</div>
+<div class="tl-entry"><span class="tl-date">2026-08-04 22:21:41</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hi  , I have attached the data for Cases 1 and 2 to the support case.Thank you for your continued support.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 02:28:30</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Thanks for sharing the data. I am currently reviewing it. Also, could we monitor this cluster for one week to track the CPU usage trend and share the SOS report along with the CPU usage trend graph?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 03:26:25</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for your support. Sure. We’ll monitor it for another five days, then share the sosreport and MON CPU usage trend graph.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-07 06:42:03</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , While reviewing the latest SOS reports and script results shared by you on the support shell, I noticed that both SOS reports are from the Ceph 8.1 environment. drwxrwxrwx+ 3 yank yank         61 Aug  3 07:44 0510-ceph-0.sysstat_data.2026-0</div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 05:16:15</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hi  , The cluster is running Ceph 6.1, but as you pointed out, ceph-common ( ceph -v ) is from Ceph 8.1.  [root@localhost sosreport-ceph-0-2026-07-30-mcsxdtt]# cat sos_commands/ceph_mon/ceph_versions
+{
+    &quot;mon&quot;: {
+        &quot;ceph version 17.2.6-148.el</div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 06:08:51</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , From the script output you shared, we observed the below. We do see an increase in CPU usage after the upgrade to 8.1. However, the MON logs are missing from the SOS report, so we could not correlate the CPU increase with the MON logs.  ps_</div>
+<div class="tl-entry"><span class="tl-date">2026-08-10 07:39:58</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hi , Thank you for checking. The MON logs are available in  var/log/messages  or under  sos_commands/logs/journalctl . Also, could you please collect the Ceph perf dump output from the support shell? Thank you in advance.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-12 02:15:34</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hi  , Thank you for investigation. The MON logs are recorded in  sos_commands/logs/journalctl_--no-pager  in the sosreport. If you need separate MON log files for each MON, could you please extract them using the following command? ## Case1_Ceph 6.1
+</div>
+<div class="tl-entry"><span class="tl-date">2026-08-12 10:43:02</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  , At this point, do you need us to collect and provide all four items again: the sosreport, perf dump, mon.log and sysstat_data? The CPU usage is now approaching 80%, so if we collect the data again, this will likely be the last time we can do so. -</div>
+<div class="tl-entry"><span class="tl-date">2026-08-13 23:10:25</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>: Hi    I have attached the data collected for the four items again. Please review them in the Support Shell. I will also attach the graphs to this ticket. Due to the high CPU load, log rotation may not have worked properly, which caused insufficient d</div>
+<div class="tl-entry"><span class="tl-date">2026-08-17 10:21:03</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Thanks for sharing the logs. from the current logs below are the  analysis: [Note I took IBMBOB help to analyse the logs] top -H sysstat output shows that ms_disp+ is the main CPU consumer on the peons, reaching around  43.8% , while the le</div>
+<div class="tl-entry"><span class="tl-date">2026-08-18 03:15:30</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for your investigation and for sharing your findings. If the fix for  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/22cd0d42a15e19d9ca3b6bd99e108993d3fd2263  is causing the MON CPU usage to increase significantly after upgrading from 6.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-20 03:39:59</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Thanks for the information. I’m currently working on the build by reverting the changes from the commit. Once it’s ready, I’ll need your help testing that branch.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 23:22:07</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Here is the container build: podman pull quay.io/rhceph-ci/rhceph:on-pr-v8.1-981f4df30d3f8beff5f17afb97a6194725678f4e Could you please try setting up the cluster with the above build and let me know whether we see high CPU usage or not?</div>
 </div>
 
 </body>

@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13541: [Dashboard][CephFS][SMB] SMB cluster recreation with a different name fails due to existing earmark on CephFS subvolume</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-07-29 12:02 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -98,7 +98,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>documentation, smb</dd>
     <dt>Versions</dt><dd>9.0</dd>
     <dt>Created</dt><dd>2026-03-24</dd>
-    <dt>Updated</dt><dd>2026-07-29</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -174,7 +174,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 
 
 
-<h2>Timeline (11 events)</h2>
+<h2>Timeline (16 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-03-24 01:28:35</span><span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Screenshot from the dashboard</div>
 <div class="tl-entry"><span class="tl-date">2026-03-24 05:11:06</span><span class="tl-badge comment">Comment</span> <strong>Velmurugan R</strong>: Slack thread conversations related to this earmark  </div>
@@ -187,6 +187,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-03-25 08:09:04</span><span class="tl-badge comment">Comment</span> <strong>Sachin Prabhu</strong>: Hello Rivka,  The earmarking of subvolumes used for smb shares seems to lead to some confusion.  We would like to document the best practises for reusing an existing sub volume. This includes making sure that all sensitive data is identified and remo</div>
 <div class="tl-entry"><span class="tl-date">2026-07-02 14:12:03</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Prajesha Naidu)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-07-29 05:34:51</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  what about as part of  Removing SMB clusters  (imperative method) Removing SMB clusters  (declarative method)  with cross references from  Creating SMB clusters   creating CephFS subvolumes  and  earmarking a file system subvolume</div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 04:13:42</span><span class="tl-badge comment">Comment</span> <strong>Prajesha Naidu</strong>:   I have updated the followings docs based on the Jira description: Managing SMB clusters by using imperative method Managing SMB clusters by using declarative method Please review the doc and let me know the changes required.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-19 09:30:46</span><span class="tl-badge comment">Comment</span> <strong>John Mulligan</strong>: Note: If the SMB cluster uses a CephFS subvolume and you plan to reuse the subvolume with a different SMB cluster, review the subvolume contents, remove any data that is no longer required, and remove the existing SMB earmark before reusing the subvo</div>
+<div class="tl-entry"><span class="tl-date">2026-08-24 03:20:16</span><span class="tl-badge comment">Comment</span> <strong>Prajesha Naidu</strong>:  Thank you for the feedback. I will incorporate this and share the updated doc.</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 02:45:26</span><span class="tl-badge comment">Comment</span> <strong>Prajesha Naidu</strong>:  I have updated the documentation based on the feedback: Updated Step 2 in  Managing SMB clusters by using imperative method   to include removing ACLs, permissions metadata, and other information that is no longer required before reusing a CephFS su</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 03:50:12</span><span class="tl-badge comment">Comment</span> <strong>RIVKA POLLACK</strong>:  I provided peer reviews in RM.</div>
 </div>
 
 </body>
