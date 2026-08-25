@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16034: [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>A fix is available for testing in build ceph-19.2.1-400. Moving to ON_QA</li>
+<li>verified the fix in <code>ceph version 19.2.1-401.el9cp. We did not observe monitor crashes.</code></li>
+</ul>
+<ul>
+<li><span class="step-num">1.</span> Reproduced the issue in <code>ceph version 19.2.1-396.el9cp</code>, by having down_in OSDs + new OSDs &gt; in osds.</li>
+</ul>
+<div>Automation Logs:- http://takshashila.cephbt.tadn.ibm.com/logs/archive/ceph-qe-user-logs/vips/vips_bug_veri_81</div>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>verified the fix in <code>ceph version 19.2.1-401.el9cp. We did not observe monitor crashes.</code></li>
+</ul>
+<ul>
+<li><span class="step-num">1.</span> Reproduced the issue in <code>ceph version 19.2.1-396.el9cp</code>, by having down_in OSDs + new OSDs &gt; in osds.</li>
+</ul>
+<div>Automation Logs:- http://takshashila.cephbt.tadn.ibm.com/lo</div>
+<ul>
+<li>In the meantime, with the help of Rovo and other AI tools, I created release notes text. please review and update, if needed. Also - I notice in the description -This caused repeated monitor crashes, preventing quorum formation. One monitor also e</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph osd tree</code></code></li>
@@ -160,6 +180,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">10.</span> Check OSD logs: <code><code>cephadm shell -- ceph log last ceph-osd 200</code></code></li>
 <li><span class="step-num">11.</span> Check PG states: <code><code>ceph pg stat</code></code> and <code><code>ceph pg dump_stuck</code></code></li>
 </ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>verified the fix in <code>ceph version 19.2.1-401.el9cp. We did not observe monitor crashes.</code></li>
+</ul>
+<ul>
+<li><span class="step-num">1.</span> Reproduced the issue in <code>ceph version 19.2.1-396.el9cp</code>, by having down_in OSDs + new OSDs &gt; in osds.</li>
+</ul>
+<div>Automation Logs:- http://takshashila.cephbt.tadn.ibm.com/lo</div>
 <div class="section-head">Validate</div>
 <ul>
 <li>Cluster health: <code><code>ceph health detail</code></code></li>

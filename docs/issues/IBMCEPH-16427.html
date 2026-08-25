@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16427: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -137,6 +137,8 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="section-head">Key Error Indicators</div>
 <ul>
 <li>We encountered a similar  500 Internal Server Error  issue. However, we were able to navigate through all the Dashboard submenus, and there was no functional impact. Sharing the Jira for reference:    We&#x27;ll also perform another round of validation wi</li>
+<li>This happens when the format of progress events is just off - and it can be replicated with fs clone - try to create a clone for a subvolume and you can visit - pools or images page and see the error.</li>
+<li>Reproduced the issue on Ceph release 9.9.1.1 version  20.2.1-324.el9cp . After clone of sub-volume snapshot in  File -&gt; File Systems , navigating to  Block → Images  page threw  http 500 Internal server error  on summary api Verified the issue on  Ce</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>
@@ -163,6 +165,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">8.</span> Navigate to the failing dashboard page/feature</li>
 <li><span class="step-num">9.</span> Open browser dev tools, check Network tab for 500 responses</li>
 <li><span class="step-num">10.</span> Check mgr module logs: <code><code>cephadm shell -- ceph log last ceph-mgr 100</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Hi    We are not able to reproduce this issue in QE env. The menus mentioned in the description are accessible and we are not observing any 500 status code. Can you please provide an RCA for this issue? Also can you please let us know if there is any</li>
+<li>Reproduced the issue on Ceph release 9.9.1.1 version  20.2.1-324.el9cp . After clone of sub-volume snapshot in  File -&gt; File Systems , navigating to  Block → Images  page threw  http 500 Internal server error  on summary api Verified the issue on  Ce</li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

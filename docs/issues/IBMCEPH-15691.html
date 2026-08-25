@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15691: [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -133,6 +133,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div>Developer Analysis (from JIRA comments):</div>
 <ul>
 <li>//Internal Discussion //  I spent some time tracing through the code path and found the root cause. When we list daemons, the  VersionStatusUpdater  class is responsible for determining the version of each daemon. It already has dedicated handling for several daemon types such as NFS, iSCSI, Prometh</li>
+<li>Thanks    for moving it back to 9.2.    please  get the fix merged quickly and have it backported.</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

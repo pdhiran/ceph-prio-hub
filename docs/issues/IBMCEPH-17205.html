@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17205: [9.1z Backport] [GSS] Health Warning is missing the descriptive text</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -157,6 +157,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">7.</span> Check PG health: <code><code>ceph pg stat</code></code></li>
 <li><span class="step-num">8.</span> Check OSD status: <code><code>ceph osd tree</code></code></li>
 <li><span class="step-num">9.</span> Check logs: <code><code>cephadm shell -- ceph log last ceph-osd 100</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Verified the bug by executing the following steps- Set the  bluestore_warn_on_free_fragmentation  value to low to generate the “ high free space fragmentation of BlueStore ” message [ceph: root@ceph-bharath-9-2-hfpca5-node1-installer /]# <code>ceph config</code></li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

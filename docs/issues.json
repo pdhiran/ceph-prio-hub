@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-25T10:09:51.092748Z",
+  "generated": "2026-08-25T10:10:05.534562Z",
   "issues": [
     {
       "issue_id": "3c5daddd7e3644da",
@@ -7,9 +7,9 @@
       "summary": "Module 'cephadm' has failed: dictionary changed size during iteration in NFS deprovisioning",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "272b02becadf4cc5",
@@ -17,9 +17,9 @@
       "summary": "[IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with \"pid path is empty; process metrics wont be fetched for\"",
       "status": "In Progress",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "edf784e5bc034c36",
@@ -57,9 +57,9 @@
       "summary": "[BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "3bf368badcf54a39",
@@ -87,9 +87,9 @@
       "summary": "[BZ#2359795] [ibm_support] [RFE] Add redeployments to ceph orch apply dry-run preview",
       "status": "In Progress",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "a3465326e71946e0",
@@ -127,9 +127,9 @@
       "summary": "[RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool",
       "status": "In Progress",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "200b091b31ec4193",
@@ -177,9 +177,9 @@
       "summary": "[RFE][BZ#2420145] [IBM_Support] Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight (65535)",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "63ba952792194b4a",
@@ -187,9 +187,9 @@
       "summary": "[RFE][BZ#2342240] [IBM_Support] Bundle & pull the images together when performing a disconnected installation/upgrade",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "3b14b65ca67d49db",
@@ -197,9 +197,9 @@
       "summary": "Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics",
       "status": "In Progress",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "ea96bfec357f4f74",
@@ -217,9 +217,9 @@
       "summary": "Prometheus deployment fails in FIPS mode due to MD5 dependency hash",
       "status": "ON_QA",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "9a4ecf10d9044a79",
@@ -227,9 +227,9 @@
       "summary": "[9.1z Backport] Prometheus deployment fails in FIPS mode due to MD5 dependency hash",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "6eb11b216f634ef0",
@@ -277,9 +277,9 @@
       "summary": "[9.1z Backport] - [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "1676c28ce6574ce9",
@@ -287,9 +287,9 @@
       "summary": "[RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule",
       "status": "ON_QA",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "7afd4c041ba84979",
@@ -307,9 +307,9 @@
       "summary": "[FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\\n",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "79b70b0cdb7f4df6",
@@ -317,9 +317,9 @@
       "summary": "[BZ#2394339] [IBM_Support] [RFE]  Log Level Audit and Adjustment in ceph-volume Code",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "36ad028f4fba4052",
@@ -327,9 +327,9 @@
       "summary": "[BZ#2358851] [IBM_Support] [RFE] Turn monitor logging enabled by default",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "15b81b2dc7dc4a39",
@@ -347,9 +347,9 @@
       "summary": "[BZ#2324535] [IBM Support] [RFE] Cephadm needs verbose operations status",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "15bc2aab6743420a",
@@ -377,9 +377,9 @@
       "summary": "[8.1z Backport]- [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "74438c31e27e4bfe",
@@ -417,9 +417,9 @@
       "summary": "[BZ#2361754] [IBM_Support] rbd trash purge schedule ls doesn't list all scheduled times for trash processing on a pool",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "24932594c07949fc",
@@ -457,9 +457,9 @@
       "summary": "Port Range for OSDs needs to be set as 6800-7568",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "9a8a77550f2748dd",
@@ -467,9 +467,9 @@
       "summary": "Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents",
       "status": "ON_QA",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "01a819d4ce1848a7",
@@ -527,9 +527,9 @@
       "summary": "[9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets",
       "status": "ON_QA",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "ef251cc71208498d",
@@ -567,9 +567,9 @@
       "summary": "[9.1z Backport] Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "deca057bca79417d",
@@ -577,9 +577,9 @@
       "summary": "[8.1z Backport] [BZ#2394284] [IBM_Support] ceph fs perf stats -f json-pretty does not produce expected pretty output",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "e04e3e5395204e2c",
@@ -677,9 +677,9 @@
       "summary": "[8.1z Backport][IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON",
       "status": "Verified",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "946265c203c444a5",
@@ -697,9 +697,9 @@
       "summary": "radosgw-admin gc process command with --bypass-gc triggers a segfault",
       "status": "In Progress",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "1e097668006b4ef1",
@@ -707,9 +707,9 @@
       "summary": "radosgw-admin gc list command with --bypass-gc triggers a segfault",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "540ff2436fad436f",
@@ -747,9 +747,9 @@
       "summary": "[IBM Support] INSERT AS SELECT fails writing to S3 (HTTP 400 errors) ",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "ca4d93bcb1634ac7",
@@ -777,9 +777,9 @@
       "summary": "[BZ#2396660] [ibm_support] RFE: Make the PG autoscaler default threshold an exposed option rather than hardcoded",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "871c3a2c557a4a7c",
@@ -787,9 +787,9 @@
       "summary": "[9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\\n",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "56ca6d7826b34f09",
@@ -797,9 +797,9 @@
       "summary": "[8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\\n",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "1d623e97d03e4950",
@@ -807,9 +807,9 @@
       "summary": "[8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "d327a4a7781940f1",
@@ -817,9 +817,9 @@
       "summary": "[9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "51fb362bb8cb4b60",
@@ -827,9 +827,9 @@
       "summary": "[9.1z Backport]  [BZ#2394284] [IBM_Support] ceph fs perf stats -f json-pretty does not produce expected pretty output",
       "status": "Verified",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "5e8245f128a34872",
@@ -857,9 +857,9 @@
       "summary": "[BZ#2422856] [IBM_Support] All Monitor Daemons are consuming large amount of memory",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "d37d368c4f9f40bf",
@@ -907,9 +907,9 @@
       "summary": "[BZ#2360663] [IBM Support][Rados] OSDs starts too slow and stuck at \"bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)\"",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "2dc1f5a510504c0a",
@@ -917,9 +917,9 @@
       "summary": "[8.1z Backport] Adapt BlueFS::truncate to changing allocation unit",
       "status": "Verified",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "6977c40086b946e5",
@@ -967,9 +967,9 @@
       "summary": "[IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication",
       "status": "In Progress",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "de3fd5dbf54b4c22",
@@ -1007,9 +1007,9 @@
       "summary": "[BZ#2351112] [IBM Support] [RFE] include NFS services/resources in \"ceph status\" output",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "7146c5b507bc4d6e",
@@ -1017,9 +1017,9 @@
       "summary": "[8.1z Backport] - [BZ#2422122] [GSS]  All 3 OSDs are failing Journal Log Replay on startup.",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "c4065a9110884df2",
@@ -1067,9 +1067,9 @@
       "summary": "[BZ#2365126] [IBM Support][RGW] Large Omap objects in Index Pool for all the sites of Multisite setup for versioned buckets",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "755fa6e0c3974c0d",
@@ -1077,9 +1077,9 @@
       "summary": "[BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "d1795f51056d43ab",
@@ -1087,9 +1087,9 @@
       "summary": "[BZ#2381596] [IBM_Support] [Upgrade] Upgrade of OSD damons to IBM Ceph 8.1 are failing",
       "status": "Verified",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "af566d45ea8c4849",
@@ -1097,9 +1097,9 @@
       "summary": "[BZ#2390722] [IBM_Support] Ceph RGW Multi-site Sync is slow",
       "status": "ASSIGNED",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "edb7793e72e44dfb",
@@ -1107,9 +1107,9 @@
       "summary": "[BZ#2415370][IBM_Support][Ceph_SMB] [CephFS]windows client couldn't connect with cephSMB share",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P2"
     },
     {
       "issue_id": "acf8acd6220f4a12",
@@ -1127,9 +1127,9 @@
       "summary": "[BZ#2391397] [IBM_Support] Guidance for config osds_per_device",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "108d5a916da7457f",
@@ -1137,9 +1137,9 @@
       "summary": "[BZ#2394284] [IBM_Support] ceph fs perf stats -f json-pretty does not produce expected pretty output",
       "status": "Verified",
       "status_category": "In Progress",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "cb6f2437f8c1424b",
@@ -1147,9 +1147,9 @@
       "summary": "[BZ#2418927] [IBM_Support] Ceph upgrade [7.1 to 8.1] pauses due to false cephadm_host_check_failed",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "d253c8e155844dd3",
@@ -1167,9 +1167,9 @@
       "summary": "[BZ#2298858] [IBM_Support][RFE][Testathon][NvmeOF] Unable to add multiple Client's NQN in nvme subsystem's \"host list\" using single command",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "01a04f8029ef4554",
@@ -1257,9 +1257,9 @@
       "summary": "[BZ#2398909] [RFE][ibm_support] Warn when bluestore_cache_size_* is not < osd_memory_target",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "afe1acd8b5554749",
@@ -1297,9 +1297,9 @@
       "summary": "[IBM_Support] [RFE] Dynamically scalable rgw endpoints ",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "e72cfd4cb5994d2e",
@@ -1357,9 +1357,9 @@
       "summary": "[BZ#2349911] [IBM_Support] RFE: enable Ceph upgrades at failure domain granularity",
       "status": "Closed",
       "status_category": "Done",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "c9c9400f2c224d75",
@@ -1367,9 +1367,9 @@
       "summary": "[BZ#2355823] [ibm_support] RFE: Metrics at device class granularity",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "88c62754c23c42fa",
@@ -1377,9 +1377,9 @@
       "summary": "[BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "0a0afe82342c4c1f",
@@ -1397,9 +1397,9 @@
       "summary": "[BZ#2373936] RFE: [IBM_SUPPORT] Improve `ceph config log`",
       "status": "New",
       "status_category": "To Do",
-      "qa_status": "not_assessed",
+      "qa_status": "needs_analysis",
       "qa_assignee": "",
-      "internal_priority": ""
+      "internal_priority": "P1"
     },
     {
       "issue_id": "ebf0840bf738478d",

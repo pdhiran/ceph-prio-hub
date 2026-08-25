@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16022: Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation</li>
 </ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Agreed this was reproduced by fault-injecting a bad agent keyring; we are not claiming keyrings commonly go bad on their own during upgrade/redeploy/rotation. The issue we want fixed is the failure handling: MGR rejects the metadata but still retur</li>
+<li>Thanks, agreed that the failure handling itself is valid. Once the MGR rejects the metadata, the agent should not treat the request as successful, and there should be a clearer indication that metadata from the host is no longer being accepted. In t</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>
@@ -155,6 +160,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">6.</span> List services: <code><code>ceph orch ls</code></code></li>
 <li><span class="step-num">7.</span> Perform the <code>cephadm operation described in the issue</code></li>
 <li><span class="step-num">8.</span> Check logs: <code><code>cephadm shell -- ceph log last cephadm 100</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Agreed this was reproduced by fault-injecting a bad agent keyring; we are not claiming keyrings commonly go bad on their own during upgrade/redeploy/rotation. The issue we want fixed is the failure handling: MGR rejects the metadata but still retur</li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

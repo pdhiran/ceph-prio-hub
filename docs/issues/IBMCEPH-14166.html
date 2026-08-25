@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -134,6 +134,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <ul>
 <li>Due to the OpenStack design, approximately 976 Compute Nodes execute the  <code>ceph df  command once every 60 seconds. Therefore</code>, this is not caused by a single specific server executing the command an excessive number of times. Commands recorded with  entity=&#x27;client.openstack&#x27;  are being executed by a</li>
 <li>Hi   , Thanks for the update. In the meantime, I&#x27;ll go through the debug logs. If possible, could you set up this environment again? That would be helpful in identifying the root cause of the issue.</li>
+<li>Thank you for your investigation and for sharing your findings. If the fix for  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/22cd0d42a15e19d9ca3b6bd99e108993d3fd2263  is causing the MON CPU usage to increase significantly after upgrading from 6.1 to 8.1, I understand that this could indicate a</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

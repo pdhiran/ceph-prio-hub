@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14999: [9.1z Backport] Daemon crashes observed, but crash files are not generated in the expected directory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -160,6 +160,15 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">10.</span> Check OSD logs: <code><code>cephadm shell -- ceph log last ceph-osd 200</code></code></li>
 <li><span class="step-num">11.</span> Check PG states: <code><code>ceph pg stat</code></code> and <code><code>ceph pg dump_stuck</code></code></li>
 </ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Verified the bug by executing following steps- Configured the cluster. ceph: root@ceph-bharath-9-2-wt2cm3-node1-installer /]# <code>ceph -s</code></li>
+</ul>
+<div>cluster:</div>
+<div>id:     1edc7be6-95e2-11f1-92c9-fa163e18ba22</div>
+<div>health: HEALTH_OK</div>
+<div>services:</div>
+<div>mon: 3 daemons, q</div>
 <div class="section-head">Validate</div>
 <ul>
 <li>Cluster health: <code><code>ceph health detail</code></code></li>

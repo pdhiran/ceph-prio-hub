@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-8776: [BZ#2273979] [IBM Support] Unable to retrieve images for upgrade from the dashboard</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,12 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: major</li>
 <li>Related Bugzilla: BZ#2273979</li>
 <li>Escalation: IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>we have removed the check already in dashboard as part of 9.2 and 9.1.  Do we want to backport and fix it in any other release?</li>
+<li>we have removed the check already in dashboard as part of 9.2 and 9.1.  Do we want to backport and fix it in any other release? It may be good to backport to 8.1z as well. If we can do it quickly we can push it in 8.1z8 as well but no rush for it. -Bipin</li>
+<li>Can you check if this could be backported?</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16032: Cephadm agent enters dead state when MGR failover occurs while the agent is down</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,19 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>A fix is available for testing in build ceph-20.2.2-176. Moving to ON_QA</li>
+<li>Hi   , Verified that the MGR configuration is now pushed correctly to a stopped agent, and the fix is working as expected. One behavior I noticed is that during an MGR failover, the agent service is also restarted using  <code>systemctl . As a result</code>, an agent that was intentionally stopped gets started a</li>
+<li>Looks like the manual repro is working but the automation isn&#x27;t. We can try to figure out the differences mostly it can be timing specific. I am attaching the script “repro_ibmceph_16032_agent_failover.sh“ that I used for unit testing the fix. The first few sections are setup specific, but can serve</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Hi   , Verified that the MGR configuration is now pushed correctly to a stopped agent, and the fix is working as expected. One behavior I noticed is that during an MGR failover, the agent service is also restarted using  <code>systemctl . As a result</code>, an a</li>
+<li>Moving back to Assigned. This is consistently failing on automation. Manually when tried the same steps it works seamlessly.  In all CI runs and local re-runs of the suite we hit the same issue: after <code>ceph mgr fail</code>, agent.json target_ip on the stoppe</li>
+<li>Looks like the manual repro is working but the automation isn&#x27;t. We can try to figure out the differences mostly it can be timing specific. I am attaching the script “repro_ibmceph_16032_agent_failover.sh“ that I used for unit testing the fix. The fi</li>
+<li>Hi   , As discussed, I increased the wait time between stopping the agent and MGR failover from  5s to 180s . The test is now passing consistently; with 5s, it was failing consistently. Only change:  wait time increased from 5s to 180s . http://magna</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>
@@ -155,6 +168,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">6.</span> List services: <code><code>ceph orch ls</code></code></li>
 <li><span class="step-num">7.</span> Perform the <code>cephadm operation described in the issue</code></li>
 <li><span class="step-num">8.</span> Check logs: <code><code>cephadm shell -- ceph log last cephadm 100</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Moving back to Assigned. This is consistently failing on automation. Manually when tried the same steps it works seamlessly.  In all CI runs and local re-runs of the suite we hit the same issue: after <code>ceph mgr fail</code>, agent.json target_ip on the stoppe</li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16928: MDS pod crash ceph_assert FAILED ceph_assert(_raw)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -133,6 +133,8 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div>Developer Analysis (from JIRA comments):</div>
 <ul>
 <li>I cross checked the fix commits, they’re present in 8.1, 9.0, and 9.1 . Also verified that the call stack of the current bug matches the reference bug IBMCEPH-12861. Will be needing core dump to proceed further.</li>
+<li>The MDS crash that this ticket has in its description has been fixed. I guess the build that is being used does not have the fix. I haven’t looked at the other details in this ticket as of now.</li>
+<li>This is the fix:  https://tracker.ceph.com/issues/68243</li>
 </ul>
 <div class="section-head">Key Error Indicators</div>
 <ul>
@@ -168,6 +170,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">9.</span> Identify active MDS: <code><code>ceph mds stat</code></code></li>
 <li><span class="step-num">10.</span> Trigger MDS failover: <code><code>ceph mds fail &amp;lt;rank&amp;gt;</code></code></li>
 <li><span class="step-num">11.</span> Verify standby promotion: <code><code>ceph mds stat</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Hi   ,   , and I checked; the fix is already present in the downstream where the issue was reproduced. That&#x27;s why we need a core dump to analyze the crash.</li>
+<li>Hi      Thanks. I&#x27;ll send the customer a link to a document on how to configure their system so they can obtain a core dump in the event of a future crash.</li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

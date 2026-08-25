@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16113: [9.1z Backport] RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -129,6 +129,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Component(s): cephadm</li>
 <li>Severity: major</li>
 <li>Escalation: L3 escalation, IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Adam King (Redouane was out sick?) merged the Apple hotfixes into  ceph-9.1-rhel-patches  for 9.1z2:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2194 This can be moved to ON_QA as we have <code>ceph containers for QE with the fix now.</code></li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

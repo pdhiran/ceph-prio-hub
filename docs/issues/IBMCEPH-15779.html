@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15779: [8.1] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: major</li>
 <li>Escalation: L3 escalation, IBM customer impact</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>The fix is now merged into the  ceph-8.1-rhel-patches  branch.</li>
+<li>A fix is available for testing in build ceph-19.2.1-402. Moving to ON_QA</li>
+<li>Backport for SID issue is now resolved for the following build:  [ceph: root@pluto007 /]# <code>ceph -v</code></li>
+</ul>
+<div>ceph version 19.2.1-403.el9cp (120d52586b6bfffbef72ee0d64f762fa1384ee94) squid (stable)</div>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph smb cluster ls</code></code></li>

@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12731: [BZ#2418927] [IBM_Support] Ceph upgrade [7.1 to 8.1] pauses due to false cephadm_host_check_failed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -110,20 +110,94 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephadm</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2418927] [IBM_Support] Ceph upgrade [7.1 to 8.1] pauses due to false cephadm_host_check_failed</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-12731</li>
+<li>Affected version(s): 7.1</li>
+<li>Component(s): cephadm</li>
+<li>Severity: major</li>
+<li>Related Bugzilla: BZ#2418927</li>
+<li>Escalation: IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Meanwhile Kindly ask customer to disable this warning for host check failures as a workaround. This will prevent the <code>cephadm upgrade from getting paused due to this issue: $ ceph config set mgr mgr/cephadm/warn_on_failed_host_check false</code></li>
+<li>Hi Adam and Shweta, Apple has shared the latest Cephadm logs via the email thread. They are requesting a workaround to resolve the issue, as upgrading to a patched build is currently not an option for them. <code>cephadm logs : [root@cephnode0421.usuqo38.pie.apple.com ~]# tail -f /var/log/ceph/1bfbf12a-bd</code></li>
+<li>as far as workarounds go, I think marking the OSD spec in the traceback as unmanaged would at least stop that from happening</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>Meanwhile Kindly ask customer to disable this warning for host check failures as a workaround. This will prevent the <code>cephadm upgrade from getting paused due to this issue: $ ceph config set mgr mgr/cephadm/warn_on_failed_host_check false</code></li>
+<li>Customer enabled the config &quot;<code>ceph config set mgr mgr/cephadm/warn_on_failed_host_check false&quot; but issue is still happening and the upgrade gets paused. Sosreport and logs have been attached to the case.</code></li>
+<li>The error message &quot;host cephnode0620.usuqo38.pie.apple.com (17.155.214.44) failed check: Unable to reach remote host cephnode0620.usuqo38.pie.apple.com. SSH connection closed &quot; indicates that the SSH session to cephnode0620 was initially established</li>
+<li>Hi Shantanu, Can you ask customer to run below command when they observe CEPHADM_HOST_CHECK_FAILED for a node in ceph.log or <code><code>ceph health detail</code></code> output ? $ <code>ceph cephadm check-host &lt;ceph-node-fqdn&gt; --verbose Kindly ask customer to share output of abo</code></li>
+</ul>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>ceph orch ls</code></code></li>
+<li><code><code>ceph orch ps</code></code></li>
+<li><code><code>ceph orch host ls</code></code></li>
+<li><code><code>ceph health detail</code></code></li>
+<li><code><code>ceph versions</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce cephadm issue on IBM Ceph 7.1</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 7.1</li>
+<li>Component: Cephadm Orchestrator</li>
+<li>Issue type: upgrade, error, network</li>
+</ul>
+<div class="section-head">Workflow</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
+<li><span class="step-num">5.</span> Set container image: <code><code>ceph config set mgr container_image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">6.</span> Start upgrade: <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">7.</span> Monitor upgrade: <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">8.</span> Watch daemon versions: <code><code>ceph versions</code></code></li>
+<li><span class="step-num">9.</span> Verify all daemons upgraded: <code><code>ceph orch ps</code></code></li>
+</ul>
+<div class="section-head">Validate</div>
+<ul>
+<li>Cluster health: <code><code>ceph health detail</code></code></li>
+<li>Daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Logs: <code><code>cephadm shell -- ceph log last cephadm</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for cephadm issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/cephadm, cephci deploy suites</code></li>
+<li>Related BZ fixes: BZ#2418927 -- check if regression tests exist</li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Upgrade/migration path testing for the specific version transition</li>
+<li>Pre/post upgrade validation checks</li>
+<li>Error handling test for the specific failure scenario</li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/cephadm, cephci deploy suites</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Upgrade test: validate across version boundary</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

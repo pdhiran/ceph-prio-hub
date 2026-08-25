@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12242: [BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -167,6 +167,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="section-head">Additional context from JIRA</div>
 <ul>
 <li>I asked him because usually we ask the ticket assignee for the input. Known issues require different information than bug fixes (such as workaround). If you can provide if there was a workaround for the issue that would be helpful. thanks</li>
+<li>Yes Harsh’s changes are correct, monitor configuration updates use to not apply if you restarted the mon, but now they do.</li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

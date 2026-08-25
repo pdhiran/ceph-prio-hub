@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11650: [BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in &quot;/proc/self/cgroup&quot;` logged in the Journal.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: blocker</li>
 <li>Related Bugzilla: BZ#2374000, BZ#2385836</li>
 <li>Escalation: L3 escalation</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Hi,  We’ve hit this in our custom code since we have a stunnel container with our NFS service, the fix is actually pretty simple. The issue is we add  --cgroups=split  without enabling it.   Below is how we’ve solved it         if self.supports_split_cgroups and not ctx.no_cgroups_split:</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

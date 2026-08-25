@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17050: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -129,6 +129,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Component(s): rgw</li>
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw_mp_lock_max_time = 1800 (30 min) The analysis of earlier provided logs showed: Multipart upload ini</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>During last week&#x27;s call with Anh, we agreed to investigate the issue on two parallel tracks: Ghost Object RCA Current evidence continues to match  IBMCEPH-13341   overlapping  CompleteMultipartUpload  requests completion time exceeded  rgw_mp_lock_ma</li>
 </ul>
 <div class="section-head">Debug Commands</div>
 <ul>

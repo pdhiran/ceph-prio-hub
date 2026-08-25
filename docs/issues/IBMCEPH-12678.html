@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12678: [BZ#2413725] Daemon crashes observed, but crash files are not generated in the expected directory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -139,6 +139,10 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </ul>
 <div>total 1592</div>
 <div>-rwxr--r</div>
+<ul>
+<li>Verified the bug by following the additional validation steps:-  First User-Initiated Crash Generation [root@ceph-bharath-9-2-e3ezdh-node2 ~]# ps -ef | grep ceph-mgr</li>
+</ul>
+<div>root      319706  319704  0 Jul30 ?        00:00:00 /run/podman-init -- /usr/bin/cep</div>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>
@@ -168,7 +172,9 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="section-head">Additional context from JIRA</div>
 <ul>
 <li>What is the output of coredumpctl list, and have you tried the steps in Comment #1? After applying the steps I am able to view a full list of my core dump files with coredumpctl list.</li>
+<li>Verified the bug by following the additional validation steps:-  First User-Initiated Crash Generation [root@ceph-bharath-9-2-e3ezdh-node2 ~]# ps -ef | grep ceph-mgr</li>
 </ul>
+<div>root      319706  319704  0 Jul30 ?        00:00:00 /run/podman-init -- /usr/bin/cep</div>
 <div class="section-head">Validate</div>
 <ul>
 <li>Cluster health: <code><code>ceph health detail</code></code></li>

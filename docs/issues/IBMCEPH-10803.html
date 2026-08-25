@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10803: [BZ#2351112] [IBM Support] [RFE] include NFS services/resources in &quot;ceph status&quot; output</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -110,20 +110,88 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: nfs-ganesha/ceph</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2351112] [IBM Support] [RFE] include NFS services/resources in &quot;ceph status&quot; output</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-10803</li>
+<li>Affected version(s): 8.0</li>
+<li>Component(s): nfs-ganesha/ceph</li>
+<li>Severity: major</li>
+<li>Related Bugzilla: BZ#2351112</li>
+<li>Escalation: IBM customer impact</li>
+</ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>, could you please let us know the status of this Bug if the fix is merged downstream ? and also let us know if this is a blocker?</li>
+<li>Yes in downstream fix is merged :  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/a4b1b85f7b7c1e35be879285cb59de3ac9800825     (branch  :  ceph-9.1-rhel-patches) But to test this feature. We need to add few configs at this part of <code>ceph code :  https://gitlab.cee.redhat.com/ceph/ceph/-/blob</code></li>
+<li>I tested this in 9.0z2 but found that this RFE/bug not supported in 9.0z2 as of now, after connecting with    The fix itself not available in 9.0z2. The fix went in to nfs version 9.x . But in 9.0z2 we have nfs_ganesha version 7.x.   Can you confirm this.</li>
+</ul>
+<div class="section-head">Key Error Indicators</div>
+<ul>
+<li>[root@ceph-harish-live-rv20rh-node4 ~]# <code>ceph -s   cluster:     id:     9969b8f8-3e47-11f1-9927-fa163e2560ac     health: HEALTH_WARN             1 failed cephadm daemon(s)   services:     mon: 3 daemons</code>, quorum ceph-harish-live-rv20rh-node1-installe</li>
+</ul>
+<div class="section-head">Debug Commands</div>
+<ul>
+<li><code><code>ceph nfs cluster ls</code></code></li>
+<li><code><code>ceph nfs export ls &amp;lt;cluster&amp;gt;</code></code></li>
+<li><code><code>ceph fs status</code></code></li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce nfs-ganesha/ceph issue on IBM Ceph 8.0</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 8.0</li>
+<li>Component: NFS-Ganesha Gateway (CephFS-backed)</li>
+<li>Issue type: network, rfe</li>
+</ul>
+<div class="section-head">Workflow</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
+<li><span class="step-num">5.</span> Create NFS cluster: <code><code>ceph nfs cluster create nfs-test &amp;#x27;&amp;lt;placement&amp;gt;&amp;#x27;</code></code></li>
+<li><span class="step-num">6.</span> Create CephFS export: <code><code>ceph nfs export create cephfs nfs-test /export testfs /</code></code></li>
+<li><span class="step-num">7.</span> Verify export: <code><code>ceph nfs export ls nfs-test</code></code></li>
+<li><span class="step-num">8.</span> Mount on client: <code><code>mount -t nfs &amp;lt;nfs-host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">9.</span> Run I/O: <code>dd if=/dev/urandom of=/mnt/nfs/test bs=1M count=50</code></li>
+<li><span class="step-num">10.</span> Perform the NFS operation described in the issue</li>
+<li><span class="step-num">11.</span> Check logs: <code><code>cephadm shell -- ceph log last nfs 100</code></code></li>
+</ul>
+<div class="section-head">Validate</div>
+<ul>
+<li>Cluster health: <code><code>ceph health detail</code></code></li>
+<li>Daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
+<li>Logs: <code><code>cephadm shell -- ceph log last nfs</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for nfs-ganesha/ceph issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/nfs</code></li>
+<li>Related BZ fixes: BZ#2351112 -- check if regression tests exist</li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Functional test covering the reported nfs-ganesha/<code>ceph scenario</code></li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/nfs</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

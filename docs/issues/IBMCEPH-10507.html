@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10507: [RFE][BZ#2342240] [IBM_Support] Bundle &amp; pull the images together when performing a disconnected installation/upgrade</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -110,20 +110,71 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="qa-section">
   <h3>QA Tracking</h3>
   <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#8d8d8d;background:#8d8d8d18;border-color:#8d8d8d40;">Not Assessed</span></dd></div>
+    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
     <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
   </div>
   <div class="qa-grid">
     <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
   </div>
-  
+  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: build</div>
 </div>
 
 <h2>Analysis</h2>
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE][BZ#2342240] [IBM_Support] Bundle &amp; pull the images together when performing a disconnected installation/upgrade</div>
+<div class="section-head">Issue Details</div>
+<ul>
+<li>JIRA: IBMCEPH-10507</li>
+<li>Affected version(s): 8.0</li>
+<li>Component(s): build</li>
+<li>Severity: major</li>
+<li>Related Bugzilla: BZ#2342240</li>
+<li>Escalation: IBM customer impact</li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce build issue on IBM Ceph 8.0</div>
+<div class="section-head">Environment</div>
+<ul>
+<li>IBM Ceph version: 8.0</li>
+<li>Component: build</li>
+<li>Issue type: upgrade, network, rfe</li>
+</ul>
+<div class="section-head">Workflow</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
+<li><span class="step-num">5.</span> Configure the component described in the issue</li>
+<li><span class="step-num">6.</span> Perform the operation described in the JIRA summary</li>
+<li><span class="step-num">7.</span> Check cluster health: <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">8.</span> Check daemon status: <code><code>ceph orch ps</code></code></li>
+<li><span class="step-num">9.</span> Check logs: <code><code>cephadm shell -- ceph log last 100</code></code></li>
+</ul>
+<div class="section-head">Validate</div>
+<ul>
+<li>Cluster health: <code><code>ceph health detail</code></code></li>
+<li>Daemon status: <code><code>ceph orch ps</code></code></li>
+<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for build issue</div>
+<div class="section-head">Existing Coverage</div>
+<ul>
+<li>Component test suite: <code>qa/suites/build</code></li>
+<li>Related BZ fixes: BZ#2342240 -- check if regression tests exist</li>
+<li>Pending: cephci repo integration for automated coverage check</li>
+</ul>
+<div class="section-head">Coverage Gaps</div>
+<ul>
+<li>Upgrade/migration path testing for the specific version transition</li>
+<li>Pre/post upgrade validation checks</li>
+</ul>
+<div class="section-head">Recommended Tests</div>
+<ul>
+<li>Add regression test to <code>qa/suites/build</code></li>
+<li>Negative test: verify proper error handling</li>
+<li>Upgrade test: validate across version boundary</li>
+<li>Integration test: end-to-end with customer-like config</li>
+</ul></div>
 
 
 

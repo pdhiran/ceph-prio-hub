@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16942: Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -176,6 +176,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <ul>
 <li>Hi    Thanks! Sure , Please let us know the steps to get coredump for crash analysis(mds). So that we would be sharing same with Customer.  Also please let us know if you need coredump on BOX or ecurep server is fine ? Regards Ravinder Kumar</li>
 <li>Hi   / Team , We have coredump from 3 nodes on Below BOX link now.   Could you please check it now.  Team, You should be able to view/download if using IBM email address. If you are using redhat email , let me know your email address . so i can invit</li>
+<li>Recovery steps:  Phase 1: Take Filesystem Offline &amp; Backup Journal 1. Prevent new clients from joining or reconnecting <code>ceph fs set production joinable false 2. Mark the filesystem down to stop active MDS daemons ceph fs fail production 3. Stop the MD</code></li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

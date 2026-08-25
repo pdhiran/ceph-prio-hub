@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16134: [IBM_Customer][RBD] Unable to delete the RBD volume</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -162,6 +162,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">9.</span> If protected, check: <code><code>rbd info rbdpool/testimg</code></code></li>
 <li><span class="step-num">10.</span> Check watchers: <code><code>rbd status rbdpool/testimg</code></code></li>
 <li><span class="step-num">11.</span> Force remove if needed: <code><code>rbd rm rbdpool/testimg --force</code></code></li>
+</ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Hello    What is meant my &quot;no output&quot;?  Did &quot;<code>rbd rm&quot; command hang?  If not</code>, what was its exit status? Yes the command is stuck with no output. When we executed the command with --debug-ms 1 and --debug-<code>rbd 20 option we observed that  rbd rm  command</code></li>
+<li>I tried to study and found that for the <code>rbd data objects to trim or delete there object_map which stores this information. However</code>, for this image i do not see such entry in logs. It’s because this image doesn&#x27;t have  object-map  feature enabled:   &quot;</li>
 </ul>
 <div class="section-head">Validate</div>
 <ul>

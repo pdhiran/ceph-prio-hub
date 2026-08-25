@@ -85,7 +85,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17115: CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:09 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -130,6 +130,11 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Severity: normal</li>
 <li>Escalation: L3 escalation, IBM customer impact</li>
 </ul>
+<div>Developer Analysis (from JIRA comments):</div>
+<ul>
+<li>Thanks for the thorough testing, this is exactly the right scenario and the results confirm both parts of the fix are working correctly</li>
+<li>Hey    Thanks for reviewing! Based on the observations and discussions with Engg, the issue is fixed and bug validation is completed. Moving the bug to verified.</li>
+</ul>
 <div class="section-head">Debug Commands</div>
 <ul>
 <li><code><code>ceph orch ls</code></code></li>
@@ -156,6 +161,17 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li><span class="step-num">7.</span> Perform the <code>cephadm operation described in the issue</code></li>
 <li><span class="step-num">8.</span> Check logs: <code><code>cephadm shell -- ceph log last cephadm 100</code></code></li>
 </ul>
+<div class="section-head">Additional context from JIRA</div>
+<ul>
+<li>Hello    Do the below steps look good and van be used to validate this fix? Bootstrap a 3-node Ceph cluster using  <code>cephadm bootstrap   Create and apply an OSD spec with  osds_per_device: 2  and  host_pattern: &#x27;*&#x27;  targeting all available disks Verify</code></li>
+<li>[QE update] Tried the steps mentioned in    <code>ceph version 19.2.1-401.el9cp (e9a5509d578aeeb86f48526cb52ae27d5248e402) squid (stable) OSD Spec Applied service_type: osd</code></li>
+</ul>
+<div>service_id: osd.1</div>
+<div>placement:</div>
+<div>host_pattern: &#x27;*&#x27;</div>
+<div>spec:</div>
+<div>data_devices:</div>
+<div>all: tru</div>
 <div class="section-head">Validate</div>
 <ul>
 <li>Cluster health: <code><code>ceph health detail</code></code></li>
