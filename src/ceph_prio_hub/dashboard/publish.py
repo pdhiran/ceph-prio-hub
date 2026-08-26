@@ -68,13 +68,24 @@ def publish_to_docs(site_dir: Path, docs_dir: Path) -> None:
     logger.info("Copied site to %s", docs_dir)
 
 
+def sync_tracking_to_repo(repo: Path) -> None:
+    """Copy tracking.json to repo root so GitHub API can read/write it."""
+    from ceph_prio_hub.config import CONFIG_DIR
+    src = CONFIG_DIR / "tracking.json"
+    dst = repo / "tracking.json"
+    if src.exists():
+        shutil.copy2(src, dst)
+        logger.info("Synced tracking.json to repo")
+
+
 def git_commit_and_push(docs_dir: Path, message: str) -> bool:
-    """Stage docs/, commit, and push."""
+    """Stage docs/ and tracking.json, commit, and push."""
     repo = docs_dir.parent
     try:
-        subprocess.run(["git", "add", "docs/"], cwd=repo, check=True, capture_output=True)
+        sync_tracking_to_repo(repo)
+        subprocess.run(["git", "add", "docs/", "tracking.json"], cwd=repo, check=True, capture_output=True)
         result = subprocess.run(
-            ["git", "status", "--porcelain", "docs/"],
+            ["git", "status", "--porcelain", "docs/", "tracking.json"],
             cwd=repo, capture_output=True, text=True,
         )
         if not result.stdout.strip():

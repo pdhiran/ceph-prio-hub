@@ -18,8 +18,9 @@ from pathlib import Path
 from typing import Any
 
 from ceph_prio_hub.tracker.state import IssueStateDB, ConsolidatedIssue
-from ceph_prio_hub.tracker.tracking import TrackingDB, QA_STATUS_LABELS
+from ceph_prio_hub.tracker.tracking import TrackingDB, QA_STATUS_LABELS, QA_STATUSES
 from ceph_prio_hub.sanitizer.redactor import sanitize_text
+from ceph_prio_hub.team import TEAM_NAMES
 
 
 def generate_dashboard(
@@ -48,7 +49,8 @@ def generate_dashboard(
         issue = next((i for i in issues if i.issue_id == row["issue_id"]), None)
         if issue:
             report = _render_issue_report(row, issue, tracking)
-            (issues_dir / f"{row['issue_id']}.html").write_text(report, encoding="utf-8")
+            fname = f"{row['jira_key']}.html" if row.get("jira_key") else f"{row['issue_id']}.html"
+            (issues_dir / fname).write_text(report, encoding="utf-8")
 
     tracking_data = {
         "generated": datetime.utcnow().isoformat() + "Z",
@@ -154,6 +156,97 @@ def _compute_stats(rows: list[dict]) -> dict[str, Any]:
 
 def _esc(text: str) -> str:
     return html_lib.escape(str(text))
+
+
+def _format_analysis(text: str) -> str:
+    """Convert structured plain text to HTML with bullets, code, headings."""
+    import re as _re
+    lines = text.split("\n")
+    out = []
+    in_list = False
+    in_pre = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Code block markers
+        if stripped.startswith("```"):
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            if in_pre:
+                out.append("</pre>")
+                in_pre = False
+            else:
+                out.append("<pre>")
+                in_pre = True
+            continue
+
+        if in_pre:
+            out.append(_esc(line))
+            continue
+
+        if not stripped:
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            continue
+
+        # Section headers (ALL CAPS line or line ending with colon)
+        if (_re.match(r'^[A-Z][A-Z &/\-]{3,}:?$', stripped) or
+                _re.match(r'^[A-Z][A-Za-z &/\-]+:$', stripped)):
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            out.append(f'<div class="section-head">{_esc(stripped.rstrip(":"))}</div>')
+            continue
+
+        # SUMMARY: line at top
+        if stripped.upper().startswith("SUMMARY:"):
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            out.append(f'<div class="summary-line">{_esc(stripped[8:].strip())}</div>')
+            continue
+
+        # Bullet lines (- or * or numbered)
+        bullet_match = _re.match(r'^[\-\*]\s+(.+)', stripped)
+        num_match = _re.match(r'^(\d+)[.)]\s+(.+)', stripped)
+
+        if bullet_match or num_match:
+            if not in_list:
+                out.append("<ul>")
+                in_list = True
+            content = bullet_match.group(1) if bullet_match else num_match.group(2)
+            prefix = ""
+            if num_match:
+                prefix = f'<span class="step-num">{num_match.group(1)}.</span> '
+            # Wrap backtick-quoted text in <code>
+            content = _re.sub(r'`([^`]+)`', lambda m: f'<code>{_esc(m.group(1))}</code>', _esc(content))
+            # Wrap command-like text (ceph ..., radosgw-admin ..., etc.)
+            content = _re.sub(
+                r'(?<![<\w])((?:ceph|rados|rbd|rgw|radosgw-admin|cephadm|smbclient|fio|mount|curl|podman|systemctl|journalctl)\s[^<,]+)',
+                lambda m: f'<code>{m.group(1).strip()}</code>',
+                content
+            )
+            out.append(f"<li>{prefix}{content}</li>")
+            continue
+
+        # Regular text line
+        if in_list:
+            out.append("</ul>")
+            in_list = False
+        # Wrap backtick-quoted text
+        escaped = _esc(stripped)
+        escaped = _re.sub(r'`([^`]+)`', lambda m: f'<code>{m.group(1)}</code>', escaped)
+        out.append(f"<div>{escaped}</div>")
+
+    if in_list:
+        out.append("</ul>")
+    if in_pre:
+        out.append("</pre>")
+
+    return "\n".join(out)
 
 
 def _status_badge(status: str, category: str) -> str:
@@ -281,17 +374,42 @@ body { font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-size: 14px;
 }
 .chart-title { font-size: 0.82rem; font-weight: 600; color: var(--ibm-gray-70); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em; }
 
-.filters {
-  display: flex; gap: 0.6rem; margin: 1.5rem 0; flex-wrap: wrap; align-items: center;
+.filter-bar {
+  margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
 }
-.filters select, .filters input {
-  font-family: inherit; font-size: 0.8rem; padding: 0.35rem 0.6rem;
+.filter-bar input[type="text"] {
+  font-family: inherit; font-size: 0.8rem; padding: 0.35rem 0.7rem;
   border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
-  color: var(--ibm-gray-90);
+  color: var(--ibm-gray-90); min-width: 180px;
 }
-.filters select:focus, .filters input:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
-.filters label { font-size: 0.75rem; color: var(--ibm-gray-70); font-weight: 500; }
+.filter-bar input:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
 .filter-count { font-size: 0.82rem; color: var(--ibm-gray-50); margin-left: auto; }
+.not-toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem;
+  color: var(--ibm-gray-70); cursor: pointer; user-select: none;
+  padding: 0.25rem 0.6rem; border-radius: 4px; border: 1px solid var(--ibm-gray-30);
+  background: #fff; transition: all 0.15s;
+}
+.not-toggle.active { background: var(--ibm-red); color: #fff; border-color: var(--ibm-red); }
+.filter-group { margin-bottom: 0.5rem; }
+.filter-group-label {
+  font-size: 0.68rem; font-weight: 600; color: var(--ibm-gray-50);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+  display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 0.72rem;
+  font-weight: 500; cursor: pointer; user-select: none; transition: all 0.12s;
+  border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
+}
+.chip:hover { border-color: var(--ibm-blue); color: var(--ibm-blue); }
+.chip.selected { background: var(--ibm-blue); color: #fff; border-color: var(--ibm-blue); }
+.chip.selected.not-mode { background: var(--ibm-red); border-color: var(--ibm-red); }
+.filters-panel {
+  background: var(--ibm-gray-10); border-radius: 6px; padding: 0.8rem 1rem;
+  margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
+}
+@media (max-width: 1000px) { .filters-panel { grid-template-columns: 1fr 1fr; } }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 th {
@@ -344,7 +462,7 @@ def _render_index(rows: list[dict], stats: dict) -> str:
           data-component="{_esc(','.join(r['components']))}"
           data-labels="{_esc(','.join(r['labels']))}"
           data-qa="{_esc(r['qa_status'])}">
-        <td><a href="issues/{r['issue_id']}.html" class="key-link">{_esc(r['jira_key'])}</a></td>
+        <td><a href="issues/{r['jira_key'] if r.get('jira_key') else r['issue_id']}.html" class="key-link">{_esc(r['jira_key'])}</a></td>
         <td class="summary-cell">{_esc(r['summary'][:90])}</td>
         <td>{_status_badge(r['status'], r['status_category'])}</td>
         <td>{_priority_badge(r['priority'])}</td>
@@ -451,42 +569,46 @@ def _render_index(rows: list[dict], stats: dict) -> str:
 <section id="issues">
   <h2>All Issues</h2>
 
-  <div class="filters">
-    <label>Status:
-      <select id="filter-status">
-        <option value="">All</option>
-        <option value="To Do">Open</option>
-        <option value="In Progress">In Progress</option>
-        <option value="Done">Resolved</option>
-      </select>
-    </label>
-    <label>Priority:
-      <select id="filter-priority">
-        <option value="">All</option>
-        <option value="blocker">Blocker</option>
-        <option value="major">Major</option>
-        <option value="normal">Normal</option>
-        <option value="minor">Minor</option>
-      </select>
-    </label>
-    <label>QA Status:
-      <select id="filter-qa">
-        <option value="">All</option>
-        <option value="not_assessed">Not Assessed</option>
-        <option value="needs_analysis">Needs Analysis</option>
-        <option value="reproducing">Reproducing</option>
-        <option value="test_written">Test Written</option>
-        <option value="verified">Verified</option>
-        <option value="wont_fix">Won't Fix</option>
-      </select>
-    </label>
-    <label>Component:
-      <select id="filter-component"><option value="">All</option></select>
-    </label>
-    <label>
-      <input type="text" id="filter-search" placeholder="Search..." style="min-width:160px;">
-    </label>
+  <div class="filter-bar">
+    <span class="not-toggle" id="not-toggle" title="Toggle NOT mode: exclude selected values instead of including">
+      <span style="font-size:0.85rem;">&#8800;</span> NOT
+    </span>
+    <input type="text" id="filter-search" placeholder="Search issues...">
     <span class="filter-count" id="visible-count">{stats['total']} issues</span>
+  </div>
+  <div class="filters-panel">
+    <div class="filter-group">
+      <div class="filter-group-label">Status</div>
+      <div class="chip-row" id="chips-status">
+        <span class="chip" data-val="To Do">Open</span>
+        <span class="chip" data-val="In Progress">In Progress</span>
+        <span class="chip" data-val="Done">Resolved</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Priority</div>
+      <div class="chip-row" id="chips-priority">
+        <span class="chip" data-val="blocker">Blocker</span>
+        <span class="chip" data-val="major">Major</span>
+        <span class="chip" data-val="normal">Normal</span>
+        <span class="chip" data-val="minor">Minor</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">QA Status</div>
+      <div class="chip-row" id="chips-qa">
+        <span class="chip" data-val="not_assessed">Not Assessed</span>
+        <span class="chip" data-val="needs_analysis">Needs Analysis</span>
+        <span class="chip" data-val="reproducing">Reproducing</span>
+        <span class="chip" data-val="test_written">Test Written</span>
+        <span class="chip" data-val="verified">Verified</span>
+        <span class="chip" data-val="wont_fix">Won't Fix</span>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Component</div>
+      <div class="chip-row" id="chips-component"></div>
+    </div>
   </div>
 
   <table id="issue-table">
@@ -556,34 +678,76 @@ makeChart('chart-priority', 'doughnut',
   Object.values(STATS.priority_counts),
   {{ colors: ['#0f62fe','#ff832b','#da1e28','#198038'] }});
 
-// Populate component dropdown
+// Multi-select chip filters
+const selections = {{ status: new Set(), priority: new Set(), qa: new Set(), component: new Set() }};
+let notMode = false;
+
+// Populate component chips
 const compSet = new Set();
 ISSUES.forEach(i => (i.components || []).forEach(c => compSet.add(c)));
-const compSel = document.getElementById('filter-component');
-[...compSet].sort().forEach(c => {{ const o = document.createElement('option'); o.value = c; o.textContent = c; compSel.appendChild(o); }});
+const compRow = document.getElementById('chips-component');
+[...compSet].sort().forEach(c => {{
+  const sp = document.createElement('span');
+  sp.className = 'chip'; sp.dataset.val = c; sp.textContent = c;
+  compRow.appendChild(sp);
+}});
+
+// NOT toggle
+document.getElementById('not-toggle').addEventListener('click', function() {{
+  notMode = !notMode;
+  this.classList.toggle('active', notMode);
+  document.querySelectorAll('.chip.selected').forEach(ch => ch.classList.toggle('not-mode', notMode));
+  applyFilters();
+}});
+
+// Chip click handlers
+document.querySelectorAll('.chip-row').forEach(row => {{
+  const group = row.id.replace('chips-', '');
+  row.addEventListener('click', e => {{
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const val = chip.dataset.val;
+    if (selections[group].has(val)) {{
+      selections[group].delete(val);
+      chip.classList.remove('selected', 'not-mode');
+    }} else {{
+      selections[group].add(val);
+      chip.classList.add('selected');
+      if (notMode) chip.classList.add('not-mode');
+    }}
+    applyFilters();
+  }});
+}});
 
 // Filtering
+function matchFilter(set, value, isNot) {{
+  if (set.size === 0) return true;
+  const has = set.has(value);
+  return isNot ? !has : has;
+}}
+
+function matchFilterMulti(set, values, isNot) {{
+  if (set.size === 0) return true;
+  const has = values.some(v => set.has(v));
+  return isNot ? !has : has;
+}}
+
 function applyFilters() {{
-  const s = document.getElementById('filter-status').value;
-  const p = document.getElementById('filter-priority').value;
-  const q = document.getElementById('filter-qa').value;
-  const c = document.getElementById('filter-component').value;
   const t = document.getElementById('filter-search').value.toLowerCase();
   let vis = 0;
   document.querySelectorAll('.issue-row').forEach(row => {{
     let show = true;
-    if (s && row.dataset.status !== s) show = false;
-    if (p && row.dataset.priority !== p) show = false;
-    if (q && row.dataset.qa !== q) show = false;
-    if (c && !row.dataset.component.includes(c)) show = false;
+    if (!matchFilter(selections.status, row.dataset.status, notMode)) show = false;
+    if (!matchFilter(selections.priority, row.dataset.priority, notMode)) show = false;
+    if (!matchFilter(selections.qa, row.dataset.qa, notMode)) show = false;
+    const comps = row.dataset.component ? row.dataset.component.split(',') : [];
+    if (!matchFilterMulti(selections.component, comps, notMode)) show = false;
     if (t && !row.children[1].textContent.toLowerCase().includes(t)) show = false;
     row.style.display = show ? '' : 'none';
     if (show) vis++;
   }});
   document.getElementById('visible-count').textContent = vis + ' issues';
 }}
-['filter-status','filter-priority','filter-qa','filter-component'].forEach(id =>
-  document.getElementById(id).addEventListener('change', applyFilters));
 document.getElementById('filter-search').addEventListener('input', applyFilters);
 
 // Column sorting
@@ -656,9 +820,24 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .analysis-box {
   background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 6px;
   padding: 1rem 1.2rem; margin: 0.75rem 0; min-height: 60px;
+  font-size: 0.85rem; line-height: 1.6;
 }
 .analysis-box.empty { color: var(--ibm-gray-50); font-style: italic; font-size: 0.85rem; }
 .analysis-label { font-size: 0.75rem; font-weight: 600; color: var(--ibm-gray-70); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.analysis-box .summary-line { font-weight: 600; color: var(--ibm-gray-90); margin-bottom: 0.6rem; font-size: 0.88rem; }
+.analysis-box ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+.analysis-box li { margin-bottom: 0.25rem; }
+.analysis-box .section-head { font-weight: 600; color: var(--ibm-gray-70); font-size: 0.8rem; margin-top: 0.8rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.analysis-box code {
+  background: var(--ibm-gray-10); padding: 1px 5px; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; color: var(--ibm-dark);
+}
+.analysis-box pre {
+  background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.6rem 0.8rem;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+  overflow-x: auto; margin: 0.3rem 0 0.5rem; white-space: pre-wrap;
+}
+.analysis-box .step-num { display: inline-block; min-width: 1.4em; font-weight: 600; color: var(--ibm-blue); }
 
 .error-box {
   background: var(--ibm-gray-100); color: #f4f4f4; padding: 0.8rem 1rem;
@@ -680,6 +859,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+
+.edit-btn {
+  font-size: 0.72rem; padding: 3px 12px; border-radius: 4px; border: 1px solid var(--ibm-blue);
+  background: #fff; color: var(--ibm-blue); cursor: pointer; font-weight: 500;
+  margin-left: 0.5rem; vertical-align: middle; transition: all 0.15s;
+}
+.edit-btn:hover { background: var(--ibm-blue); color: #fff; }
+.edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
+}
+@media (max-width: 900px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
+.edit-field label {
+  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ibm-gray-50);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
+}
+.edit-field select, .edit-field textarea {
+  font-family: inherit; font-size: 0.82rem; padding: 0.35rem 0.5rem;
+  border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
+  color: var(--ibm-gray-90); width: 100%; box-sizing: border-box;
+}
+.edit-field select:focus, .edit-field textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.save-btn {
+  font-size: 0.8rem; padding: 0.4rem 1.2rem; border-radius: 4px; border: none;
+  background: var(--ibm-blue); color: #fff; cursor: pointer; font-weight: 500;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: #0353e9; }
+.cancel-btn {
+  font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 4px;
+  border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
+  cursor: pointer; font-weight: 500;
+}
+.cancel-btn:hover { background: var(--ibm-gray-10); }
 """
 
 
@@ -747,7 +959,7 @@ def _render_issue_report(row: dict, issue: ConsolidatedIssue, tracking: Tracking
         if content:
             return (
                 f'<div class="analysis-label">{_esc(label)}</div>'
-                f'<div class="analysis-box">{_esc(content)}</div>'
+                f'<div class="analysis-box">{_format_analysis(content)}</div>'
             )
         return (
             f'<div class="analysis-label">{_esc(label)}</div>'
@@ -789,23 +1001,79 @@ def _render_issue_report(row: dict, issue: ConsolidatedIssue, tracking: Tracking
   <div class="label-list">{''.join(f'<span>{_esc(l)}</span>' for l in row['labels'])}</div>
 </div>
 
-<div class="qa-section">
-  <h3>QA Tracking</h3>
-  <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd>{_qa_badge(row['qa_status'])}</dd></div>
-    <div class="qa-field"><dt>QA Owner</dt><dd>{_esc(row['qa_assignee']) or '<span style="color:var(--ibm-gray-50);">Unassigned</span>'}</dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd>{_esc(row['internal_priority']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</dd></div>
+<div class="qa-section" id="qa-section">
+  <h3>QA Tracking <button class="edit-btn" id="edit-toggle" onclick="toggleEdit()">Edit</button></h3>
+
+  <div id="qa-view">
+    <div class="qa-grid">
+      <div class="qa-field"><dt>QA Status</dt><dd>{_qa_badge(row['qa_status'])}</dd></div>
+      <div class="qa-field"><dt>QA Owner</dt><dd>{_esc(row['qa_assignee']) or '<span style="color:var(--ibm-gray-50);">Unassigned</span>'}</dd></div>
+      <div class="qa-field"><dt>Internal Priority</dt><dd>{_esc(row['internal_priority']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</dd></div>
+    </div>
+    <div class="qa-grid">
+      <div class="qa-field"><dt>Hotfix Status</dt><dd>{_esc(row['hotfix_status']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</dd></div>
+    </div>
+    {f'<div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> {_esc(row["notes"])}</div>' if row.get("notes") else ''}
   </div>
-  <div class="qa-grid">
-    <div class="qa-field"><dt>Hotfix Status</dt><dd>{_esc(row['hotfix_status']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</dd></div>
+
+  <div id="qa-edit" style="display:none;">
+    <div class="edit-grid">
+      <div class="edit-field">
+        <label>QA Status</label>
+        <select id="ed-qa-status">
+          {''.join(f'<option value="{s}"{" selected" if s == row["qa_status"] else ""}>{QA_STATUS_LABELS.get(s, s)}</option>' for s in QA_STATUSES)}
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>QA Owner</label>
+        <select id="ed-qa-assignee">
+          <option value="">-- Unassigned --</option>
+          {''.join(f'<option value="{_esc(n)}"{" selected" if n == row["qa_assignee"] else ""}>{_esc(n)}</option>' for n in TEAM_NAMES)}
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Internal Priority</label>
+        <select id="ed-priority">
+          {''.join(f'<option value="{p}"{" selected" if p == row["internal_priority"] else ""}>{p or "-- None --"}</option>' for p in ["", "P0", "P1", "P2", "P3"])}
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Hotfix Status</label>
+        <select id="ed-hotfix">
+          {''.join(f'<option value="{h}"{" selected" if h == row["hotfix_status"] else ""}>{h or "-- None --"}</option>' for h in ["", "requested", "delivered", "not_needed"])}
+        </select>
+      </div>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Notes</label>
+      <textarea id="ed-notes" rows="2" style="width:100%;">{_esc(row.get('notes', ''))}</textarea>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Root Cause Analysis</label>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">{_esc(row.get('analysis', ''))}</textarea>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Steps to Reproduce</label>
+      <textarea id="ed-repro" rows="8" style="width:100%;">{_esc(row.get('repro_steps', ''))}</textarea>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Test Coverage</label>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">{_esc(row.get('test_coverage', ''))}</textarea>
+    </div>
+    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+      <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
+      <button class="cancel-btn" onclick="toggleEdit()">Cancel</button>
+      <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);align-self:center;"></span>
+    </div>
   </div>
-  {f'<div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> {_esc(row["notes"])}</div>' if row.get("notes") else ''}
 </div>
 
 <h2>Analysis</h2>
+<div id="analysis-view">
 {_analysis_block("Root Cause Analysis", row.get("analysis", ""))}
 {_analysis_block("Steps to Reproduce", row.get("repro_steps", ""))}
 {_analysis_block("Test Coverage", row.get("test_coverage", ""))}
+</div>
 
 {errors_html}
 
@@ -814,5 +1082,102 @@ def _render_issue_report(row: dict, issue: ConsolidatedIssue, tracking: Tracking
 {timeline_html}
 </div>
 
+<script>
+const ISSUE_ID = '{_esc(row["jira_key"])}';
+const REPO_OWNER = 'pdhiran';
+const REPO_NAME = 'ceph-prio-hub';
+const TRACKING_PATH = 'tracking.json';
+
+function toggleEdit() {{
+  const view = document.getElementById('qa-view');
+  const edit = document.getElementById('qa-edit');
+  const btn = document.getElementById('edit-toggle');
+  const analysis = document.getElementById('analysis-view');
+  if (edit.style.display === 'none') {{
+    edit.style.display = 'block';
+    view.style.display = 'none';
+    analysis.style.display = 'none';
+    btn.textContent = 'Cancel';
+  }} else {{
+    edit.style.display = 'none';
+    view.style.display = 'block';
+    analysis.style.display = 'block';
+    btn.textContent = 'Edit';
+  }}
+}}
+
+function getToken() {{
+  let token = localStorage.getItem('gh_prio_hub_token');
+  if (!token) {{
+    token = prompt('Enter your GitHub Personal Access Token (needs repo scope):');
+    if (token) localStorage.setItem('gh_prio_hub_token', token);
+  }}
+  return token;
+}}
+
+async function saveChanges() {{
+  const token = getToken();
+  if (!token) return;
+
+  const status = document.getElementById('save-status');
+  status.textContent = 'Saving...';
+  status.style.color = 'var(--ibm-blue)';
+
+  try {{
+    const url = `https://api.github.com/repos/${{REPO_OWNER}}/${{REPO_NAME}}/contents/${{TRACKING_PATH}}`;
+    const resp = await fetch(url, {{ headers: {{ 'Authorization': `token ${{token}}` }} }});
+
+    let trackingData = {{ issues: {{}} }};
+    let sha = null;
+
+    if (resp.ok) {{
+      const file = await resp.json();
+      sha = file.sha;
+      trackingData = JSON.parse(atob(file.content));
+    }}
+
+    if (!trackingData.issues) trackingData.issues = {{}};
+    if (!trackingData.issues[ISSUE_ID]) trackingData.issues[ISSUE_ID] = {{}};
+
+    const entry = trackingData.issues[ISSUE_ID];
+    entry.qa_status = document.getElementById('ed-qa-status').value;
+    entry.qa_assignee = document.getElementById('ed-qa-assignee').value;
+    entry.internal_priority = document.getElementById('ed-priority').value;
+    entry.hotfix_status = document.getElementById('ed-hotfix').value;
+    entry.notes = document.getElementById('ed-notes').value;
+    entry.analysis = document.getElementById('ed-analysis').value;
+    entry.repro_steps = document.getElementById('ed-repro').value;
+    entry.test_coverage = document.getElementById('ed-coverage').value;
+
+    const body = {{
+      message: `Update tracking: ${{ISSUE_ID}}`,
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(trackingData, null, 2)))),
+    }};
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(url, {{
+      method: 'PUT',
+      headers: {{
+        'Authorization': `token ${{token}}`,
+        'Content-Type': 'application/json',
+      }},
+      body: JSON.stringify(body),
+    }});
+
+    if (putResp.ok) {{
+      status.textContent = 'Saved! Reload to see changes.';
+      status.style.color = 'var(--ibm-green)';
+    }} else {{
+      const err = await putResp.json();
+      status.textContent = 'Error: ' + (err.message || putResp.status);
+      status.style.color = 'var(--ibm-red)';
+      if (putResp.status === 401) localStorage.removeItem('gh_prio_hub_token');
+    }}
+  }} catch (e) {{
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--ibm-red)';
+  }}
+}}
+</script>
 </body>
 </html>"""
