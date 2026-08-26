@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16134: [IBM_Customer][RBD] Unable to delete the RBD volume</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Customer][RBD] Unable to delete the RBD volume
 
 ROOT CAUSE:
-- Issue reported in rbd component.
 - Affected version(s): 8.0
+- Component: rbd
+
+ENGINEERING FINDINGS:
+- [Kritik Sachdeva] Hi team, Sharing the additional details, that for the same image we are not able to execute the  rbd status  or  rbd info  command as well. When executed with  debug-rbd=20  we see the openRequest call been failed with  -2  return code # rbd status --pool rbd_pool --namespace rke
+- [Kritik Sachdeva] Hello    What is meant my &quot;no output&quot;?  Did &quot;rbd rm&quot; command hang?  If not, what was its exit status? Yes the command is stuck with no output. When we executed the command with --debug-ms 1 and --debug-rbd 20 option we observed that  rbd rm  command is doing the deletion of whole
+- [Ilya Dryomov] I tried to study and found that for the rbd data objects to trim or delete there object_map which stores this information. However, for this image i do not see such entry in logs. It’s because this image doesn&#x27;t have  object-map  feature enabled:   &quot;features&quot;: [
+    &quot;layering&quot;
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rbd issue reported in IBM Ceph 8.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [IBM_Customer][RBD] Unable to delete the RBD volume
+Environment: IBM Ceph 8.0, component: rbd
 
 1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create RBD pool -- `ceph osd pool create rbd-pool 32`
-3. Create RBD image -- `rbd create rbd-pool/test-image --size 10G`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+2. Create RBD pool and image -- `rbd create test-pool/img --size 10G`
+3. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hello    What is meant my &quot;no output&quot;?  Did &quot;rbd rm&quot; command hang?  If not, what was its exit status? Yes the command is stuck with no output. When we executed the command with --debug-ms 1 and --debu</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing rbd test coverage for this scenario
+- Existing rbd tests may not cover: [IBM_Customer][RBD] Unable to delete the RBD volume
 
 SCENARIOS NEEDED:
-- Functional test for rbd: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported rbd scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +239,38 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Customer][RBD] Unable to delete the RBD volume</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rbd component.</code></li>
 <li>Affected version(s): 8.0</li>
+<li>Component: rbd</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Kritik Sachdeva] Hi team, Sharing the additional details, that for the same image we are not able to execute the  <code>rbd status  or  rbd info  command as well. When executed with  debug-rbd=20  we see the openRequest call been failed with  -2  return code # rbd status --pool rbd_pool --namespace rke</code></li>
+<li>[Kritik Sachdeva] Hello    What is meant my &quot;no output&quot;?  Did &quot;<code>rbd rm&quot; command hang?  If not</code>, what was its exit status? Yes the command is stuck with no output. When we executed the command with --debug-ms 1 and --debug-<code>rbd 20 option we observed that  rbd rm  command is doing the deletion of whole</code></li>
+<li>[Ilya Dryomov] I tried to study and found that for the <code>rbd data objects to trim or delete there object_map which stores this information. However</code>, for this image i do not see such entry in logs. It’s because this image doesn&#x27;t have  object-map  feature enabled:   &quot;features&quot;: [</li>
+</ul>
+<div>&quot;layering&quot;</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rbd issue reported in IBM Ceph 8.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [IBM_Customer][RBD] Unable to delete the RBD volume</div>
+<div>Environment: IBM Ceph 8.0, component: rbd</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create RBD pool -- <code><code>ceph osd pool create rbd-pool 32</code></code></li>
-<li><span class="step-num">3.</span> Create RBD image -- <code><code>rbd create rbd-pool/test-image --size 10G</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Create RBD pool and image -- <code><code>rbd create test-pool/img --size 10G</code></code></li>
+<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hello    What is meant my &quot;no output&quot;?  Did &quot;rbd rm&quot; command hang?  If not, what was its exit status? Yes the command is stuck with no output. When we executed the command with --debug-ms 1 and --debu</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>rbd test coverage for this scenario</code></li>
+<li>Existing <code>rbd tests may not cover: [IBM_Customer][RBD] Unable to delete the RBD volume</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rbd: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>rbd scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

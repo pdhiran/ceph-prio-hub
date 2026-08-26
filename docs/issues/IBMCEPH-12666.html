@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12666: [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,38 +192,46 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;
 
 ROOT CAUSE:
-- Daemon crash reported in rados. No stack trace captured in JIRA metadata.
+- Daemon crash reported in rados.
 - Affected version(s): 9.0
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Pawan Dhiran] Core dump and logsa are copied here :  http://magna002.ceph.redhat.com/ceph-qe-logs/bz-2418230/
+- [Pawan Dhiran] We&#x27;re able to generate the OSD crashes on demand via CI runs :  http://magna002.ceph.redhat.com/cephci-jenkins/cephci-run-35QGLN [root@ceph-pdhiran-7gztjq-node6 ~]# ceph -s cluster: id:     7462100e-ce95-11f0-b5f7-fa163e4dc65b health: HEALTH_WARN Reduced data availability: 4 pgs
+- [Pawan Dhiran] (In reply to Radoslaw Zarzynski from comment #4) &gt;     &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, &gt;  &gt; This seems to be around an RC   of Tentacle. Does it reproduce on current &gt; version? We can try and check if the issue is reproducible with latest builds &gt; Was there a FastEC pool? No,
+- [Vipin M S] We have observed 2 osds crashing with the same assertions in   ceph version 20.2.1-236.el9cp  during osd thrash testing debug_osd 20 logs:-     [root@ceph40 ~]# ceph crash info 2026-05-08T12:52:49.196033Z_77dcc18e-58f3-452d-b8dc-38612ad1f535
+{
+    &quot;archived&quot;: &quot;2026-05-08 14:47:25
+- [Brad Hubbard] /builddir/build/BUILD/ceph-20.2.1/src/osd/PeeringState.cc: 5149: ceph_abort_msg(&quot;we got a bad state machine event&quot;) That comes from here. src/osd/PeeringState.cc: 5236 /------Crashed-------/
+5237 PeeringState::Crashed::Crashed(my_context ctx)
+5238   : my_base(ctx),
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: ASSIGNED</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 9.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;
+Environment: IBM Ceph 9.0, component: rados
 
 1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the scenario described in the JIRA (see issue for specific conditions)
-5. Check for crash -- `ceph crash ls-new`
-6. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Trigger the failure scenario (see engineering findings below)
+5. Check for daemon crash -- `ceph crash ls-new`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
 
 GAPS:
-- No crash regression test for this specific rados scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for rados: reproduce the reported scenario and verify correct behavior</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,35 +245,47 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in rados. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in rados.</li>
 <li>Affected version(s): 9.0</li>
+<li>Component: rados</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Pawan Dhiran] Core dump and logsa are copied here :  http://magna002.ceph.redhat.com/ceph-qe-logs/bz-2418230/</li>
+<li>[Pawan Dhiran] We&#x27;re able to generate the OSD crashes on demand via CI runs :  http://magna002.ceph.redhat.com/cephci-jenkins/cephci-run-35QGLN [root@ceph-pdhiran-7gztjq-node6 ~]# <code>ceph -s cluster: id:     7462100e-ce95-11f0-b5f7-fa163e4dc65b health: HEALTH_WARN Reduced data availability: 4 pgs</code></li>
+<li>[Pawan Dhiran] (In reply to Radoslaw Zarzynski from comment #4) &gt;     &quot;ceph_version&quot;: &quot;20.1.0-112.el9cp&quot;, &gt;  &gt; This seems to be around an RC   of Tentacle. Does it reproduce on current &gt; version? We can try and check if the issue is reproducible with latest builds &gt; Was there a FastEC pool? No,</li>
+<li>[Vipin M S] We have observed 2 osds crashing with the same assertions in   <code>ceph version 20.2.1-236.el9cp  during osd thrash testing debug_osd 20 logs:-     [root@ceph40 ~]# ceph crash info 2026-05-08T12:52:49.196033Z_77dcc18e-58f3-452d-b8dc-38612ad1f535</code></li>
+</ul>
+<div>{</div>
+<div>&quot;archived&quot;: &quot;2026-05-08 14:47:25</div>
+<ul>
+<li>[Brad Hubbard] /builddir/build/BUILD/ceph-20.2.1/src/osd/PeeringState.cc: 5149: ceph_abort_msg(&quot;we got a bad state machine event&quot;) That comes from here. src/osd/PeeringState.cc: 5236 /------Crashed-------/</li>
+</ul>
+<div>5237 PeeringState::Crashed::Crashed(my_context ctx)</div>
+<div>5238   : my_base(ctx),</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: ASSIGNED</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 9.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;</div>
+<div>Environment: IBM Ceph 9.0, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">5.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific <code>rados scenario</code></li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: [BZ#2418230] Several OSDs crashed in assert_func: &quot;PeeringState::Crashed::Crashed&quot;</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12242: [BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,33 +192,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Affected version(s): 9.0
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Pawan Dhiran] Here are the monmap contents before and after updating the public_network [root@ceph-pdhiran-0-qs371s-node6 ~]# ceph config set mon debug_mon 30 [root@ceph-pdhiran-0-qs371s-node6 ~]# date Fri Oct  3 11:21:00 UTC 2025 [root@ceph-pdhiran-0-qs371s-node6 ~]# ceph config set global pu
+- [Pawan Dhiran] Created  attachment 2108373  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2108373&amp;action=edit ] monmaps + mon debug_mon 30 logs. Attaching the monmaps collected along with mon debug_mon 30 logs.
+- [Former user] Github branch for plausible solution that checks for public network change and initiates redeploy process instead of restart process on mon daemon https://github.com/timqn22/ceph/tree/mon-public-network-updating
+- [Prashant Dhange] We encountered this issue during the Apple cluster expansion. A detailed explanation of the root cause is available here:    Redeploying the MONs is not required. Instead, we need to reconfigure and restart the MONs to apply the newly added  public_network  changes.
+- [Timothy Nguyen] To avoid confusion, Prashant and I discussed this further and decided fix was viable.
 
 FIX STATUS:
 - Current JIRA status: Verified
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: I asked him because usually we ask the ticket assignee for the input. Known issues require different information than bug fixes (such as workaround). </textarea>
+- Workaround: I asked him because usually we ask the ticket assignee for the input. Known issues require different information than bug fixes (such as workaround). If you can provide if there was a workaround for</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 9.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart
+Environment: IBM Ceph 9.0, component: cephadm
 
 1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Apply the configuration change described in the JIRA
+4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,28 +238,36 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Affected version(s): 9.0</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Pawan Dhiran] Here are the monmap contents before and after updating the public_network [root@ceph-pdhiran-0-qs371s-node6 ~]# <code>ceph config set mon debug_mon 30 [root@ceph-pdhiran-0-qs371s-node6 ~]# date Fri Oct  3 11:21:00 UTC 2025 [root@ceph-pdhiran-0-qs371s-node6 ~]# ceph config set global pu</code></li>
+<li>[Pawan Dhiran] Created  attachment 2108373  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2108373&amp;action=edit ] monmaps + mon debug_mon 30 logs. Attaching the monmaps collected along with mon debug_mon 30 logs.</li>
+<li>[Former user] Github branch for plausible solution that checks for public network change and initiates redeploy process instead of restart process on mon daemon https://github.com/timqn22/ceph/tree/mon-public-network-updating</li>
+<li>[Prashant Dhange] We encountered this issue during the Apple cluster expansion. A detailed explanation of the root cause is available here:    Redeploying the MONs is not required. Instead, we need to reconfigure and restart the MONs to apply the newly added  public_network  changes.</li>
+<li>[Timothy Nguyen] To avoid confusion, Prashant and I discussed this further and decided fix was viable.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Verified</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: I asked him because usually we ask the ticket assignee for the input. Known issues require different information than bug fixes (such as workaround).</li>
+<li>Workaround: I asked him because usually we ask the ticket assignee for the input. Known issues require different information than bug fixes (such as workaround). If you can provide if there was a workaround for</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 9.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2400397] Mon daemons do not get updated with public_network set via config set upon restart</div>
+<div>Environment: IBM Ceph 9.0, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">3.</span> Apply the configuration change described in the JIRA</li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

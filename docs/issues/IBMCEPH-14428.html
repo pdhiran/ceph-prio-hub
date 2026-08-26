@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14428: [GSS] Slow heartbeat ping on back &amp; front interface from osd</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,42 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [GSS] Slow heartbeat ping on back &amp; front interface from osd
 
 ROOT CAUSE:
-- Issue reported in ceph component.
 - Performance degradation or timeout behavior reported.
 - Affected version(s): 4.3z1
+- Component: ceph
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] I have done the quick analysis of the customer provided data. Based on the available data, observed over 100k OSD down events caused by network latency (over 21 seconds) exceeding the default OSD heartbeat grace. This resulted in false OSD downs and cluster instability. Observed
+- [Karun Josy] Can you add a brief summary of the network issue identified and the steps that customer took to rectify it? Is there something we can learn from this case to handle such issues?
+- [Tridibesh Chakraborty] the issue mostly identified by our Network team after analysis the packets captured via TCP dump where they were able to pin point the packet drops in physical interface layer and that allowed the customer network team to identify the faulty switch which was causing the issue. I
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph issue reported in IBM Ceph 4.3z1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [GSS] Slow heartbeat ping on back &amp; front interface from osd
+Environment: IBM Ceph 4.3z1, component: ceph
 
 1. Deploy IBM Ceph 4.3z1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
+2. Run baseline benchmark (fio/rados bench) -- record metrics
+3. Trigger the performance scenario described in JIRA
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hi, During the call, we have set below on one of the cluster (OSP1) in AZ2. We didn’t see significant change after applying this. We noticed there was long heartbeat ping time of more than 2 minutes.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No performance benchmark test for this scenario
+- No performance baseline test for: [GSS] Slow heartbeat ping on back &amp; front interface from osd
 
 SCENARIOS NEEDED:
-- Performance test: measure and compare against baseline
-- Functional test for ceph: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported ceph scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +241,40 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[GSS] Slow heartbeat ping on back &amp; front interface from osd</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>ceph component.</code></li>
 <li>Performance degradation or timeout behavior reported.</li>
 <li>Affected version(s): 4.3z1</li>
+<li>Component: ceph</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] I have done the quick analysis of the customer provided data. Based on the available data, observed over 100k OSD down events caused by network latency (over 21 seconds) exceeding the default OSD heartbeat grace. This resulted in false OSD downs and cluster instability. Observed</li>
+<li>[Karun Josy] Can you add a brief summary of the network issue identified and the steps that customer took to rectify it? Is there something we can learn from this case to handle such issues?</li>
+<li>[Tridibesh Chakraborty] the issue mostly identified by our Network team after analysis the packets captured via TCP dump where they were able to pin point the packet drops in physical interface layer and that allowed the customer network team to identify the faulty switch which was causing the issue. I</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph issue reported in IBM Ceph 4.3z1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [GSS] Slow heartbeat ping on back &amp; front interface from osd</div>
+<div>Environment: IBM Ceph 4.3z1, component: ceph</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 4.3z1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">3.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hi, During the call, we have set below on one of the cluster (OSP1) in AZ2. We didn’t see significant change after applying this. We noticed there was long heartbeat ping time of more than 2 minutes.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance benchmark test for this scenario</li>
+<li>No performance baseline test for: [GSS] Slow heartbeat ping on back &amp; front interface from osd</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance test: measure and compare against baseline</li>
-<li>Functional test for ceph: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported <code>ceph scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

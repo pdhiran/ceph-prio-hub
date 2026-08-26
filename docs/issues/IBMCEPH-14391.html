@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14391: MOD multisite promote secondary fails </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,35 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MOD multisite promote secondary fails 
 
 ROOT CAUSE:
-- Issue reported in rgw-multisite component.
 - Affected version(s): 7.1
+- Component: rgw-multisite
+
+ENGINEERING FINDINGS:
+- [Uri Tanis] ceph orch apply rgw test --realm=test_realm --zone=us-east-1 --zonegroup=us --placement=&quot;1 vmrgws-0&quot; The above command specifies invalid flags; --realm, --zonegroup and --zone. They all should be prefixed by --rgw
+- [Vivek Maurya] Hi   , The support team fixed the secondary promotion issue.  Now the question:  After promoting a secondary (slave/non-master) zone to master in a Ceph RGW multisite setup, the  radosgw-admin period get  command shows mostly empty strings in the  sync_status  array.  Is this nor
+- [Michael Kadmiel] Yes please close this case.  It seems resolved,   I’f there’s anything further I’ll let you know and we can decide how to move foreward.
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw-multisite issue reported in IBM Ceph 7.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MOD multisite promote secondary fails
+Environment: IBM Ceph 7.1, component: rgw-multisite
 
 1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing rgw-multisite test coverage for this scenario
+- Existing rgw-multisite tests may not cover: MOD multisite promote secondary fails
 
 SCENARIOS NEEDED:
-- Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +234,34 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MOD multisite promote secondary fails</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in rgw-multisite component.</li>
 <li>Affected version(s): 7.1</li>
+<li>Component: rgw-multisite</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Uri Tanis] <code>ceph orch apply rgw test --realm=test_realm --zone=us-east-1 --zonegroup=us --placement=&quot;1 vmrgws-0&quot; The above command specifies invalid flags; --realm</code>, --zonegroup and --zone. They all should be prefixed by --rgw</li>
+<li>[Vivek Maurya] Hi   , The support team fixed the secondary promotion issue.  Now the question:  After promoting a secondary (slave/non-master) zone to master in a Ceph RGW multisite setup, the  <code>radosgw-admin period get  command shows mostly empty strings in the  sync_status  array.  Is this nor</code></li>
+<li>[Michael Kadmiel] Yes please close this case.  It seems resolved,   I’f there’s anything further I’ll let you know and we can decide how to move foreward.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw-multisite issue reported in IBM Ceph 7.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MOD multisite promote secondary fails</div>
+<div>Environment: IBM Ceph 7.1, component: rgw-multisite</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing rgw-multisite test coverage for this scenario</li>
+<li>Existing rgw-multisite tests may not cover: MOD multisite promote secondary fails</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

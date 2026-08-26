@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16079: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,33 +192,44 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Affected version(s): 9.0
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  cephadm ? Sharing these logs will help us investigate further.
+- [Gorantla Ramya Sree] Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. ceph orch set-unmanaged osd.default_drive_group
+2. systemctl stop ceph-&lt;cluster_id&gt;@osd.&lt;number&gt;.service
+3. ceph osd o
+- [Aarti Dhikale] Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will help us investigate further.
+- [G Sri Harsha] Issue appeared once again. Added attachment  ceph_osd_recreation_issue.pdf cc:      Note : didn’t noticed the ask in the ticket hence missed collecting debug logs during the steps execution.
+- [G Sri Harsha] the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix/workaround.  Let us know your availability today for a call. cc:
 
 FIX STATUS:
 - Fix available in build 20.2.1-330.
-- Workaround mentioned: the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before </textarea>
+- Workaround: the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 9.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
+Environment: IBM Ceph 9.0, component: cephadm
 
 1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
 3. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will help us investigate further.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
 
 GAPS:
-- Need to assess existing cephadm test coverage for this scenario
+- Existing cephadm tests may not cover: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
 
 SCENARIOS NEEDED:
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,30 +243,42 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Affected version(s): 9.0</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  <code>cephadm ? Sharing these logs will help us investigate further.</code></li>
+<li>[Gorantla Ramya Sree] Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. <code>ceph orch set-unmanaged osd.default_drive_group</code></li>
+<li><span class="step-num">2.</span> <code>systemctl stop ceph-&lt;cluster_id&gt;@osd.&lt;number&gt;.service</code></li>
+<li><span class="step-num">3.</span> <code>ceph osd o</code></li>
+<li>[Aarti Dhikale] Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  <code>cephadm  after reproducing the issue? These logs will help us investigate further.</code></li>
+<li>[G Sri Harsha] Issue appeared once again. Added attachment  ceph_osd_recreation_issue.pdf cc:      Note : didn’t noticed the ask in the ticket hence missed collecting debug logs during the steps execution.</li>
+<li>[G Sri Harsha] the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix/workaround.  Let us know your availability today for a call. cc:</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.1-330.</li>
-<li>Workaround mentioned: the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before</li>
+<li>Workaround: the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 9.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</div>
+<div>Environment: IBM Ceph 9.0, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will help us investigate further.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>cephadm test coverage for this scenario</code></li>
+<li>Existing <code>cephadm tests may not cover: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

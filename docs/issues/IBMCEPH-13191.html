@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13191: Updated mon_config_key_max_entry_size config change is not being recognized by MONs</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,35 +192,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Updated mon_config_key_max_entry_size config change is not being recognized by MONs
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Performance degradation or timeout behavior reported.
 - Affected version(s): 8.1z3
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] We have found a related BZ    that appears to match the symptoms observed during our 10K scale testing. The behavior and available debug data were reviewed to confirm alignment. Initial review suggested no CEPHADM_STRAY_HOST warning as ceph report and ceph health detail output we
+- [Prashant Dhange] During troubleshooting of   , we observed that updating  mon_config_key_max_entry_size  using the  global  scope— ceph config set global mon_config_key_max_entry_size &lt;value&gt;
+ —did  not  take effect on the monitor daemons. Despite the command succeeding and appearing in the confi
+- [Timothy Nguyen] I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 8.1z3.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Updated mon_config_key_max_entry_size config change is not being recognized by MONs
+Environment: IBM Ceph 8.1z3, component: cephadm
 
 1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
+3. Run baseline benchmark (fio/rados bench) -- record metrics
+4. Trigger the performance scenario described in JIRA
+5. Apply the configuration change described in the JIRA
+6. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No performance benchmark test for this scenario
+- No performance baseline test for: Updated mon_config_key_max_entry_size config change is not being recognized by MONs
 
 SCENARIOS NEEDED:
-- Performance test: measure and compare against baseline
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,32 +244,45 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Updated mon_config_key_max_entry_size config change is not being recognized by MONs</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Performance degradation or timeout behavior reported.</li>
 <li>Affected version(s): 8.1z3</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] We have found a related BZ    that appears to match the symptoms observed during our 10K scale testing. The behavior and available debug data were reviewed to confirm alignment. Initial review suggested no CEPHADM_STRAY_HOST warning as <code>ceph report and ceph health detail output we</code></li>
+<li>[Prashant Dhange] During troubleshooting of   , we observed that updating  mon_config_key_max_entry_size  using the  global  scope— <code>ceph config set global mon_config_key_max_entry_size &lt;value&gt;</code></li>
+</ul>
+<div>—did  not  take effect on the monitor daemons. Despite the command succeeding and appearing in the confi</div>
+<ul>
+<li>[Timothy Nguyen] I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 8.1z3.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Updated mon_config_key_max_entry_size config change is not being recognized by MONs</div>
+<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">5.</span> Apply the configuration change described in the JIRA</li>
+<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance benchmark test for this scenario</li>
+<li>No performance baseline test for: Updated mon_config_key_max_entry_size config change is not being recognized by MONs</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance test: measure and compare against baseline</li>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

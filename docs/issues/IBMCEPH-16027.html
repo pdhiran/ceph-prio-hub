@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16027: SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SMB: User/group names missing for permissions
 
 ROOT CAUSE:
-- Issue reported in smb component.
-- Permission or access control issue reported.
+- Permission or access control issue.
 - Affected version(s): 9.2
+- Component: smb
+
+ENGINEERING FINDINGS:
+- [Sachin Yeshwanth] A fix is available for testing in build ceph-20.2.2-21.
+- [Aditya Roshan Ramteke] During validation on 9.0, the SMB share was mounted from a Windows client using AD credentials. The existing folders displayed raw SIDs instead of resolved user/group names, which reproduced the reported issue. The same cluster was then upgraded to 9.2 and the SMB share was mount
 
 FIX STATUS:
 - Fix available in build 20.2.2-21.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce smb issue reported in IBM Ceph 9.2.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- SMB: User/group names missing for permissions
+Environment: IBM Ceph 9.2, component: smb
 
-1. Deploy IBM Ceph 9.2 cluster with CephFS and SMB -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 9.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster -- `ceph smb cluster create &lt;cluster-id&gt; user`
+3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
 4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+During validation of an upgrade from  RHCS 9.0 to RHCS 9.2  in an  AD DC environment , I observed that files and directories created  before the upgrade  continue to display raw SIDs in the Windows Se</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
 
 GAPS:
-- Permission/ACL test may not cover this specific access pattern
+- Permission test gap for: SMB: User/group names missing for permissions
 
 SCENARIOS NEEDED:
-- Functional test for smb: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported smb scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +239,38 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SMB: User/group names missing for permissions</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in smb component.</li>
-<li>Permission or access control issue reported.</li>
+<li>Permission or access control issue.</li>
 <li>Affected version(s): 9.2</li>
+<li>Component: smb</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Sachin Yeshwanth] A fix is available for testing in build ceph-20.2.2-21.</li>
+<li>[Aditya Roshan Ramteke] During validation on 9.0, the SMB share was mounted from a Windows client using AD credentials. The existing folders displayed raw SIDs instead of resolved user/group names, which reproduced the reported issue. The same cluster was then upgraded to 9.2 and the SMB share was mount</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.2-21.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce smb issue reported in IBM Ceph 9.2.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- SMB: User/group names missing for permissions</div>
+<div>Environment: IBM Ceph 9.2, component: smb</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster with CephFS and SMB -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster -- <code><code>ceph smb cluster create &amp;lt;cluster-id&amp;gt; user</code></code></li>
+<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>During validation of an upgrade from  RHCS 9.0 to RHCS 9.2  in an  AD DC environment , I observed that files and directories created  before the upgrade  continue to display raw SIDs in the Windows Se</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission/ACL test may not cover this specific access pattern</li>
+<li>Permission test gap for: SMB: User/group names missing for permissions</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for smb: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

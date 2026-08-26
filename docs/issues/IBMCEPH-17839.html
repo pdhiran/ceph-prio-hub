@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17839: [IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process metrics wont be fetched for&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process metrics wont be fetched for&quot;
 
 ROOT CAUSE:
-- Issue reported in ceph-monitoring component.
 - Affected version(s): 8.1z7
+- Component: ceph-monitoring
+
+ENGINEERING FINDINGS:
+- [Ravinder Kumar] Hi   Thanks for details from code and RCA. It enhanced our understanding. We were also aware about daemons running in foreground creating problem. Could you please check if we have some workaround for the issue. Than we can fix the issue as well. Because Fix gonna take long time,
+- [Aarti Dhikale] Hello   , I was trying to reproduce the issue by following the above steps on both  8.1z5 and 8.1z7 , but I was not able to reproduce it. Could you please share the exact steps you followed, including any debug-level config changes you made during the reproduction? If you did not
+- [Aarti Dhikale] Hello   , By default, the logs were getting written to the individual ceph-exporter log file, which is why I was not able to see them in journald. If we set  debug_ceph_exporter  to  0 , we may lose many other important ceph-exporter logs which are logged at level 1 and above. Th
+- [Ravinder Kumar] Thanks   I changed reproducer steps. We will convey same with Customer. lets see how it goes for him. Also Please continue work on Fix. I think it should be fixed and backported in all IBM Ceph versions. Regards Ravinder Kumar
+- [Ravinder Kumar] Hi   FYI, We got below response form Customer. -- we chose to go another way to keep the ceph config as per IBM default. We will filter the messages on our Monitoring Layer. Please let us know when the fix is live and when we can turn off this filter again. --  So lets fix this A
 
 FIX STATUS:
 - Current JIRA status: In Progress
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Hi   Thanks for details from code and RCA. It enhanced our understanding. We were also aware about daemons running in foreground creating problem. Cou</textarea>
+- Workaround: Hi   Thanks for details from code and RCA. It enhanced our understanding. We were also aware about daemons running in foreground creating problem. Could you please check if we have some workaround for</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-monitoring issue reported in IBM Ceph 8.1z7.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process metrics wont be fetched for&quot;
+Environment: IBM Ceph 8.1z7, component: ceph-monitoring
 
 1. Deploy IBM Ceph 8.1z7 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hello   , I was trying to reproduce the issue by following the above steps on both  8.1z5 and 8.1z7 , but I was not able to reproduce it. Could you please share the exact steps you followed, including any debug-level config changes you made during the reproduction? If you did not</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing ceph-monitoring test coverage for this scenario
+- Existing ceph-monitoring tests may not cover: [IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process met
 
 SCENARIOS NEEDED:
-- Functional test for ceph-monitoring: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported ceph-monitoring scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +239,38 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process metrics wont be fetched for&quot;</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in ceph-monitoring component.</li>
 <li>Affected version(s): 8.1z7</li>
+<li>Component: ceph-monitoring</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Ravinder Kumar] Hi   Thanks for details from code and RCA. It enhanced our understanding. We were also aware about daemons running in foreground creating problem. Could you please check if we have some workaround for the issue. Than we can fix the issue as well. Because Fix gonna take long time,</li>
+<li>[Aarti Dhikale] Hello   , I was trying to reproduce the issue by following the above steps on both  8.1z5 and 8.1z7 , but I was not able to reproduce it. Could you please share the exact steps you followed, including any debug-level config changes you made during the reproduction? If you did not</li>
+<li>[Aarti Dhikale] Hello   , By default, the logs were getting written to the individual ceph-exporter log file, which is why I was not able to see them in journald. If we set  debug_ceph_exporter  to  0 , we may lose many other important ceph-exporter logs which are logged at level 1 and above. Th</li>
+<li>[Ravinder Kumar] Thanks   I changed reproducer steps. We will convey same with Customer. lets see how it goes for him. Also Please continue work on Fix. I think it should be fixed and backported in all IBM Ceph versions. Regards Ravinder Kumar</li>
+<li>[Ravinder Kumar] Hi   FYI, We got below response form Customer. -- we chose to go another way to keep the <code>ceph config as per IBM default. We will filter the messages on our Monitoring Layer. Please let us know when the fix is live and when we can turn off this filter again. --  So lets fix this A</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: In Progress</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Hi   Thanks for details from code and RCA. It enhanced our understanding. We were also aware about daemons running in foreground creating problem. Cou</li>
+<li>Workaround: Hi   Thanks for details from code and RCA. It enhanced our understanding. We were also aware about daemons running in foreground creating problem. Could you please check if we have some workaround for</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-monitoring issue reported in IBM Ceph 8.1z7.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process metrics wont be fetched for&quot;</div>
+<div>Environment: IBM Ceph 8.1z7, component: ceph-monitoring</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z7 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hello   , I was trying to reproduce the issue by following the above steps on both  8.1z5 and 8.1z7 , but I was not able to reproduce it. Could you please share the exact steps you followed, including any debug-level config changes you made during the reproduction? If you did not</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing ceph-monitoring test coverage for this scenario</li>
+<li>Existing ceph-monitoring tests may not cover: [IBM_Customer][Ceph-exporter] Logs are flooded by ceph-exporter with &quot;pid path is empty; process met</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for ceph-monitoring: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported ceph-monitoring scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

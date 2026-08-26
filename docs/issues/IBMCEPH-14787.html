@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14787: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,30 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
 
 ROOT CAUSE:
-- Issue reported in documentation component.
-- Permission or access control issue reported.
+- Permission or access control issue.
 - Affected version(s): 8.0, 8.1, 9.0, 9.1, 9.2
+- Component: documentation
 
 FIX STATUS:
-- Current JIRA status: In Progress
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: In Progress</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce documentation issue reported in IBM Ceph 8.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
+Environment: IBM Ceph 8.0, component: documentation
 
 1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
 
 GAPS:
-- Permission/ACL test may not cover this specific access pattern
+- Permission test gap for: [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
 
 SCENARIOS NEEDED:
-- Functional test for documentation: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported documentation scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +229,28 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in documentation component.</li>
-<li>Permission or access control issue reported.</li>
+<li>Permission or access control issue.</li>
 <li>Affected version(s): 8.0, 8.1, 9.0, 9.1, 9.2</li>
+<li>Component: documentation</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: In Progress</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce documentation issue reported in IBM Ceph 8.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</div>
+<div>Environment: IBM Ceph 8.0, component: documentation</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission/ACL test may not cover this specific access pattern</li>
+<li>Permission test gap for: [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for documentation: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported documentation scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

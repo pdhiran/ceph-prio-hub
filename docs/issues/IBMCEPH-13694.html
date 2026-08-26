@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13694: [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,15 +189,46 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">9.0z2 backport of IBMCEPH-13408. Same root cause: ceph-volume inventory crashes when thin-provisioned LVs exist. See IBMCEPH-13408 for full RCA.</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.
+
+ROOT CAUSE:
+- Upgrade-related issue or backport request.
+- Affected version(s): 8.1, 9.0, 9.1
+- Component: ceph-volume
+
+ENGINEERING FINDINGS:
+- [Bipin Kunal] Based on program call discussion today Now that fix is already in the branch, lets pick it for 9.0z2 as the new RC is needed due to other bug.  I have updated the target release to 9.0z2.  Please ensure that fixes are not merged into the branch in the blocker only phase without J
+- [Aditya Roshan Ramteke] , I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-
+
+FIX STATUS:
+- Fix available
+- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1650
+- Verified by: Aditya Roshan Ramteke</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Same as IBMCEPH-13408 -- reproduce on 9.0z2 target version.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.
+Environment: IBM Ceph 8.1, component: ceph-volume
+
+1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+3. Monitor upgrade -- `ceph orch upgrade status`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
+
+SCENARIO DETAIL (from engineering comments):
+, I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">Same as IBMCEPH-13408. Needs backport verification on 9.0z2 builds.</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
+
+GAPS:
+- Upgrade path may lack pre-condition coverage for this scenario
+
+SCENARIOS NEEDED:
+- Upgrade: validate behavior across affected versions
+- Functional: reproduce reported ceph-volume scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -208,9 +239,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>9.0z2 backport of IBMCEPH-13408. Same root cause: ceph-volume inventory crashes when thin-provisioned LVs exist. See IBMCEPH-13408 for full RCA.</div></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Same as IBMCEPH-13408 -- reproduce on 9.0z2 target version.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>Same as IBMCEPH-13408. Needs backport verification on 9.0z2 builds.</div></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
+<div class="section-head">ROOT CAUSE</div>
+<ul>
+<li>Upgrade-related issue or backport request.</li>
+<li>Affected version(s): 8.1, 9.0, 9.1</li>
+<li>Component: ceph-volume</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Bipin Kunal] Based on program call discussion today Now that fix is already in the branch, lets pick it for 9.0z2 as the new RC is needed due to other bug.  I have updated the target release to 9.0z2.  Please ensure that fixes are not merged into the branch in the blocker only phase without J</li>
+<li>[Aditya Roshan Ramteke] , I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# <code>cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-</code></li>
+</ul>
+<div class="section-head">FIX STATUS</div>
+<ul>
+<li>Fix available</li>
+<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1650</li>
+<li>Verified by: Aditya Roshan Ramteke</li>
+</ul></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
+<div>Environment: IBM Ceph 8.1, component: ceph-volume</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>, I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
+<div class="section-head">GAPS</div>
+<ul>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+</ul>
+<div class="section-head">SCENARIOS NEEDED</div>
+<ul>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Functional: reproduce reported ceph-volume scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
+</ul></div>
 </div>
 
 

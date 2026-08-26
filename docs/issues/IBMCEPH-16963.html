@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16963:  mgmt-gateway continuously cycling on 9.9.1.0 code</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY:  mgmt-gateway continuously cycling on 9.9.1.0 code
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Affected version(s): 9.1
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Rigoberto Padilla Peña] Hello   , Is there any workaround we can share with the customer? Thanks
+- [Redouane Kachach] Hi   and   this is a regression which is fixed by the PR   . I’m afraid there’s no workaround in this case and we need the code to be fixed.
+- [Aarti Dhikale] , If we mark the daemon as  unmanaged , the flapping is no longer observed. Can we consider this a valid workaround for the issue?
+- [Rigoberto Padilla Peña] In addition  , regarding   question, can we advise the customer to set the  unmanaged  flag as a temporary workaround? Thanks
+- [Shweta Bhosale] Redo is out this week, and I missed   comment earlier. As a temporary workaround, we can mark the service as unmanaged. Since the reconciliation loop does not perform any operations on unmanaged services, the service will not be reconfigured repeatedly.
 
 FIX STATUS:
 - Fix available in build 20.2.2-150.
 - PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161
-- Workaround mentioned: Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the dow</textarea>
+- Workaround: Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the downstream releases (9.9.2.x and the 9.9.1.x backpor</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 9.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- mgmt-gateway continuously cycling on 9.9.1.0 code
+Environment: IBM Ceph 9.1, component: cephadm
 
 1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
 3. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hello   , I tried to reproduce this issue in my test environment, and I was able to reproduce it consistently. [root@aartisa-0 ~]# ceph orch ps --daemon-type mgmt-gateway
+NAME          HOST    PORTS STATUS    REFRESHED AGE MEM USE MEM LIM VERSION IMAGE ID   CONTAINER ID  
+mgmt-ga</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
 
 GAPS:
-- Need to assess existing cephadm test coverage for this scenario
+- Existing cephadm tests may not cover: mgmt-gateway continuously cycling on 9.9.1.0 code
 
 SCENARIOS NEEDED:
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +244,43 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">mgmt-gateway continuously cycling on 9.9.1.0 code</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Affected version(s): 9.1</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Rigoberto Padilla Peña] Hello   , Is there any workaround we can share with the customer? Thanks</li>
+<li>[Redouane Kachach] Hi   and   this is a regression which is fixed by the PR   . I’m afraid there’s no workaround in this case and we need the code to be fixed.</li>
+<li>[Aarti Dhikale] , If we mark the daemon as  unmanaged , the flapping is no longer observed. Can we consider this a valid workaround for the issue?</li>
+<li>[Rigoberto Padilla Peña] In addition  , regarding   question, can we advise the customer to set the  unmanaged  flag as a temporary workaround? Thanks</li>
+<li>[Shweta Bhosale] Redo is out this week, and I missed   comment earlier. As a temporary workaround, we can mark the service as unmanaged. Since the reconciliation loop does not perform any operations on unmanaged services, the service will not be reconfigured repeatedly.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.2-150.</li>
 <li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161</li>
-<li>Workaround mentioned: Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the dow</li>
+<li>Workaround: Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the downstream releases (9.9.2.x and the 9.9.1.x backpor</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 9.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- mgmt-gateway continuously cycling on 9.9.1.0 code</div>
+<div>Environment: IBM Ceph 9.1, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hello   , I tried to reproduce this issue in my test environment, and I was able to reproduce it consistently. [root@aartisa-0 ~]# ceph orch ps --daemon-type mgmt-gateway</div>
+<div class="section-head">NAME          HOST    PORTS STATUS    REFRESHED AGE MEM USE MEM LIM VERSION IMAGE ID   CONTAINER ID</div>
+<div>mgmt-ga</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>cephadm test coverage for this scenario</code></li>
+<li>Existing <code>cephadm tests may not cover: mgmt-gateway continuously cycling on 9.9.1.0 code</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

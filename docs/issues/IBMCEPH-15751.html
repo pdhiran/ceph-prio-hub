@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15751: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli
 
 ROOT CAUSE:
-- Issue reported in ceph-mgr/orchestrator component.
 - Affected version(s): 8.1
+- Component: ceph-mgr/orchestrator
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] [Internal - do not share with customer] From the initial analysis looks like is_error() function in inventory.py assumes a strict nested dictionary structure (status[&#x27;status&#x27;[&#x27;health&#x27;]). However, data from node-proxy cache is sometimes malformed, containing non-dictionary values
+- [Aarti Dhikale] Hello   , Based on customer data, we are receiving null values for some devices from Redfish: &quot;Status&quot;: {         
+    &quot;Health&quot;: null, 
+    &quot;HealthRollup&quot;: null,
+    &quot;State&quot;: &quot;Enabled&quot; 
+}
+ I found a related issue in upstream where work was done to fix null status from Redfish:
+- [Guillaume ABRIOUX] Hello   , The issue is already fixed in 9.1 via  #74749  ( f5211073b7c34532af191efc2b4b1550627c1469 ): get_node_proxy_status_value() centralizes safe access to status.health / status.state in both NodeProxyCache.summary() and NodeProxyEndpoint, with proper handling of non-dict da
+- [Bipin Kunal] But we can ask QE to validate it better. We can not say to customer choose the environment where we tested. We do not even support  standalone ceph deployments in VM’s.  If we can not backport the same patch then we may need to have customized fix for 8.1 but as of now I woul
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-mgr/orchestrator issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Node-proxy] Node proxy summary for hw status is failing on cli
+Environment: IBM Ceph 8.1, component: ceph-mgr/orchestrator
 
 1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing ceph-mgr/orchestrator test coverage for this scenario
+- Existing ceph-mgr/orchestrator tests may not cover: [Node-proxy] Node proxy summary for hw status is failing on cli
 
 SCENARIOS NEEDED:
-- Functional test for ceph-mgr/orchestrator: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +240,42 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in ceph-mgr/orchestrator component.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: ceph-mgr/orchestrator</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] [Internal - do not share with customer] From the initial analysis looks like is_error() function in inventory.py assumes a strict nested dictionary structure (status[&#x27;status&#x27;[&#x27;health&#x27;]). However, data from node-proxy cache is sometimes malformed, containing non-dictionary values</li>
+<li>[Aarti Dhikale] Hello   , Based on customer data, we are receiving null values for some devices from Redfish: &quot;Status&quot;: {</li>
+</ul>
+<div>&quot;Health&quot;: null,</div>
+<div>&quot;HealthRollup&quot;: null,</div>
+<div>&quot;State&quot;: &quot;Enabled&quot;</div>
+<div>}</div>
+<div class="section-head">I found a related issue in upstream where work was done to fix null status from Redfish</div>
+<ul>
+<li>[Guillaume ABRIOUX] Hello   , The issue is already fixed in 9.1 via  #74749  ( f5211073b7c34532af191efc2b4b1550627c1469 ): get_node_proxy_status_value() centralizes safe access to status.health / status.state in both NodeProxyCache.summary() and NodeProxyEndpoint, with proper handling of non-dict da</li>
+<li>[Bipin Kunal] But we can ask QE to validate it better. We can not say to customer choose the environment where we tested. We do not even support  standalone <code>ceph deployments in VM’s.  If we can not backport the same patch then we may need to have customized fix for 8.1 but as of now I woul</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-mgr/orchestrator issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Node-proxy] Node proxy summary for hw status is failing on cli</div>
+<div>Environment: IBM Ceph 8.1, component: ceph-mgr/orchestrator</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing ceph-mgr/orchestrator test coverage for this scenario</li>
+<li>Existing ceph-mgr/orchestrator tests may not cover: [Node-proxy] Node proxy summary for hw status is failing on cli</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for ceph-mgr/orchestrator: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

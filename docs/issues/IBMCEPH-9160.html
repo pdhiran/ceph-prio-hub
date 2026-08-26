@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-9160: [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,8 +192,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster
 
 ROOT CAUSE:
-- Issue reported in rados component.
 - Affected version(s): 7.1
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] [ Internal Discussion - Do not share with customer ] The changes are now backported to ceph-9.1-rhel-patches. Commit ids are:   https://gitlab.cee.redhat.com/ceph/ceph/-/commit/733b2af6eb3d18ce995e13e274ad609c0eddc2a1
+- [Sachin Yeshwanth] A fix is available in the build for testing :  ceph-20.2.1-286.el9cp Moving the bug to ON_QA
+- [Pawan Vinayak Dhiran] Verified the fix. the command is now available to fetch the global threshold. [root@grim036 ~]# ceph osd pool get threshold
+3.0
+[root@grim036 ~]# ceph osd pool set threshold 2.5
+threshold updated
+[root@grim036 ~]# ceph osd pool get threshold
+2.5
+[root@grim036 ~]# ceph version
+cep
 
 FIX STATUS:
 - Fix available
@@ -202,25 +214,25 @@ FIX STATUS:
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 7.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster
+Environment: IBM Ceph 7.1, component: rados
 
 1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Apply the configuration change described in the JIRA
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- Scale test may not reach the threshold that triggers this issue
+- Scale test may not reach threshold that triggers this issue
 
 SCENARIOS NEEDED:
-- Functional test for rados: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported rados scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,32 +246,46 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rados component.</code></li>
 <li>Affected version(s): 7.1</li>
+<li>Component: rados</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] [ Internal Discussion - Do not share with customer ] The changes are now backported to ceph-9.1-rhel-patches. Commit ids are:   https://gitlab.cee.redhat.com/ceph/ceph/-/commit/733b2af6eb3d18ce995e13e274ad609c0eddc2a1</li>
+<li>[Sachin Yeshwanth] A fix is available in the build for testing :  ceph-20.2.1-286.el9cp Moving the bug to ON_QA</li>
+<li>[Pawan Vinayak Dhiran] Verified the fix. the command is now available to fetch the global threshold. [root@grim036 ~]# <code>ceph osd pool get threshold</code></li>
+</ul>
+<div>3.0</div>
+<div>[root@grim036 ~]# ceph osd pool set threshold 2.5</div>
+<div>threshold updated</div>
+<div>[root@grim036 ~]# ceph osd pool get threshold</div>
+<div>2.5</div>
+<div>[root@grim036 ~]# ceph version</div>
+<div>cep</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available</li>
 <li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/733b2af6eb3d18ce995e13e274ad609c0eddc2a1</li>
 <li>Verified by: Pawan Vinayak Dhiran</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 7.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2291435] [RFE] Provide option to fetch the autoscale threshold set on the cluster</div>
+<div>Environment: IBM Ceph 7.1, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Scale test may not reach the threshold that triggers this issue</li>
+<li>Scale test may not reach threshold that triggers this issue</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

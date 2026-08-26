@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10803: [BZ#2351112] [IBM Support] [RFE] include NFS services/resources in &quot;ceph status&quot; output</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,8 +192,15 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2351112] [IBM Support] [RFE] include NFS services/resources in &quot;ceph status&quot; output
 
 ROOT CAUSE:
-- Issue reported in nfs-ganesha/ceph component.
 - Affected version(s): 8.0
+- Component: nfs-ganesha/ceph
+
+ENGINEERING FINDINGS:
+- [Thomas Serlin] The “Fix Version” needs to be changed from 9.0z1 to 9.0z2, as the upstream PRs referenced by Sreedhar last week haven’t yet merged downstream.
+- [Pradnya Chikhale] , could you please let us know the status of this Bug if the fix is merged downstream ? and also let us know if this is a blocker?
+- [Sreedhar Agraharam] Yes in downstream fix is merged :  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/a4b1b85f7b7c1e35be879285cb59de3ac9800825     (branch  :  ceph-9.1-rhel-patches) But to test this feature. We need to add few configs at this part of ceph code :  https://gitlab.cee.redhat.
+- [Harish Acharya] I tested this in 9.0z2 but found that this RFE/bug not supported in 9.0z2 as of now, after connecting with    The fix itself not available in 9.0z2. The fix went in to nfs version 9.x . But in 9.0z2 we have nfs_ganesha version 7.x.   Can you confirm this.
+- [Sreedhar Agraharam] , Thanks for testing the changes. But the fix is available in ceph-9.1-rhel-patches downstream branch which has ganesha9.7 version. Changing the target version to 9.1
 
 FIX STATUS:
 - Fix available
@@ -201,25 +208,24 @@ FIX STATUS:
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 8.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2351112]  [RFE] include NFS services/resources in &quot;ceph status&quot; output
+Environment: IBM Ceph 8.0, component: nfs-ganesha/ceph
 
-1. Deploy IBM Ceph 8.0 cluster with CephFS and NFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;cluster-name&gt; &lt;host&gt;`
+1. Deploy IBM Ceph 8.0 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
 3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available but not yet fully verified. Needs QA validation.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
 
 GAPS:
-- Need to assess existing nfs-ganesha/ceph test coverage for this scenario
+- Existing nfs-ganesha/ceph tests may not cover: [BZ#2351112]  [RFE] include NFS services/resources in &quot;ceph status&quot; output
 
 SCENARIOS NEEDED:
-- Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +239,39 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2351112] [IBM Support] [RFE] include NFS services/resources in &quot;ceph status&quot; output</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in nfs-ganesha/<code>ceph component.</code></li>
 <li>Affected version(s): 8.0</li>
+<li>Component: nfs-ganesha/ceph</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Thomas Serlin] The “Fix Version” needs to be changed from 9.0z1 to 9.0z2, as the upstream PRs referenced by Sreedhar last week haven’t yet merged downstream.</li>
+<li>[Pradnya Chikhale] , could you please let us know the status of this Bug if the fix is merged downstream ? and also let us know if this is a blocker?</li>
+<li>[Sreedhar Agraharam] Yes in downstream fix is merged :  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/a4b1b85f7b7c1e35be879285cb59de3ac9800825     (branch  :  ceph-9.1-rhel-patches) But to test this feature. We need to add few configs at this part of <code>ceph code :  https://gitlab.cee.redhat.</code></li>
+<li>[Harish Acharya] I tested this in 9.0z2 but found that this RFE/bug not supported in 9.0z2 as of now, after connecting with    The fix itself not available in 9.0z2. The fix went in to nfs version 9.x . But in 9.0z2 we have nfs_ganesha version 7.x.   Can you confirm this.</li>
+<li>[Sreedhar Agraharam] , Thanks for testing the changes. But the fix is available in ceph-9.1-rhel-patches downstream branch which has ganesha9.7 version. Changing the target version to 9.1</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available</li>
 <li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1673</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 8.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2351112]  [RFE] include NFS services/resources in &quot;ceph status&quot; output</div>
+<div>Environment: IBM Ceph 8.0, component: nfs-ganesha/ceph</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster with CephFS and NFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;cluster-name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
 <li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available but not yet fully verified. Needs QA validation.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing nfs-ganesha/<code>ceph test coverage for this scenario</code></li>
+<li>Existing nfs-ganesha/<code>ceph tests may not cover: [BZ#2351112]  [RFE] include NFS services/resources in &quot;ceph status&quot; output</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 

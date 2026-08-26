@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17543: radosgw-admin gc list command with --bypass-gc triggers a segfault</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,38 +192,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: radosgw-admin gc list command with --bypass-gc triggers a segfault
 
 ROOT CAUSE:
-- Daemon crash reported in rgw. No stack trace captured in JIRA metadata.
+- Daemon crash reported in rgw.
 - Affected version(s): 9.1
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 9.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- radosgw-admin gc list command with --bypass-gc triggers a segfault
+Environment: IBM Ceph 9.1, component: rgw
 
-1. Deploy IBM Ceph 9.1 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Trigger the scenario described in the JIRA (see issue for specific conditions)
-4. Check for crash -- `ceph crash ls-new`
-5. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+3. Trigger the failure scenario (see engineering findings below)
+4. Check for daemon crash -- `ceph crash ls-new`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No crash regression test for this specific rgw scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: radosgw-admin gc list command with --bypass-gc triggers a segfault
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported rgw scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,35 +240,39 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">radosgw-admin gc list command with --bypass-gc triggers a segfault</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in rgw. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in rgw.</li>
 <li>Affected version(s): 9.1</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 9.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- radosgw-admin gc list command with --bypass-gc triggers a segfault</div>
+<div>Environment: IBM Ceph 9.1, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">4.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">5.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">4.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific <code>rgw scenario</code></li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: <code>radosgw-admin gc list command with --bypass-gc triggers a segfault</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13408: cephadm shell ceph-volume inventory errors out when Thin LVS are created.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on the node.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm shell ceph-volume inventory errors out when Thin LVS are created.
 
 ROOT CAUSE:
-- When thin-provisioned LVs are created (e.g., lvcreate -L 900M -T test/thinpool), LVM creates hidden internal LVs: thinpool_tdata and thinpool_tmeta
-- These hidden LVs exist under /dev/mapper/&lt;vg&gt;-&lt;lv&gt; but NOT under /dev/&lt;vgname&gt;/ (only the visible thinpool LV gets a symlink there)
-- ceph-volume Device.__init__() calls _get_device_id() -&gt; disk.UdevData(self.path) which expects the path to exist
-- For /dev/test/thinpool_tdata, the path does not exist (only /dev/mapper/test-thinpool_tdata does), causing RuntimeError
-- This crashes the entire inventory collection, impacting the orchestrator&#x27;s ability to discover and manage devices
+- Affected version(s): 8.1, 9.0, 9.1
+- Component: ceph-volume
 
-FIX:
-- Upstream fix by Guillaume ABRIOUX: filter out thin pool data/metadata LVs from the inventory listing
-- Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1651
-- Fix available in build ceph-20.2.1-141, verified on 19.2.1-354 (Squid)
-- Status: CLOSED (fixed in 9.1 release)</textarea>
+ENGINEERING FINDINGS:
+- [Karun Josy] Thanks   for quickly coming up with a fix!   Can we have this backported to IBM 8.1 as well?
+
+FIX STATUS:
+- Fix available in build 20.2.1-141.
+- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1651
+- Verified by: Aditya Roshan Ramteke</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-volume inventory crash when thin-provisioned LVMs exist on an OSD node.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- cephadm shell ceph-volume inventory errors out when Thin LVS are created.
+Environment: IBM Ceph 8.1, component: ceph-volume
 
-1. Deploy IBM Ceph 8.x or 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create a loopback device for testing -- `dd if=/dev/zero of=/disk.img bs=1M count=1024`
-3. Attach the loopback device -- `losetup -f --show /disk.img`
-4. Create a volume group on the loopback -- `vgcreate test /dev/loop0`
-5. Create a thin-provisioned LV -- `lvcreate -L 900M -T test/thinpool`
-6. Verify hidden LVs exist under /dev/mapper but not /dev/test -- `ls -la /dev/test/` vs `ls -la /dev/mapper/test*`
-7. Run inventory -- `cephadm ceph-volume inventory`
-8. Observe RuntimeError crash: /dev/test/thinpool_tdata not found
-
-Hit rate: 100% reproducible when thin LVs exist.</textarea>
+1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test covers ceph-volume inventory with LVM thin provisioning. Fixed and verified.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- No CephCI test creates thin-provisioned LVs before running ceph-volume inventory
-- No negative test for exotic LVM configurations (thin pools, cache pools, snapshots)
+- Existing ceph-volume tests may not cover: cephadm shell ceph-volume inventory errors out when Thin LVS are created.
 
 SCENARIOS NEEDED:
-- ceph-volume inventory with thin LV: create thin pool, run inventory, verify no crash and thin pool data/meta LVs are filtered
-- ceph-volume inventory with mixed devices: nodes with both regular and thin-provisioned LVs
-- OSD deployment on node with thin LVs: verify orchestrator can still discover and use available non-thin devices</textarea>
+- Functional: reproduce reported ceph-volume scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,45 +231,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on the node.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>When thin-provisioned LVs are created (e.g., lvcreate -L 900M -T test/thinpool), LVM creates hidden internal LVs: thinpool_tdata and thinpool_tmeta</li>
-<li>These hidden LVs exist under /dev/mapper/&lt;vg&gt;-&lt;lv&gt; but NOT under /dev/&lt;vgname&gt;/ (only the visible thinpool LV gets a symlink there)</li>
-<li>ceph-volume Device.__init__() calls _get_device_id() -&gt; disk.UdevData(self.path) which expects the path to exist</li>
-<li>For /dev/test/thinpool_tdata, the path does not exist (only /dev/mapper/test-thinpool_tdata does), causing RuntimeError</li>
-<li>This crashes the entire inventory collection, impacting the orchestrator&#x27;s ability to discover and manage devices</li>
+<li>Affected version(s): 8.1, 9.0, 9.1</li>
+<li>Component: ceph-volume</li>
 </ul>
-<div class="section-head">FIX</div>
+<div class="section-head">ENGINEERING FINDINGS</div>
 <ul>
-<li>Upstream fix by Guillaume ABRIOUX: filter out thin pool data/metadata LVs from the inventory listing</li>
-<li>Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1651</li>
-<li>Fix available in build ceph-20.2.1-141, verified on 19.2.1-354 (Squid)</li>
-<li>Status: CLOSED (fixed in 9.1 release)</li>
+<li>[Karun Josy] Thanks   for quickly coming up with a fix!   Can we have this backported to IBM 8.1 as well?</li>
+</ul>
+<div class="section-head">FIX STATUS</div>
+<ul>
+<li>Fix available in build 20.2.1-141.</li>
+<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1651</li>
+<li>Verified by: Aditya Roshan Ramteke</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-volume inventory crash when thin-provisioned LVMs exist on an OSD node.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
+<div>Environment: IBM Ceph 8.1, component: ceph-volume</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.x or 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create a loopback device for testing -- <code>dd if=/dev/zero of=/disk.img bs=1M count=1024</code></li>
-<li><span class="step-num">3.</span> Attach the loopback device -- <code>losetup -f --show /disk.img</code></li>
-<li><span class="step-num">4.</span> Create a volume group on the loopback -- <code>vgcreate test /dev/loop0</code></li>
-<li><span class="step-num">5.</span> Create a thin-provisioned LV -- <code>lvcreate -L 900M -T test/thinpool</code></li>
-<li><span class="step-num">6.</span> Verify hidden LVs exist under /dev/mapper but not /dev/test -- <code>ls -la /dev/test/</code> vs <code>ls -la /dev/mapper/test*</code></li>
-<li><span class="step-num">7.</span> Run inventory -- <code><code>cephadm ceph-volume inventory</code></code></li>
-<li><span class="step-num">8.</span> Observe RuntimeError crash: /dev/test/thinpool_tdata not found</li>
-</ul>
-<div>Hit rate: 100% reproducible when thin LVs exist.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test covers ceph-volume inventory with LVM thin provisioning. Fixed and verified.</div>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No CephCI test creates thin-provisioned LVs before running ceph-volume inventory</li>
-<li>No negative test for exotic LVM configurations (thin pools, cache pools, snapshots)</li>
+<li>Existing ceph-volume tests may not cover: <code>cephadm shell ceph-volume inventory errors out when Thin LVS are created.</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>ceph-volume inventory with thin LV: create thin pool, run inventory, verify no crash and thin pool data/meta LVs are filtered</li>
-<li>ceph-volume inventory with mixed devices: nodes with both regular and thin-provisioned LVs</li>
-<li>OSD deployment on node with thin LVs: verify orchestrator can still discover and use available non-thin devices</li>
+<li>Functional: reproduce reported ceph-volume scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

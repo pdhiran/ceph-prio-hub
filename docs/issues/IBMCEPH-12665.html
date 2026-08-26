@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12665: [BZ#2426864] [IBM_Support][NFS] Ownership for files and directories are not changing for NFS export with no_root_squash</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,37 +192,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2426864] [IBM_Support][NFS] Ownership for files and directories are not changing for NFS export with no_root_squash
 
 ROOT CAUSE:
-- Issue reported in nfs-ganesha component.
 - Performance degradation or timeout behavior reported.
 - Affected version(s): 8.1
+- Component: nfs-ganesha
+
+ENGINEERING FINDINGS:
+- [Shantanu Bhardwaj] Issue got resolved temporarily after restarting the NFS Daemons using &quot;ceph orch restart&quot; and remounting the Exports on client side.  However issue reappeared once customer rebooted the client node and NFS exports were remounted after that.
+- [Thomas Serlin] For the hotfix request that was filed today, devs can cherry-pick their fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin-ceph-8.1-rhel-9-hotfix-bz2426864-patches Thanks, Thomas
+- [Thomas Serlin] (In reply to tserlin from comment #16) &gt; For the hotfix request that was filed today, devs can cherry-pick their &gt; fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): &gt;  &gt;  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin- &gt; ceph-8.1-rhel-
+- [Thomas Serlin] QE can use this to verify the hotfix, based on 8.1 z4: $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z4.0.hotfix.bz2426864 The hotfix builds in the container are: nfs-ganesha-6.5-29.0.hotfix.bz2426864.el9cp ceph-19.2.1-292.0.hotfix.bz2426864.el9cp Based on these two hot
+- [Chaithra Kulal] Hi Team, RGW-Dashboard BZ2417688 validation completed with hotfix build: ceph version 19.2.1-292.0.hotfix.bz2426864.el9cp No issues seen. Test result :  https://docs.google.com/document/d/1U2WupM66bQnmxVBZ0_3WVQWEa394mDZ_UqdLA-nHGc4/edit?tab=t.0 Thanks, Chaithra
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce nfs-ganesha issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_squash
+Environment: IBM Ceph 8.1, component: nfs-ganesha
 
-1. Deploy IBM Ceph 8.1 cluster with CephFS and NFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;cluster-name&gt; &lt;host&gt;`
+1. Deploy IBM Ceph 8.1 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
 3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
+4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
+5. Run baseline benchmark (fio/rados bench) -- record metrics
+6. Trigger the performance scenario described in JIRA
+7. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Was able to reproduce this issue locally: 1. NFS server (Ganesha side): Domain used is &quot;random.com&quot; [root@ceph-msaini-r9ft0j-node2 ganesha]# hostname -f ceph-msaini-r9ft0j-node2.random.com [root@ceph-msaini-r9ft0j-node2 ganesha]# cat /etc/hosts 127.0.0.1   localhost localhost.ran</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No performance benchmark test for this scenario
+- No performance baseline test for: [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_
 
 SCENARIOS NEEDED:
-- Performance test: measure and compare against baseline
-- Functional test for nfs-ganesha: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported nfs-ganesha scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,34 +246,45 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2426864] [IBM_Support][NFS] Ownership for files and directories are not changing for NFS export with no_root_squash</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in nfs-ganesha component.</li>
 <li>Performance degradation or timeout behavior reported.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: nfs-ganesha</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Shantanu Bhardwaj] Issue got resolved temporarily after restarting the NFS Daemons using &quot;<code>ceph orch restart&quot; and remounting the Exports on client side.  However issue reappeared once customer rebooted the client node and NFS exports were remounted after that.</code></li>
+<li>[Thomas Serlin] For the hotfix request that was filed today, devs can cherry-pick their fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin-ceph-8.1-rhel-9-hotfix-bz2426864-patches Thanks, Thomas</li>
+<li>[Thomas Serlin] (In reply to tserlin from comment #16) &gt; For the hotfix request that was filed today, devs can cherry-pick their &gt; fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): &gt;  &gt;  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin- &gt; ceph-8.1-rhel-</li>
+<li>[Thomas Serlin] QE can use this to verify the hotfix, based on 8.1 z4: $ <code>podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z4.0.hotfix.bz2426864 The hotfix builds in the container are: nfs-ganesha-6.5-29.0.hotfix.bz2426864.el9cp ceph-19.2.1-292.0.hotfix.bz2426864.el9cp Based on these two hot</code></li>
+<li>[Chaithra Kulal] Hi Team, RGW-Dashboard BZ2417688 validation completed with hotfix build: <code>ceph version 19.2.1-292.0.hotfix.bz2426864.el9cp No issues seen. Test result :  https://docs.google.com/document/d/1U2WupM66bQnmxVBZ0_3WVQWEa394mDZ_UqdLA-nHGc4/edit?tab=t.0 Thanks</code>, Chaithra</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce nfs-ganesha issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_squash</div>
+<div>Environment: IBM Ceph 8.1, component: nfs-ganesha</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with CephFS and NFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;cluster-name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">5.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">6.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Was able to reproduce this issue locally: 1. NFS server (Ganesha side): Domain used is &quot;random.com&quot; [root@ceph-msaini-r9ft0j-node2 ganesha]# hostname -f ceph-msaini-r9ft0j-node2.random.com [root@ceph-msaini-r9ft0j-node2 ganesha]# cat /etc/hosts 127.0.0.1   localhost localhost.ran</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance benchmark test for this scenario</li>
+<li>No performance baseline test for: [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance test: measure and compare against baseline</li>
-<li>Functional test for nfs-ganesha: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported nfs-ganesha scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13748: [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,36 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Performance degradation or timeout behavior reported.
 - Affected version(s): 7.1z8
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Anita Pandey] Hello   , The debug logs from the non-affected cluster, where the  ceph orch daemon redeploy osd.&lt;id&gt;  operation succeeds even when the OSD spec is configured as  unmanaged , have been attached. Could you please review these logs and help us understand the workflow being followed
+- [Aarti Dhikale] The fix mentioned above, which was added in the 8.1 release, is under    and commit  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/50f18b9686d400c320d0a7afa7f2f381a5b16d7b  Also by default, if any OSDs are unmanaged, we should not perform any cephadm actions on that service,
+- [Anita Pandey] Hello   , We suggested removing the  unmanaged: true  flag from the OSD spec and reapplying the specification as a potential solution. However, before proceeding with this action, the customer has raised the following concerns: Response from Customer: As opposed to removing the &quot;
+- [Aarti Dhikale] [ Internal - Do no share with customer]  Our earlier workaround involved marking the OSD service as managed, which would result in a different OSD spec between the affected and non-affected nodes. Since the customer would like to keep the same OSD spec across all nodes, I explore
+- [Aarti Dhikale] Could you please ask the customer to use the workaround of marking the OSDs as managed if they need to perform orchestrator actions, instead of removing the key from the MON store?
 
 FIX STATUS:
 - Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Closing this issue, as the workaround was successful in the customer environment.</textarea>
+- Workaround: Closing this issue, as the workaround was successful in the customer environment.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 7.1z8.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State
+Environment: IBM Ceph 7.1z8, component: cephadm
 
 1. Deploy IBM Ceph 7.1z8 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Run baseline benchmark (fio/rados bench) -- record metrics
+4. Trigger the performance scenario described in JIRA
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No performance benchmark test for this scenario
+- No performance baseline test for: [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State
 
 SCENARIOS NEEDED:
-- Performance test: measure and compare against baseline
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,33 +242,42 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Performance degradation or timeout behavior reported.</li>
 <li>Affected version(s): 7.1z8</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Anita Pandey] Hello   , The debug logs from the non-affected cluster, where the  <code>ceph orch daemon redeploy osd.&lt;id&gt;  operation succeeds even when the OSD spec is configured as  unmanaged</code>, have been attached. Could you please review these logs and help us understand the workflow being followed</li>
+<li>[Aarti Dhikale] The fix mentioned above, which was added in the 8.1 release, is under    and commit  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/50f18b9686d400c320d0a7afa7f2f381a5b16d7b  Also by default, if any OSDs are unmanaged, we should not perform any <code>cephadm actions on that service</code>,</li>
+<li>[Anita Pandey] Hello   , We suggested removing the  unmanaged: true  flag from the OSD spec and reapplying the specification as a potential solution. However, before proceeding with this action, the customer has raised the following concerns: Response from Customer: As opposed to removing the &quot;</li>
+<li>[Aarti Dhikale] [ Internal - Do no share with customer]  Our earlier workaround involved marking the OSD service as managed, which would result in a different OSD spec between the affected and non-affected nodes. Since the customer would like to keep the same OSD spec across all nodes, I explore</li>
+<li>[Aarti Dhikale] Could you please ask the customer to use the workaround of marking the OSDs as managed if they need to perform orchestrator actions, instead of removing the key from the MON store?</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Closing this issue, as the workaround was successful in the customer environment.</li>
+<li>Workaround: Closing this issue, as the workaround was successful in the customer environment.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 7.1z8.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State</div>
+<div>Environment: IBM Ceph 7.1z8, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 7.1z8 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance benchmark test for this scenario</li>
+<li>No performance baseline test for: [Ceph-OSD] OSD Daemon Redeployment Stuck in Scheduled State</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance test: measure and compare against baseline</li>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13151:  	[IBM_Support] MGR Daemon failing frequently post upgrade to 8.1</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,38 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY:  	[IBM_Support] MGR Daemon failing frequently post upgrade to 8.1
 
 ROOT CAUSE:
-- Issue reported in rados component.
-- This appears to be an upgrade-related issue or backport request.
+- Upgrade-related issue or backport request.
 - Affected version(s): 8.1
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Anjana Sriram] Shantanu Bhardwaj  2025-12-15 20:38:22 UTC CONFIDENTIAL IBM Case : TS020992388 (Apple)
+
+ Comment 2   Prashant Dhange  2025-12-15 21:48:54 UTC CONFIDENTIAL Here is the analysis of mon and mgr logs provided earlier. We will need debug logs from mgr and mon daemons to further invest
+- [Aarti Dhikale] Hello   , Are we good to close this issue, or is the customer still facing the issue and requires further debugging?
+- [Shantanu Bhardwaj] We are good to close this issue. The issue was resolved with below work around: $ ceph config set mon mon_mgr_beacon_grace 300
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MGR Daemon failing frequently post upgrade to 8.1
+Environment: IBM Ceph 8.1, component: rados
 
 1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade progress -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+5. Monitor upgrade -- `ceph orch upgrade status`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- Upgrade test may not cover the specific pre-conditions that trigger this issue
+- Upgrade path may lack pre-condition coverage for this scenario
 
 SCENARIOS NEEDED:
-- Upgrade test: validate behavior before and after upgrade on affected version
-- Functional test for rados: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Upgrade: validate behavior across affected versions
+- Functional: reproduce reported rados scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,35 +242,43 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] MGR Daemon failing frequently post upgrade to 8.1</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rados component.</code></li>
-<li>This appears to be an upgrade-related issue or backport request.</li>
+<li>Upgrade-related issue or backport request.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: rados</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Anjana Sriram] Shantanu Bhardwaj  2025-12-15 20:38:22 UTC CONFIDENTIAL IBM Case : TS020992388 (Apple)</li>
+</ul>
+<div>Comment 2   Prashant Dhange  2025-12-15 21:48:54 UTC CONFIDENTIAL Here is the analysis of mon and mgr logs provided earlier. We will need debug logs from mgr and mon daemons to further invest</div>
+<ul>
+<li>[Aarti Dhikale] Hello   , Are we good to close this issue, or is the customer still facing the issue and requires further debugging?</li>
+<li>[Shantanu Bhardwaj] We are good to close this issue. The issue was resolved with below work around: $ <code>ceph config set mon mon_mgr_beacon_grace 300</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MGR Daemon failing frequently post upgrade to 8.1</div>
+<div>Environment: IBM Ceph 8.1, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
 <li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

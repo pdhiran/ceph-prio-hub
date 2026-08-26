@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17050: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,33 +192,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET
 
 ROOT CAUSE:
-- Issue reported in rgw component.
 - Affected version(s): 8.1z4
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw_mp_lock_max_time = 1800 (30 min) The analysis of earlier provided logs showed:
+- [Prashant Dhange] Summary of the 29th July call :  1) As informed to us during the call, there was an index pool migration activity to move index pool to SSD drives due to which cluster was not healthy and this is the reason for the observed increased latency in RGW operation.
+
+2) The ghost object
 
 FIX STATUS:
 - Current JIRA status: New
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed.</textarea>
+- Workaround: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 8.1z4.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET
+Environment: IBM Ceph 8.1z4, component: rgw
 
-1. Deploy IBM Ceph 8.1z4 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+1. Deploy IBM Ceph 8.1z4 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is New. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing rgw test coverage for this scenario
+- Existing rgw tests may not cover: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET
 
 SCENARIOS NEEDED:
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,30 +236,37 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
 <li>Affected version(s): 8.1z4</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw_mp_lock_max_time = 1800 (30 min) The analysis of earlier provided logs showed:</li>
+<li>[Prashant Dhange] Summary of the 29th July call :  1) As informed to us during the call, there was an index pool migration activity to move index pool to SSD drives due to which cluster was not healthy and this is the reason for the observed increased latency in RGW operation.</li>
+</ul>
+<ul>
+<li><span class="step-num">2.</span> The ghost object</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: New</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed.</li>
+<li>Workaround: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 8.1z4.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</div>
+<div>Environment: IBM Ceph 8.1z4, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z4 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z4 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is New. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>rgw test coverage for this scenario</code></li>
+<li>Existing <code>rgw tests may not cover: For Successful MultipartComplete object</code>, HEAD succeeds but can&#x27;t be retrieved with GET</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16463: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,37 +192,42 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal
 
 ROOT CAUSE:
-- Issue reported in smb component.
 - Performance degradation or timeout behavior reported.
 - Affected version(s): 9.1
+- Component: smb
+
+ENGINEERING FINDINGS:
+- [Ravinder Kumar] Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?
+- [Ashish Singh] Hi   can we avoid threaded replies? We’re trying to move away from threaded replies as they are difficult to find and ordering of comments doesn&#x27;t happen which can be problematic while debugging this issue.  cc:
+- [Sachin Prabhu] This is a customer issue which does not require a new fix. Setting target to 10.0 so that it doesn’t come up on 9.2 program manager reports.
 
 FIX STATUS:
 - Current JIRA status: ASSIGNED
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</textarea>
+- Workaround: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce smb issue reported in IBM Ceph 9.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- SMB is extremely slow when trying to sync many small files but directly sync to mds working normal
+Environment: IBM Ceph 9.1, component: smb
 
-1. Deploy IBM Ceph 9.1 cluster with CephFS and SMB -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster -- `ceph smb cluster create &lt;cluster-id&gt; user`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
+4. Run baseline benchmark (fio/rados bench) -- record metrics
+5. Trigger the performance scenario described in JIRA
+6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
 
 GAPS:
-- No performance benchmark test for this scenario
-- Scale test may not reach the threshold that triggers this issue
+- No performance baseline test for: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal
+- Scale test may not reach threshold that triggers this issue
 
 SCENARIOS NEEDED:
-- Performance test: measure and compare against baseline
-- Functional test for smb: reproduce the reported scenario and verify correct behavior</textarea>
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported smb scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,34 +241,41 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in smb component.</li>
 <li>Performance degradation or timeout behavior reported.</li>
 <li>Affected version(s): 9.1</li>
+<li>Component: smb</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Ravinder Kumar] Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</li>
+<li>[Ashish Singh] Hi   can we avoid threaded replies? We’re trying to move away from threaded replies as they are difficult to find and ordering of comments doesn&#x27;t happen which can be problematic while debugging this issue.  cc:</li>
+<li>[Sachin Prabhu] This is a customer issue which does not require a new fix. Setting target to 10.0 so that it doesn’t come up on 9.2 program manager reports.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: ASSIGNED</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</li>
+<li>Workaround: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce smb issue reported in IBM Ceph 9.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</div>
+<div>Environment: IBM Ceph 9.1, component: smb</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster with CephFS and SMB -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster -- <code><code>ceph smb cluster create &amp;lt;cluster-id&amp;gt; user</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
+<li><span class="step-num">4.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">5.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance benchmark test for this scenario</li>
-<li>Scale test may not reach the threshold that triggers this issue</li>
+<li>No performance baseline test for: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</li>
+<li>Scale test may not reach threshold that triggers this issue</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance test: measure and compare against baseline</li>
-<li>Functional test for smb: reproduce the reported scenario and verify correct behavior</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12883: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,36 +192,46 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)
 
 ROOT CAUSE:
-- Daemon crash reported in cephfs. No stack trace captured in JIRA metadata.
+- Daemon crash reported in cephfs.
 - Affected version(s): 8.1
+- Component: cephfs
+
+ENGINEERING FINDINGS:
+- [Bipin Kunal] Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1
+- [Bipin Kunal] Vivek, Please cross check if the fix already exists in 9.0 branch(as you mentioned on chat). -Bipin
+- [Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So moving it for QE test.
+- [Justin Caratzas] Can you link to the code change that fixed this issue?
+- [Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So created this  BZ#2431671  for QA verification. Fix : https://github.com/ceph/ceph/commit/a291280de697abbba07ba7d975b59f853204a83e
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephfs issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)
+Environment: IBM Ceph 8.1, component: cephfs
 
-1. Deploy IBM Ceph 8.1 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Trigger the scenario described in the JIRA (see issue for specific conditions)
-4. Check for crash -- `ceph crash ls-new`
-5. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
+4. Trigger the failure scenario (see engineering findings below)
+5. Check for daemon crash -- `ceph crash ls-new`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`
+
+SCENARIO DETAIL (from engineering comments):
+Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No crash regression test for this specific cephfs scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_as
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for cephfs: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported cephfs scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,34 +245,44 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in cephfs. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in cephfs.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: cephfs</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Bipin Kunal] Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1</li>
+<li>[Bipin Kunal] Vivek, Please cross check if the fix already exists in 9.0 branch(as you mentioned on chat). -Bipin</li>
+<li>[Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So moving it for QE test.</li>
+<li>[Justin Caratzas] Can you link to the code change that fixed this issue?</li>
+<li>[Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So created this  BZ#2431671  for QA verification. Fix : https://github.com/ceph/ceph/commit/a291280de697abbba07ba7d975b59f853204a83e</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephfs issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</div>
+<div>Environment: IBM Ceph 8.1, component: cephfs</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">4.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">5.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
+<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
 <li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific cephfs scenario</li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_as</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for cephfs: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

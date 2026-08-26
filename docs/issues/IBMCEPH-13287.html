@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13287: NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,41 +192,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
 
 ROOT CAUSE:
-- Daemon crash reported in nfs-ganesha/ceph. No stack trace captured in JIRA metadata.
+- Daemon crash reported in nfs-ganesha/ceph.
 - Affected version(s): 8.0
+- Component: nfs-ganesha/ceph
+
+ENGINEERING FINDINGS:
+- [Matthew Benjamin] I don’t understand why this debug output is here.
+- [Aarti Dhikale] the GDB backtrace and details were shared inadvertently and were only meant for reference to assist with the investigation.
+- [Vidushi Mishra] Reproducer steps  Verify the NFS cluster ceph nfs cluster ls [ &quot;nfs-gateway&quot; ] Create RGW user radosgw-admin user create --uid=nfs-test2 --display-name=&quot;NFS Test User 2&quot; --access-key=TEST2_ACCESS_KEY --secret=TEST2_SECRET_KEY Create bucket  aws --endpoint-url  http://cali022:80
+- [Aarti Dhikale] Hello   , Root Cause Analysis (RCA) Problem Summary A crash was observed during bucket listing operations while handling common prefix entries, specifically when the prefix is  / . Root Cause During parsing, when the condition  cp_iter-&gt;first == &quot;/&quot;  is encountered, the logic ski
+- [Aarti Dhikale] Hello   , Regarding a workaround, the issue is already fixed in  7.1z10, 8.1z7, and 9.0z2. Please let us know if the customer is okay to receive the fix in an upcoming release, or if they require a hotfix for this issue.
 
 FIX STATUS:
 - Fix available in build 20.2.1-76.
 - PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/53e3af37a48ff90098c1249981ae58f922f75604
-- Workaround mentioned: Hello   , Regarding a workaround, the issue is already fixed in  7.1z10, 8.1z6, and 9.0z2. Please let us know if the customer is okay to receive the f</textarea>
+- Workaround: Hello   , Regarding a workaround, the issue is already fixed in  7.1z10, 8.1z6, and 9.0z2. Please let us know if the customer is okay to receive the fix in an upcoming release, or if they require a ho</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 8.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
+Environment: IBM Ceph 8.0, component: nfs-ganesha/ceph
 
-1. Deploy IBM Ceph 8.0 cluster with CephFS and NFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;cluster-name&gt; &lt;host&gt;`
+1. Deploy IBM Ceph 8.0 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
 3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Trigger the scenario described in the JIRA (see issue for specific conditions)
-6. Check for crash -- `ceph crash ls-new`
-7. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-8. Verify cluster health -- `ceph -s` and `ceph health detail`
+4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
+5. Trigger the failure scenario (see engineering findings below)
+6. Check for daemon crash -- `ceph crash ls-new`
+7. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+[Internal] I am able to reproduce the issue using the default  ganesha.conf  settings. On Server: [root@aarti-0 ~]# cd bucket_upload/
+[root@aarti-0 bucket_upload]# aws s3 cp catalog s3://sdlc-stage//  --recursive  --endpoint-url http://aarti-0:80  --profile sysuser-CAIXA
+upload:</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- No crash regression test for this specific nfs-ganesha/ceph scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,38 +250,49 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in nfs-ganesha/ceph. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in nfs-ganesha/ceph.</li>
 <li>Affected version(s): 8.0</li>
+<li>Component: nfs-ganesha/ceph</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Matthew Benjamin] I don’t understand why this debug output is here.</li>
+<li>[Aarti Dhikale] the GDB backtrace and details were shared inadvertently and were only meant for reference to assist with the investigation.</li>
+<li>[Vidushi Mishra] Reproducer steps  Verify the NFS cluster <code>ceph nfs cluster ls [ &quot;nfs-gateway&quot; ] Create RGW user radosgw-admin user create --uid=nfs-test2 --display-name=&quot;NFS Test User 2&quot; --access-key=TEST2_ACCESS_KEY --secret=TEST2_SECRET_KEY Create bucket  aws --endpoint-url  http://cali022:80</code></li>
+<li>[Aarti Dhikale] Hello   , Root Cause Analysis (RCA) Problem Summary A crash was observed during bucket listing operations while handling common prefix entries, specifically when the prefix is  / . Root Cause During parsing, when the condition  cp_iter-&gt;first == &quot;/&quot;  is encountered, the logic ski</li>
+<li>[Aarti Dhikale] Hello   , Regarding a workaround, the issue is already fixed in  7.1z10, 8.1z7, and 9.0z2. Please let us know if the customer is okay to receive the fix in an upcoming release, or if they require a hotfix for this issue.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.1-76.</li>
 <li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/53e3af37a48ff90098c1249981ae58f922f75604</li>
-<li>Workaround mentioned: Hello   , Regarding a workaround, the issue is already fixed in  7.1z10, 8.1z6, and 9.0z2. Please let us know if the customer is okay to receive the f</li>
+<li>Workaround: Hello   , Regarding a workaround, the issue is already fixed in  7.1z10, 8.1z6, and 9.0z2. Please let us know if the customer is okay to receive the fix in an upcoming release, or if they require a ho</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 8.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</div>
+<div>Environment: IBM Ceph 8.0, component: nfs-ganesha/ceph</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster with CephFS and NFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;cluster-name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">6.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">7.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">8.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">5.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">6.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>[Internal] I am able to reproduce the issue using the default  ganesha.conf  settings. On Server: [root@aarti-0 ~]# cd bucket_upload/</div>
+<div>[root@aarti-0 bucket_upload]# aws s3 cp catalog s3://sdlc-stage//  --recursive  --endpoint-url http://aarti-0:80  --profile sysuser-CAIXA</div>
+<div>upload:</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific nfs-ganesha/<code>ceph scenario</code></li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: NFS daemon (nfs-over-rgw) crashing while listing the files on the <code>mount point</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

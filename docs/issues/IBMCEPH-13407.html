@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13407: [IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,44 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support]Ceph Dashboard menus fail with HTTP 500 error
 
 ROOT CAUSE:
-- Issue reported in ceph-dashboard component.
 - Affected version(s): 9.0
+- Component: ceph-dashboard
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] Hi   , I tried reproducing the issue on ceph version 20.1.0-145.el9cp tentacle , and both  Cluster → Pool List  and  Block → Images  in the dashboard are accessible without any issues. To help with further debugging, could you please provide the  Ceph Manager logs with  mgr/dashb
+- [Varuni Sawant] Hello    The sos-report from MGR node with dashboard debug logs enabled is present below in ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-sceph03-TS021586859-2026-03-12-xxrllfk.tar.xz_unpack/sosreport-sceph03-TS021586859-2026-03-12-xxrllfk Please let us know if an
+- [Aarti Dhikale] , Thanks for sharing the logs. However, I need the debug logs captured while accessing the  Cluster → Pools  and  Block → Images  tabs in the dashboard. I do not see any log entries indicating that the  GET requests for  /api/pool  or  /api/block/image  were triggered. Could you
+- [Varuni Sawant] Sure, I will reproduce the issue and capture the debug logs while accessing the  Cluster → Pools  and  Block → Images  tabs, and share them here.
+- [Aarti Dhikale] [Internal Do not share with Customer]: Current Status:  Crash log:
+
+Mar 11 14:25:29 sceph03 ceph-mgr[3332502]: [dashboard ERROR exception] Internal Server Error#012Traceback (most recent call last):#012  File &quot;/usr/share/ceph/mgr/dashboard/services/exception.py&quot;, line 47, in dash
 
 FIX STATUS:
-- Current JIRA status: Verified
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Verified</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-dashboard issue reported in IBM Ceph 9.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph Dashboard menus fail with HTTP 500 error
+Environment: IBM Ceph 9.0, component: ceph-dashboard
 
 1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access dashboard -- `curl -k https://&lt;mgr-host&gt;:8443/`
+3. Access at `https://&lt;mgr-host&gt;:8443/`
 4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+[Internal - Do not share with customer] From the logs, it is observed that  refs  is set to  [&#x27;mds&#x27;, &#x27;clone&#x27;] , which is causing the crash. Mar 12 08:58:33 sceph03 ceph-mgr[3390646]: [dashboard DEBUG</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing ceph-dashboard test coverage for this scenario
+- Existing ceph-dashboard tests may not cover: Ceph Dashboard menus fail with HTTP 500 error
 
 SCENARIOS NEEDED:
-- Functional test for ceph-dashboard: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +243,41 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in ceph-dashboard component.</li>
 <li>Affected version(s): 9.0</li>
+<li>Component: ceph-dashboard</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] Hi   , I tried reproducing the issue on <code>ceph version 20.1.0-145.el9cp tentacle</code>, and both  Cluster → Pool List  and  Block → Images  in the dashboard are accessible without any issues. To help with further debugging, could you please provide the  Ceph Manager logs with  mgr/dashb</li>
+<li>[Varuni Sawant] Hello    The sos-report from MGR node with dashboard debug logs enabled is present below in ecurep: /ecurep/sf/TS021/586/TS021586859/0-all_data/sosreport-sceph03-TS021586859-2026-03-12-xxrllfk.tar.xz_unpack/sosreport-sceph03-TS021586859-2026-03-12-xxrllfk Please let us know if an</li>
+<li>[Aarti Dhikale] , Thanks for sharing the logs. However, I need the debug logs captured while accessing the  Cluster → Pools  and  Block → Images  tabs in the dashboard. I do not see any log entries indicating that the  GET requests for  /api/pool  or  /api/block/image  were triggered. Could you</li>
+<li>[Varuni Sawant] Sure, I will reproduce the issue and capture the debug logs while accessing the  Cluster → Pools  and  Block → Images  tabs, and share them here.</li>
+<li>[Aarti Dhikale] [Internal Do not share with Customer]: Current Status:  Crash log:</li>
+</ul>
+<div>Mar 11 14:25:29 sceph03 ceph-mgr[3332502]: [dashboard ERROR exception] Internal Server Error#012Traceback (most recent call last):#012  File &quot;/usr/share/ceph/mgr/dashboard/services/exception.py&quot;, line 47, in dash</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Verified</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-dashboard issue reported in IBM Ceph 9.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph Dashboard menus fail with HTTP 500 error</div>
+<div>Environment: IBM Ceph 9.0, component: ceph-dashboard</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access dashboard -- <code><code>curl -k https://&amp;lt;mgr-host&amp;gt;:8443/</code></code></li>
+<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
 <li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>[Internal - Do not share with customer] From the logs, it is observed that  refs  is set to  [&#x27;mds&#x27;, &#x27;clone&#x27;] , which is causing the crash. Mar 12 08:58:33 sceph03 ceph-mgr[3390646]: [dashboard DEBUG</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing ceph-dashboard test coverage for this scenario</li>
+<li>Existing ceph-dashboard tests may not cover: Ceph Dashboard menus fail with HTTP 500 error</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for ceph-dashboard: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

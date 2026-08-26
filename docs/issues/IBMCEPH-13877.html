@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13877: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,10 +192,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
 
 ROOT CAUSE:
-- Issue reported in rgw component.
-- This appears to be an upgrade-related issue or backport request.
-- Permission or access control issue reported.
+- Upgrade-related issue or backport request.
+- Permission or access control issue.
 - Affected version(s): 9.0
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Prajesha Naidu] here is the RN for this bug fix  https://ibmdocs-test.dcs.ibm.com/docs/en/storage-ceph/9.9.0?topic=9902-bug-fixes#GUID-72293705-d27f-4d6d-b4cf-4639f310e26d_ object_gatewaytitle _1
 
 FIX STATUS:
 - Fix available in build 20.1.0-184.
@@ -203,28 +206,27 @@ FIX STATUS:
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 9.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
+Environment: IBM Ceph 9.0, component: rgw
 
-1. Deploy IBM Ceph 9.0 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade progress -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+4. Monitor upgrade -- `ceph orch upgrade status`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- Upgrade test may not cover the specific pre-conditions that trigger this issue
-- Permission/ACL test may not cover this specific access pattern
+- Upgrade path may lack pre-condition coverage for this scenario
+- Permission test gap for: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current pe
 
 SCENARIOS NEEDED:
-- Upgrade test: validate behavior before and after upgrade on affected version
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Upgrade: validate behavior across affected versions
+- Functional: reproduce reported rgw scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,36 +240,40 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
-<li>This appears to be an upgrade-related issue or backport request.</li>
-<li>Permission or access control issue reported.</li>
+<li>Upgrade-related issue or backport request.</li>
+<li>Permission or access control issue.</li>
 <li>Affected version(s): 9.0</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prajesha Naidu] here is the RN for this bug fix  https://ibmdocs-test.dcs.ibm.com/docs/en/storage-ceph/9.9.0?topic=9902-bug-fixes#GUID-72293705-d27f-4d6d-b4cf-4639f310e26d_ object_gatewaytitle _1</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.1.0-184.</li>
 <li>Verified by: Chaithra .</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 9.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
+<div>Environment: IBM Ceph 9.0, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
 <li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
-<li>Permission/ACL test may not cover this specific access pattern</li>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>Permission test gap for: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current pe</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

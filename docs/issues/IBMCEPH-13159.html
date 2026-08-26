@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13159: [IBM_Support] &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,47 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Git clone operations fail with &quot;permission denied&quot; on NFS exports configured with no_root_squash, caused by a bug in NFS-Ganesha permission handling.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export
 
 ROOT CAUSE:
-- NFS-Ganesha had a permission handling bug that caused certain file operations (used internally by git during clone) to fail with EACCES even when the export was configured with no_root_squash
-- The fix was pushed by Sachin Punadikar to the nfs-ganesha 9.0 branch
-- Commit: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/593af378b1e1df2462540b44740ca680cf71bab3
-- Part of nfs-ganesha-7.0-0.6.16 tag
+- Permission or access control issue.
+- Affected version(s): 8.1
+- Component: nfs-ganesha
+
+ENGINEERING FINDINGS:
+- [Sachin Punadikar] Pushed the fix in 9.0 branch https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/593af378b1e1df2462540b44740ca680cf71bab3
+- [Sachin Punadikar] this was asked/suggested by QE team. The fix  is already part of released image of 9.0z1 (may be interim only).
 
 FIX STATUS:
-- Fixed in nfs-ganesha-7.0-0.6.16
-- Verified on ceph-20.1.0-155.el9cp by Harish Acharya -- git clone succeeded after fix
-- Status: CLOSED (fixed in 9.0z1 release)</textarea>
+- Fix available
+- PR/MR: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/593af378b1e1df2462540b44740ca680cf71bab3
+- Verified by: Harish Acharya</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify that git clone works correctly on a CephFS-backed NFS export with no_root_squash.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export
+Environment: IBM Ceph 8.1, component: nfs-ganesha
 
-1. Deploy IBM Ceph cluster with CephFS and NFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS subvolume for git repos -- `ceph fs subvolumegroup create cephfs git-group`
-3. Create subvolume -- `ceph fs subvolume create cephfs git-repo-vol --group_name git-group`
-4. Get the subvolume path -- `SUB_PATH=$(ceph fs subvolume getpath cephfs git-repo-vol --group_name git-group)`
-5. Create NFS cluster -- `ceph nfs cluster create &lt;cluster-name&gt; &lt;host&gt;`
-6. Create NFS export with no_root_squash -- `ceph nfs export create cephfs &lt;cluster-name&gt; /git_export cephfs $SUB_PATH --squash no_root_squash`
-7. Mount the NFS export on a client -- `mount -t nfs -o port=2049,nfsvers=4.2 &lt;nfs-host&gt;:/git_export /mnt/git_test`
-8. Create a non-root user -- `useradd -g gitgroup gituser`
-9. Set ownership -- `chown gituser:gitgroup /mnt/git_test`
-10. As the non-root user, run git clone -- `su - gituser -c &quot;cd /mnt/git_test &amp;&amp; git clone &lt;repo-url&gt;&quot;`
-11. Verify clone completes without permission errors</textarea>
+1. Deploy IBM Ceph 8.1 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
+3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
+4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: NFS git clone test gap is covered by fix verification. Need permanent regression test.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- No automated CephCI test for git clone over NFS
-- No test for permission-sensitive file operations (git, tar, rsync) on NFS exports with various squash modes
+- Permission test gap for: &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export
 
 SCENARIOS NEEDED:
-- Git clone on no_root_squash export: create CephFS-backed NFS export, clone a repo as non-root user, verify success
-- Permission modes: test with root_squash, no_root_squash, all_squash -- verify correct permission behavior
-- Complex file operations: git clone, git push, tar extraction, rsync over NFS</textarea>
+- Functional: reproduce reported nfs-ganesha scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,45 +236,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Git clone operations fail with &quot;permission denied&quot; on NFS exports configured with no_root_squash, caused by a bug in NFS-Ganesha permission handling.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>NFS-Ganesha had a permission handling bug that caused certain file operations (used internally by git during clone) to fail with EACCES even when the export was configured with no_root_squash</li>
-<li>The fix was pushed by Sachin Punadikar to the nfs-ganesha 9.0 branch</li>
-<li>Commit: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/593af378b1e1df2462540b44740ca680cf71bab3</li>
-<li>Part of nfs-ganesha-7.0-0.6.16 tag</li>
+<li>Permission or access control issue.</li>
+<li>Affected version(s): 8.1</li>
+<li>Component: nfs-ganesha</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Sachin Punadikar] Pushed the fix in 9.0 branch https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/593af378b1e1df2462540b44740ca680cf71bab3</li>
+<li>[Sachin Punadikar] this was asked/suggested by QE team. The fix  is already part of released image of 9.0z1 (may be interim only).</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Fixed in nfs-ganesha-7.0-0.6.16</li>
-<li>Verified on ceph-20.1.0-155.el9cp by Harish Acharya -- git clone succeeded after fix</li>
-<li>Status: CLOSED (fixed in 9.0z1 release)</li>
+<li>Fix available</li>
+<li>PR/MR: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/593af378b1e1df2462540b44740ca680cf71bab3</li>
+<li>Verified by: Harish Acharya</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify that git clone works correctly on a CephFS-backed NFS export with no_root_squash.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export</div>
+<div>Environment: IBM Ceph 8.1, component: nfs-ganesha</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph cluster with CephFS and NFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS subvolume for git repos -- <code><code>ceph fs subvolumegroup create cephfs git-group</code></code></li>
-<li><span class="step-num">3.</span> Create subvolume -- <code><code>ceph fs subvolume create cephfs git-repo-vol --group_name git-group</code></code></li>
-<li><span class="step-num">4.</span> Get the subvolume path -- <code>SUB_PATH=$(<code>ceph fs subvolume getpath cephfs git-repo-vol --group_name git-group)</code></code></li>
-<li><span class="step-num">5.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;cluster-name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">6.</span> Create NFS export with no_root_squash -- <code><code>ceph nfs export create cephfs &amp;lt;cluster-name&amp;gt; /git_export cephfs $SUB_PATH --squash no_root_squash</code></code></li>
-<li><span class="step-num">7.</span> Mount the NFS export on a client -- <code><code>mount -t nfs -o port=2049</code>,nfsvers=4.2 &amp;lt;nfs-host&amp;gt;:/git_export /mnt/git_test</code></li>
-<li><span class="step-num">8.</span> Create a non-root user -- <code>useradd -g gitgroup gituser</code></li>
-<li><span class="step-num">9.</span> Set ownership -- <code>chown gituser:gitgroup /mnt/git_test</code></li>
-<li><span class="step-num">10.</span> As the non-root user, run git clone -- <code>su - gituser -c &amp;quot;cd /mnt/git_test &amp;amp;&amp;amp; git clone &amp;lt;repo-url&amp;gt;&amp;quot;</code></li>
-<li><span class="step-num">11.</span> Verify clone completes without permission errors</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
+<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">NFS git clone test gap is covered by fix verification. Need permanent regression test.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No automated CephCI test for git clone over NFS</li>
-<li>No test for permission-sensitive file operations (git, tar, rsync) on NFS exports with various squash modes</li>
+<li>Permission test gap for: &quot;Git Clone&quot; operation fails with error &quot;permission denied&quot; on no_root_squash NFS Export</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Git clone on no_root_squash export: create CephFS-backed NFS export, clone a repo as non-root user, verify success</li>
-<li>Permission modes: test with root_squash, no_root_squash, all_squash -- verify correct permission behavior</li>
-<li>Complex file operations: git clone, git push, tar extraction, rsync over NFS</li>
+<li>Functional: reproduce reported nfs-ganesha scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

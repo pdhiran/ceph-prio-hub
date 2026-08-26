@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14412: orch export of mgmt-gateway contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,33 +192,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: orch export of mgmt-gateway contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Affected version(s): 8.1
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] Hello   , As a workaround, we can manually edit the exported spec file to correct the  ssl_cert  and  ssl_key  entries before reapplying it. I have tested this approach on my test cluster. Note: the spec file entries for  ssl_cert  and  ssl_key  will need to be updated each time
+- [Rigoberto Padilla Peña] Hello    Thanks for the workaround, I shared the steps with the customer.  I’ll let you know if we need any additional help. I appreciate your time and efforts!
+- [Aarti Dhikale] Hello   , Thanks for the updates from customer. here are the answer of your questions: Could you confirm if running redeploy and restart mgmt-gateway will fix the issue temporary? ---→ Yes, redeploying the  mgmt-gateway  daemon is required. Running  ceph orch apply  only updates
+- [Aarti Dhikale] Closing this case as there have been no further updates. We have provided the recommended workaround steps. Please feel free to reopen the case if you need any additional information or further assistance.
 
 FIX STATUS:
 - Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Closing this case as there have been no further updates. We have provided the recommended workaround steps. Please feel free to reopen the case if you</textarea>
+- Workaround: Closing this case as there have been no further updates. We have provided the recommended workaround steps. Please feel free to reopen the case if you need any additional information or further assist</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- orch export of mgmt-gateway contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml
+Environment: IBM Ceph 8.1, component: cephadm
 
 1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
+3. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hello, I tried reproducing this issue locally for rgw service. I am able to reproduced this issue: logs:  sample spec file applied: service_type: rgw
+service_id: test-ssl
+placement:
+  count: 1
+  hosts:
+    - aaruvm-0
+spec:
+  rgw_frontend_port: 8090
+  ssl: true
+  rgw_frontend_ssl_</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,28 +249,48 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">orch export of mgmt-gateway contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Affected version(s): 8.1</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] Hello   , As a workaround, we can manually edit the exported spec file to correct the  ssl_cert  and  ssl_key  entries before reapplying it. I have tested this approach on my test cluster. Note: the spec file entries for  ssl_cert  and  ssl_key  will need to be updated each time</li>
+<li>[Rigoberto Padilla Peña] Hello    Thanks for the workaround, I shared the steps with the customer.  I’ll let you know if we need any additional help. I appreciate your time and efforts!</li>
+<li>[Aarti Dhikale] Hello   , Thanks for the updates from customer. here are the answer of your questions: Could you confirm if running redeploy and restart mgmt-gateway will fix the issue temporary? ---→ Yes, redeploying the  mgmt-gateway  daemon is required. Running  <code>ceph orch apply  only updates</code></li>
+<li>[Aarti Dhikale] Closing this case as there have been no further updates. We have provided the recommended workaround steps. Please feel free to reopen the case if you need any additional information or further assistance.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Closing this case as there have been no further updates. We have provided the recommended workaround steps. Please feel free to reopen the case if you</li>
+<li>Workaround: Closing this case as there have been no further updates. We have provided the recommended workaround steps. Please feel free to reopen the case if you need any additional information or further assist</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- orch export of mgmt-gateway contains single line <code>ssl_cert</code> instead of multiline, preventing orch apply of the yaml</div>
+<div>Environment: IBM Ceph 8.1, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hello, I tried reproducing this issue locally for rgw service. I am able to reproduced this issue: logs:  sample spec file applied: service_type: rgw</div>
+<div>service_id: test-ssl</div>
+<div>placement:</div>
+<div>count: 1</div>
+<div>hosts:</div>
+<ul>
+<li>aaruvm-0</li>
+</ul>
+<div>spec:</div>
+<div>rgw_frontend_port: 8090</div>
+<div>ssl: true</div>
+<div>rgw_frontend_ssl_</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

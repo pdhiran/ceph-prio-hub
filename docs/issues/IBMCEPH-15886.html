@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15886: [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,35 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster
 
 ROOT CAUSE:
-- Issue reported in nfs-ganesha/ceph component.
 - Affected version(s): 8.1z6
+- Component: nfs-ganesha/ceph
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] From the mds debug logs, are we trying to determine if the issue is related to the missing async patch ( https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/e717b455336ffa48e908dc9d37f3ddd3fd67ecb2 ) or another root cause involving session management between NFS-Ganesha and
+- [Rajesh Prasad] Right now, the async patch isn’t confirmed since no FSAL calls appear to trigger the async path in the logs. On the MDS side, I wanted to trace activity during the OPEN call, but FSAL_CEPH doesn’t seem to have made any calls to MDS through libCephFS API.
+- [Prashant Dhange] After reviewing the Ganesha logs again (including the latest debug logs), I am inclined towards a RADOS cluster grace period coordination deadlock causing NFS operations to hang indefinitely. The root cause seems to be a non-zero recovery epoch (rec) in the RADOS grace database p
+- [Aarti Dhikale] [ Sharing my analysis ---    Internal Do no share with customer] I traced the code changes for OPEN operations using strace and found that the client is requesting claim type 4, which corresponds to CLAIM_FH = 4. Inside the  open4_validate_claim()  function, I encountered the rel
+- [Sachin Punadikar] Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer then proactively check the grace-table content before the upgrade and if found no
 
 FIX STATUS:
 - Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team g</textarea>
+- Workaround: Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer th</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 8.1z6.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster
+Environment: IBM Ceph 8.1z6, component: nfs-ganesha/ceph
 
-1. Deploy IBM Ceph 8.1z6 cluster with CephFS and NFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;cluster-name&gt; &lt;host&gt;`
+1. Deploy IBM Ceph 8.1z6 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
 3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
+4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
 5. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hi   , At this code level (8.1 and 9.0) active-active Ganesha is not supported. Need to stick with active-passive setup. Active-active will be supported with 9.1 version, which is yet to be released. About upgrade, QE team is trying to reproduce this issue. Once I get inputs from</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,30 +242,39 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in nfs-ganesha/<code>ceph component.</code></li>
 <li>Affected version(s): 8.1z6</li>
+<li>Component: nfs-ganesha/ceph</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] From the mds debug logs, are we trying to determine if the issue is related to the missing async patch ( https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/e717b455336ffa48e908dc9d37f3ddd3fd67ecb2 ) or another root cause involving session management between NFS-Ganesha and</li>
+<li>[Rajesh Prasad] Right now, the async patch isn’t confirmed since no FSAL calls appear to trigger the async path in the logs. On the MDS side, I wanted to trace activity during the OPEN call, but FSAL_CEPH doesn’t seem to have made any calls to MDS through libCephFS API.</li>
+<li>[Prashant Dhange] After reviewing the Ganesha logs again (including the latest debug logs), I am inclined towards a RADOS cluster grace period coordination deadlock causing NFS operations to hang indefinitely. The root cause seems to be a non-zero recovery epoch (rec) in the RADOS grace database p</li>
+<li>[Aarti Dhikale] [ Sharing my analysis ---    Internal Do no share with customer] I traced the code changes for OPEN operations using strace and found that the client is requesting claim type 4, which corresponds to CLAIM_FH = 4. Inside the  open4_validate_claim()  function, I encountered the rel</li>
+<li>[Sachin Punadikar] Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer then proactively check the grace-table content before the upgrade and if found no</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team g</li>
+<li>Workaround: Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer th</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 8.1z6.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</div>
+<div>Environment: IBM Ceph 8.1z6, component: nfs-ganesha/ceph</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z6 cluster with CephFS and NFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;cluster-name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z6 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
 <li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hi   , At this code level (8.1 and 9.0) active-active Ganesha is not supported. Need to stick with active-passive setup. Active-active will be supported with 9.1 version, which is yet to be released. About upgrade, QE team is trying to reproduce this issue. Once I get inputs from</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

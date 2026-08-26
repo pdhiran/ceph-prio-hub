@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13320: Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Affected version(s): 8.1z3
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Swati Thombe] Hi Team,  We currently do not have sufficient information to proceed with full analysis. The JIRA has been updated with the required logs and environment details, and we are awaiting inputs. From the snippet shared, the following looks suspicious:      ENGINE Client (&#x27;17.155.212.
+- [Adam King] Do we have the logs from the individual agents that aren’t reporting in (they have their own systemd units so their should be journal logs) or some analysis on the ceph-volume failure? The log lines about the server dropping a TLS connection I think are a red herring here
+- [Swati Thombe] Hi    We currently do not have sufficient logs to proceed with further investigation. Could you please confirm if we can close this case for now? If the issue reoccurs or you observe a similar instance, kindly reopen the case and share the complete sosreport. We need logs from th
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 8.1z3.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;
+Environment: IBM Ceph 8.1z3, component: cephadm
 
 1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
+3. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hi    I’m currently trying to reproduce the reported issue on our end. Could you please confirm if there are any specific steps or sequence being followed to trigger the problem? It would be helpful to know the exact actions performed before the issue started and whether it is co</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,27 +238,35 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Affected version(s): 8.1z3</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Swati Thombe] Hi Team,  We currently do not have sufficient information to proceed with full analysis. The JIRA has been updated with the required logs and environment details, and we are awaiting inputs. From the snippet shared, the following looks suspicious:      ENGINE Client (&#x27;17.155.212.</li>
+<li>[Adam King] Do we have the logs from the individual agents that aren’t reporting in (they have their own systemd units so their should be journal logs) or some analysis on the ceph-volume failure? The log lines about the server dropping a TLS connection I think are a red herring here</li>
+<li>[Swati Thombe] Hi    We currently do not have sufficient logs to proceed with further investigation. Could you please confirm if we can close this case for now? If the issue reoccurs or you observe a similar instance, kindly reopen the case and share the complete sosreport. We need logs from th</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 8.1z3.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</div>
+<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hi    I’m currently trying to reproduce the reported issue on our end. Could you please confirm if there are any specific steps or sequence being followed to trigger the problem? It would be helpful to know the exact actions performed before the issue started and whether it is co</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

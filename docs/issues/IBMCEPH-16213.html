@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16213: Ganesha &lt;--&gt; MDS failing after adding OSDs</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ganesha &lt;--&gt; MDS failing after adding OSDs
 
 ROOT CAUSE:
-- Issue reported in cephfs component.
 - Affected version(s): not specified
+- Component: cephfs
+
+ENGINEERING FINDINGS:
+- [Michael Kidd] During a conversation  in slack , it was identified that the following occurred: newly added OSDs were both up and in contrary to the intent (  noin  flag was set ) The new OSD hosts were not part of a zone, and thus fell outside of the normal crush rule for data placement. Howev
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: ASSIGNED</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephfs issue reported in IBM Ceph 9.x.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ganesha &lt;--&gt; MDS failing after adding OSDs
+Environment: IBM Ceph 9.x, component: cephfs
 
-1. Deploy IBM Ceph 9.x cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Trigger failover (stop daemon, power off node, or network partition)
-4. Verify services recover -- `ceph -s`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
+4. Trigger failover (stop daemon / power off node / network partition)
+5. Verify recovery -- `ceph -s`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- HA test: trigger failover, verify data integrity and service continuity
-- Functional test for cephfs: reproduce the reported scenario and verify correct behavior</textarea>
+- HA: failover + recovery, verify data integrity
+- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,29 +235,33 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ganesha &lt;--&gt; MDS failing after adding OSDs</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in cephfs component.</li>
 <li>Affected version(s): not specified</li>
+<li>Component: cephfs</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Michael Kidd] During a conversation  in slack , it was identified that the following occurred: newly added OSDs were both up and in contrary to the intent (  noin  flag was set ) The new OSD hosts were not part of a zone, and thus fell outside of the normal crush rule for data placement. Howev</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: ASSIGNED</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephfs issue reported in IBM Ceph 9.x.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ganesha &lt;--&gt; MDS failing after adding OSDs</div>
+<div>Environment: IBM Ceph 9.x, component: cephfs</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Trigger failover (stop daemon, power off node, or network partition)</li>
-<li><span class="step-num">4.</span> Verify services recover -- <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
+<li><span class="step-num">4.</span> Trigger failover (stop daemon / power off node / network partition)</li>
+<li><span class="step-num">5.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
+<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA test: trigger failover, verify data integrity and service continuity</li>
-<li>Functional test for cephfs: reproduce the reported scenario and verify correct behavior</li>
+<li>HA: failover + recovery, verify data integrity</li>
+<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

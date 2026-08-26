@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13484: [9.0] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,36 +192,46 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0] SMB: User/group names missing for permissions
 
 ROOT CAUSE:
-- Issue reported in smb component.
-- Permission or access control issue reported.
+- Permission or access control issue.
 - Affected version(s): 9.2
+- Component: smb
+
+ENGINEERING FINDINGS:
+- [Timothy Nguyen] Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fail periodically every 2 hours. This could cause strain on the SMB service. Apr
+- [Maria Fernanda Salas Villaseñor] Hello      I reviewed the latest four sosreports uploaded after the customer applied the TasksMax workaround to the CTDB sidecar units: 2026-05-04/sosreport-ceph01-services-p06-az1-TS021606977-2026-05-04-flkdcxm.tar.xz 2026-05-04/sosreport-ceph01-services-p06-az2-TS021606977-2026
+- [Prashant Dhange] Hi  , &gt; Is the supported method to add the Podman pids limit to the SMB service spec, for example: extra_container_args:
+  - &quot;--pids-limit=4194304&quot; &gt;  followed by: ceph orch apply -i &lt;updated_smb_spec.yaml&gt;
+ceph orch redeploy smb.&lt;service_id&gt; The above proposed workaround of addi
+- [Anoop C S] Our team will set up a reproducible scenario for this issue, debug it further, and develop a RCA.
+- [Maria Fernanda Salas Villaseñor] Hi      Thanks for the updates. Before I provide the workaround to the customer, I would like to confirm the expected next step from your side. Since    was asked for any additional recommendations, should we wait for his input before asking the customer to proceed? Also, could y
 
 FIX STATUS:
 - Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</textarea>
+- Workaround: I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce smb issue reported in IBM Ceph 9.2.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0] SMB: User/group names missing for permissions
+Environment: IBM Ceph 9.2, component: smb
 
-1. Deploy IBM Ceph 9.2 cluster with CephFS and SMB -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 9.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster -- `ceph smb cluster create &lt;cluster-id&gt; user`
+3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
 4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+The current guidance should be good enough to solve current forking issue, for the main issue of the SID-to-name resolution we would still likely need Active Directory Audit Logs to solve or we wait for Anoop to reproduce. If Adam doesn’t respond in a few days I think it’s safe</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- Permission/ACL test may not cover this specific access pattern
+- Permission test gap for: [9.0] SMB: User/group names missing for permissions
 
 SCENARIOS NEEDED:
-- Functional test for smb: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported smb scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,33 +245,46 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0] SMB: User/group names missing for permissions</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in smb component.</li>
-<li>Permission or access control issue reported.</li>
+<li>Permission or access control issue.</li>
 <li>Affected version(s): 9.2</li>
+<li>Component: smb</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Timothy Nguyen] Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fail periodically every 2 hours. This could cause strain on the SMB service. Apr</li>
+<li>[Maria Fernanda Salas Villaseñor] Hello      I reviewed the latest four sosreports uploaded after the customer applied the TasksMax workaround to the CTDB sidecar units: 2026-05-04/sosreport-ceph01-services-p06-az1-TS021606977-2026-05-04-flkdcxm.tar.xz 2026-05-04/sosreport-ceph01-services-p06-az2-TS021606977-2026</li>
+<li>[Prashant Dhange] Hi  , &gt; Is the supported method to add the Podman pids limit to the SMB service spec, for example: extra_container_args:</li>
+<li>&quot;--pids-limit=4194304&quot; &gt;  followed by: <code>ceph orch apply -i &lt;updated_smb_spec.yaml&gt;</code></li>
+</ul>
+<div>ceph orch redeploy smb.&lt;service_id&gt; The above proposed workaround of addi</div>
+<ul>
+<li>[Anoop C S] Our team will set up a reproducible scenario for this issue, debug it further, and develop a RCA.</li>
+<li>[Maria Fernanda Salas Villaseñor] Hi      Thanks for the updates. Before I provide the workaround to the customer, I would like to confirm the expected next step from your side. Since    was asked for any additional recommendations, should we wait for his input before asking the customer to proceed? Also, could y</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</li>
+<li>Workaround: I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce smb issue reported in IBM Ceph 9.2.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0] SMB: User/group names missing for permissions</div>
+<div>Environment: IBM Ceph 9.2, component: smb</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster with CephFS and SMB -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster -- <code><code>ceph smb cluster create &amp;lt;cluster-id&amp;gt; user</code></code></li>
+<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>The current guidance should be good enough to solve current forking issue, for the main issue of the SID-to-name resolution we would still likely need Active Directory Audit Logs to solve or we wait for Anoop to reproduce. If Adam doesn’t respond in a few days I think it’s safe</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission/ACL test may not cover this specific access pattern</li>
+<li>Permission test gap for: [9.0] SMB: User/group names missing for permissions</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for smb: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

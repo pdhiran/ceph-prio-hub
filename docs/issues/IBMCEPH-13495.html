@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13495: Ceph orchestrator restart commands not restarting the Daemons</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,33 +192,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ceph orchestrator restart commands not restarting the Daemons
 
 ROOT CAUSE:
-- Issue reported in cephadm component.
 - Affected version(s): 8.1z3
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] Running  ceph orch ps --refresh  resolved the issue. No cephadm commands were observed hanging on any nodes; however, the  REFRESHED  column for all services was showing  10d  prior to the refresh. We should also analyze the customer‑provided logs to investigate the issue further
+- [Timothy Nguyen] If the use_agent was in use and turned off around the time this bug occurred that could possibly be the root cause, some bug in use agent, though this is reach
+- [Timothy Nguyen] Summary of Analysis:  Could not conclude a root cause, without debug level logs there are too many possibilities. Any bug involving services not refreshing in “ceph orch ps” with “ refreshed [X]d ago&quot; will likely be related to the ``host_needs_daemon_refresh`` function which hand
+- [Prashant Dhange] Logs Needed if the Bug Is Reproduced Ceph Manager (MGR) logs with debug level enabled Ceph audit logs Ceph crash logs sosreport from at least one affected node Ceph logs (mon, mgr, and relevant daemon logs) Latest cephadm logs Cephadm debug logs Additionally, try ceph orch daemon
+- [Timothy Nguyen] Cannot determine root cause, insufficient log information
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm issue reported in IBM Ceph 8.1z3.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph orchestrator restart commands not restarting the Daemons
+Environment: IBM Ceph 8.1z3, component: cephadm
 
 1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
 3. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Could you please try to reproduce it internally or involve QE Team for the reproducer?</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing cephadm test coverage for this scenario
+- Existing cephadm tests may not cover: Ceph orchestrator restart commands not restarting the Daemons
 
 SCENARIOS NEEDED:
-- Functional test for cephadm: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,30 +240,39 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ceph orchestrator restart commands not restarting the Daemons</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>cephadm component.</code></li>
 <li>Affected version(s): 8.1z3</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] Running  <code>ceph orch ps --refresh  resolved the issue. No cephadm commands were observed hanging on any nodes; however</code>, the  REFRESHED  column for all services was showing  10d  prior to the refresh. We should also analyze the customer‑provided logs to investigate the issue further</li>
+<li>[Timothy Nguyen] If the use_agent was in use and turned off around the time this bug occurred that could possibly be the root cause, some bug in use agent, though this is reach</li>
+<li>[Timothy Nguyen] Summary of Analysis:  Could not conclude a root cause, without debug level logs there are too many possibilities. Any bug involving services not refreshing in “<code>ceph orch ps” with “ refreshed [X]d ago&quot; will likely be related to the `</code><code>host_needs_daemon_refresh</code>` function which hand</li>
+<li>[Prashant Dhange] Logs Needed if the Bug Is Reproduced Ceph Manager (MGR) logs with debug level enabled Ceph audit logs Ceph crash logs sosreport from at least one affected node Ceph logs (mon, mgr, and relevant daemon logs) Latest <code>cephadm logs Cephadm debug logs Additionally</code>, try <code>ceph orch daemon</code></li>
+<li>[Timothy Nguyen] Cannot determine root cause, insufficient log information</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm issue reported in IBM Ceph 8.1z3.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph orchestrator restart commands not restarting the Daemons</div>
+<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Could you please try to reproduce it internally or involve QE Team for the reproducer?</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>cephadm test coverage for this scenario</code></li>
+<li>Existing <code>cephadm tests may not cover: Ceph orchestrator restart commands not restarting the Daemons</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephadm: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

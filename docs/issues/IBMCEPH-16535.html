@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16535: hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,50 +189,54 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm normalizes hostnames to lowercase during 8.1 -&gt; 9.x upgrade, breaking service placement and host management for clusters using uppercase hostnames.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed
 
 ROOT CAUSE:
-- During the upgrade from IBM Ceph 8.1 to 9.x, cephadm&#x27;s host inventory migration normalizes all hostnames to lowercase
-- However, existing metadata stores (MON map, CRUSH map, service placement specs, daemon IDs) retain the original uppercase hostnames
-- This creates a split-brain state: cephadm inventory says &quot;multi80-site1&quot; but MON/CRUSH says &quot;MULTI80-SITE1&quot;
-- Service placement fails because cephadm tries to match lowercase inventory against uppercase placement specs
-- Host management commands fail: `ceph orch host rm multi80-site1` says &quot;host does not exist&quot; because the canonical name is still uppercase
+- Upgrade-related issue or backport request.
+- Performance degradation or timeout behavior reported.
+- Affected version(s): 9.1
+- Component: cephadm
+
+ENGINEERING FINDINGS:
+- [SHUBHA JAIN] Thanks,   . I went through your analysis, and it does explain why I wasn&#x27;t able to reproduce the regression in my environment. In my testing, I intentionally bootstrapped an 8.1 cluster with Linux hostnames in uppercase (e.g.  CEPH-NODE-00 ). However, even before the upgrade,  ce
+- [Aarti Dhikale] Hello Team, Current Update:  I am currently testing the fixed image shared by Shubha. Steps Followed During Testing: Bootstrapped a Red Hat Ceph Storage 8 cluster. Upgraded the cluster to the image  quay.io/shubhjai/ceph1:hostname_changed_fix . Verified the upgrade status using
+- [SHUBHA JAIN] Root Cause Identified: The upgrade failure is due to a Dockerfile issue in the test image, NOT a problem with the hostname normalization fix itself. The image incorrectly replaced the downstream cephadm binary (/usr/sbin/cephadm) with the upstream version. The downstream MGR mod
+- [Aarti Dhikale] Hello   , Sharing the test results from the image you shared:   quay.io/shubhjai/ceph1:hostname-upgrade-fix-ds After upgrading,  ceph orch host rm  correctly recognizes both uppercase and lowercase hostnames. [root@AARTISD-0 ~]# ceph orch host rm AARTISD-0
+Not allowed to remove a
+- [SHUBHA JAIN] Hi Aarti, Thank you for the detailed testing. Building a new image with fixes for the three remaining issues you identified: ceph orch host rm drain message— will now echo back the same hostname case you typed (e.g.,ceph orch host drain AARTISD-0) ceph config-key dump showing up
 
 FIX STATUS:
-- Upstream PR: https://github.com/ceph/ceph/pull/70346
-- Engineering provided iterative fixes: inventory normalization, case-insensitive host matching, placement spec migration
-- Remaining cosmetic: `ceph osd tree`, `ceph mon stat`, `ceph quorum_status` still show uppercase (from CRUSH/MON metadata, not cephadm)
-- OSD redeployment correctly uses existing uppercase CRUSH bucket (no duplicate lowercase bucket created)
-- Status: Verified -- cephadm scope is fixed; CRUSH/MON display is cosmetic, not functional</textarea>
+- Current JIRA status: Verified</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce the hostname case normalization regression during IBM Ceph 8.1 -&gt; 9.x upgrade on a cluster with uppercase hostnames.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed
+Environment: IBM Ceph 9.1, component: cephadm
 
-1. Deploy IBM Ceph 8.1 cluster with uppercase hostnames -- `cephadm bootstrap --mon-ip=&lt;ip&gt;` on a host named e.g. MULTI80-SITE1
-2. Add additional hosts with uppercase names -- `ceph orch host add MULTI80-SITE2 &lt;ip&gt;`
-3. Deploy services (mon, mgr, osd, rgw) -- `ceph orch apply mon &quot;MULTI80-SITE1;MULTI80-SITE2;MULTI80-SITE3&quot;`
-4. Verify pre-upgrade state -- `ceph orch host ls` should show uppercase hostnames
-5. Perform upgrade to IBM Ceph 9.x -- `ceph orch upgrade start --image &lt;9.x-image&gt;`
-6. After upgrade completes, check host inventory -- `ceph orch host ls` now shows lowercase
-7. Verify service placement failure -- `ceph -s` shows HEALTH_WARN with &quot;Failed to apply N service(s)&quot;
-8. Attempt host management -- `ceph orch host rm multi80-site1` returns &quot;host does not exist&quot;
-9. Check MON map for case mismatch -- `ceph mon dump` still shows uppercase MON names</textarea>
+1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
+3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+4. Monitor upgrade -- `ceph orch upgrade status`
+5. Run baseline benchmark (fio/rados bench) -- record metrics
+6. Trigger the performance scenario described in JIRA
+7. Verify cluster health -- `ceph -s` and `ceph health detail`
+
+SCENARIO DETAIL (from engineering comments):
+Thanks  for sharing reproducing steps. I attempted to reproduce the issue using the steps provided. During reproducer, I observed an additional regression: after upgrading to IBM Ceph 9.0, the orchestrator silently lowercased the hostname in its store (e.g.  AARTINODE-0 → aartino</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing QE test covers upgrade with uppercase hostnames. This is a gap.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
 
 GAPS:
-- CephCI upgrade suites deploy with lowercase hostnames by default -- the uppercase case was never tested
-- No test validates hostname consistency across cephadm inventory, CRUSH map, MON map, and placement specs post-upgrade
-- No test for host management operations (add/rm/drain/label) with mixed-case hostnames
+- Upgrade path may lack pre-condition coverage for this scenario
+- No performance baseline test for: hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get place
 
 SCENARIOS NEEDED:
-- Upgrade test with uppercase hostnames: deploy 8.1 cluster with uppercase hosts, upgrade to 9.x, verify service placement succeeds
-- Host management with mixed case: `ceph orch host add UPPERCASE &lt;ip&gt;`, then `ceph orch host rm uppercase` -- both should work
-- Service spec migration: export specs pre-upgrade, verify post-upgrade specs reference correct (normalized) hostnames
-- OSD redeploy after upgrade: purge and redeploy OSD, verify it lands in correct CRUSH bucket (not a new duplicate)</textarea>
+- Upgrade: validate behavior across affected versions
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported cephadm scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -243,48 +247,54 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm normalizes hostnames to lowercase during 8.1 -&gt; 9.x upgrade, breaking service placement and host management for clusters using uppercase hostnames.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>During the upgrade from IBM Ceph 8.1 to 9.x, cephadm&#x27;s host inventory migration normalizes all hostnames to lowercase</li>
-<li>However, existing metadata stores (MON map, CRUSH map, service placement specs, daemon IDs) retain the original uppercase hostnames</li>
-<li>This creates a split-brain state: <code>cephadm inventory says &quot;multi80-site1&quot; but MON/CRUSH says &quot;MULTI80-SITE1&quot;</code></li>
-<li>Service placement fails because <code>cephadm tries to match lowercase inventory against uppercase placement specs</code></li>
-<li>Host management commands fail: <code><code>ceph orch host rm multi80-site1</code></code> says &quot;host does not exist&quot; because the canonical name is still uppercase</li>
+<li>Upgrade-related issue or backport request.</li>
+<li>Performance degradation or timeout behavior reported.</li>
+<li>Affected version(s): 9.1</li>
+<li>Component: cephadm</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[SHUBHA JAIN] Thanks,   . I went through your analysis, and it does explain why I wasn&#x27;t able to reproduce the regression in my environment. In my testing, I intentionally bootstrapped an 8.1 cluster with Linux hostnames in uppercase (e.g.  CEPH-NODE-00 ). However, even before the upgrade,  ce</li>
+<li>[Aarti Dhikale] Hello Team, Current Update:  I am currently testing the fixed image shared by Shubha. Steps Followed During Testing: Bootstrapped a Red Hat Ceph Storage 8 cluster. Upgraded the cluster to the image  quay.io/shubhjai/ceph1:hostname_changed_fix . Verified the upgrade status using</li>
+<li>[SHUBHA JAIN] Root Cause Identified: The upgrade failure is due to a Dockerfile issue in the test image, NOT a problem with the hostname normalization fix itself. The image incorrectly replaced the downstream <code>cephadm binary (/usr/sbin/cephadm) with the upstream version. The downstream MGR mod</code></li>
+<li>[Aarti Dhikale] Hello   , Sharing the test results from the image you shared:   quay.io/shubhjai/ceph1:hostname-upgrade-fix-ds After upgrading,  <code>ceph orch host rm  correctly recognizes both uppercase and lowercase hostnames. [root@AARTISD-0 ~]# ceph orch host rm AARTISD-0</code></li>
+</ul>
+<div>Not allowed to remove a</div>
+<ul>
+<li>[SHUBHA JAIN] Hi Aarti, Thank you for the detailed testing. Building a new image with fixes for the three remaining issues you identified: <code>ceph orch host rm drain message— will now echo back the same hostname case you typed (e.g.</code>,<code>ceph orch host drain AARTISD-0) ceph config-key dump showing up</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Upstream PR: https://github.com/ceph/ceph/pull/70346</li>
-<li>Engineering provided iterative fixes: inventory normalization, case-insensitive host matching, placement spec migration</li>
-<li>Remaining cosmetic: <code><code>ceph osd tree</code></code>, <code><code>ceph mon stat</code></code>, <code><code>ceph quorum_status</code></code> still show uppercase (from CRUSH/MON metadata, not cephadm)</li>
-<li>OSD redeployment correctly uses existing uppercase CRUSH bucket (no duplicate lowercase bucket created)</li>
-<li>Status: Verified -- <code>cephadm scope is fixed; CRUSH/MON display is cosmetic</code>, not functional</li>
+<li>Current JIRA status: Verified</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce the hostname case normalization regression during IBM Ceph 8.1 -&gt; 9.x upgrade on a cluster with uppercase hostnames.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</div>
+<div>Environment: IBM Ceph 9.1, component: cephadm</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with uppercase hostnames -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code> on a host named e.g. MULTI80-SITE1</li>
-<li><span class="step-num">2.</span> Add additional hosts with uppercase names -- <code><code>ceph orch host add MULTI80-SITE2 &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Deploy services (mon, mgr, osd, rgw) -- <code><code>ceph orch apply mon &amp;quot;MULTI80-SITE1;MULTI80-SITE2;MULTI80-SITE3&amp;quot;</code></code></li>
-<li><span class="step-num">4.</span> Verify pre-upgrade state -- <code><code>ceph orch host ls</code></code> should show uppercase hostnames</li>
-<li><span class="step-num">5.</span> Perform upgrade to IBM Ceph 9.x -- <code><code>ceph orch upgrade start --image &amp;lt;9.x-image&amp;gt;</code></code></li>
-<li><span class="step-num">6.</span> After upgrade completes, check host inventory -- <code><code>ceph orch host ls</code></code> now shows lowercase</li>
-<li><span class="step-num">7.</span> Verify service placement failure -- <code><code>ceph -s</code></code> shows HEALTH_WARN with &quot;Failed to apply N service(s)&quot;</li>
-<li><span class="step-num">8.</span> Attempt host management -- <code><code>ceph orch host rm multi80-site1</code></code> returns &quot;host does not exist&quot;</li>
-<li><span class="step-num">9.</span> Check MON map for case mismatch -- <code><code>ceph mon dump</code></code> still shows uppercase MON names</li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing QE test covers upgrade with uppercase hostnames. This is a gap.</div>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">5.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">6.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Thanks  for sharing reproducing steps. I attempted to reproduce the issue using the steps provided. During reproducer, I observed an additional regression: after upgrading to IBM Ceph 9.0, the orchestrator silently lowercased the hostname in its store (e.g.  AARTINODE-0 → aartino</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>CephCI upgrade suites deploy with lowercase hostnames by default -- the uppercase case was never tested</li>
-<li>No test validates hostname consistency across <code>cephadm inventory</code>, CRUSH map, MON map, and placement specs post-upgrade</li>
-<li>No test for host management operations (add/rm/drain/label) with mixed-case hostnames</li>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No performance baseline test for: hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get place</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade test with uppercase hostnames: deploy 8.1 cluster with uppercase hosts, upgrade to 9.x, verify service placement succeeds</li>
-<li>Host management with mixed case: <code><code>ceph orch host add UPPERCASE &amp;lt;ip&amp;gt;</code></code>, then <code><code>ceph orch host rm uppercase</code></code> -- both should work</li>
-<li>Service spec migration: export specs pre-upgrade, verify post-upgrade specs reference correct (normalized) hostnames</li>
-<li>OSD redeploy after upgrade: purge and redeploy OSD, verify it lands in correct CRUSH bucket (not a new duplicate)</li>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

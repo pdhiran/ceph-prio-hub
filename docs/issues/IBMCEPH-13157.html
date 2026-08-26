@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13157: [IBM_Support] High mon DB size and failure to automatically compact</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -131,7 +131,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-02-08</dd>
-    <dt>Updated</dt><dd>2026-08-24</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -192,33 +192,58 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] High mon DB size and failure to automatically compact
 
 ROOT CAUSE:
-- Issue reported in rados component.
 - Affected version(s): 7.1
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] Monstore DB analysis Summary :  [1] Total store.db size # du -sh store.db/
+2.4G    store.db [2] Key count by prefix # ceph-kvstore-tool rocksdb /store.db/ list | awk &#x27;{print $1}&#x27;|sort|uniq -c
+    162 auth
+      2 config
+     12 health
+    248 kv
+  30709 logm
+      3 mdsmap
+    55
+- [Michael Hackett] Monstore grabbed when customer reported seeing mon_disk_big warning. Attached to case:  2026-04-12/monstore-s-d49m1g3.tar.gz
+- [Prashant Dhange] Hi  , Monstore DB analysis Summary (monstore-s-d49m1g3.tar.gz) : [1] Total store.db size # du -sh monstore/store.db/
+3.7G	monstore/store.db/ [2] Key count by prefix # ceph-kvstore-tool rocksdb /monstore/store.db/ list | awk &#x27;{print $1}&#x27;|sort|uniq -c
+ 31 auth
+  2 config
+  12 healt
+- [Prashant Dhange] Hi  , I am only seeing monstore db dump in the latest provided data.  [73:us1234@itclin82]:/ecurep/sf/TS019/671/TS019671746/0-all_data $ ls -ltr 
+total 15878733
+-rw-r-----+ 2 root     swsupt         65 Jun 26  2025 sosreport-host2572570-2025-06-23-mmkvtno-obfuscated.tar.xz.sha256
+- [Prashant Dhange] Hi  , We completed the monstore DB analysis from store_db.tar.gz (22‑Apr‑2026). Monstore DB analysis summary Total monstore size # du -sh store.db/
+18G    store.db/ Key count by prefix # ceph-kvstore-tool rocksdb /store.db/ list | awk &#x27;{print $1}&#x27; | sort | uniq -c
+221 auth
+  2 co
 
 FIX STATUS:
-- Current JIRA status: In Progress
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: In Progress</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 7.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- High mon DB size and failure to automatically compact
+Environment: IBM Ceph 7.1, component: rados
 
 1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
 4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+We observed that the monitor is unable to trim OSDMaps due to insufficient trimmable versions, with trimming consistently falling short of the paxos_service_trim_min threshold. The trim target is adva</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing rados test coverage for this scenario
+- Existing rados tests may not cover: High mon DB size and failure to automatically compact
 
 SCENARIOS NEEDED:
-- Functional test for rados: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,36 +257,68 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] High mon DB size and failure to automatically compact</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rados component.</code></li>
 <li>Affected version(s): 7.1</li>
+<li>Component: rados</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] Monstore DB analysis Summary :  [1] Total store.db size # du -sh store.db/</li>
+</ul>
+<div>2.4G    store.db [2] Key count by prefix # ceph-kvstore-tool rocksdb /store.db/ list | awk &#x27;{print $1}&#x27;|sort|uniq -c</div>
+<div>162 auth</div>
+<div>2 config</div>
+<div>12 health</div>
+<div>248 kv</div>
+<div>30709 logm</div>
+<div>3 mdsmap</div>
+<div>55</div>
+<ul>
+<li>[Michael Hackett] Monstore grabbed when customer reported seeing mon_disk_big warning. Attached to case:  2026-04-12/monstore-s-d49m1g3.tar.gz</li>
+<li>[Prashant Dhange] Hi  , Monstore DB analysis Summary (monstore-s-d49m1g3.tar.gz) : [1] Total store.db size # du -sh monstore/store.db/</li>
+</ul>
+<div>3.7G	monstore/store.db/ [2] Key count by prefix # ceph-kvstore-tool rocksdb /monstore/store.db/ list | awk &#x27;{print $1}&#x27;|sort|uniq -c</div>
+<div>31 auth</div>
+<div>2 config</div>
+<div>12 healt</div>
+<ul>
+<li>[Prashant Dhange] Hi  , I am only seeing monstore db dump in the latest provided data.  [73:us1234@itclin82]:/ecurep/sf/TS019/671/TS019671746/0-all_data $ ls -ltr</li>
+</ul>
+<div>total 15878733</div>
+<div>-rw-r-----+ 2 root     swsupt         65 Jun 26  2025 sosreport-host2572570-2025-06-23-mmkvtno-obfuscated.tar.xz.sha256</div>
+<ul>
+<li>[Prashant Dhange] Hi  , We completed the monstore DB analysis from store_db.tar.gz (22‑Apr‑2026). Monstore DB analysis summary Total monstore size # du -sh store.db/</li>
+</ul>
+<div>18G    store.db/ Key count by prefix # ceph-kvstore-tool rocksdb /store.db/ list | awk &#x27;{print $1}&#x27; | sort | uniq -c</div>
+<div>221 auth</div>
+<div>2 co</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: In Progress</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 7.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- High mon DB size and failure to automatically compact</div>
+<div>Environment: IBM Ceph 7.1, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>We observed that the monitor is unable to trim OSDMaps due to insufficient trimmable versions, with trimming consistently falling short of the paxos_service_trim_min threshold. The trim target is adva</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>rados test coverage for this scenario</code></li>
+<li>Existing <code>rados tests may not cover: High mon DB size and failure to automatically compact</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 
 
 
-<h2>Timeline (21 events)</h2>
+<h2>Timeline (22 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-02-08 13:29:07</span><span class="tl-badge comment">Comment</span> <strong>Anjana Sriram</strong>: Anthony D&#x27;Atri  2025-11-18 14:23:42 UTC CONFIDENTIAL Created  attachment 2114998  [ [details] | https://bugzilla.redhat.com/attachment.cgi?id=2114998&amp;action=edit ] graph   Comment 2   Anthony D&#x27;Atri  2025-11-18 14:24:09 UTC CONFIDENTIAL Created  atta</div>
 <div class="tl-entry"><span class="tl-date">2026-03-03 16:02:37</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: Hello   We finally got the store.db grabbed and uploaded here:  https://ecurep.mainz.de.ibm.com/ae5/#id=TS019671746&amp;path=TS019671746/2026-02-12/&amp;filepath=TS019671746/2026-02-12/store_db.zip You will need access to ecurep in order to access this file.</div>
@@ -299,6 +356,7 @@ total 15878733
 <div class="tl-entry"><span class="tl-date">2026-08-13 09:48:47</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: SOS Report from MON AFTER to issuing compaction after completion of 2 week run of test: /ecurep/sf/TS019/671/TS019671746/2026-07-29/sosreport-s-3ybxnk3-2026-07-29-pfgaxnn.tar.xz_unpack Logs from the test:  /ecurep/sf/TS019/671/TS019671746/2026-07-29/</div>
 <div class="tl-entry"><span class="tl-date">2026-08-17 13:15:17</span><span class="tl-badge comment">Comment</span> <strong>Timothy Nguyen</strong>:  , Analysis of Data The cluster appears to not be able to trim the osdmap history because of a stray osd holding the epoch at  2386407 . {   &quot;osdmap_first_committed&quot;: 2386327,   &quot;osdmap_last_committed&quot;: 2613056,   &quot;osdmap_clean_epochs&quot;: {     &quot;min_la</div>
 <div class="tl-entry"><span class="tl-date">2026-08-24 13:17:12</span><span class="tl-badge comment">Comment</span> <strong>Michael Hackett</strong>: Hello Team, I have met with Workday and reviewed the analyzed findings. In the cluster we can find no current instances of osd.3112 in the crush map.  I have a couple of theories here… After the customer captured all of the log data, including the ce</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 21:50:55</span><span class="tl-badge comment">Comment</span> <strong>Prashant Dhange</strong>: Hi   , All five monitor nodes are reporting monstore db size over 50 GiB. The health alert MON_DISK_BIG is active on all five monitors but has been silenced via a mute, masking the issue from cluster health status. The root cause is a stalled OSDMap </div>
 </div>
 
 <script>

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14079: [IBM_Support] Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,31 +192,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;
 
 ROOT CAUSE:
-- Issue reported in rgw-multisite component.
 - Affected version(s): 8.1z3
+- Component: rgw-multisite
+
+ENGINEERING FINDINGS:
+- [Kritik Sachdeva] Hello    We have updated the customer about potential fix that could help us them to resolve the issue and when it is planning to be available. Currently customer didn’t updated about the information related to upgrade or fix as they said they will check with their management &amp; l
+- [Kritik Sachdeva] Hello        We got an update from the customer that they agree to upgrade this cluster and test the fixes as we likely hitting the same lock issue as described for other Jira ( for the same cluster but different cluster )    After this cluster upgrade, they will plan to upgrade
+- [Aarti Dhikale] Hello   , Both commits  from    are merged in ceph-9.1-rhe-patches on 23rd march   1.  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/3bc929439d1d3d14b4115324c1aab4b2d1d08d93  2.  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d70f423fd728e9d2f1e4966b5946ff4ba5c70d86 It will
+- [Aarti Dhikale] Hello   , Do we have any backport Jira for this issue in 8.1? I wanted to check if there is a plan to backport this fix to 8.1
+- [Bipin Kunal] I see that the fix indicated in previous comment was added to 9.1 via   .  If the fix is needed in 8.1 as well then , please get the Jira cloned and target it for 8.1z8.
 
 FIX STATUS:
-- Current JIRA status: New
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: New</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.1z3.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;
+Environment: IBM Ceph 8.1z3, component: rgw-multisite
 
 1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is New. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing rgw-multisite test coverage for this scenario
+- Existing rgw-multisite tests may not cover: Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.f
 
 SCENARIOS NEEDED:
-- Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported rgw-multisite scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,28 +235,35 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in rgw-multisite component.</li>
 <li>Affected version(s): 8.1z3</li>
+<li>Component: rgw-multisite</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Kritik Sachdeva] Hello    We have updated the customer about potential fix that could help us them to resolve the issue and when it is planning to be available. Currently customer didn’t updated about the information related to upgrade or fix as they said they will check with their management &amp; l</li>
+<li>[Kritik Sachdeva] Hello        We got an update from the customer that they agree to upgrade this cluster and test the fixes as we likely hitting the same lock issue as described for other Jira ( for the same cluster but different cluster )    After this cluster upgrade, they will plan to upgrade</li>
+<li>[Aarti Dhikale] Hello   , Both commits  from    are merged in ceph-9.1-rhe-patches on 23rd march   1.  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/3bc929439d1d3d14b4115324c1aab4b2d1d08d93  2.  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d70f423fd728e9d2f1e4966b5946ff4ba5c70d86 It will</li>
+<li>[Aarti Dhikale] Hello   , Do we have any backport Jira for this issue in 8.1? I wanted to check if there is a plan to backport this fix to 8.1</li>
+<li>[Bipin Kunal] I see that the fix indicated in previous comment was added to 9.1 via   .  If the fix is needed in 8.1 as well then , please get the Jira cloned and target it for 8.1z8.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: New</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.1z3.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.full-sync-status.&lt;id&gt;&quot;</div>
+<div>Environment: IBM Ceph 8.1z3, component: rgw-multisite</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is New. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing rgw-multisite test coverage for this scenario</li>
+<li>Existing rgw-multisite tests may not cover: Ceph RGW Multi-site Sync is failing due to lock lease failure &quot;couldn&#x27;t lock &lt;zone&gt;.rgw.log:bucket.f</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

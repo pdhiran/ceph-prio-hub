@@ -1,6 +1,166 @@
 {
-  "generated": "2026-08-26T07:14:49.631299Z",
+  "generated": "2026-08-26T07:23:03.810091Z",
   "issues": [
+    {
+      "issue_id": "756bd53ae7dd4e43",
+      "jira_key": "IBMCEPH-16032",
+      "summary": "Cephadm agent enters dead state when MGR failover occurs while the agent is down",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "3b14b65ca67d49db",
+      "jira_key": "IBMCEPH-17696",
+      "summary": "Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "e0285aa9c2214966",
+      "jira_key": "IBMCEPH-8606",
+      "summary": "[BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "0863d6fe4bec47c2",
+      "jira_key": "IBMCEPH-17938",
+      "summary": "[9.1z Backport] ceph pg query returns JSONDecodeError when EIO flag is set",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "05737df0ce85485b",
+      "jira_key": "IBMCEPH-17937",
+      "summary": "[8.1z Backport] ceph pg query returns JSONDecodeError when EIO flag is set",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "edf784e5bc034c36",
+      "jira_key": "IBMCEPH-13541",
+      "summary": "[Dashboard][CephFS][SMB] SMB cluster recreation with a different name fails due to existing earmark on CephFS subvolume",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "00e918bb662e4246",
+      "jira_key": "IBMCEPH-17740",
+      "summary": "MOD thread_name:safe_timer  after hotfix.bz2405397 ",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "963ae220093d48d7",
+      "jira_key": "IBMCEPH-13157",
+      "summary": "[IBM_Support] High mon DB size and failure to automatically compact",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "200b091b31ec4193",
+      "jira_key": "IBMCEPH-14166",
+      "summary": "High MON ms_dispatch CPU related to LogClient",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "0508621101d54ddc",
+      "jira_key": "IBMCEPH-17936",
+      "summary": "Option [--rebuild-osds-sharing-devices] isn't passed properly",
+      "status": "ASSIGNED",
+      "status_category": "In Progress",
+      "qa_status": "not_assessed",
+      "qa_assignee": "",
+      "internal_priority": ""
+    },
+    {
+      "issue_id": "6dd115b79ccd40c6",
+      "jira_key": "IBMCEPH-11647",
+      "summary": "[BZ#2373936] RFE: [IBM_SUPPORT] Improve `ceph config log`",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
+    {
+      "issue_id": "134484d18f144355",
+      "jira_key": "IBMCEPH-14409",
+      "summary": "ceph orch ps shows the MGR port more than one time",
+      "status": "New",
+      "status_category": "To Do",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "47e663874dc2420c",
+      "jira_key": "IBMCEPH-16079",
+      "summary": "Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map",
+      "status": "Verified",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "c80869e4ddb54b56",
+      "jira_key": "IBMCEPH-12766",
+      "summary": "[BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2",
+      "status": "ON_QA",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P0"
+    },
+    {
+      "issue_id": "871c3a2c557a4a7c",
+      "jira_key": "IBMCEPH-17490",
+      "summary": "[9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\\n",
+      "status": "POST",
+      "status_category": "In Progress",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P2"
+    },
+    {
+      "issue_id": "2e85db91864e4a58",
+      "jira_key": "IBMCEPH-12435",
+      "summary": "[BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body",
+      "status": "Closed",
+      "status_category": "Done",
+      "qa_status": "needs_analysis",
+      "qa_assignee": "",
+      "internal_priority": "P1"
+    },
     {
       "issue_id": "3c5daddd7e3644da",
       "jira_key": "IBMCEPH-17450",
@@ -20,46 +180,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
-    },
-    {
-      "issue_id": "edf784e5bc034c36",
-      "jira_key": "IBMCEPH-13541",
-      "summary": "[Dashboard][CephFS][SMB] SMB cluster recreation with a different name fails due to existing earmark on CephFS subvolume",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "47e663874dc2420c",
-      "jira_key": "IBMCEPH-16079",
-      "summary": "Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map",
-      "status": "Verified",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "756bd53ae7dd4e43",
-      "jira_key": "IBMCEPH-16032",
-      "summary": "Cephadm agent enters dead state when MGR failover occurs while the agent is down",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
-      "issue_id": "e0285aa9c2214966",
-      "jira_key": "IBMCEPH-8606",
-      "summary": "[BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set",
-      "status": "POST",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
     },
     {
       "issue_id": "3bf368badcf54a39",
@@ -132,16 +252,6 @@
       "internal_priority": "P2"
     },
     {
-      "issue_id": "200b091b31ec4193",
-      "jira_key": "IBMCEPH-14166",
-      "summary": "High MON ms_dispatch CPU related to LogClient",
-      "status": "ASSIGNED",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
-    },
-    {
       "issue_id": "a38a07c15c524ecd",
       "jira_key": "IBMCEPH-16942",
       "summary": "Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin",
@@ -150,26 +260,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P2"
-    },
-    {
-      "issue_id": "c80869e4ddb54b56",
-      "jira_key": "IBMCEPH-12766",
-      "summary": "[BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2",
-      "status": "ON_QA",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P0"
-    },
-    {
-      "issue_id": "963ae220093d48d7",
-      "jira_key": "IBMCEPH-13157",
-      "summary": "[IBM_Support] High mon DB size and failure to automatically compact",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
     },
     {
       "issue_id": "2594ce1b818347f6",
@@ -190,16 +280,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
-    },
-    {
-      "issue_id": "3b14b65ca67d49db",
-      "jira_key": "IBMCEPH-17696",
-      "summary": "Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics",
-      "status": "In Progress",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
     },
     {
       "issue_id": "ea96bfec357f4f74",
@@ -780,16 +860,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
-    },
-    {
-      "issue_id": "871c3a2c557a4a7c",
-      "jira_key": "IBMCEPH-17490",
-      "summary": "[9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\\n",
-      "status": "POST",
-      "status_category": "In Progress",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
     },
     {
       "issue_id": "56ca6d7826b34f09",
@@ -1385,16 +1455,6 @@
       "issue_id": "0a0afe82342c4c1f",
       "jira_key": "IBMCEPH-16318",
       "summary": "[RFE] CephFS File Activity Auditing and Monitoring from Server/CephFS Side",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
-      "issue_id": "6dd115b79ccd40c6",
-      "jira_key": "IBMCEPH-11647",
-      "summary": "[BZ#2373936] RFE: [IBM_SUPPORT] Improve `ceph config log`",
       "status": "New",
       "status_category": "To Do",
       "qa_status": "needs_analysis",
@@ -2092,16 +2152,6 @@
       "internal_priority": "P1"
     },
     {
-      "issue_id": "2e85db91864e4a58",
-      "jira_key": "IBMCEPH-12435",
-      "summary": "[BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body",
-      "status": "Closed",
-      "status_category": "Done",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P1"
-    },
-    {
       "issue_id": "5363595730e64904",
       "jira_key": "IBMCEPH-13755",
       "summary": "[8.1z Backport] 403 response for HeadObject operation with s3:GetObject Action",
@@ -2480,16 +2530,6 @@
       "qa_status": "needs_analysis",
       "qa_assignee": "",
       "internal_priority": "P1"
-    },
-    {
-      "issue_id": "134484d18f144355",
-      "jira_key": "IBMCEPH-14409",
-      "summary": "ceph orch ps shows the MGR port more than one time",
-      "status": "New",
-      "status_category": "To Do",
-      "qa_status": "needs_analysis",
-      "qa_assignee": "",
-      "internal_priority": "P2"
     },
     {
       "issue_id": "bb4d42d9d7c74d20",

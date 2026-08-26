@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14213: Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,9 +192,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9
 
 ROOT CAUSE:
-- Issue reported in rgw-multisite component.
-- This appears to be an upgrade-related issue or backport request.
+- Upgrade-related issue or backport request.
 - Affected version(s): 8.0
+- Component: rgw-multisite
+
+ENGINEERING FINDINGS:
+- [Chaithra .] Hi  @tserlin , Can you please help with the hotfix repo with debug package and ceph-common. Currently we have only hotfix container build.
+- [Chaithra .] As per yesterdays discussion in “Multisite biweekly “  Sharing new observation on hotfifix test here, Today we have tried again with debug_log 20, and seen different crash on hotfix build. # ceph -v ceph version 20.1.0-185.0.hotfix.IBMCEPH14213.el9cp #rpm -qa|grep gcc libgcc-11.5
+- [Thomas Serlin] The debug RPMs are now here:
+- [Chaithra .] [May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce
+- [Chaithra .] As discussed in call updating here, another crash in bad_alloc: details:     # date;s5cmd --numworkers 64 --endpoint-url http://10.0.67.227:80 --credentials-file ~/.aws/credentials rm s3://test-multidel-50k-pri5/dep1/dep2/*
+Tue May 19 11:41:05 UTC 2026
+
+# date;pkill -9 s5cmd
+Tue
 
 FIX STATUS:
 - Fix available in build 20.2.2-34.
@@ -202,26 +213,28 @@ FIX STATUS:
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9
+Environment: IBM Ceph 8.0, component: rgw-multisite
 
 1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
-3. Monitor upgrade progress -- `ceph orch upgrade status`
+2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+3. Monitor upgrade -- `ceph orch upgrade status`
 4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+[May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
 
 GAPS:
-- Upgrade test may not cover the specific pre-conditions that trigger this issue
+- Upgrade path may lack pre-condition coverage for this scenario
 
 SCENARIOS NEEDED:
-- Upgrade test: validate behavior before and after upgrade on affected version
-- Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Upgrade: validate behavior across affected versions
+- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,33 +248,46 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in rgw-multisite component.</li>
-<li>This appears to be an upgrade-related issue or backport request.</li>
+<li>Upgrade-related issue or backport request.</li>
 <li>Affected version(s): 8.0</li>
+<li>Component: rgw-multisite</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Chaithra .] Hi  @tserlin , Can you please help with the hotfix repo with debug package and ceph-common. Currently we have only hotfix container build.</li>
+<li>[Chaithra .] As per yesterdays discussion in “Multisite biweekly “  Sharing new observation on hotfifix test here, Today we have tried again with debug_log 20, and seen different crash on hotfix build. # <code>ceph -v ceph version 20.1.0-185.0.hotfix.IBMCEPH14213.el9cp #rpm -qa|grep gcc libgcc-11.5</code></li>
+<li>[Thomas Serlin] The debug RPMs are now here:</li>
+<li>[Chaithra .] [May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce</li>
+<li>[Chaithra .] As discussed in call updating here, another crash in bad_alloc: details:     # date;s5cmd --numworkers 64 --endpoint-url http://10.0.67.227:80 --credentials-file ~/.aws/credentials rm s3://test-multidel-50k-pri5/dep1/dep2/*</li>
+</ul>
+<div>Tue May 19 11:41:05 UTC 2026</div>
+<div># date;pkill -9 s5cmd</div>
+<div>Tue</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.2-34.</li>
 <li>Verified by: Vidushi Mishra</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</div>
+<div>Environment: IBM Ceph 8.0, component: rgw-multisite</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>[May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
-<li>Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

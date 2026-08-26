@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17490: [9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -131,7 +131,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>cephfs</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2026-08-06</dd>
-    <dt>Updated</dt><dd>2026-08-13</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -192,42 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
 
 ROOT CAUSE:
-- Daemon crash reported in cephfs. No stack trace captured in JIRA metadata.
-- This appears to be an upgrade-related issue or backport request.
+- Daemon crash reported in cephfs.
+- Upgrade-related issue or backport request.
 - Affected version(s): 8.1
+- Component: cephfs
+
+ENGINEERING FINDINGS:
+- [Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.
 
 FIX STATUS:
-- Current JIRA status: POST
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: POST</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephfs issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
+Environment: IBM Ceph 8.1, component: cephfs
 
-1. Deploy IBM Ceph 8.1 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade progress -- `ceph orch upgrade status`
-5. Trigger the scenario described in the JIRA (see issue for specific conditions)
-6. Check for crash -- `ceph crash ls-new`
-7. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-8. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
+4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+5. Monitor upgrade -- `ceph orch upgrade status`
+6. Trigger the failure scenario (see engineering findings below)
+7. Check for daemon crash -- `ceph crash ls-new`
+8. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is POST. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
 
 GAPS:
-- No crash regression test for this specific cephfs scenario
-- Need test that triggers the crash condition and verifies daemon stability
-- Upgrade test may not cover the specific pre-conditions that trigger this issue
+- No crash regression test for: [9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1
+- Upgrade path may lack pre-condition coverage for this scenario
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Upgrade test: validate behavior before and after upgrade on affected version
-- Functional test for cephfs: reproduce the reported scenario and verify correct behavior</textarea>
+- Stability: reproduce conditions, verify no crash
+- Upgrade: validate behavior across affected versions
+- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,39 +242,42 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in cephfs. No stack trace captured in JIRA metadata.</li>
-<li>This appears to be an upgrade-related issue or backport request.</li>
+<li>Daemon crash reported in cephfs.</li>
+<li>Upgrade-related issue or backport request.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: cephfs</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: POST</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephfs issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</div>
+<div>Environment: IBM Ceph 8.1, component: cephfs</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">6.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">7.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
+<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">6.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">7.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
 <li><span class="step-num">8.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is POST. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific cephfs scenario</li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
-<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
+<li>No crash regression test for: [9.1z Backport] [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1</li>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
-<li>Functional test for cephfs: reproduce the reported scenario and verify correct behavior</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

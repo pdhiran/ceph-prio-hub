@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13341: HEAD returns the object but Get requests fails with code 404 for multi-part upload</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: HEAD returns the object but Get requests fails with code 404 for multi-part upload
 
 ROOT CAUSE:
-- Issue reported in rgw component.
 - Affected version(s): 8.1z3
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Shantanu Bhardwaj] Customer is still looking for the exact trigger of the issue. Could you please help further on this? Mitigation / Workaround: Is there any configuration change we can apply to our clusters right now to prevent or reduce the likelihood of this race condition? (For example, adjust
+- [Prashant Dhange] Hi   , Kindly review the below responses to the customer’s queries: Mitigation / Workaround: Is there any configuration change we can apply to our clusters right now to prevent or reduce the likelihood of this race condition? (For example, adjusting rgw_mp_lock_max_time or any ot
+- [Prashant Dhange] We need to check with the Apple team on Q3 to see whether they are open to using the workaround of increasing  rgw_mp_lock_max_time  to mitigate the issue, instead of a code fix.
+- [Casey Bodley] thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to finish regarding upstream fix, i did update   according to our design discussion yesterday, and i’ll proceed with testing
+- [Thomas Serlin] The hotfix build is ready for QE verification: $ podman pull  cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z5-0.hotfix.IBMCEPH13341 Ceph build inside container:  ceph-19.2.1-331.0.hotfix.IBMCEPH13341.el9cp Based on this 8.z15  -patches branch (b196766f694744260e8e24757bf7173e6d01c1f
 
 FIX STATUS:
 - Fix available in build 20.2.1-108.
 - PR/MR: https://github.com/ceph/ceph/pull/58082
-- Workaround mentioned: thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to fi</textarea>
+- Workaround: thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to finish regarding upstream fix, i did update   accor</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 8.1z3.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- HEAD returns the object but Get requests fails with code 404 for multi-part upload
+Environment: IBM Ceph 8.1z3, component: rgw
 
-1. Deploy IBM Ceph 8.1z3 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
 3. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+looks good. only clarification is the final point about multisite replication - if a multipart object is corrupted such that it can’t serve GetObject requests, other zones won’t be able to replicate that so won’t corrupt their own copy</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- Need to assess existing rgw test coverage for this scenario
+- Existing rgw tests may not cover: HEAD returns the object but Get requests fails with code 404 for multi-part upload
 
 SCENARIOS NEEDED:
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported rgw scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,31 +242,41 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">HEAD returns the object but Get requests fails with code 404 for multi-part upload</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
 <li>Affected version(s): 8.1z3</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Shantanu Bhardwaj] Customer is still looking for the exact trigger of the issue. Could you please help further on this? Mitigation / Workaround: Is there any configuration change we can apply to our clusters right now to prevent or reduce the likelihood of this race condition? (For example, adjust</li>
+<li>[Prashant Dhange] Hi   , Kindly review the below responses to the customer’s queries: Mitigation / Workaround: Is there any configuration change we can apply to our clusters right now to prevent or reduce the likelihood of this race condition? (For example, adjusting rgw_mp_lock_max_time or any ot</li>
+<li>[Prashant Dhange] We need to check with the Apple team on Q3 to see whether they are open to using the workaround of increasing  rgw_mp_lock_max_time  to mitigate the issue, instead of a code fix.</li>
+<li>[Casey Bodley] thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to finish regarding upstream fix, i did update   according to our design discussion yesterday, and i’ll proceed with testing</li>
+<li>[Thomas Serlin] The hotfix build is ready for QE verification: $ <code>podman pull  cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z5-0.hotfix.IBMCEPH13341 Ceph build inside container:  ceph-19.2.1-331.0.hotfix.IBMCEPH13341.el9cp Based on this 8.z15  -patches branch (b196766f694744260e8e24757bf7173e6d01c1f</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.1-108.</li>
 <li>PR/MR: https://github.com/ceph/ceph/pull/58082</li>
-<li>Workaround mentioned: thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to fi</li>
+<li>Workaround: thanks, the workaround stuff looks good. it’s probably also worth investigating why they see CompleteMultipartUpload requests taking 10+ minutes to finish regarding upstream fix, i did update   accor</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 8.1z3.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- HEAD returns the object but Get requests fails with code 404 for multi-part upload</div>
+<div>Environment: IBM Ceph 8.1z3, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>looks good. only clarification is the final point about multisite replication - if a multipart object is corrupted such that it can’t serve GetObject requests, other zones won’t be able to replicate that so won’t corrupt their own copy</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>rgw test coverage for this scenario</code></li>
+<li>Existing <code>rgw tests may not cover: HEAD returns the object but Get requests fails with code 404 for multi-part upload</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13494: 403 response for HeadObject operation with s3:GetObject Action</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 403 response for HeadObject operation with s3:GetObject Action
 
 ROOT CAUSE:
-- Issue reported in rgw component.
 - Affected version(s): 8.1z3
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Prashant Dhange] Hi   , It seems to be we have a bug in  RGWGetObj::verify_permission() , where object version resolution occurring before IAM permission evaluation which is causing the authorization to be based on a mutated object state. Kindly provide your valuable inputs on this. Regards, Pras
+- [Pritha Srivastava] Upon examining the code, the reasoning is plausible.  rgw_iam_add_objtags  invokes  object-&gt;get_obj_attrs  which internally does the following: int RadosObject::get_obj_attrs(optional_yield y, const DoutPrefixProvider* dpp)
+{
+  RGWRados::Object op_target(store-&gt;getRados(), bucket
+- [Prashant Dhange] Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.
+- [Pritha Srivastava] : from one of the earlier comments: ”This seems to be leading to authorization failures when the user lacks version‑specific permissions. The issue is observed only when bucket versioning is enabled, the request does not explicitly specify a  versionId , and IAM policies inclu
+- [Pritha Srivastava] I did some debugging on the 8.1 branch - the version id gets populated even before the call reaches GetObj::verify_permission(). It gets populated in get_obj_policy_from_attr() called from read_obj_policy() as part of read permissions operation. get_obj_policy_from_attr() calls r
 
 FIX STATUS:
 - Fix available in build 20.2.1-167.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 8.1z3.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- 403 response for HeadObject operation with s3:GetObject Action
+Environment: IBM Ceph 8.1z3, component: rgw
 
-1. Deploy IBM Ceph 8.1z3 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
 3. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- Need to assess existing rgw test coverage for this scenario
+- Existing rgw tests may not cover: 403 response for HeadObject operation with s3:GetObject Action
 
 SCENARIOS NEEDED:
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported rgw scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +242,43 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">403 response for HeadObject operation with s3:GetObject Action</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
 <li>Affected version(s): 8.1z3</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Prashant Dhange] Hi   , It seems to be we have a bug in  RGWGetObj::verify_permission() , where object version resolution occurring before IAM permission evaluation which is causing the authorization to be based on a mutated object state. Kindly provide your valuable inputs on this. Regards, Pras</li>
+<li>[Pritha Srivastava] Upon examining the code, the reasoning is plausible.  rgw_iam_add_objtags  invokes  object-&gt;get_obj_attrs  which internally does the following: int RadosObject::get_obj_attrs(optional_yield y, const DoutPrefixProvider* dpp)</li>
+</ul>
+<div>{</div>
+<div>RGWRados::Object op_target(store-&gt;getRados(), bucket</div>
+<ul>
+<li>[Prashant Dhange] Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.</li>
+<li>[Pritha Srivastava] : from one of the earlier comments: ”This seems to be leading to authorization failures when the user lacks version‑specific permissions. The issue is observed only when bucket versioning is enabled, the request does not explicitly specify a  versionId , and IAM policies inclu</li>
+<li>[Pritha Srivastava] I did some debugging on the 8.1 branch - the version id gets populated even before the call reaches GetObj::verify_permission(). It gets populated in get_obj_policy_from_attr() called from read_obj_policy() as part of read permissions operation. get_obj_policy_from_attr() calls r</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.1-167.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 8.1z3.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- 403 response for HeadObject operation with s3:GetObject Action</div>
+<div>Environment: IBM Ceph 8.1z3, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>rgw test coverage for this scenario</code></li>
+<li>Existing <code>rgw tests may not cover: 403 response for HeadObject operation with s3:GetObject Action</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

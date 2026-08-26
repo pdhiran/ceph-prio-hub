@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17696: Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -131,7 +131,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw</dd>
     <dt>Versions</dt><dd>7.1</dd>
     <dt>Created</dt><dd>2026-08-14</dd>
-    <dt>Updated</dt><dd>2026-08-24</dd>
+    <dt>Updated</dt><dd>2026-08-26</dd>
   </dl></div>
 </div>
 
@@ -192,31 +192,33 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics
 
 ROOT CAUSE:
-- Issue reported in rgw component.
 - Affected version(s): 7.1
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Abhishek Gupta] Hello, Are we going to support these configuration additions? What is the expected CPU, memory, and latency penalty on the RGW daemons when these caches and logs are enabled in a production environment with thousands of buckets and high ops/sec?
+- [Bipin Kunal] Please add the RH_Customer_Issue label while opening an issue for RH customer issue. Without label, it won’t appear in the right report.  I see that issue has been raised for 7.1 and we are very close to end of maintenance phase for 7.1. At this point, 7.1 won’t receive any fix
 
 FIX STATUS:
-- Current JIRA status: In Progress
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: In Progress</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 7.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics
+Environment: IBM Ceph 7.1, component: rgw
 
-1. Deploy IBM Ceph 7.1 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,32 +232,36 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
 <li>Affected version(s): 7.1</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Abhishek Gupta] Hello, Are we going to support these configuration additions? What is the expected CPU, memory, and latency penalty on the RGW daemons when these caches and logs are enabled in a production environment with thousands of buckets and high ops/sec?</li>
+<li>[Bipin Kunal] Please add the RH_Customer_Issue label while opening an issue for RH customer issue. Without label, it won’t appear in the right report.  I see that issue has been raised for 7.1 and we are very close to end of maintenance phase for 7.1. At this point, 7.1 won’t receive any fix</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: In Progress</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 7.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics</div>
+<div>Environment: IBM Ceph 7.1, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 
 
 
-<h2>Timeline (10 events)</h2>
+<h2>Timeline (14 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-08-14 07:21:01</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Gupta</strong>: Hello, Are we going to support these configuration additions? What is the expected CPU, memory, and latency penalty on the RGW daemons when these caches and logs are enabled in a production environment with thousands of buckets and high ops/sec?</div>
 <div class="tl-entry"><span class="tl-date">2026-08-17 11:06:25</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Gupta</strong>: Hello Team, Any update?</div>
@@ -267,6 +273,10 @@ SCENARIOS NEEDED:
 <div class="tl-entry"><span class="tl-date">2026-08-20 05:51:53</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:  Please edit the description and add case number in the description.</div>
 <div class="tl-entry"><span class="tl-date">2026-08-24 10:01:49</span><span class="tl-badge status">Status</span> In Progress <span style="color:var(--ibm-gray-50);">(Aarti Dhikale)</span></div>
 <div class="tl-entry"><span class="tl-date">2026-08-24 10:01:49</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: Also, I am not able to link my case to this JIRA, is there any permission issue? Its showing rejected How are you adding the link? -Bipin Kunal</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 07:58:58</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Gupta</strong>: I am adding through external link section in SFDC. I cannot see any edit description option here</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 08:47:11</span><span class="tl-badge comment">Comment</span> <strong>Bipin Kunal</strong>: I am adding through external link section in SFDC. I cannot see any edit description option here You need to add the customer portal link in the Jira as a weblink. There is no integration between RH SFDC and IBM Jira.  Just add the customer portal ca</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 09:23:27</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>:    Any further updates on this?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 09:26:07</span><span class="tl-badge comment">Comment</span> <strong>Abhishek Gupta</strong>: Sure, I will link the case in that way. Yes   I was engaged in escalations and sev 1 lately, created the cluster but didn’t get time to test.. I will test and update you tomorrow</div>
 </div>
 
 <script>

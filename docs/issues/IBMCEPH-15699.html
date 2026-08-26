@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15699: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error
 
 ROOT CAUSE:
-- Issue reported in ceph-dashboard component.
 - Affected version(s): 9.0z2
+- Component: ceph-dashboard
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] [Internal Do not share with customer] Hello, From the initial analysis, it looks like changes from  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a59cb5b5e2be3956705fe0176ecdedd7511bebd7  are present in 9.1 and missing in 8.1, which is likely causing this issue. Currently debu
+- [Abhishek Desai] Thanks for the detailed explaination, i will raise a needed fix for the same
+- [Sachin Yeshwanth] - Please share the corresponding commit ID or MR link that got merged into the DS ceph-9.2-rhel-patches branch ?
+- [Abhishek Desai] The issue only persist on 9.0.  9.1 and beyond does not need any fix
+- [Sachin Yeshwanth] So can we move this bug to ON_QA without a fix ?
 
 FIX STATUS:
 - Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues</textarea>
+- Workaround: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues? The Dashboard does not display the SSL certifica</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-dashboard issue reported in IBM Ceph 9.0z2.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error
+Environment: IBM Ceph 9.0z2, component: ceph-dashboard
 
 1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access dashboard -- `curl -k https://&lt;mgr-host&gt;:8443/`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+3. Access at `https://&lt;mgr-host&gt;:8443/`
+4. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hello   , For reproduction of the above issue, we need to upload only the certificate and skip the key. Then we will be able to recreate the issue. I am able to reproduce on 9.1. Also if we skip certificate and provided only key in that case also will see same behaviour. Jun 05 0</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- Functional test for ceph-dashboard: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,29 +242,39 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in ceph-dashboard component.</li>
 <li>Affected version(s): 9.0z2</li>
+<li>Component: ceph-dashboard</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] [Internal Do not share with customer] Hello, From the initial analysis, it looks like changes from  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a59cb5b5e2be3956705fe0176ecdedd7511bebd7  are present in 9.1 and missing in 8.1, which is likely causing this issue. Currently debu</li>
+<li>[Abhishek Desai] Thanks for the detailed explaination, i will raise a needed fix for the same</li>
+<li>[Sachin Yeshwanth] - Please share the corresponding commit ID or MR link that got merged into the DS ceph-9.2-rhel-patches branch ?</li>
+<li>[Abhishek Desai] The issue only persist on 9.0.  9.1 and beyond does not need any fix</li>
+<li>[Sachin Yeshwanth] So can we move this bug to ON_QA without a fix ?</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues</li>
+<li>Workaround: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues? The Dashboard does not display the SSL certifica</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-dashboard issue reported in IBM Ceph 9.0z2.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</div>
+<div>Environment: IBM Ceph 9.0z2, component: ceph-dashboard</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access dashboard -- <code><code>curl -k https://&amp;lt;mgr-host&amp;gt;:8443/</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
+<li><span class="step-num">4.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hello   , For reproduction of the above issue, we need to upload only the certificate and skip the key. Then we will be able to recreate the issue. I am able to reproduce on 9.1. Also if we skip certificate and provided only key in that case also will see same behaviour. Jun 05 0</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for ceph-dashboard: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13843: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,39 +192,49 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
 
 ROOT CAUSE:
-- Issue reported in rgw component.
-- This appears to be an upgrade-related issue or backport request.
-- Permission or access control issue reported.
+- Upgrade-related issue or backport request.
+- Permission or access control issue.
 - Affected version(s): 9.0
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Swati Thombe] Hi    Could you please provide the following data for further analysis?  Kindly attach the support case Specifically, we need the  admin node’s sosreport , including the  config dump output . ceph --admin-daemon &lt;rgw.asok-file-path&gt; config show Thank you!
+- [Shantanu Bhardwaj] Hello    We have sosreport from the RGW nodes and output of below commands $ radosgw-admin period list --debug-rgw 20  --debug-ms 1 &gt; &quot;period-list.txt&quot; 2&gt;&amp;1 $ radosgw-admin period get --debug-rgw 20  --debug-ms 1 &gt; &quot;period-get.txt&quot; 2&gt;&amp;1 /ecurep/sf/TS021/923/TS021923264/0-all_data
+- [Casey Bodley] looking at ceph-7.1-rhel-patches, i see this commit that changes the RGWPeriod encoding: commit e79699e78454977ef8dabec46afc650004edc3ea
+Author: Jiffin Tony Thottan &lt;jthottan@redhat.com&gt;
+Date:   Tue Oct 31 12:50:52 2023 +0530
+
+    rgw/rgw_period : remove realm name from period co
+- [Varuni Sawant] Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepared for the customer?
+- [Sachin Yeshwanth] hello   - Could you please confirm whether the fix has been merged into the DS ceph-9.1-rhel-patches branch ? If yes, kindly share the corresponding commit ID or MR link.
 
 FIX STATUS:
 - Fix available in build 20.2.1-206.
-- Workaround mentioned: Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upst</textarea>
+- Workaround: Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepar</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 9.0.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
+Environment: IBM Ceph 9.0, component: rgw
 
-1. Deploy IBM Ceph 9.0 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade progress -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
+4. Monitor upgrade -- `ceph orch upgrade status`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- Upgrade test may not cover the specific pre-conditions that trigger this issue
-- Permission/ACL test may not cover this specific access pattern
+- Upgrade path may lack pre-condition coverage for this scenario
+- Permission test gap for: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3)
 
 SCENARIOS NEEDED:
-- Upgrade test: validate behavior before and after upgrade on affected version
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Upgrade: validate behavior across affected versions
+- Functional: reproduce reported rgw scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,36 +248,49 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
-<li>This appears to be an upgrade-related issue or backport request.</li>
-<li>Permission or access control issue reported.</li>
+<li>Upgrade-related issue or backport request.</li>
+<li>Permission or access control issue.</li>
 <li>Affected version(s): 9.0</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Swati Thombe] Hi    Could you please provide the following data for further analysis?  Kindly attach the support case Specifically, we need the  admin node’s sosreport , including the  config dump output . <code>ceph --admin-daemon &lt;rgw.asok-file-path&gt; config show Thank you!</code></li>
+<li>[Shantanu Bhardwaj] Hello    We have sosreport from the RGW nodes and output of below commands $ <code>radosgw-admin period list --debug-rgw 20  --debug-ms 1 &gt; &quot;period-list.txt&quot; 2&gt;&amp;1 $ radosgw-admin period get --debug-rgw 20  --debug-ms 1 &gt; &quot;period-get.txt&quot; 2&gt;&amp;1 /ecurep/sf/TS021/923/TS021923264/0-all_data</code></li>
+<li>[Casey Bodley] looking at ceph-7.1-rhel-patches, i see this commit that changes the RGWPeriod encoding: commit e79699e78454977ef8dabec46afc650004edc3ea</li>
+</ul>
+<div>Author: Jiffin Tony Thottan &lt;jthottan@redhat.com&gt;</div>
+<div>Date:   Tue Oct 31 12:50:52 2023 +0530</div>
+<div>rgw/rgw_period : remove realm name from period co</div>
+<ul>
+<li>[Varuni Sawant] Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepared for the customer?</li>
+<li>[Sachin Yeshwanth] hello   - Could you please confirm whether the fix has been merged into the DS ceph-9.1-rhel-patches branch ? If yes, kindly share the corresponding commit ID or MR link.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available in build 20.2.1-206.</li>
-<li>Workaround mentioned: Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upst</li>
+<li>Workaround: Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepar</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 9.0.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
+<div>Environment: IBM Ceph 9.0, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
 <li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
-<li>Permission/ACL test may not cover this specific access pattern</li>
+<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>Permission test gap for: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Upgrade: validate behavior across affected versions</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

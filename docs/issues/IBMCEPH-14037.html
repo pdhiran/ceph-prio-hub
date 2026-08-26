@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14037: [IBM_Support] Latency observed on the RGW GET requests</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,35 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] Latency observed on the RGW GET requests
 
 ROOT CAUSE:
-- Issue reported in rgw component.
 - Performance degradation or timeout behavior reported.
 - Affected version(s): 8.1z1
+- Component: rgw
+
+ENGINEERING FINDINGS:
+- [Kritik Sachdeva] Hello      Customer responded back that they are not comfortable to make the specific tunings changes without any concrete proof introduces unnecessary risk. They are specifically requesting concrete findings from the existing logs or analysis that conclusively support the need f
+- [Prashant Dhange] Hi  , Thanks for your time on the quick call today. As discussed, this cluster is reporting large omap warnings for some buckets, which appear to be used by the Spark workload. As a first step, we should fix the shard count for the buckets reporting large omaps. After that, we ca
+- [Kritik Sachdeva] Hello team, As discussed over the slack here is this is the action plan we are going with moving forward: We will work on fixing the shard count for the buckets throwing the Large Omap. After fixing this, we evaluate the performance behaviour if still getting the latency, then we
+- [Kritik Sachdeva] Hello      Customer have uploaded the data from the last timestamp we asked during the end of the impacted window timeframe on the case as well. Here are the files: 1315_perf.tar_unpack  --&gt; with perf stats of NVMe OSDs. Started at 13:09:21 BST.
+1315_perf_rgw_debug_1.tar_unpack a
+- [Kritik Sachdeva] Hello    As discussed over the slack about turning off the RGW instance on node 0042. Customer did that and observed the latency today but unfortunately it didn’t helped. This is the response we get from the customer. We have disabled the RGW service on whds0042 and we could see
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw issue reported in IBM Ceph 8.1z1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Latency observed on the RGW GET requests
+Environment: IBM Ceph 8.1z1, component: rgw
 
-1. Deploy IBM Ceph 8.1z1 cluster with RGW -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW service -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+1. Deploy IBM Ceph 8.1z1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
+3. Run baseline benchmark (fio/rados bench) -- record metrics
+4. Trigger the performance scenario described in JIRA
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No performance benchmark test for this scenario
+- No performance baseline test for: Latency observed on the RGW GET requests
 
 SCENARIOS NEEDED:
-- Performance test: measure and compare against baseline
-- Functional test for rgw: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Performance: benchmark before/after, compare against SLA
+- Functional: reproduce reported rgw scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,32 +242,44 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] Latency observed on the RGW GET requests</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rgw component.</code></li>
 <li>Performance degradation or timeout behavior reported.</li>
 <li>Affected version(s): 8.1z1</li>
+<li>Component: rgw</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Kritik Sachdeva] Hello      Customer responded back that they are not comfortable to make the specific tunings changes without any concrete proof introduces unnecessary risk. They are specifically requesting concrete findings from the existing logs or analysis that conclusively support the need f</li>
+<li>[Prashant Dhange] Hi  , Thanks for your time on the quick call today. As discussed, this cluster is reporting large omap warnings for some buckets, which appear to be used by the Spark workload. As a first step, we should fix the shard count for the buckets reporting large omaps. After that, we ca</li>
+<li>[Kritik Sachdeva] Hello team, As discussed over the slack here is this is the action plan we are going with moving forward: We will work on fixing the shard count for the buckets throwing the Large Omap. After fixing this, we evaluate the performance behaviour if still getting the latency, then we</li>
+<li>[Kritik Sachdeva] Hello      Customer have uploaded the data from the last timestamp we asked during the end of the impacted window timeframe on the case as well. Here are the files: 1315_perf.tar_unpack  --&gt; with perf stats of NVMe OSDs. Started at 13:09:21 BST.</li>
+</ul>
+<div>1315_perf_rgw_debug_1.tar_unpack a</div>
+<ul>
+<li>[Kritik Sachdeva] Hello    As discussed over the slack about turning off the RGW instance on node 0042. Customer did that and observed the latency today but unfortunately it didn’t helped. This is the response we get from the customer. We have disabled the RGW service on whds0042 and we could see</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw issue reported in IBM Ceph 8.1z1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Latency observed on the RGW GET requests</div>
+<div>Environment: IBM Ceph 8.1z1, component: rgw</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z1 cluster with RGW -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW service -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
+<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance benchmark test for this scenario</li>
+<li>No performance baseline test for: Latency observed on the RGW GET requests</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance test: measure and compare against baseline</li>
-<li>Functional test for rgw: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Performance: benchmark before/after, compare against SLA</li>
+<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

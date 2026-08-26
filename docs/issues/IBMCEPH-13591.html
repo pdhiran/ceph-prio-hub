@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13591: [IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,48 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill
 
 ROOT CAUSE:
-- Issue reported in rados component.
-- Memory issue (leak, OOM, or excessive consumption) reported.
+- Memory issue (leak, OOM, or excessive consumption).
 - Affected version(s): 7.1z8
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Brad Hubbard] Two observations. osd_memory_target is not a hard limit (see documentation) and this is highly unlikely to be a memory leak so it might be a good idea to either provide definitive proof that it is, or stop using that term without such proof since currently that appears to be an u
+- [Deshpande Vaishnavi Renukadas] Hello Team, Hello Team, sos-report says that ceph-osd is consuming most of the memory there is not any other process which is consuming the memory as per the linux analysis, buffer_io and dentry usage is high Your dmesg output shows a system barely keeping its head above water. W
+- [Ravinder Kumar] Hi Team We got below query from customer. Could you please check it once. ----- We would like to share an additional finding from our investigation. We have formed the following hypothesis, though it has not yet been confirmed. [Hypothesis] With bluefs_buffered_io set to its defa
+- [Deshpande Vaishnavi Renukadas] Hello   , Memory used by ceph-osd  $ grep ceph-osd ps_auxwwwm | awk &#x27;{print $2, $4&quot;%&quot;, $6/1024 &quot; MB&quot;, $11}&#x27; | sort -k3 -nr
+
+7109 3.7% 9543.16 MB /usr/bin/ceph-osd
+6576 3.1% 8025.07 MB /usr/bin/ceph-osd
+7099 2.9% 7678.2 MB /usr/bin/ceph-osd
+7080 2.9% 7662.77 MB /usr/bin/ceph-osd
+7
+- [Prashant Dhange] Hi All, Analysis of ceph-ssd-y130013 sosreport node,  sosreport location : /ecurep/sf/TS021/744/TS021744338/0-all_data/sosreport-ceph-ssd-y130013-2026-03-26-seucics.tar.xz_unpack/sosreport-ceph-ssd-y130013-2026-03-26-seucics [1] System memory usage at time of collection. At the t
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 7.1z8.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill
+Environment: IBM Ceph 7.1z8, component: rados
 
 1. Deploy IBM Ceph 7.1z8 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Monitor daemon memory -- `ceph tell &lt;daemon&gt; heap stats`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
+- No memory leak detection test for rados
 
 SCENARIOS NEEDED:
-- Functional test for rados: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Memory: long-running workload, monitor for leaks
+- Functional: reproduce reported rados scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,29 +247,48 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rados component.</code></li>
-<li>Memory issue (leak, OOM, or excessive consumption) reported.</li>
+<li>Memory issue (leak, OOM, or excessive consumption).</li>
 <li>Affected version(s): 7.1z8</li>
+<li>Component: rados</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Brad Hubbard] Two observations. osd_memory_target is not a hard limit (see documentation) and this is highly unlikely to be a memory leak so it might be a good idea to either provide definitive proof that it is, or stop using that term without such proof since currently that appears to be an u</li>
+<li>[Deshpande Vaishnavi Renukadas] Hello Team, Hello Team, sos-report says that ceph-osd is consuming most of the memory there is not any other process which is consuming the memory as per the linux analysis, buffer_io and dentry usage is high Your dmesg output shows a system barely keeping its head above water. W</li>
+<li>[Ravinder Kumar] Hi Team We got below query from customer. Could you please check it once. ----- We would like to share an additional finding from our investigation. We have formed the following hypothesis, though it has not yet been confirmed. [Hypothesis] With bluefs_buffered_io set to its defa</li>
+<li>[Deshpande Vaishnavi Renukadas] Hello   , Memory used by ceph-osd  $ grep ceph-osd ps_auxwwwm | awk &#x27;{print $2, $4&quot;%&quot;, $6/1024 &quot; MB&quot;, $11}&#x27; | sort -k3 -nr</li>
+</ul>
+<div>7109 3.7% 9543.16 MB /usr/bin/ceph-osd</div>
+<div>6576 3.1% 8025.07 MB /usr/bin/ceph-osd</div>
+<div>7099 2.9% 7678.2 MB /usr/bin/ceph-osd</div>
+<div>7080 2.9% 7662.77 MB /usr/bin/ceph-osd</div>
+<div>7</div>
+<ul>
+<li>[Prashant Dhange] Hi All, Analysis of ceph-ssd-y130013 sosreport node,  sosreport location : /ecurep/sf/TS021/744/TS021744338/0-all_data/sosreport-ceph-ssd-y130013-2026-03-26-seucics.tar.xz_unpack/sosreport-ceph-ssd-y130013-2026-03-26-seucics [1] System memory usage at time of collection. At the t</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 7.1z8.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</div>
+<div>Environment: IBM Ceph 7.1z8, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 7.1z8 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">4.</span> Monitor daemon memory -- <code><code>ceph tell &amp;lt;daemon&amp;gt; heap stats</code></code></li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>No memory leak detection test for rados</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Memory: long-running workload, monitor for leaks</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

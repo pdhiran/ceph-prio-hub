@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16005: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,32 +192,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone
 
 ROOT CAUSE:
-- Issue reported in cephfs component.
 - Affected version(s): not specified
+- Component: cephfs
+
+ENGINEERING FINDINGS:
+- [Brandon McMurray] Logs are attached to the bug now. I think these are the relevant log lines   was looking for: debug 2026-06-24T19:30:51.191+0000 7f504629e640  0 log_channel(audit) log [DBG] : from=&#x27;client.293097161 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;fs clone cancel&quot;, &quot;vol_name&quot;: &quot;ocs-sto
+- [Vivek Maurya] Hi   , As per mgr logs and code, the  clone cancel failed due to the tracking index not being found. debug 2026-06-24T19:30:51.233+0000 7f501b5c9640 -1 mgr.server reply reply (22) Invalid argument error canceling clone Code: def cancel_job(self, volname, job):
+...
+        try:
+- [Rishabh Dave] The issue is that “fs clone status” command keeps printing the status as “in-progress” for the clone subvolume. Running “rm -rf &lt;path-to-clone-subvolume&gt;” should fix that issue. Running “fs clone status” command then would then print “Error ENOENT: subvolume ‘&lt;clone-subvol-name&gt;
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: ASSIGNED</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephfs issue reported in IBM Ceph 9.x.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone
+Environment: IBM Ceph 9.x, component: cephfs
 
-1. Deploy IBM Ceph 9.x cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing cephfs test coverage for this scenario
+- Existing cephfs tests may not cover: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone
 
 SCENARIOS NEEDED:
-- Functional test for cephfs: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +237,39 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in cephfs component.</li>
 <li>Affected version(s): not specified</li>
+<li>Component: cephfs</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Brandon McMurray] Logs are attached to the bug now. I think these are the relevant log lines   was looking for: debug 2026-06-24T19:30:51.191+0000 7f504629e640  0 log_channel(audit) log [DBG] : from=&#x27;client.293097161 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;fs clone cancel&quot;, &quot;vol_name&quot;: &quot;ocs-sto</li>
+<li>[Vivek Maurya] Hi   , As per mgr logs and code, the  clone cancel failed due to the tracking index not being found. debug 2026-06-24T19:30:51.233+0000 7f501b5c9640 -1 mgr.server reply reply (22) Invalid argument error canceling clone Code: def cancel_job(self, volname, job):</li>
+</ul>
+<div>...</div>
+<div>try:</div>
+<ul>
+<li>[Rishabh Dave] The issue is that “fs clone status” command keeps printing the status as “in-progress” for the clone subvolume. Running “rm -rf &lt;path-to-clone-subvolume&gt;” should fix that issue. Running “fs clone status” command then would then print “Error ENOENT: subvolume ‘&lt;clone-subvol-name&gt;</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: ASSIGNED</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephfs issue reported in IBM Ceph 9.x.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</div>
+<div>Environment: IBM Ceph 9.x, component: cephfs</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing cephfs test coverage for this scenario</li>
+<li>Existing cephfs tests may not cover: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for cephfs: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

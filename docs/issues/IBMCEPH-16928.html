@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16928: MDS pod crash ceph_assert FAILED ceph_assert(_raw)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,8 +192,16 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS pod crash ceph_assert FAILED ceph_assert(_raw)
 
 ROOT CAUSE:
-- Daemon crash reported in cephfs. No stack trace captured in JIRA metadata.
+- Daemon crash reported in cephfs.
 - Affected version(s): 8.1z5
+- Component: cephfs
+
+ENGINEERING FINDINGS:
+- [Zbigniew Cofala] The customer provided the following analysis of the case including the contents of the file: /ecurep/sf/TS022/559/TS022559107/IBM_Ceph_MDS_Case_Summary.txt IBM Case Summary – CephFS MDS Cache Oversized and MDS Crash Investigation Environment Ceph version: 19.2.1-331.el9cp (Squid)
+- [Vivek Maurya] Hi   , Please share the core dump for analysis. Share it on BOX. Thanks Vivek
+- [Manya Dogra] I cross checked the fix commits, they’re present in 8.1, 9.0, and 9.1 . Also verified that the call stack of the current bug matches the reference bug IBMCEPH-12861. Will be needing core dump to proceed further.
+- [Manya Dogra] Hello  , Could you please help with two things: Could you share the core dump file(s) so we can proceed with further analysis? Could you clarify why and what triggered the dump tree admin socket command at the time crash? For example, was it run manually by an user for diagnostic
+- [Zbigniew Cofala] Hi    I&#x27;m not sure if they even have core dumps from these crashes, I sent a question, still waiting for a reply, I&#x27;ll let you know when I get it.  As for the second part, I know that the first crash occurred on its own, and the second one while creating an sosreport.
 
 FIX STATUS:
 - Fix available
@@ -201,28 +209,26 @@ FIX STATUS:
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephfs issue reported in IBM Ceph 8.1z5.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MDS pod crash ceph_assert FAILED ceph_assert(_raw)
+Environment: IBM Ceph 8.1z5, component: cephfs
 
-1. Deploy IBM Ceph 8.1z5 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Trigger the scenario described in the JIRA (see issue for specific conditions)
-4. Check for crash -- `ceph crash ls-new`
-5. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
+4. Trigger the failure scenario (see engineering findings below)
+5. Check for daemon crash -- `ceph crash ls-new`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available but not yet fully verified. Needs QA validation.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
 
 GAPS:
-- No crash regression test for this specific cephfs scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: MDS pod crash ceph_assert FAILED ceph_assert(_raw)
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for cephfs: reproduce the reported scenario and verify correct behavior</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,34 +242,42 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS pod crash ceph_assert FAILED ceph_assert(_raw)</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in cephfs. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in cephfs.</li>
 <li>Affected version(s): 8.1z5</li>
+<li>Component: cephfs</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Zbigniew Cofala] The customer provided the following analysis of the case including the contents of the file: /ecurep/sf/TS022/559/TS022559107/IBM_Ceph_MDS_Case_Summary.txt IBM Case Summary – CephFS MDS Cache Oversized and MDS Crash Investigation Environment Ceph version: 19.2.1-331.el9cp (Squid)</li>
+<li>[Vivek Maurya] Hi   , Please share the core dump for analysis. Share it on BOX. Thanks Vivek</li>
+<li>[Manya Dogra] I cross checked the fix commits, they’re present in 8.1, 9.0, and 9.1 . Also verified that the call stack of the current bug matches the reference bug IBMCEPH-12861. Will be needing core dump to proceed further.</li>
+<li>[Manya Dogra] Hello  , Could you please help with two things: Could you share the core dump file(s) so we can proceed with further analysis? Could you clarify why and what triggered the dump tree admin socket command at the time crash? For example, was it run manually by an user for diagnostic</li>
+<li>[Zbigniew Cofala] Hi    I&#x27;m not sure if they even have core dumps from these crashes, I sent a question, still waiting for a reply, I&#x27;ll let you know when I get it.  As for the second part, I know that the first crash occurred on its own, and the second one while creating an sosreport.</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available</li>
 <li>Verified by: Manya Dogra</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephfs issue reported in IBM Ceph 8.1z5.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MDS pod crash ceph_assert FAILED ceph_assert(_raw)</div>
+<div>Environment: IBM Ceph 8.1z5, component: cephfs</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">4.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">5.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
+<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
 <li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available but not yet fully verified. Needs QA validation.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific cephfs scenario</li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: MDS pod crash ceph_assert FAILED ceph_assert(_raw)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for cephfs: reproduce the reported scenario and verify correct behavior</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

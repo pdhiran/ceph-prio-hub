@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13545: NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,38 +192,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;
 
 ROOT CAUSE:
-- Issue reported in nfs-ganesha/ceph component.
 - Affected version(s): 7.2
+- Component: nfs-ganesha/ceph
+
+ENGINEERING FINDINGS:
+- [Harsh Murkunde] Hello Team, I have implemented a workaround in my reproduction cluster, which was experiencing the same failure. By manually removing the  NFSv3 protocol  from the  ganesha.conf  file and restarting the service via  ceph  and  systemctl , I was able to resolve the issue in my env
+- [Harsh Murkunde] Hello  , Thank you for the update. I appreciate you taking this on from the L3 side. Please let me know if you need any further logs, reproduction steps, or details from my initial investigation to assist with your analysis.
+- [Sachin Punadikar] Proposed workaround is correct
+- [Aarti Dhikale] Hi   , A solution for this issue is available in Ceph version 9 where we have implemented the following changes: We are by default enabling only NFSV4, not NFSv3 If user wants to enable NFSv3, then they will have to manually run &#x27;cephadm prepare-host --install-service-dependencie
+- [Harsh Murkunde] Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that starting with  Ceph version 9 ,  NFSv3  will no longer be supported due to planne
 
 FIX STATUS:
 - Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared p</textarea>
+- Workaround: Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that s</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 7.2.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;
+Environment: IBM Ceph 7.2, component: nfs-ganesha/ceph
 
-1. Deploy IBM Ceph 7.2 cluster with CephFS and NFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;cluster-name&gt; &lt;host&gt;`
+1. Deploy IBM Ceph 7.2 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
 3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Trigger failover (stop daemon, power off node, or network partition)
-6. Verify services recover -- `ceph -s`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
+5. Trigger failover (stop daemon / power off node / network partition)
+6. Verify recovery -- `ceph -s`
+7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- HA test: trigger failover, verify data integrity and service continuity
-- Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- HA: failover + recovery, verify data integrity
+- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,33 +242,40 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in nfs-ganesha/<code>ceph component.</code></li>
 <li>Affected version(s): 7.2</li>
+<li>Component: nfs-ganesha/ceph</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Harsh Murkunde] Hello Team, I have implemented a workaround in my reproduction cluster, which was experiencing the same failure. By manually removing the  NFSv3 protocol  from the  ganesha.conf  file and restarting the service via  <code>ceph  and  systemctl</code>, I was able to resolve the issue in my env</li>
+<li>[Harsh Murkunde] Hello  , Thank you for the update. I appreciate you taking this on from the L3 side. Please let me know if you need any further logs, reproduction steps, or details from my initial investigation to assist with your analysis.</li>
+<li>[Sachin Punadikar] Proposed workaround is correct</li>
+<li>[Aarti Dhikale] Hi   , A solution for this issue is available in Ceph version 9 where we have implemented the following changes: We are by default enabling only NFSV4, not NFSv3 If user wants to enable NFSv3, then they will have to manually run &#x27;<code>cephadm prepare-host --install-service-dependencie</code></li>
+<li>[Harsh Murkunde] Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that starting with  Ceph version 9 ,  NFSv3  will no longer be supported due to planne</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared p</li>
+<li>Workaround: Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that s</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce nfs-ganesha/ceph issue reported in IBM Ceph 7.2.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;</div>
+<div>Environment: IBM Ceph 7.2, component: nfs-ganesha/ceph</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.2 cluster with CephFS and NFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;cluster-name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 7.2 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
 <li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Trigger failover (stop daemon, power off node, or network partition)</li>
-<li><span class="step-num">6.</span> Verify services recover -- <code><code>ceph -s</code></code></li>
+<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
+<li><span class="step-num">5.</span> Trigger failover (stop daemon / power off node / network partition)</li>
+<li><span class="step-num">6.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
 <li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA test: trigger failover, verify data integrity and service continuity</li>
-<li>Functional test for nfs-ganesha/ceph: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>HA: failover + recovery, verify data integrity</li>
+<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13659: [Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end() </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,39 +192,48 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end() 
 
 ROOT CAUSE:
-- Daemon crash reported in rados. No stack trace captured in JIRA metadata.
+- Daemon crash reported in rados.
 - Affected version(s): 7.1z8
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Ravinder Kumar] Hi   Please let us know steps to capture OSD core dump logs.  Note: We marked osd lost, also we are not sure if osd 53 still exist or replaced but we can check that. So please let us know steps accordingly. Regards Ravinder Kumar
+- [Aarti Dhikale] Thanks. If possible, could you please ask the customer to share osd 167 logs and  the crash dump for OSD 167? It appears that OSD 167 has also crashed recently. Also share bluestone and kvstore crash dump logs.
+- [Aarti Dhikale] [Internal - do not share with customer] Root Cause Analysis (RCA) Problem Summary OSD.53 failed to initialize and entered a crash loop during startup. The same failure is observed from  ceph-bluestore-tool fsck  and  ceph-kvstore-tool  crash dumps shared by customer, indicating a
+- [Adam Kupczyk] Thank you for your analysis. Since you got this far, I think you should help BlueStore team and community to pinpoint the issue. This type of corruption is possible if RocksDB keys encoding specific onodes are corrupted. Please retrieve the keys and try to find which ones do no
+- [Aarti Dhikale] [Internal do not share with customer] From the  osd.53 logs  and provided core dumps, we observed that prior to the current issue, the same OSD had already encountered a segmentation fault: [db/db_impl/db_impl_compaction_flush.cc:3275] Compaction nothing to do
+
+2026-03-29T18:16:0
 
 FIX STATUS:
-- Current JIRA status: Closed
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: Closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 7.1z8.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end()
+Environment: IBM Ceph 7.1z8, component: rados
 
 1. Deploy IBM Ceph 7.1z8 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the scenario described in the JIRA (see issue for specific conditions)
-5. Check for crash -- `ceph crash ls-new`
-6. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`
+4. Trigger the failure scenario (see engineering findings below)
+5. Check for daemon crash -- `ceph crash ls-new`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+[Internal do not share with customer] From the  osd.53 logs  and provided core dumps, we observed that prior to the current issue, the same OSD had already encountered a segmentation fault: [db/db_imp</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
 
 GAPS:
-- No crash regression test for this specific rados scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: [Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end()
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for rados: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported rados scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,36 +247,45 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end()</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in rados. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in rados.</li>
 <li>Affected version(s): 7.1z8</li>
+<li>Component: rados</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Ravinder Kumar] Hi   Please let us know steps to capture OSD core dump logs.  Note: We marked osd lost, also we are not sure if osd 53 still exist or replaced but we can check that. So please let us know steps accordingly. Regards Ravinder Kumar</li>
+<li>[Aarti Dhikale] Thanks. If possible, could you please ask the customer to share osd 167 logs and  the crash dump for OSD 167? It appears that OSD 167 has also crashed recently. Also share bluestone and kvstore crash dump logs.</li>
+<li>[Aarti Dhikale] [Internal - do not share with customer] Root Cause Analysis (RCA) Problem Summary OSD.53 failed to initialize and entered a crash loop during startup. The same failure is observed from  ceph-bluestore-tool fsck  and  ceph-kvstore-tool  crash dumps shared by customer, indicating a</li>
+<li>[Adam Kupczyk] Thank you for your analysis. Since you got this far, I think you should help BlueStore team and community to pinpoint the issue. This type of corruption is possible if RocksDB keys encoding specific onodes are corrupted. Please retrieve the keys and try to find which ones do no</li>
+<li>[Aarti Dhikale] [Internal do not share with customer] From the  osd.53 logs  and provided core dumps, we observed that prior to the current issue, the same OSD had already encountered a segmentation fault: [db/db_impl/db_impl_compaction_flush.cc:3275] Compaction nothing to do</li>
+</ul>
+<div>2026-03-29T18:16:0</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: Closed</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 7.1z8.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end()</div>
+<div>Environment: IBM Ceph 7.1z8, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 7.1z8 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">5.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>[Internal do not share with customer] From the  osd.53 logs  and provided core dumps, we observed that prior to the current issue, the same OSD had already encountered a segmentation fault: [db/db_imp</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific <code>rados scenario</code></li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: [Ceph -OSD]OSD crashed with assert FAILED ceph_assert(it != map.end()</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 

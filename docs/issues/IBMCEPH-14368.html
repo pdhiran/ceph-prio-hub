@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14368: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,38 +192,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat
 
 ROOT CAUSE:
-- Daemon crash reported in rados. No stack trace captured in JIRA metadata.
+- Daemon crash reported in rados.
 - Affected version(s): 9.2
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Brad Hubbard] Looking at the logs you suggested. osd40_crash_logs$ grep timestamp crash_info.json
+    &quot;timestamp&quot;: &quot;2026-05-08T14:36:33.817416Z&quot;,
+osd40_crash_logs$  ls -l ceph-osd.40.log*
+-rw-r--r--. 1 brad brad      0 May 11 16:23 ceph-osd.40.log
+-rw-r--r--. 1 brad brad 676986 May 11 16:23 c
+- [K Amarnath Reddy] Hi   , This crash was observed during scale testing, but there were no specific reproduction steps. After creating the cluster, we did not perform any operations. We are not sure whether this issue is consistently reproducible. Since it resulted in a crash, I reported it for furt
+- [K Amarnath Reddy] , Let me check if  I can get the actual crash log and update here
+- [K Amarnath Reddy] Hi    I have collected a crash_dump_log  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/osd40_crash_logs/crash_dump_log.txt Could you please review if this helps?
+- [Brad Hubbard] I was looking at this frame and I loaded a binary compatible debugging environment to get a better idea where we are. /usr/bin/ceph-osd(+0x3b0271) [0x558c1eebf271] Searching for that offset in the objdump output places us most likely here.       ceph_abort();
+  627fbb:»······48 8
 
 FIX STATUS:
-- Current JIRA status: In Progress
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: In Progress</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 9.2.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat
+Environment: IBM Ceph 9.2, component: rados
 
 1. Deploy IBM Ceph 9.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the scenario described in the JIRA (see issue for specific conditions)
-5. Check for crash -- `ceph crash ls-new`
-6. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+4. Trigger the failure scenario (see engineering findings below)
+5. Check for daemon crash -- `ceph crash ls-new`
+6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
 
 GAPS:
-- No crash regression test for this specific rados scenario
-- Need test that triggers the crash condition and verifies daemon stability
+- No crash regression test for: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat
 
 SCENARIOS NEEDED:
-- Stability test: trigger the reported condition, verify no daemon crash
-- Functional test for rados: reproduce the reported scenario and verify correct behavior</textarea>
+- Stability: reproduce conditions, verify no crash
+- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,35 +246,48 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Daemon crash reported in rados. No stack trace captured in JIRA metadata.</li>
+<li>Daemon crash reported in rados.</li>
 <li>Affected version(s): 9.2</li>
+<li>Component: rados</li>
 </ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Brad Hubbard] Looking at the logs you suggested. osd40_crash_logs$ grep timestamp crash_info.json</li>
+</ul>
+<div>&quot;timestamp&quot;: &quot;2026-05-08T14:36:33.817416Z&quot;,</div>
+<div>osd40_crash_logs$  ls -l ceph-osd.40.log*</div>
+<div>-rw-r--r--. 1 brad brad      0 May 11 16:23 ceph-osd.40.log</div>
+<div>-rw-r--r--. 1 brad brad 676986 May 11 16:23 c</div>
+<ul>
+<li>[K Amarnath Reddy] Hi   , This crash was observed during scale testing, but there were no specific reproduction steps. After creating the cluster, we did not perform any operations. We are not sure whether this issue is consistently reproducible. Since it resulted in a crash, I reported it for furt</li>
+<li>[K Amarnath Reddy] , Let me check if  I can get the actual crash log and update here</li>
+<li>[K Amarnath Reddy] Hi    I have collected a crash_dump_log  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/osd40_crash_logs/crash_dump_log.txt Could you please review if this helps?</li>
+<li>[Brad Hubbard] I was looking at this frame and I loaded a binary compatible debugging environment to get a better idea where we are. /usr/bin/ceph-osd(+0x3b0271) [0x558c1eebf271] Searching for that offset in the objdump output places us most likely here.       ceph_abort();</li>
+</ul>
+<div>627fbb:»······48 8</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: In Progress</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 9.2.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</div>
+<div>Environment: IBM Ceph 9.2, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
-<li><span class="step-num">5.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
+<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for this specific <code>rados scenario</code></li>
-<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>No crash regression test for: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability test: trigger the reported condition, verify no daemon crash</li>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
+<li>Stability: reproduce conditions, verify no crash</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 

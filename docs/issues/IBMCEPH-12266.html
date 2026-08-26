@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12266: [BZ#2401094] [IBM_Support] [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -192,34 +192,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2401094] [IBM_Support] [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working
 
 ROOT CAUSE:
-- Issue reported in documentation component.
 - Affected version(s): 8.1
+- Component: documentation
+
+ENGINEERING FINDINGS:
+- [Vivek Maurya] Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file cephadm shell – cat /usr/share/ceph/mgr/cephadm/templates/services/nfs/ganesha.conf.j2 &gt; ganesha.conf.j2 2. Verify the conf file before
+- [Sachin Punadikar] Hi Rivka, Please do below: 1. Change the topic name &quot;Customizing an NFS configuration&quot; to &quot;Adding custom debug configuration&quot; - Keep rest of the information as is for this topic. 2. Add a new topic &quot;Changing default NFS configuration&quot; under  https://www.ibm.com/docs/en/storage-ce
 
 FIX STATUS:
 - Current JIRA status: MODIFIED
-- No fix confirmed in JIRA comments yet.
-- Workaround mentioned: Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file cepha</textarea>
+- Workaround: Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file cephadm shell – cat /usr/share/ceph/mgr/cephadm/templat</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce documentation issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2401094]  [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working
+Environment: IBM Ceph 8.1, component: documentation
 
 1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Trigger failover (stop daemon, power off node, or network partition)
-3. Verify services recover -- `ceph -s`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+2. Trigger failover (stop daemon / power off node / network partition)
+3. Verify recovery -- `ceph -s`
+4. Apply the configuration change described in the JIRA
+5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is MODIFIED. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: MODIFIED. Investigation and test coverage needed.
 
 GAPS:
 
 SCENARIOS NEEDED:
-- HA test: trigger failover, verify data integrity and service continuity
-- Functional test for documentation: reproduce the reported scenario and verify correct behavior</textarea>
+- HA: failover + recovery, verify data integrity
+- Functional: reproduce reported documentation scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,29 +236,34 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2401094] [IBM_Support] [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in documentation component.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: documentation</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Vivek Maurya] Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file <code>cephadm shell – cat /usr/share/ceph/mgr/cephadm/templates/services/nfs/ganesha.conf.j2 &gt; ganesha.conf.j2 2. Verify the conf file before</code></li>
+<li>[Sachin Punadikar] Hi Rivka, Please do below: 1. Change the topic name &quot;Customizing an NFS configuration&quot; to &quot;Adding custom debug configuration&quot; - Keep rest of the information as is for this topic. 2. Add a new topic &quot;Changing default NFS configuration&quot; under  https://www.ibm.com/docs/en/storage-ce</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: MODIFIED</li>
-<li>No fix confirmed in JIRA comments yet.</li>
-<li>Workaround mentioned: Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file cepha</li>
+<li>Workaround: Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file <code>cephadm shell – cat /usr/share/ceph/mgr/cephadm/templat</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce documentation issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2401094]  [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working</div>
+<div>Environment: IBM Ceph 8.1, component: documentation</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Trigger failover (stop daemon, power off node, or network partition)</li>
-<li><span class="step-num">3.</span> Verify services recover -- <code><code>ceph -s</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is MODIFIED. No confirmed fix yet. Needs investigation and test coverage.</div>
+<li><span class="step-num">2.</span> Trigger failover (stop daemon / power off node / network partition)</li>
+<li><span class="step-num">3.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
+<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">MODIFIED. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA test: trigger failover, verify data integrity and service continuity</li>
-<li>Functional test for documentation: reproduce the reported scenario and verify correct behavior</li>
+<li>HA: failover + recovery, verify data integrity</li>
+<li>Functional: reproduce reported documentation scenario, verify correct behavior</li>
 </ul></div>
 </div>
 

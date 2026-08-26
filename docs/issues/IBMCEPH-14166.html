@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -131,7 +131,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rados</dd>
     <dt>Versions</dt><dd>6.1, 8.1</dd>
     <dt>Created</dt><dd>2026-04-24</dd>
-    <dt>Updated</dt><dd>2026-08-24</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -192,33 +192,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: High MON ms_dispatch CPU related to LogClient
 
 ROOT CAUSE:
-- Issue reported in rados component.
 - Affected version(s): 6.1, 8.1
+- Component: rados
+
+ENGINEERING FINDINGS:
+- [Yuka Ariyama] Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this could suggest that some proces
+- [Prashant Dhange] After analyzing the monitor debug logs and CPU utilization data on tb8-cephmon-p3i-a1s2-0002p, two potential contributors to the high CPU usage (ranging from 5.9% to 94.1%) were identified: route message flooding and excessive audit logging. Among these, the route message flood s
+- [Yuka Ariyama] thanks for looking into this. The customer has informed us that it would be difficult to enable debug logging on all three MONs because the MONs are already under high load and the cluster is currently in the middle of an upgrade. If debug logs from all three MONs are absolutely
+- [Aarti Dhikale] Hi   , Thanks for the update. In the meantime, I&#x27;ll go through the debug logs. If possible, could you set up this environment again? That would be helpful in identifying the root cause of the issue.
+- [Aarti Dhikale] Hello   , From the script output you shared, we observed the below. We do see an increase in CPU usage after the upgrade to 8.1. However, the MON logs are missing from the SOS report, so we could not correlate the CPU increase with the MON logs.  ps_auxwww  command output All thr
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED
-- No fix confirmed in JIRA comments yet.</textarea>
+- Current JIRA status: ASSIGNED</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 6.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- High MON ms_dispatch CPU related to LogClient
+Environment: IBM Ceph 6.1, component: rados
 
 1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
 2. Add OSDs -- `ceph orch apply osd --all-available-devices`
 3. Create test pool -- `ceph osd pool create test-pool 32`
 4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+SCENARIO DETAIL (from engineering comments):
+Hi  , I re‑reviewed the logs provided earlier by the customer and observed that the route messages are part of cluster audit logs, specifically associated with the  ceph df  command  2026-06-11T08:40:</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
 
 GAPS:
-- Need to assess existing rados test coverage for this scenario
+- Existing rados tests may not cover: High MON ms_dispatch CPU related to LogClient
 
 SCENARIOS NEEDED:
-- Functional test for rados: reproduce the reported scenario and verify correct behavior</textarea>
+- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,36 +240,45 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">High MON ms_dispatch CPU related to LogClient</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in <code>rados component.</code></li>
 <li>Affected version(s): 6.1, 8.1</li>
+<li>Component: rados</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Yuka Ariyama] Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this could suggest that some proces</li>
+<li>[Prashant Dhange] After analyzing the monitor debug logs and CPU utilization data on tb8-cephmon-p3i-a1s2-0002p, two potential contributors to the high CPU usage (ranging from 5.9% to 94.1%) were identified: route message flooding and excessive audit logging. Among these, the route message flood s</li>
+<li>[Yuka Ariyama] thanks for looking into this. The customer has informed us that it would be difficult to enable debug logging on all three MONs because the MONs are already under high load and the cluster is currently in the middle of an upgrade. If debug logs from all three MONs are absolutely</li>
+<li>[Aarti Dhikale] Hi   , Thanks for the update. In the meantime, I&#x27;ll go through the debug logs. If possible, could you set up this environment again? That would be helpful in identifying the root cause of the issue.</li>
+<li>[Aarti Dhikale] Hello   , From the script output you shared, we observed the below. We do see an increase in CPU usage after the upgrade to 8.1. However, the MON logs are missing from the SOS report, so we could not correlate the CPU increase with the MON logs.  ps_auxwww  command output All thr</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Current JIRA status: ASSIGNED</li>
-<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 6.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- High MON ms_dispatch CPU related to LogClient</div>
+<div>Environment: IBM Ceph 6.1, component: rados</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
 <li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
 <li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is ASSIGNED. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div>SCENARIO DETAIL (from engineering comments):</div>
+<div>Hi  , I re‑reviewed the logs provided earlier by the customer and observed that the route messages are part of cluster audit logs, specifically associated with the  ceph df  command  2026-06-11T08:40:</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing <code>rados test coverage for this scenario</code></li>
+<li>Existing <code>rados tests may not cover: High MON ms_dispatch CPU related to LogClient</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
+<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
 </ul></div>
 </div>
 
 
 
-<h2>Timeline (42 events)</h2>
+<h2>Timeline (43 events)</h2>
 <div class="timeline">
 <div class="tl-entry"><span class="tl-date">2026-06-18 03:45:35</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  The upgrade is currently on hold due to CVE remediation. Please let us know if there is any additional data we should collect.</div>
 <div class="tl-entry"><span class="tl-date">2026-06-18 05:18:54</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this </div>
@@ -310,6 +327,8 @@ ce</div>
 <div class="tl-entry"><span class="tl-date">2026-08-18 03:15:30</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for your investigation and for sharing your findings. If the fix for  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/22cd0d42a15e19d9ca3b6bd99e108993d3fd2263  is causing the MON CPU usage to increase significantly after upgrading from 6.</div>
 <div class="tl-entry"><span class="tl-date">2026-08-20 03:39:59</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Thanks for the information. I’m currently working on the build by reverting the changes from the commit. Once it’s ready, I’ll need your help testing that branch.</div>
 <div class="tl-entry"><span class="tl-date">2026-08-24 23:22:07</span><span class="tl-badge comment">Comment</span> <strong>Aarti Dhikale</strong>: Hello   , Here is the container build: podman pull quay.io/rhceph-ci/rhceph:on-pr-v8.1-981f4df30d3f8beff5f17afb97a6194725678f4e Could you please try setting up the cluster with the above build and let me know whether we see high CPU usage or not?</div>
+<div class="tl-entry"><span class="tl-date">2026-08-25 21:35:16</span><span class="tl-badge comment">Comment</span> <strong>Yuka Ariyama</strong>:  Thank you for providing the patch. I applied it today. Regarding the CPU increase, I would like to monitor the situation for about one week before providing an update. [root@ceph-0 ~]#  ceph orch ps --service_name mon
+NAME        HOST    PORTS  STAT</div>
 </div>
 
 <script>

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12435: [BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -131,7 +131,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     <dt>Components</dt><dd>rgw-multisite</dd>
     <dt>Versions</dt><dd>8.1</dd>
     <dt>Created</dt><dd>2025-10-30</dd>
-    <dt>Updated</dt><dd>2026-06-30</dd>
+    <dt>Updated</dt><dd>2026-08-25</dd>
   </dl></div>
 </div>
 
@@ -192,8 +192,14 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
       <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body
 
 ROOT CAUSE:
-- Issue reported in rgw-multisite component.
 - Affected version(s): 8.1
+- Component: rgw-multisite
+
+ENGINEERING FINDINGS:
+- [Aarti Dhikale] We are encountering the below crash on primary endpoint RGW, after which the RGW service restarts. If additional retries remain, the operation may succeed during a subsequent attempt; otherwise, it will fail. Increasing the number of retries may help in some cases, but there is s
+- [Aarti Dhikale] Hello   ,  I’m able to successfully create a bucket in the secondary zonegroup using the secondary endpoint. Could you please try this on your setup and confirm? Build is available at:   Please bootstrap the cluster using the build provided below:  $ podman pull quay.io/rhceph-ci
+- [Manisha Reddem] I’ll test this on the downstream build once the fix is available there.
+- [Aarti Dhikale] [ Internal Discussion - Do not share with customer ] The changes are now backported to ceph-8.1-rhel-patches. Commit ids are:   https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a33c8b02fa170c045c94e1c89da3929d1e9e0f38 https://gitlab.cee.redhat.com/ceph/ceph/-/commit/1732c6773e1fa
 
 FIX STATUS:
 - Fix available
@@ -201,23 +207,22 @@ FIX STATUS:
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.1.
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2407405]  [rgw-multisite] Forwarded CreateBucket missing request body
+Environment: IBM Ceph 8.1, component: rgw-multisite
 
 1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
+2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. Fix verified. Need regression test to prevent recurrence.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
 
 GAPS:
-- Need to assess existing rgw-multisite test coverage for this scenario
+- Existing rgw-multisite tests may not cover: [BZ#2407405]  [rgw-multisite] Forwarded CreateBucket missing request body
 
 SCENARIOS NEEDED:
-- Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior
-- Regression test: verify fix holds across supported versions</textarea>
+- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
+- Regression: verify fix holds in latest builds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,29 +236,36 @@ SCENARIOS NEEDED:
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2407405] [IBM_Support] [rgw-multisite] Forwarded CreateBucket missing request body</div>
 <div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Issue reported in rgw-multisite component.</li>
 <li>Affected version(s): 8.1</li>
+<li>Component: rgw-multisite</li>
+</ul>
+<div class="section-head">ENGINEERING FINDINGS</div>
+<ul>
+<li>[Aarti Dhikale] We are encountering the below crash on primary endpoint RGW, after which the RGW service restarts. If additional retries remain, the operation may succeed during a subsequent attempt; otherwise, it will fail. Increasing the number of retries may help in some cases, but there is s</li>
+<li>[Aarti Dhikale] Hello   ,  I’m able to successfully create a bucket in the secondary zonegroup using the secondary endpoint. Could you please try this on your setup and confirm? Build is available at:   Please bootstrap the cluster using the build provided below:  $ <code>podman pull quay.io/rhceph-ci</code></li>
+<li>[Manisha Reddem] I’ll test this on the downstream build once the fix is available there.</li>
+<li>[Aarti Dhikale] [ Internal Discussion - Do not share with customer ] The changes are now backported to ceph-8.1-rhel-patches. Commit ids are:   https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a33c8b02fa170c045c94e1c89da3929d1e9e0f38 https://gitlab.cee.redhat.com/ceph/ceph/-/commit/1732c6773e1fa</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
 <li>Fix available</li>
 <li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a33c8b02fa170c045c94e1c89da3929d1e9e0f38</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.1.</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2407405]  [rgw-multisite] Forwarded CreateBucket missing request body</div>
+<div>Environment: IBM Ceph 8.1, component: rgw-multisite</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
 <li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. Fix verified. Need regression test to prevent recurrence.</div>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Need to assess existing rgw-multisite test coverage for this scenario</li>
+<li>Existing rgw-multisite tests may not cover: [BZ#2407405]  [rgw-multisite] Forwarded CreateBucket missing request body</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior</li>
-<li>Regression test: verify fix holds across supported versions</li>
+<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
+<li>Regression: verify fix holds in latest builds</li>
 </ul></div>
 </div>
 
