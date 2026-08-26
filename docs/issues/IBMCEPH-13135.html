@@ -127,7 +127,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13135: MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 09:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 09:52 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -307,7 +307,7 @@ SCENARIOS NEEDED:
 </div>
 
 <div class="save-bar" id="save-bar">
-  <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
+  <button class="save-btn" onclick="saveLocal()">Save</button>
   <button class="discard-btn" onclick="discardAll()">Discard</button>
   <span class="change-count" id="change-count"></span>
   <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);margin-left:auto;"></span>
@@ -332,11 +332,29 @@ SCENARIOS NEEDED:
 
 <script>
 const ISSUE_ID = 'IBMCEPH-13135';
-const REPO_OWNER = 'pdhiran';
-const REPO_NAME = 'ceph-prio-hub';
-const TRACKING_PATH = 'tracking.json';
+const LS_KEY = 'priohub_' + ISSUE_ID;
 
 const dirtyFields = new Set();
+
+// Load any locally saved overrides on page load
+(function loadLocal() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (!saved) return;
+    const fieldMap = {
+      qa_status: 'ed-qa-status', qa_assignee: 'ed-qa-assignee',
+      internal_priority: 'ed-priority', hotfix_status: 'ed-hotfix',
+      notes: 'ed-notes', analysis: 'ed-analysis',
+      repro_steps: 'ed-repro', test_coverage: 'ed-coverage',
+    };
+    Object.entries(fieldMap).forEach(([key, elId]) => {
+      if (saved[key] !== undefined) {
+        const el = document.getElementById(elId);
+        if (el) el.value = saved[key];
+      }
+    });
+  } catch(e) {}
+})();
 
 function editField(field) {
   const viewEl = document.getElementById('view-' + field);
@@ -378,78 +396,22 @@ function discardAll() {
   document.getElementById('save-bar').classList.remove('visible');
 }
 
-function getToken() {
-  let token = localStorage.getItem('gh_prio_hub_token');
-  if (!token) {
-    token = prompt('Enter your GitHub Personal Access Token (needs repo scope):');
-    if (token) localStorage.setItem('gh_prio_hub_token', token);
-  }
-  return token;
-}
-
-async function saveChanges() {
-  const token = getToken();
-  if (!token) return;
-
+function saveLocal() {
+  const data = {
+    qa_status: document.getElementById('ed-qa-status').value,
+    qa_assignee: document.getElementById('ed-qa-assignee').value,
+    internal_priority: document.getElementById('ed-priority').value,
+    hotfix_status: document.getElementById('ed-hotfix').value,
+    notes: document.getElementById('ed-notes').value,
+    analysis: document.getElementById('ed-analysis').value,
+    repro_steps: document.getElementById('ed-repro').value,
+    test_coverage: document.getElementById('ed-coverage').value,
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
   const status = document.getElementById('save-status');
-  status.textContent = 'Saving...';
-  status.style.color = 'var(--ibm-blue)';
-
-  try {
-    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${TRACKING_PATH}`;
-    const resp = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
-
-    let trackingData = { issues: {} };
-    let sha = null;
-
-    if (resp.ok) {
-      const file = await resp.json();
-      sha = file.sha;
-      trackingData = JSON.parse(atob(file.content));
-    }
-
-    if (!trackingData.issues) trackingData.issues = {};
-    if (!trackingData.issues[ISSUE_ID]) trackingData.issues[ISSUE_ID] = {};
-
-    const entry = trackingData.issues[ISSUE_ID];
-    entry.qa_status = document.getElementById('ed-qa-status').value;
-    entry.qa_assignee = document.getElementById('ed-qa-assignee').value;
-    entry.internal_priority = document.getElementById('ed-priority').value;
-    entry.hotfix_status = document.getElementById('ed-hotfix').value;
-    entry.notes = document.getElementById('ed-notes').value;
-    entry.analysis = document.getElementById('ed-analysis').value;
-    entry.repro_steps = document.getElementById('ed-repro').value;
-    entry.test_coverage = document.getElementById('ed-coverage').value;
-
-    const body = {
-      message: `Update tracking: ${ISSUE_ID}`,
-      content: btoa(unescape(encodeURIComponent(JSON.stringify(trackingData, null, 2)))),
-    };
-    if (sha) body.sha = sha;
-
-    const putResp = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (putResp.ok) {
-      status.textContent = 'Saved!';
-      status.style.color = 'var(--ibm-green)';
-      setTimeout(() => location.reload(), 1200);
-    } else {
-      const err = await putResp.json();
-      status.textContent = 'Error: ' + (err.message || putResp.status);
-      status.style.color = 'var(--ibm-red)';
-      if (putResp.status === 401) localStorage.removeItem('gh_prio_hub_token');
-    }
-  } catch (e) {
-    status.textContent = 'Error: ' + e.message;
-    status.style.color = 'var(--ibm-red)';
-  }
+  status.textContent = 'Saved locally';
+  status.style.color = 'var(--ibm-green)';
+  setTimeout(() => { status.textContent = ''; }, 3000);
 }
 </script>
 </body>
