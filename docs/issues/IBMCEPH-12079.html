@@ -80,12 +80,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .tl-badge.status { background: #e8f0fe; color: var(--ibm-blue); }
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
+
+.edit-btn {
+  font-size: 0.72rem; padding: 3px 12px; border-radius: 4px; border: 1px solid var(--ibm-blue);
+  background: #fff; color: var(--ibm-blue); cursor: pointer; font-weight: 500;
+  margin-left: 0.5rem; vertical-align: middle; transition: all 0.15s;
+}
+.edit-btn:hover { background: var(--ibm-blue); color: #fff; }
+.edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
+}
+@media (max-width: 900px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
+.edit-field label {
+  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ibm-gray-50);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
+}
+.edit-field select, .edit-field textarea {
+  font-family: inherit; font-size: 0.82rem; padding: 0.35rem 0.5rem;
+  border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
+  color: var(--ibm-gray-90); width: 100%; box-sizing: border-box;
+}
+.edit-field select:focus, .edit-field textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.save-btn {
+  font-size: 0.8rem; padding: 0.4rem 1.2rem; border-radius: 4px; border: none;
+  background: var(--ibm-blue); color: #fff; cursor: pointer; font-weight: 500;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: #0353e9; }
+.cancel-btn {
+  font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 4px;
+  border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
+  cursor: pointer; font-weight: 500;
+}
+.cancel-btn:hover { background: var(--ibm-gray-10); }
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12079: [BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-25 10:10 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -107,20 +140,126 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
   <div class="label-list"><span>FutureFeature</span><span>IBM_Customer_Issue</span></div>
 </div>
 
-<div class="qa-section">
-  <h3>QA Tracking</h3>
-  <div class="qa-grid">
-    <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
-    <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-    <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+<div class="qa-section" id="qa-section">
+  <h3>QA Tracking <button class="edit-btn" id="edit-toggle" onclick="toggleEdit()">Edit</button></h3>
+
+  <div id="qa-view">
+    <div class="qa-grid">
+      <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
+      <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
+      <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+    </div>
+    <div class="qa-grid">
+      <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rados</div>
   </div>
-  <div class="qa-grid">
-    <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+
+  <div id="qa-edit" style="display:none;">
+    <div class="edit-grid">
+      <div class="edit-field">
+        <label>QA Status</label>
+        <select id="ed-qa-status">
+          <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>QA Owner</label>
+        <select id="ed-qa-assignee">
+          <option value="">-- Unassigned --</option>
+          <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Internal Priority</label>
+        <select id="ed-priority">
+          <option value="">-- None --</option><option value="P0">P0</option><option value="P1" selected>P1</option><option value="P2">P2</option><option value="P3">P3</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Hotfix Status</label>
+        <select id="ed-hotfix">
+          <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
+        </select>
+      </div>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Notes</label>
+      <textarea id="ed-notes" rows="2" style="width:100%;">Auto-analyzed from JIRA data. Components: rados</textarea>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Root Cause Analysis</label>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible
+
+Issue Details:
+- JIRA: IBMCEPH-12079
+- Affected version(s): 9.1
+- Component(s): rados
+- Severity: major
+- Related Bugzilla: BZ#2393402
+- Escalation: IBM customer impact
+
+Debug Commands:
+- `ceph osd tree`
+- `ceph osd pool ls detail`
+- `ceph pg stat`
+- `ceph health detail`
+- `ceph crash ls-new`
+- `ceph osd perf`</textarea>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Steps to Reproduce</label>
+      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce rados issue on IBM Ceph 9.1
+
+Environment:
+- IBM Ceph version: 9.1
+- Component: RADOS (core storage layer)
+- Issue type: error, network, rfe
+
+Workflow:
+1. Deploy IBM Ceph 9.1 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
+2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
+3. Add OSDs: `ceph orch apply osd --all-available-devices`
+4. Verify cluster health: `ceph -s`
+5. Create test pool: `ceph osd pool create testpool 32`
+6. Run rados operations related to the issue scenario
+7. Check PG health: `ceph pg stat`
+8. Check OSD status: `ceph osd tree`
+9. Check logs: `cephadm shell -- ceph log last ceph-osd 100`
+
+Validate:
+- Cluster health: `ceph health detail`
+- Daemon status: `ceph orch ps`
+- Crash dumps: `ceph crash ls-new`
+- Logs: `cephadm shell -- ceph log last ceph-osd`</textarea>
+    </div>
+    <div class="edit-field" style="margin-top:0.5rem;">
+      <label>Test Coverage</label>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for rados issue
+
+Existing Coverage:
+- Component test suite: `qa/suites/rados`
+- Related BZ fixes: BZ#2393402 -- check if regression tests exist
+- Pending: cephci repo integration for automated coverage check
+
+Coverage Gaps:
+- Error handling test for the specific failure scenario
+
+Recommended Tests:
+- Add regression test to `qa/suites/rados`
+- Negative test: verify proper error handling
+- Integration test: end-to-end with customer-like config</textarea>
+    </div>
+    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+      <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
+      <button class="cancel-btn" onclick="toggleEdit()">Cancel</button>
+      <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);align-self:center;"></span>
+    </div>
   </div>
-  <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: rados</div>
 </div>
 
 <h2>Analysis</h2>
+<div id="analysis-view">
 <div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible</div>
 <div class="section-head">Issue Details</div>
 <ul>
@@ -183,6 +322,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
 </ul></div>
+</div>
 
 
 
@@ -191,5 +331,102 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <div class="tl-entry"><span class="tl-date">2026-08-05 06:32:41</span><span class="tl-badge status">Status</span> New <span style="color:var(--ibm-gray-50);">(Radosław Zarzyński)</span></div>
 </div>
 
+<script>
+const ISSUE_ID = 'IBMCEPH-12079';
+const REPO_OWNER = 'pdhiran';
+const REPO_NAME = 'ceph-prio-hub';
+const TRACKING_PATH = 'tracking.json';
+
+function toggleEdit() {
+  const view = document.getElementById('qa-view');
+  const edit = document.getElementById('qa-edit');
+  const btn = document.getElementById('edit-toggle');
+  const analysis = document.getElementById('analysis-view');
+  if (edit.style.display === 'none') {
+    edit.style.display = 'block';
+    view.style.display = 'none';
+    analysis.style.display = 'none';
+    btn.textContent = 'Cancel';
+  } else {
+    edit.style.display = 'none';
+    view.style.display = 'block';
+    analysis.style.display = 'block';
+    btn.textContent = 'Edit';
+  }
+}
+
+function getToken() {
+  let token = localStorage.getItem('gh_prio_hub_token');
+  if (!token) {
+    token = prompt('Enter your GitHub Personal Access Token (needs repo scope):');
+    if (token) localStorage.setItem('gh_prio_hub_token', token);
+  }
+  return token;
+}
+
+async function saveChanges() {
+  const token = getToken();
+  if (!token) return;
+
+  const status = document.getElementById('save-status');
+  status.textContent = 'Saving...';
+  status.style.color = 'var(--ibm-blue)';
+
+  try {
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${TRACKING_PATH}`;
+    const resp = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+
+    let trackingData = { issues: {} };
+    let sha = null;
+
+    if (resp.ok) {
+      const file = await resp.json();
+      sha = file.sha;
+      trackingData = JSON.parse(atob(file.content));
+    }
+
+    if (!trackingData.issues) trackingData.issues = {};
+    if (!trackingData.issues[ISSUE_ID]) trackingData.issues[ISSUE_ID] = {};
+
+    const entry = trackingData.issues[ISSUE_ID];
+    entry.qa_status = document.getElementById('ed-qa-status').value;
+    entry.qa_assignee = document.getElementById('ed-qa-assignee').value;
+    entry.internal_priority = document.getElementById('ed-priority').value;
+    entry.hotfix_status = document.getElementById('ed-hotfix').value;
+    entry.notes = document.getElementById('ed-notes').value;
+    entry.analysis = document.getElementById('ed-analysis').value;
+    entry.repro_steps = document.getElementById('ed-repro').value;
+    entry.test_coverage = document.getElementById('ed-coverage').value;
+
+    const body = {
+      message: `Update tracking: ${ISSUE_ID}`,
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(trackingData, null, 2)))),
+    };
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (putResp.ok) {
+      status.textContent = 'Saved! Reload to see changes.';
+      status.style.color = 'var(--ibm-green)';
+    } else {
+      const err = await putResp.json();
+      status.textContent = 'Error: ' + (err.message || putResp.status);
+      status.style.color = 'var(--ibm-red)';
+      if (putResp.status === 401) localStorage.removeItem('gh_prio_hub_token');
+    }
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.color = 'var(--ibm-red)';
+  }
+}
+</script>
 </body>
 </html>
