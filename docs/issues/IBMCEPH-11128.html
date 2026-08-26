@@ -122,12 +122,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 }
 .save-bar .discard-btn:hover { background: var(--ibm-gray-10); }
 .save-bar .change-count { font-size: 0.78rem; color: var(--ibm-gray-50); }
+
+.settings-gear {
+  position: fixed; top: 12px; right: 16px; z-index: 200;
+  width: 30px; height: 30px; border: none; background: transparent;
+  cursor: pointer; opacity: 0.4; transition: opacity 0.15s; padding: 0;
+}
+.settings-gear:hover { opacity: 0.9; }
+.settings-gear svg { width: 22px; height: 22px; fill: var(--ibm-gray-70); }
+.settings-gear.configured svg { fill: var(--ibm-green); }
+
+.settings-panel {
+  display: none; position: fixed; top: 50px; right: 16px; z-index: 200;
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 1.2rem 1.4rem;
+  width: 360px; font-size: 0.82rem;
+}
+.settings-panel.open { display: block; }
+.settings-panel h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--ibm-gray-90); }
+.settings-panel p { font-size: 0.75rem; color: var(--ibm-gray-50); margin-bottom: 0.6rem; line-height: 1.4; }
+.settings-panel input[type="password"] {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; padding: 0.35rem 0.5rem;
+  border: 1px solid var(--ibm-gray-30); border-radius: 4px; width: 100%;
+  box-sizing: border-box; margin-bottom: 0.5rem;
+}
+.settings-panel input:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.settings-panel .btn-row { display: flex; gap: 0.4rem; align-items: center; }
+.settings-panel .btn-sm {
+  font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer;
+  font-weight: 500; border: none;
+}
+.settings-panel .btn-sm.primary { background: var(--ibm-blue); color: #fff; }
+.settings-panel .btn-sm.danger { background: var(--ibm-red); color: #fff; }
+.settings-panel .btn-sm.secondary { background: var(--ibm-gray-10); color: var(--ibm-gray-70); border: 1px solid var(--ibm-gray-30); }
+.sync-indicator {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  margin-right: 0.3rem; vertical-align: middle;
+}
+.sync-indicator.on { background: var(--ibm-green); }
+.sync-indicator.off { background: var(--ibm-gray-50); }
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11128: [BZ#2358851] [IBM_Support] [RFE] Turn monitor logging enabled by default</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 09:52 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 10:15 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -308,8 +347,24 @@ SCENARIOS NEEDED (once implemented):
   </div>
 </div>
 
+<button class="settings-gear" id="settings-gear" onclick="toggleSettings()" title="Sync settings">
+  <svg viewBox="0 0 20 20"><path d="M17.2 8.6l-1.5-.3a5.9 5.9 0 00-.5-1.2l.8-1.3a.5.5 0 00-.1-.6l-1.1-1.1a.5.5 0 00-.6-.1l-1.3.8a5.9 5.9 0 00-1.2-.5l-.3-1.5a.5.5 0 00-.5-.4H9.3a.5.5 0 00-.5.4l-.3 1.5a5.9 5.9 0 00-1.2.5l-1.3-.8a.5.5 0 00-.6.1L4.3 5.2a.5.5 0 00-.1.6l.8 1.3a5.9 5.9 0 00-.5 1.2l-1.5.3a.5.5 0 00-.4.5v1.6a.5.5 0 00.4.5l1.5.3c.1.4.3.8.5 1.2l-.8 1.3a.5.5 0 00.1.6l1.1 1.1a.5.5 0 00.6.1l1.3-.8c.4.2.8.4 1.2.5l.3 1.5a.5.5 0 00.5.4h1.6a.5.5 0 00.5-.4l.3-1.5c.4-.1.8-.3 1.2-.5l1.3.8a.5.5 0 00.6-.1l1.1-1.1a.5.5 0 00.1-.6l-.8-1.3c.2-.4.4-.8.5-1.2l1.5-.3a.5.5 0 00.4-.5V9.1a.5.5 0 00-.4-.5zM10 13a3 3 0 110-6 3 3 0 010 6z"/></svg>
+</button>
+
+<div class="settings-panel" id="settings-panel">
+  <h4>GitHub Sync Settings</h4>
+  <p>Save a Personal Access Token (repo scope) to sync edits to the shared GitHub repo. Without this, edits are saved locally in your browser only.</p>
+  <div id="token-status" style="margin-bottom:0.5rem;font-size:0.78rem;"></div>
+  <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxx">
+  <div class="btn-row">
+    <button class="btn-sm primary" onclick="saveToken()">Save Token</button>
+    <button class="btn-sm danger" id="clear-token-btn" onclick="clearToken()" style="display:none;">Remove</button>
+    <button class="btn-sm secondary" onclick="toggleSettings()">Close</button>
+  </div>
+</div>
+
 <div class="save-bar" id="save-bar">
-  <button class="save-btn" onclick="saveLocal()">Save</button>
+  <button class="save-btn" onclick="saveAll()">Save</button>
   <button class="discard-btn" onclick="discardAll()">Discard</button>
   <span class="change-count" id="change-count"></span>
   <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);margin-left:auto;"></span>
@@ -347,10 +402,26 @@ SCENARIOS NEEDED (once implemented):
 <script>
 const ISSUE_ID = 'IBMCEPH-11128';
 const LS_KEY = 'priohub_' + ISSUE_ID;
+const GH_TOKEN_KEY = 'priohub_gh_token';
+const REPO_OWNER = 'pdhiran';
+const REPO_NAME = 'ceph-prio-hub';
 
 const dirtyFields = new Set();
 
-// Load any locally saved overrides on page load
+function getFieldData() {
+  return {
+    qa_status: document.getElementById('ed-qa-status').value,
+    qa_assignee: document.getElementById('ed-qa-assignee').value,
+    internal_priority: document.getElementById('ed-priority').value,
+    hotfix_status: document.getElementById('ed-hotfix').value,
+    notes: document.getElementById('ed-notes').value,
+    analysis: document.getElementById('ed-analysis').value,
+    repro_steps: document.getElementById('ed-repro').value,
+    test_coverage: document.getElementById('ed-coverage').value,
+  };
+}
+
+// Load locally saved overrides on page load
 (function loadLocal() {
   try {
     const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
@@ -368,14 +439,14 @@ const dirtyFields = new Set();
       }
     });
   } catch(e) {}
+  refreshGearState();
 })();
 
 function editField(field) {
   const viewEl = document.getElementById('view-' + field);
   const editEl = document.getElementById('edit-' + field);
   if (!editEl) return;
-  const isOpen = editEl.classList.contains('active');
-  if (isOpen) {
+  if (editEl.classList.contains('active')) {
     editEl.classList.remove('active');
     if (viewEl) viewEl.classList.remove('hidden');
   } else {
@@ -410,22 +481,109 @@ function discardAll() {
   document.getElementById('save-bar').classList.remove('visible');
 }
 
-function saveLocal() {
-  const data = {
-    qa_status: document.getElementById('ed-qa-status').value,
-    qa_assignee: document.getElementById('ed-qa-assignee').value,
-    internal_priority: document.getElementById('ed-priority').value,
-    hotfix_status: document.getElementById('ed-hotfix').value,
-    notes: document.getElementById('ed-notes').value,
-    analysis: document.getElementById('ed-analysis').value,
-    repro_steps: document.getElementById('ed-repro').value,
-    test_coverage: document.getElementById('ed-coverage').value,
-  };
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
+// --- Settings panel ---
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) refreshTokenStatus();
+}
+
+function refreshGearState() {
+  const gear = document.getElementById('settings-gear');
+  gear.classList.toggle('configured', !!localStorage.getItem(GH_TOKEN_KEY));
+}
+
+function refreshTokenStatus() {
+  const el = document.getElementById('token-status');
+  const clearBtn = document.getElementById('clear-token-btn');
+  if (localStorage.getItem(GH_TOKEN_KEY)) {
+    el.innerHTML = '<span class="sync-indicator on"></span> GitHub sync enabled';
+    el.style.color = 'var(--ibm-green)';
+    clearBtn.style.display = 'inline-block';
+  } else {
+    el.innerHTML = '<span class="sync-indicator off"></span> Local only (no sync)';
+    el.style.color = 'var(--ibm-gray-50)';
+    clearBtn.style.display = 'none';
+  }
+}
+
+function saveToken() {
+  const input = document.getElementById('gh-token-input');
+  const val = input.value.trim();
+  if (val) {
+    localStorage.setItem(GH_TOKEN_KEY, val);
+    input.value = '';
+    refreshTokenStatus();
+    refreshGearState();
+  }
+}
+
+function clearToken() {
+  localStorage.removeItem(GH_TOKEN_KEY);
+  refreshTokenStatus();
+  refreshGearState();
+}
+
+// --- Save: always localStorage, optionally GitHub ---
+async function saveAll() {
+  const data = getFieldData();
   const status = document.getElementById('save-status');
-  status.textContent = 'Saved locally';
-  status.style.color = 'var(--ibm-green)';
-  setTimeout(() => { status.textContent = ''; }, 3000);
+
+  // 1. Always save to localStorage
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+
+  // 2. If GitHub token configured, also push to repo
+  const token = localStorage.getItem(GH_TOKEN_KEY);
+  if (token) {
+    status.textContent = 'Syncing to GitHub...';
+    status.style.color = 'var(--ibm-blue)';
+    try {
+      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/tracking.json`;
+      const resp = await fetch(url, { headers: { Authorization: `token ${token}` } });
+      let trackingData = { issues: {} };
+      let sha = null;
+      if (resp.ok) {
+        const file = await resp.json();
+        sha = file.sha;
+        trackingData = JSON.parse(atob(file.content));
+      }
+      if (!trackingData.issues) trackingData.issues = {};
+      if (!trackingData.issues[ISSUE_ID]) trackingData.issues[ISSUE_ID] = {};
+      Object.assign(trackingData.issues[ISSUE_ID], data);
+
+      const body = {
+        message: `Update tracking: ${ISSUE_ID}`,
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(trackingData, null, 2)))),
+      };
+      if (sha) body.sha = sha;
+
+      const putResp = await fetch(url, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (putResp.ok) {
+        status.textContent = 'Saved + synced to GitHub';
+        status.style.color = 'var(--ibm-green)';
+      } else {
+        if (putResp.status === 401) {
+          localStorage.removeItem(GH_TOKEN_KEY);
+          refreshGearState();
+          status.textContent = 'Saved locally. Token expired -- update in settings.';
+        } else {
+          status.textContent = 'Saved locally. GitHub sync failed (' + putResp.status + ')';
+        }
+        status.style.color = 'var(--ibm-orange)';
+      }
+    } catch (e) {
+      status.textContent = 'Saved locally. GitHub sync error.';
+      status.style.color = 'var(--ibm-orange)';
+    }
+  } else {
+    status.textContent = 'Saved locally';
+    status.style.color = 'var(--ibm-green)';
+  }
+  setTimeout(() => { status.textContent = ''; }, 4000);
 }
 </script>
 </body>
