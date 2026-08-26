@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10996: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,94 +189,34 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
-- Doc ref: IBM 9.0 - Managing the monitoring stack (Prometheus, Alertmanager, Grafana, Node-exporter)
-- Doc ref: IBM 9.0 - Deploying the monitoring stack (ceph orch apply prometheus/grafana/alertmanager/node-exporter)
-- Doc ref: IBM 9.0 - Configuring snmptrapd (CephMgrPrometheusModuleInactive alert)
-- Custom Grafana TLS certs: ceph config-key set mgr/cephadm/HOSTNAME/grafana_crt -i cert.pem
-- Commands: ceph dashboard set-prometheus-api-host, ceph dashboard set-alertmanager-api-host, ceph dashboard set-grafana-api-url
-Known Issues &amp; Cross-References (from KB enrichment):
-- IBMCEPH-6792: Dashboard does not display Grafana graphs (500 error, fixed via BZ#2212967) [ceph-4.3]
-- IBMCEPH-7421: RGW page 500 error when beast port config includes ssl_port [ceph-7.0, fixed]
-- IBMCEPH-11030: 500 Internal Server Error for buckets with LC policies [ceph-8.1, fixed]
-- IBMCEPH-11354: RFE - Move browser certificate exceptions to dashboard window [ceph-8.1, assigned]
-- IBMCEPH-4672: Grafana &#x27;RGW Overview - HAProxy Metrics&#x27; not populated with SSL ingress [ceph-5.2]
-- IBMCEPH-10277: HTTPError 401 Unauthorized for Grafana dashboard injection during upgrade [ceph-ansible, fixed 5.3z8]
-- RH KB 6525991: Dashboard 500 Internal Server Error collecting metrics (ConnectionError/BadStatusLine)
-- Doc ref: IBM 9.0 - Enabling monitoring stack (set-grafana-api-url, set-grafana-api-ssl-verify False)
-- Doc ref: IBM 9.0 - Certificate management (ceph orch certmgr cert/key set)
-- Commands: ceph dashboard set-grafana-api-url, ceph dashboard set-grafana-api-ssl-verify, ceph mgr module disable/enable dashboard
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity
 
-SUMMARY: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity
-
-Issue Details:
-- JIRA: IBMCEPH-10996
+ROOT CAUSE:
+- Issue reported in monitoring component.
 - Affected version(s): 9.0
-- Component(s): monitoring
-- Severity: major
-- Related Bugzilla: BZ#2355823
-- Escalation: IBM customer impact</textarea>
+
+FIX STATUS:
+- Current JIRA status: New
+- No fix confirmed in JIRA comments yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce monitoring issue on IBM Ceph 9.0
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce monitoring issue reported in IBM Ceph 9.0.
 
-Environment:
-- IBM Ceph version: 9.0
-- Component: monitoring
-- Issue type: monitoring, network, rfe, device
+1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 9.0 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Configure the component described in the issue
-6. Perform the operation described in the JIRA summary
-7. Check cluster health: `ceph health detail`
-8. Check daemon status: `ceph orch ps`
-9. Check logs: `cephadm shell -- ceph log last 100`
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-
-Verified Commands (from ceph-cmd-kb tentacle):
-  ceph mgr module ls                    # List active mgr modules
-  ceph mgr module enable dashboard      # Enable dashboard module
-  ceph mgr module disable dashboard     # Disable dashboard module (for reset)
-  ceph dashboard set-grafana-api-url &#x27;https://HOST:3000&#x27;
-  ceph dashboard set-grafana-api-ssl-verify False
-  ceph dashboard set-prometheus-api-host &#x27;http://HOST:9095&#x27;
-  ceph dashboard set-alertmanager-api-host &#x27;http://HOST:9093&#x27;
-  ceph dashboard feature                # Enable/disable features in dashboard
-  ceph dashboard debug                  # Control/report debug status
-  ceph mgr services                     # List service endpoints provided by mgr modules</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for monitoring issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is New. No confirmed fix yet. Needs investigation and test coverage.
 
-Existing Coverage:
-- Component test suite: `qa/suites/monitoring`
-- Related BZ fixes: BZ#2355823 -- check if regression tests exist
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- Need to assess existing monitoring test coverage for this scenario
 
-Coverage Gaps:
-- Functional test covering the reported monitoring scenario
-
-Recommended Tests:
-- Add regression test to `qa/suites/monitoring`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config
-
-KB-referenced fixes and test suites:
-- BZ#2212967 (IBMCEPH-6792): Grafana graph display fix - verify post-upgrade
-- BZ#2238470 (IBMCEPH-7421): RGW page 500 with ssl_port - test beast config with/without ssl_port
-- BZ#2364875 (IBMCEPH-11030): LC policy 500 error - test bucket lifecycle operations via dashboard
-- RH KB 6525991: Dashboard metrics 500 - test under mgr failover conditions
-- Regression suite: qa/tasks/mgr/dashboard (upstream Ceph test suite)</textarea>
+SCENARIOS NEEDED:
+- Functional test for monitoring: reproduce the reported scenario and verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -286,99 +226,32 @@ KB-referenced fixes and test suites:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Doc ref: IBM 9.0 - Managing the monitoring stack (Prometheus, Alertmanager, Grafana, Node-exporter)</li>
-<li>Doc ref: IBM 9.0 - Deploying the monitoring stack (<code>ceph orch apply prometheus/grafana/alertmanager/node-exporter)</code></li>
-<li>Doc ref: IBM 9.0 - Configuring snmptrapd (CephMgrPrometheusModuleInactive alert)</li>
-<li>Custom Grafana TLS certs: <code>ceph config-key set mgr/cephadm/HOSTNAME/grafana_crt -i cert.pem</code></li>
-<li>Commands: <code>ceph dashboard set-prometheus-api-host</code>, <code>ceph dashboard set-alertmanager-api-host</code>, <code>ceph dashboard set-grafana-api-url</code></li>
-</ul>
-<div>Known Issues &amp; Cross-References (from KB enrichment):</div>
-<ul>
-<li>IBMCEPH-6792: Dashboard does not display Grafana graphs (500 error, fixed via BZ#2212967) [ceph-4.3]</li>
-<li>IBMCEPH-7421: RGW page 500 error when beast port config includes ssl_port [ceph-7.0, fixed]</li>
-<li>IBMCEPH-11030: 500 Internal Server Error for buckets with LC policies [ceph-8.1, fixed]</li>
-<li>IBMCEPH-11354: RFE - Move browser certificate exceptions to dashboard window [ceph-8.1, assigned]</li>
-<li>IBMCEPH-4672: Grafana &#x27;RGW Overview - HAProxy Metrics&#x27; not populated with SSL ingress [ceph-5.2]</li>
-<li>IBMCEPH-10277: HTTPError 401 Unauthorized for Grafana dashboard injection during upgrade [ceph-ansible, fixed 5.3z8]</li>
-<li>RH KB 6525991: Dashboard 500 Internal Server Error collecting metrics (ConnectionError/BadStatusLine)</li>
-<li>Doc ref: IBM 9.0 - Enabling monitoring stack (set-grafana-api-url, set-grafana-api-ssl-verify False)</li>
-<li>Doc ref: IBM 9.0 - Certificate management (<code>ceph orch certmgr cert/key set)</code></li>
-<li>Commands: <code>ceph dashboard set-grafana-api-url</code>, <code>ceph dashboard set-grafana-api-ssl-verify</code>, <code>ceph mgr module disable/enable dashboard</code></li>
-</ul>
-<div class="summary-line">[BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-10996</li>
+<li>Issue reported in monitoring component.</li>
 <li>Affected version(s): 9.0</li>
-<li>Component(s): monitoring</li>
-<li>Severity: major</li>
-<li>Related Bugzilla: BZ#2355823</li>
-<li>Escalation: IBM customer impact</li>
+</ul>
+<div class="section-head">FIX STATUS</div>
+<ul>
+<li>Current JIRA status: New</li>
+<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce monitoring issue on IBM Ceph 9.0</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce monitoring issue reported in IBM Ceph 9.0.</div>
 <ul>
-<li>IBM Ceph version: 9.0</li>
-<li>Component: monitoring</li>
-<li>Issue type: monitoring, network, rfe, device</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is New. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Configure the component described in the issue</li>
-<li><span class="step-num">6.</span> Perform the operation described in the JIRA summary</li>
-<li><span class="step-num">7.</span> Check cluster health: <code><code>ceph health detail</code></code></li>
-<li><span class="step-num">8.</span> Check daemon status: <code><code>ceph orch ps</code></code></li>
-<li><span class="step-num">9.</span> Check logs: <code><code>cephadm shell -- ceph log last 100</code></code></li>
+<li>Need to assess existing monitoring test coverage for this scenario</li>
 </ul>
-<div class="section-head">Validate</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-</ul>
-<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
-<div>ceph mgr module ls                    # List active mgr modules</div>
-<div>ceph mgr module enable dashboard      # Enable dashboard module</div>
-<div>ceph mgr module disable dashboard     # Disable dashboard module (for reset)</div>
-<div>ceph dashboard set-grafana-api-url &#x27;https://HOST:3000&#x27;</div>
-<div>ceph dashboard set-grafana-api-ssl-verify False</div>
-<div>ceph dashboard set-prometheus-api-host &#x27;http://HOST:9095&#x27;</div>
-<div>ceph dashboard set-alertmanager-api-host &#x27;http://HOST:9093&#x27;</div>
-<div>ceph dashboard feature                # Enable/disable features in dashboard</div>
-<div>ceph dashboard debug                  # Control/report debug status</div>
-<div>ceph mgr services                     # List service endpoints provided by mgr modules</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for monitoring issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/monitoring</code></li>
-<li>Related BZ fixes: BZ#2355823 -- check if regression tests exist</li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Functional test covering the reported monitoring scenario</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/monitoring</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div class="section-head">KB-referenced fixes and test suites</div>
-<ul>
-<li>BZ#2212967 (IBMCEPH-6792): Grafana graph display fix - verify post-upgrade</li>
-<li>BZ#2238470 (IBMCEPH-7421): RGW page 500 with ssl_port - test beast config with/without ssl_port</li>
-<li>BZ#2364875 (IBMCEPH-11030): LC policy 500 error - test bucket lifecycle operations via dashboard</li>
-<li>RH KB 6525991: Dashboard metrics 500 - test under mgr failover conditions</li>
-<li>Regression suite: qa/tasks/mgr/dashboard (upstream Ceph test suite)</li>
+<li>Functional test for monitoring: reproduce the reported scenario and verify correct behavior</li>
 </ul></div>
 </div>
 

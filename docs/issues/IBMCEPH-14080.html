@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14080: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,110 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
-- IBMCEPH-17568: dispatch_remote() records crash dump for NotImplementedError (documented orchestrator pattern) [post]
-- IBMCEPH-13474: nvmeof module enable error - cannot import CLICommandBase [ceph-9.1, closed]
-- IBMCEPH-15751: Node-proxy hw status summary failing on CLI [ceph-8.1]
-- IBMCEPH-16996: ceph orch ls crashes reloading node-proxy spec (NodeProxySpec.__init__ unexpected kwarg) [on_qa]
-- IBMCEPH-6312: MGR Prometheus module errors during failover (cherrypy port binding) [fixed 4.0/4.1]
-- IBMCEPH-9459: Manager daemon crash with cephadm module during OSD removal [ceph-8.0, fixed]
-- IBMCEPH-10120: MGR crash with cephadm module post host removal (EC 8+6 MSR) [ceph-8.0]
-- RH KB 6751411: List of Supported/Not Supported RHCS Manager Modules
-- Doc ref: IBM 9.0 - Using Ceph Manager modules (ceph mgr module ls/enable/disable)
-- Doc ref: IBM 9.0 - Using Ceph Manager crash module (ceph crash ls/info/stat/prune/archive)
-- Commands: ceph mgr module ls, ceph mgr module enable &lt;module&gt;, ceph mgr module disable &lt;module&gt;, ceph mgr services, ceph crash info &lt;id&gt;
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode 
 
-SUMMARY: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode 
-
-Issue Details:
-- JIRA: IBMCEPH-14080
+ROOT CAUSE:
+- Daemon crash reported in ceph-mgr/crash. No stack trace captured in JIRA metadata.
 - Affected version(s): 7.1
-- Component(s): ceph-mgr/crash
-- Severity: normal
-- Escalation: IBM customer impact
 
-Developer Analysis (from JIRA comments):
-- Hi    As the issue is currently not reproducible, the inventory data does not provide significant insight in this case. To capture more meaningful data, we will run the inventory capture script before entering maintenance mode and stop it after exiting maintenance mode. We will share the collected d
-- Hello    We have not received an update regarding the requested inventory data. As the issue is currently not reproducible, we are unable to proceed with further analysis. If the issue is no longer occurring, we would like to close this case. Should the issue reoccur, please reopen the case and shar
-
-Key Error Indicators:
-- Ceph MGR log: 2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 log_channel(cluster) log [ERR] : Unhandled exception from module &#x27;cephadm&#x27; while running on mgr.host0.pncyox: &#x27;host194.obfuscateddomain1.wd&#x27;
-
-2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 ceph
-- Even Though the hosts are not labeled with osd but it has the osd daemons #cat ceph_orch_host_ls | grep -v osd  HOST              ADDR      LABELS                       STATUS   host21.obfuscateddomain1.wd 26.64.85.18  ceph,sku_archive_v1     #grep h
-
-Debug Commands:
-- `ceph crash ls-new`
-- `ceph crash info &lt;crash-id&gt;`
-- `ceph mgr module ls`</textarea>
+FIX STATUS:
+- Current JIRA status: Closed
+- No fix confirmed in JIRA comments yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce ceph-mgr/crash issue on IBM Ceph 7.1
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-mgr/crash issue reported in IBM Ceph 7.1.
 
-Environment:
-- IBM Ceph version: 7.1
-- Component: Ceph MGR Crash module
-- Issue type: crash
+1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Trigger the scenario described in the JIRA (see issue for specific conditions)
+3. Check for crash -- `ceph crash ls-new`
+4. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
+5. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 7.1 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Check MGR status: `ceph mgr stat`
-6. List modules: `ceph mgr module ls`
-7. Check crash list: `ceph crash ls-new`
-8. Get crash info: `ceph crash info &lt;crash-id&gt;`
-9. Check MGR logs: `cephadm shell -- ceph log last ceph-mgr 200`
-
-Additional context from JIRA:
-- Hi Team,       We attempted to reproduce the issue in our lab environment. The cluster was upgraded from version 7.1z8 to 7.1z9. We intentionally removed the &quot;osd&quot; label from one of the hosts, even though it still had OSD daemons running. However, ma
-- Hi        Thanks for the detailed informations and steps provided. We will reopen the Jira with the mentioned reports, if it occurs again. Thanks  Velmurugan
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-mgr`
-
-Verified Commands (from ceph-cmd-kb tentacle):
-  ceph mgr module ls                    # List active mgr modules
-  ceph mgr module enable &lt;module&gt; [--force]  # Enable mgr module
-  ceph mgr module disable &lt;module&gt;      # Disable mgr module
-  ceph mgr module force &lt;module&gt; --yes-i-really-mean-it  # Force disable always-on module
-  ceph crash ls                         # List all crash IDs
-  ceph crash ls-new                     # List new (unarchived) crashes
-  ceph crash info &lt;CRASH_ID&gt;            # View crash details
-  ceph crash stat                       # Summary grouped by age
-  ceph crash prune &lt;DAYS&gt;               # Remove crashes older than N days
-  ceph crash archive &lt;CRASH_ID&gt;         # Archive a crash report
-  ceph mgr dump                         # Dump latest MgrMap
-  ceph mgr versions                     # Check running ceph-mgr versions</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for ceph-mgr/crash issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
 
-Existing Coverage:
-- Component test suite: `qa/suites/rados`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- No crash regression test for this specific ceph-mgr/crash scenario
+- Need test that triggers the crash condition and verifies daemon stability
 
-Coverage Gaps:
-- Crash/assert scenario needs dedicated negative test
-- Crash dump analysis in regression suite
-
-Recommended Tests:
-- Add regression test to `qa/suites/rados`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config
-
-KB-referenced fixes and test suites:
-- IBMCEPH-17568: dispatch_remote NotImplementedError crash dump - verify no false-positive RECENT_MGR_MODULE_CRASH
-- IBMCEPH-9459/10120: cephadm module crash during OSD/host removal - test drain operations
-- IBMCEPH-16996: NodeProxySpec crash on orch ls - test hw_monitoring enable/disable cycle
-- IBMCEPH-6312: Prometheus module failover error - test mgr failover with prometheus enabled
-- Regression suite: qa/tasks/mgr/ (upstream mgr module tests)</textarea>
+SCENARIOS NEEDED:
+- Stability test: trigger the reported condition, verify no daemon crash
+- Functional test for ceph-mgr/crash: reproduce the reported scenario and verify correct behavior
+- Regression test: verify fix holds across supported versions</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -302,118 +232,38 @@ KB-referenced fixes and test suites:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>IBMCEPH-17568: dispatch_remote() records crash dump for NotImplementedError (documented orchestrator pattern) [post]</li>
-<li>IBMCEPH-13474: nvmeof module enable error - cannot import CLICommandBase [ceph-9.1, closed]</li>
-<li>IBMCEPH-15751: Node-proxy hw status summary failing on CLI [ceph-8.1]</li>
-<li>IBMCEPH-16996: <code>ceph orch ls crashes reloading node-proxy spec (NodeProxySpec.__init__ unexpected kwarg) [on_qa]</code></li>
-<li>IBMCEPH-6312: MGR Prometheus module errors during failover (cherrypy port binding) [fixed 4.0/4.1]</li>
-<li>IBMCEPH-9459: Manager daemon crash with <code>cephadm module during OSD removal [ceph-8.0</code>, fixed]</li>
-<li>IBMCEPH-10120: MGR crash with <code>cephadm module post host removal (EC 8+6 MSR) [ceph-8.0]</code></li>
-<li>RH KB 6751411: List of Supported/Not Supported RHCS Manager Modules</li>
-<li>Doc ref: IBM 9.0 - Using Ceph Manager modules (<code>ceph mgr module ls/enable/disable)</code></li>
-<li>Doc ref: IBM 9.0 - Using Ceph Manager crash module (<code>ceph crash ls/info/stat/prune/archive)</code></li>
-<li>Commands: <code>ceph mgr module ls</code>, <code>ceph mgr module enable &lt;module&gt;</code>, <code>ceph mgr module disable &lt;module&gt;</code>, <code>ceph mgr services</code>, <code>ceph crash info &lt;id&gt;</code></li>
-</ul>
-<div class="summary-line">[MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-14080</li>
+<li>Daemon crash reported in ceph-mgr/crash. No stack trace captured in JIRA metadata.</li>
 <li>Affected version(s): 7.1</li>
-<li>Component(s): ceph-mgr/crash</li>
-<li>Severity: normal</li>
-<li>Escalation: IBM customer impact</li>
 </ul>
-<div>Developer Analysis (from JIRA comments):</div>
+<div class="section-head">FIX STATUS</div>
 <ul>
-<li>Hi    As the issue is currently not reproducible, the inventory data does not provide significant insight in this case. To capture more meaningful data, we will run the inventory capture script before entering maintenance mode and stop it after exiting maintenance mode. We will share the collected d</li>
-<li>Hello    We have not received an update regarding the requested inventory data. As the issue is currently not reproducible, we are unable to proceed with further analysis. If the issue is no longer occurring, we would like to close this case. Should the issue reoccur, please reopen the case and shar</li>
-</ul>
-<div class="section-head">Key Error Indicators</div>
-<ul>
-<li>Ceph MGR log: 2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 log_channel(cluster) log [ERR] : Unhandled exception from module &#x27;cephadm&#x27; while running on mgr.host0.pncyox: &#x27;host194.obfuscateddomain1.wd&#x27;</li>
-</ul>
-<div>2026-04-15T10:10:02.781+0000 7fbe7406d640 -1 ceph</div>
-<ul>
-<li>Even Though the hosts are not labeled with osd but it has the osd daemons #cat ceph_orch_host_ls | grep -v osd  HOST              ADDR      LABELS                       STATUS   host21.obfuscateddomain1.wd 26.64.85.18  ceph,sku_archive_v1     #grep h</li>
-</ul>
-<div class="section-head">Debug Commands</div>
-<ul>
-<li><code><code>ceph crash ls-new</code></code></li>
-<li><code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><code><code>ceph mgr module ls</code></code></li>
+<li>Current JIRA status: Closed</li>
+<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce ceph-mgr/crash issue on IBM Ceph 7.1</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-mgr/crash issue reported in IBM Ceph 7.1.</div>
 <ul>
-<li>IBM Ceph version: 7.1</li>
-<li>Component: Ceph MGR Crash module</li>
-<li>Issue type: crash</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
+<li><span class="step-num">3.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">4.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Check MGR status: <code><code>ceph mgr stat</code></code></li>
-<li><span class="step-num">6.</span> List modules: <code><code>ceph mgr module ls</code></code></li>
-<li><span class="step-num">7.</span> Check crash list: <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">8.</span> Get crash info: <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">9.</span> Check MGR logs: <code><code>cephadm shell -- ceph log last ceph-mgr 200</code></code></li>
+<li>No crash regression test for this specific ceph-mgr/crash scenario</li>
+<li>Need test that triggers the crash condition and verifies daemon stability</li>
 </ul>
-<div class="section-head">Additional context from JIRA</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Hi Team,       We attempted to reproduce the issue in our lab environment. The cluster was upgraded from version 7.1z8 to 7.1z9. We intentionally removed the &quot;osd&quot; label from one of the hosts, even though it still had OSD daemons running. However, ma</li>
-<li>Hi        Thanks for the detailed informations and steps provided. We will reopen the Jira with the mentioned reports, if it occurs again. Thanks  Velmurugan</li>
-</ul>
-<div class="section-head">Validate</div>
-<ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-<li>Logs: <code><code>cephadm shell -- ceph log last ceph-mgr</code></code></li>
-</ul>
-<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
-<div>ceph mgr module ls                    # List active mgr modules</div>
-<div>ceph mgr module enable &lt;module&gt; [--force]  # Enable mgr module</div>
-<div>ceph mgr module disable &lt;module&gt;      # Disable mgr module</div>
-<div>ceph mgr module force &lt;module&gt; --yes-i-really-mean-it  # Force disable always-on module</div>
-<div>ceph crash ls                         # List all crash IDs</div>
-<div>ceph crash ls-new                     # List new (unarchived) crashes</div>
-<div>ceph crash info &lt;CRASH_ID&gt;            # View crash details</div>
-<div>ceph crash stat                       # Summary grouped by age</div>
-<div>ceph crash prune &lt;DAYS&gt;               # Remove crashes older than N days</div>
-<div>ceph crash archive &lt;CRASH_ID&gt;         # Archive a crash report</div>
-<div>ceph mgr dump                         # Dump latest MgrMap</div>
-<div>ceph mgr versions                     # Check running ceph-mgr versions</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for ceph-mgr/crash issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/rados</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Crash/assert scenario needs dedicated negative test</li>
-<li>Crash dump analysis in regression suite</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/rados</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div class="section-head">KB-referenced fixes and test suites</div>
-<ul>
-<li>IBMCEPH-17568: dispatch_remote NotImplementedError crash dump - verify no false-positive RECENT_MGR_MODULE_CRASH</li>
-<li>IBMCEPH-9459/10120: <code>cephadm module crash during OSD/host removal - test drain operations</code></li>
-<li>IBMCEPH-16996: NodeProxySpec crash on orch ls - test hw_monitoring enable/disable cycle</li>
-<li>IBMCEPH-6312: Prometheus module failover error - test mgr failover with prometheus enabled</li>
-<li>Regression suite: qa/tasks/mgr/ (upstream mgr module tests)</li>
+<li>Stability test: trigger the reported condition, verify no daemon crash</li>
+<li>Functional test for ceph-mgr/crash: reproduce the reported scenario and verify correct behavior</li>
+<li>Regression test: verify fix holds across supported versions</li>
 </ul></div>
 </div>
 

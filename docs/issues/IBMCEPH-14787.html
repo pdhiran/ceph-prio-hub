@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14787: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,65 +189,35 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
-- Doc ref: IBM 9.0 - Service specification of the Ceph Orchestrator (service_type, placement, unmanaged)
-- Doc ref: IBM 9.0 - Introduction to the Ceph Orchestrator (bridge between cluster and deployment tools)
-- Doc ref: IBM 9.0 - Data location (/var/log/ceph/FSID, /var/lib/ceph/FSID, crash reports)
-- Commands: ceph orch ls, ceph orch apply, ceph mgr module ls, ceph -s, ceph health detail
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
 
-SUMMARY: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
-
-Issue Details:
-- JIRA: IBMCEPH-14787
+ROOT CAUSE:
+- Issue reported in documentation component.
+- Permission or access control issue reported.
 - Affected version(s): 8.0, 8.1, 9.0, 9.1, 9.2
-- Component(s): documentation
-- Severity: normal
-- Escalation: IBM customer impact</textarea>
+
+FIX STATUS:
+- Current JIRA status: In Progress
+- No fix confirmed in JIRA comments yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce documentation issue on IBM Ceph 8.0, 8.1, 9.0, 9.1, 9.2
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce documentation issue reported in IBM Ceph 8.0.
 
-Environment:
-- IBM Ceph version: 8.0, 8.1, 9.0, 9.1, 9.2
-- Component: documentation
-- Issue type: access, network
+1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 8.0, 8.1, 9.0, 9.1, 9.2 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Configure the component described in the issue
-6. Perform the operation described in the JIRA summary
-7. Check cluster health: `ceph health detail`
-8. Check daemon status: `ceph orch ps`
-9. Check logs: `cephadm shell -- ceph log last 100`
-
-Additional context from JIRA:
-- Yes this documentation change is still valid as the configuration nss_db_path is not available after ceph Nautilus.  In the documentation [1] we need to remove the step 1 where we are setting the nss_db_path parameter. [1]  Configuring the Ceph Obje
-- I have tested this on my setup: nss_db_path   is no longer required Removed Step 1 ( nss_db_path ) from the procedure. This setting was needed for PKI/PKIz token validation using a local NSS database. PKI/PKIz tokens were removed from OpenStack years
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for documentation issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.
 
-Existing Coverage:
-- Component test suite: `qa/suites/documentation`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- Permission/ACL test may not cover this specific access pattern
 
-Coverage Gaps:
-- Functional test covering the reported documentation scenario
-
-Recommended Tests:
-- Add regression test to `qa/suites/documentation`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+SCENARIOS NEEDED:
+- Functional test for documentation: reproduce the reported scenario and verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -257,69 +227,33 @@ Recommended Tests:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>Doc ref: IBM 9.0 - Service specification of the Ceph Orchestrator (service_type, placement, unmanaged)</li>
-<li>Doc ref: IBM 9.0 - Introduction to the Ceph Orchestrator (bridge between cluster and deployment tools)</li>
-<li>Doc ref: IBM 9.0 - Data location (/var/log/ceph/FSID, /var/lib/ceph/FSID, crash reports)</li>
-<li>Commands: <code>ceph orch ls</code>, <code>ceph orch apply</code>, <code>ceph mgr module ls</code>, <code>ceph -s</code>, <code>ceph health detail</code></li>
-</ul>
-<div class="summary-line">[IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-14787</li>
+<li>Issue reported in documentation component.</li>
+<li>Permission or access control issue reported.</li>
 <li>Affected version(s): 8.0, 8.1, 9.0, 9.1, 9.2</li>
-<li>Component(s): documentation</li>
-<li>Severity: normal</li>
-<li>Escalation: IBM customer impact</li>
+</ul>
+<div class="section-head">FIX STATUS</div>
+<ul>
+<li>Current JIRA status: In Progress</li>
+<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce documentation issue on IBM Ceph 8.0, 8.1, 9.0, 9.1, 9.2</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce documentation issue reported in IBM Ceph 8.0.</div>
 <ul>
-<li>IBM Ceph version: 8.0, 8.1, 9.0, 9.1, 9.2</li>
-<li>Component: documentation</li>
-<li>Issue type: access, network</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is In Progress. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0, 8.1, 9.0, 9.1, 9.2 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Configure the component described in the issue</li>
-<li><span class="step-num">6.</span> Perform the operation described in the JIRA summary</li>
-<li><span class="step-num">7.</span> Check cluster health: <code><code>ceph health detail</code></code></li>
-<li><span class="step-num">8.</span> Check daemon status: <code><code>ceph orch ps</code></code></li>
-<li><span class="step-num">9.</span> Check logs: <code><code>cephadm shell -- ceph log last 100</code></code></li>
+<li>Permission/ACL test may not cover this specific access pattern</li>
 </ul>
-<div class="section-head">Additional context from JIRA</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Yes this documentation change is still valid as the configuration nss_db_path is not available after <code>ceph Nautilus.  In the documentation [1] we need to remove the step 1 where we are setting the nss_db_path parameter. [1]  Configuring the Ceph Obje</code></li>
-<li>I have tested this on my setup: nss_db_path   is no longer required Removed Step 1 ( nss_db_path ) from the procedure. This setting was needed for PKI/PKIz token validation using a local NSS database. PKI/PKIz tokens were removed from OpenStack years</li>
-</ul>
-<div class="section-head">Validate</div>
-<ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for documentation issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/documentation</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Functional test covering the reported documentation scenario</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/documentation</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
+<li>Functional test for documentation: reproduce the reported scenario and verify correct behavior</li>
 </ul></div>
 </div>
 

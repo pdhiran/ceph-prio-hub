@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13408: cephadm shell ceph-volume inventory errors out when Thin LVS are created.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,101 +189,48 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
-- IBMCEPH-16284: Implement skip firewalld management in cephadm-preflight.yml [ceph-8.1, new]
-- IBMCEPH-16610: [8.1z Backport] Preflight playbook should not force-enable firewalld [assigned]
-- IBMCEPH-16612: [9.1z Backport] Preflight playbook should not force-enable firewalld [new]
-- IBMCEPH-16611: [9.1z2 Backport] Preflight should not force-enable firewalld [closed]
-- IBMCEPH-13852: Preflight playbook should not force-enable firewalld (parent) [in progress]
-- IBMCEPH-8071: ceph-volume lvm batch --report fails on dm-cache LVM OSDs [fixed 4.2z1/5.*]
-- IBMCEPH-431: ceph-volume fails to get inventory list (KeyError ceph.cluster_name) [fixed 5.2]
-- IBMCEPH-7654: ceph lvm_volumes by path not working [fixed 4.1/5.*]
-- RH KB 5638881: ceph-volume fails with &#x27;RuntimeError: devices filtered in non-interactive mode&#x27; during re-deploy
-- Doc ref: IBM 9.0 - ceph-volume LVM plugin (prepare, activate, list, batch, zap, migrate, new-db, new-wal)
-- Doc ref: IBM 9.0 - Using batch mode (ceph-volume lvm batch --bluestore)
-- Doc ref: IBM 9.0 - Zapping data (ceph-volume lvm zap)
-- Commands: ceph-volume lvm batch --bluestore, ceph-volume lvm list, ceph-volume lvm zap --destroy --osd-id &lt;id&gt;, ceph-volume lvm prepare --bluestore --data &lt;vg/lv&gt;
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on the node.
 
-SUMMARY: cephadm shell ceph-volume inventory errors out when Thin LVS are created.
+ROOT CAUSE:
+- When thin-provisioned LVs are created (e.g., lvcreate -L 900M -T test/thinpool), LVM creates hidden internal LVs: thinpool_tdata and thinpool_tmeta
+- These hidden LVs exist under /dev/mapper/&lt;vg&gt;-&lt;lv&gt; but NOT under /dev/&lt;vgname&gt;/ (only the visible thinpool LV gets a symlink there)
+- ceph-volume Device.__init__() calls _get_device_id() -&gt; disk.UdevData(self.path) which expects the path to exist
+- For /dev/test/thinpool_tdata, the path does not exist (only /dev/mapper/test-thinpool_tdata does), causing RuntimeError
+- This crashes the entire inventory collection, impacting the orchestrator&#x27;s ability to discover and manage devices
 
-Issue Details:
-- JIRA: IBMCEPH-13408
-- Affected version(s): 8.1, 9.0, 9.1
-- Component(s): ceph-volume
-- Severity: blocker
-- Escalation: L3 escalation
-
-Developer Analysis (from JIRA comments):
-- Thanks   for quickly coming up with a fix!   Can we have this backported to IBM 8.1 as well?
-- Linked the case. Yeah, BackPort to 8.1 would be good.
-- Backport 8.1z6 and 9.0z2 Jira ticket created and linked.
-
-Debug Commands:
-- `ceph-volume lvm list`
-- `ceph-volume inventory`
-- `ceph osd tree`</textarea>
+FIX:
+- Upstream fix by Guillaume ABRIOUX: filter out thin pool data/metadata LVs from the inventory listing
+- Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1651
+- Fix available in build ceph-20.2.1-141, verified on 19.2.1-354 (Squid)
+- Status: CLOSED (fixed in 9.1 release)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce ceph-volume issue on IBM Ceph 8.1, 9.0, 9.1
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-volume inventory crash when thin-provisioned LVMs exist on an OSD node.
 
-Environment:
-- IBM Ceph version: 8.1, 9.0, 9.1
-- Component: ceph-volume OSD provisioning
-- Issue type: error, device
+1. Deploy IBM Ceph 8.x or 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Create a loopback device for testing -- `dd if=/dev/zero of=/disk.img bs=1M count=1024`
+3. Attach the loopback device -- `losetup -f --show /disk.img`
+4. Create a volume group on the loopback -- `vgcreate test /dev/loop0`
+5. Create a thin-provisioned LV -- `lvcreate -L 900M -T test/thinpool`
+6. Verify hidden LVs exist under /dev/mapper but not /dev/test -- `ls -la /dev/test/` vs `ls -la /dev/mapper/test*`
+7. Run inventory -- `cephadm ceph-volume inventory`
+8. Observe RuntimeError crash: /dev/test/thinpool_tdata not found
 
-Workflow:
-1. Deploy IBM Ceph 8.1, 9.0, 9.1 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. List available devices: `ceph-volume inventory`
-6. Check LVM status: `ceph-volume lvm list`
-7. Create OSD: `ceph orch daemon add osd &lt;host&gt;:&lt;device&gt;`
-8. Verify OSD: `ceph osd tree`
-
-Additional context from JIRA:
-- Hello   , thanks for the easy reproducer steps.  I see recent enhancement for ‘inventory list’ in upstream. I have reached out to Guillaume to take a look.   P.S : Can you link the customer case ID to this Jira?
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph-volume lvm list`
-
-Verified Commands (from ceph-cmd-kb tentacle):
-  ceph-volume lvm list                  # List LVs associated with Ceph
-  ceph-volume lvm batch --bluestore /dev/sdX [/dev/sdY]  # Create OSDs on drives
-  ceph-volume lvm prepare --bluestore --data VG/LV       # Prepare LVM volume as OSD
-  ceph-volume lvm activate --bluestore OSD_ID OSD_FSID   # Activate OSD
-  ceph-volume lvm zap VG/LV [--destroy]                  # Zap logical volume
-  ceph-volume lvm zap --destroy --osd-id OSD_ID          # Purge devices by OSD ID
-  ceph-volume lvm new-db --osd-id ID --osd-fsid FSID --target VG/LV  # Attach DB volume
-  ceph-volume lvm new-wal --osd-id ID --osd-fsid FSID --target VG/LV  # Attach WAL volume
-  ceph-volume lvm migrate --osd-id ID --osd-fsid FSID --from data --target VG/LV
-  ceph-volume lvm deactivate OSD_ID     # Deactivate OSD</textarea>
+Hit rate: 100% reproducible when thin LVs exist.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for ceph-volume issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test covers ceph-volume inventory with LVM thin provisioning. Fixed and verified.
 
-Existing Coverage:
-- Component test suite: `qa/suites/ceph-volume`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- No CephCI test creates thin-provisioned LVs before running ceph-volume inventory
+- No negative test for exotic LVM configurations (thin pools, cache pools, snapshots)
 
-Coverage Gaps:
-- Error handling test for the specific failure scenario
-
-Recommended Tests:
-- Add regression test to `qa/suites/ceph-volume`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config
-
-KB-referenced fixes and test suites:
-- IBMCEPH-16284/16610/16612: Preflight firewalld force-enable - test with firewalld disabled/absent
-- IBMCEPH-8071: ceph-volume batch fails on dm-cache LVs - test with dm-cache overlay
-- RH KB 5638881: ceph-volume non-interactive filter - test re-deploy scenario
-- Regression: cephci preflight suite (cephadm-ansible tests)</textarea>
+SCENARIOS NEEDED:
+- ceph-volume inventory with thin LV: create thin pool, run inventory, verify no crash and thin pool data/meta LVs are filtered
+- ceph-volume inventory with mixed devices: nodes with both regular and thin-provisioned LVs
+- OSD deployment on node with thin LVs: verify orchestrator can still discover and use available non-thin devices</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -293,107 +240,46 @@ KB-referenced fixes and test suites:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on the node.</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>IBMCEPH-16284: Implement skip firewalld management in cephadm-preflight.yml [ceph-8.1, new]</li>
-<li>IBMCEPH-16610: [8.1z Backport] Preflight playbook should not force-enable firewalld [assigned]</li>
-<li>IBMCEPH-16612: [9.1z Backport] Preflight playbook should not force-enable firewalld [new]</li>
-<li>IBMCEPH-16611: [9.1z2 Backport] Preflight should not force-enable firewalld [closed]</li>
-<li>IBMCEPH-13852: Preflight playbook should not force-enable firewalld (parent) [in progress]</li>
-<li>IBMCEPH-8071: ceph-volume lvm batch --report fails on dm-cache LVM OSDs [fixed 4.2z1/5.*]</li>
-<li>IBMCEPH-431: ceph-volume fails to get inventory list (KeyError ceph.cluster_name) [fixed 5.2]</li>
-<li>IBMCEPH-7654: <code>ceph lvm_volumes by path not working [fixed 4.1/5.*]</code></li>
-<li>RH KB 5638881: ceph-volume fails with &#x27;RuntimeError: devices filtered in non-interactive mode&#x27; during re-deploy</li>
-<li>Doc ref: IBM 9.0 - ceph-volume LVM plugin (prepare, activate, list, batch, zap, migrate, new-db, new-wal)</li>
-<li>Doc ref: IBM 9.0 - Using batch mode (ceph-volume lvm batch --bluestore)</li>
-<li>Doc ref: IBM 9.0 - Zapping data (ceph-volume lvm zap)</li>
-<li>Commands: ceph-volume lvm batch --bluestore, ceph-volume lvm list, ceph-volume lvm zap --destroy --osd-id &lt;id&gt;, ceph-volume lvm prepare --bluestore --data &lt;vg/lv&gt;</li>
+<li>When thin-provisioned LVs are created (e.g., lvcreate -L 900M -T test/thinpool), LVM creates hidden internal LVs: thinpool_tdata and thinpool_tmeta</li>
+<li>These hidden LVs exist under /dev/mapper/&lt;vg&gt;-&lt;lv&gt; but NOT under /dev/&lt;vgname&gt;/ (only the visible thinpool LV gets a symlink there)</li>
+<li>ceph-volume Device.__init__() calls _get_device_id() -&gt; disk.UdevData(self.path) which expects the path to exist</li>
+<li>For /dev/test/thinpool_tdata, the path does not exist (only /dev/mapper/test-thinpool_tdata does), causing RuntimeError</li>
+<li>This crashes the entire inventory collection, impacting the orchestrator&#x27;s ability to discover and manage devices</li>
 </ul>
-<div class="summary-line">cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
-<div class="section-head">Issue Details</div>
+<div class="section-head">FIX</div>
 <ul>
-<li>JIRA: IBMCEPH-13408</li>
-<li>Affected version(s): 8.1, 9.0, 9.1</li>
-<li>Component(s): ceph-volume</li>
-<li>Severity: blocker</li>
-<li>Escalation: L3 escalation</li>
-</ul>
-<div>Developer Analysis (from JIRA comments):</div>
-<ul>
-<li>Thanks   for quickly coming up with a fix!   Can we have this backported to IBM 8.1 as well?</li>
-<li>Linked the case. Yeah, BackPort to 8.1 would be good.</li>
-<li>Backport 8.1z6 and 9.0z2 Jira ticket created and linked.</li>
-</ul>
-<div class="section-head">Debug Commands</div>
-<ul>
-<li><code>ceph-volume lvm list</code></li>
-<li><code>ceph-volume inventory</code></li>
-<li><code><code>ceph osd tree</code></code></li>
+<li>Upstream fix by Guillaume ABRIOUX: filter out thin pool data/metadata LVs from the inventory listing</li>
+<li>Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1651</li>
+<li>Fix available in build ceph-20.2.1-141, verified on 19.2.1-354 (Squid)</li>
+<li>Status: CLOSED (fixed in 9.1 release)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce ceph-volume issue on IBM Ceph 8.1, 9.0, 9.1</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-volume inventory crash when thin-provisioned LVMs exist on an OSD node.</div>
 <ul>
-<li>IBM Ceph version: 8.1, 9.0, 9.1</li>
-<li>Component: ceph-volume OSD provisioning</li>
-<li>Issue type: error, device</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.x or 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Create a loopback device for testing -- <code>dd if=/dev/zero of=/disk.img bs=1M count=1024</code></li>
+<li><span class="step-num">3.</span> Attach the loopback device -- <code>losetup -f --show /disk.img</code></li>
+<li><span class="step-num">4.</span> Create a volume group on the loopback -- <code>vgcreate test /dev/loop0</code></li>
+<li><span class="step-num">5.</span> Create a thin-provisioned LV -- <code>lvcreate -L 900M -T test/thinpool</code></li>
+<li><span class="step-num">6.</span> Verify hidden LVs exist under /dev/mapper but not /dev/test -- <code>ls -la /dev/test/</code> vs <code>ls -la /dev/mapper/test*</code></li>
+<li><span class="step-num">7.</span> Run inventory -- <code><code>cephadm ceph-volume inventory</code></code></li>
+<li><span class="step-num">8.</span> Observe RuntimeError crash: /dev/test/thinpool_tdata not found</li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>Hit rate: 100% reproducible when thin LVs exist.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test covers ceph-volume inventory with LVM thin provisioning. Fixed and verified.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1, 9.0, 9.1 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> List available devices: <code>ceph-volume inventory</code></li>
-<li><span class="step-num">6.</span> Check LVM status: <code>ceph-volume lvm list</code></li>
-<li><span class="step-num">7.</span> Create OSD: <code><code>ceph orch daemon add osd &amp;lt;host&amp;gt;:&amp;lt;device&amp;gt;</code></code></li>
-<li><span class="step-num">8.</span> Verify OSD: <code><code>ceph osd tree</code></code></li>
+<li>No CephCI test creates thin-provisioned LVs before running ceph-volume inventory</li>
+<li>No negative test for exotic LVM configurations (thin pools, cache pools, snapshots)</li>
 </ul>
-<div class="section-head">Additional context from JIRA</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Hello   , thanks for the easy reproducer steps.  I see recent enhancement for ‘inventory list’ in upstream. I have reached out to Guillaume to take a look.   P.S : Can you link the customer case ID to this Jira?</li>
-</ul>
-<div class="section-head">Validate</div>
-<ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-<li>Logs: <code><code>cephadm shell -- ceph-volume lvm list</code></code></li>
-</ul>
-<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
-<div>ceph-volume lvm list                  # List LVs associated with Ceph</div>
-<div>ceph-volume lvm batch --bluestore /dev/sdX [/dev/sdY]  # Create OSDs on drives</div>
-<div>ceph-volume lvm prepare --bluestore --data VG/LV       # Prepare LVM volume as OSD</div>
-<div>ceph-volume lvm activate --bluestore OSD_ID OSD_FSID   # Activate OSD</div>
-<div>ceph-volume lvm zap VG/LV [--destroy]                  # Zap logical volume</div>
-<div>ceph-volume lvm zap --destroy --osd-id OSD_ID          # Purge devices by OSD ID</div>
-<div>ceph-volume lvm new-db --osd-id ID --osd-fsid FSID --target VG/LV  # Attach DB volume</div>
-<div>ceph-volume lvm new-wal --osd-id ID --osd-fsid FSID --target VG/LV  # Attach WAL volume</div>
-<div>ceph-volume lvm migrate --osd-id ID --osd-fsid FSID --from data --target VG/LV</div>
-<div>ceph-volume lvm deactivate OSD_ID     # Deactivate OSD</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for ceph-volume issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/ceph-volume</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Error handling test for the specific failure scenario</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/ceph-volume</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div class="section-head">KB-referenced fixes and test suites</div>
-<ul>
-<li>IBMCEPH-16284/16610/16612: Preflight firewalld force-enable - test with firewalld disabled/absent</li>
-<li>IBMCEPH-8071: ceph-volume batch fails on dm-cache LVs - test with dm-cache overlay</li>
-<li>RH KB 5638881: ceph-volume non-interactive filter - test re-deploy scenario</li>
-<li>Regression: cephci preflight suite (cephadm-ansible tests)</li>
+<li>ceph-volume inventory with thin LV: create thin pool, run inventory, verify no crash and thin pool data/meta LVs are filtered</li>
+<li>ceph-volume inventory with mixed devices: nodes with both regular and thin-provisioned LVs</li>
+<li>OSD deployment on node with thin LVs: verify orchestrator can still discover and use available non-thin devices</li>
 </ul></div>
 </div>
 

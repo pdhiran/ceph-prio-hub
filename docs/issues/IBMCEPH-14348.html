@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14348: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,111 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown
 
-### Hot RADOS Issues (ceph-issue-kb)
-- IBMCEPH-16598: EC truncate+write planning for shard sizes — data corruption risk (9.1z)
-- IBMCEPH-16972: OSD enters error state post Monitor connection scores tests (9.1z1)
-- IBMCEPH-17866: RFE: Warnings when applying 0-weight CRUSH rules to pool
-- IBMCEPH-17828: PG rebuild duration only considered for non-primary OSD (9.1z2)
-- IBMCEPH-17541: PG Inconsistent omap digest mismatch on s390x after upgrade (9.0, blocker)
-- IBMCEPH-14459: QoS support for high priority operations (target 10.0)
-- IBMCEPH-14722: Pool Migration — RADOS (target 10.0)
-
-### Documentation References (ceph-doc-kb, IBM 9.0)
-- IBM 9.0 Docs: Known issue — PGs not scaled down in upmap-read/read balancer modes (BZ#2302230) — workaround: `ceph osd rm-pg-upmap-primary &lt;PG_ID&gt;`
-- IBM 9.0 Docs: Tuning considerations (sysctl, TuneD) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=recommendations-tuning-considerations-storage-ceph
-- IBM 9.0 Docs: Adjusting cluster map size (osd_map_cache_size, etc.) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=adjustments-adjusting-cluster-map-size
-- IBM 9.0 Docs: Benchmarking with rados bench — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=benchmark-benchmarking-ceph-performance
-
----
-
-SUMMARY: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown
-
-Issue Details:
-- JIRA: IBMCEPH-14348
+ROOT CAUSE:
+- Issue reported in rados component.
 - Affected version(s): 8.1z4
-- Component(s): rados
-- Severity: normal
-- Escalation: L3 escalation, IBM customer impact
 
-Debug Commands:
-- `ceph osd tree`
-- `ceph osd pool ls detail`
-- `ceph pg stat`
-- `ceph health detail`
-- `ceph crash ls-new`
-- `ceph osd perf`</textarea>
+FIX STATUS:
+- Current JIRA status: New
+- No fix confirmed in JIRA comments yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce rados issue on IBM Ceph 8.1z4
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 8.1z4.
 
-Environment:
-- IBM Ceph version: 8.1z4
-- Component: RADOS (core storage layer)
-- Issue type: osd_failure, network, rfe
+1. Deploy IBM Ceph 8.1z4 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Add OSDs -- `ceph orch apply osd --all-available-devices`
+3. Create test pool -- `ceph osd pool create test-pool 32`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 8.1z4 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Create test pool: `ceph osd pool create testpool 32`
-6. Run I/O workload: `rados bench -p testpool 60 write --no-cleanup`
-7. Monitor OSD status: `ceph osd tree`
-8. Check for crashes: `ceph crash ls-new`
-9. Get crash details: `ceph crash info &lt;crash-id&gt;`
-10. Check OSD logs: `cephadm shell -- ceph log last ceph-osd 200`
-11. Check PG states: `ceph pg stat` and `ceph pg dump_stuck`
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-osd`
-
----
-
-## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)
-
-```bash
-ceph osd perf                       # Print OSD perf summary stats
-ceph osd perf counters &lt;query_id&gt;   # Fetch OSD perf counters
-ceph osd dump                       # Print summary of OSD map
-ceph osd crush dump                 # Dump CRUSH map
-ceph osd crush rule dump            # Dump CRUSH rules
-```
-
-```bash
-ceph osd pool autoscale-status      # Report PG autoscaling recommendation
-ceph osd pool application get &lt;POOL&gt; # Get pool application metadata
-ceph osd reweight-by-pg             # Reweight OSDs by PG distribution
-ceph osd ok-to-upgrade &lt;BUCKET&gt; &lt;VER&gt;  # Check safe OSD upgrade count
-```
-</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for rados issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is New. No confirmed fix yet. Needs investigation and test coverage.
 
-Existing Coverage:
-- Component test suite: `qa/suites/rados`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- Need to assess existing rados test coverage for this scenario
 
-Coverage Gaps:
-- Functional test covering the reported rados scenario
-
-Recommended Tests:
-- Add regression test to `qa/suites/rados`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config
-
----
-
-## KB-Sourced Test Suite References (enriched 2026-08-26)
-
-- bluestore: qa/suites/rados/basic/tasks/rados_bench.yaml, qa/suites/bluestore</textarea>
+SCENARIOS NEEDED:
+- Functional test for rados: reproduce the reported scenario and verify correct behavior</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -303,108 +228,34 @@ Recommended Tests:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)</div>
-<div>### Hot RADOS Issues (ceph-issue-kb)</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>IBMCEPH-16598: EC truncate+write planning for shard sizes — data corruption risk (9.1z)</li>
-<li>IBMCEPH-16972: OSD enters error state post Monitor connection scores tests (9.1z1)</li>
-<li>IBMCEPH-17866: RFE: Warnings when applying 0-weight CRUSH rules to pool</li>
-<li>IBMCEPH-17828: PG rebuild duration only considered for non-primary OSD (9.1z2)</li>
-<li>IBMCEPH-17541: PG Inconsistent omap digest mismatch on s390x after upgrade (9.0, blocker)</li>
-<li>IBMCEPH-14459: QoS support for high priority operations (target 10.0)</li>
-<li>IBMCEPH-14722: Pool Migration — RADOS (target 10.0)</li>
-</ul>
-<div>### Documentation References (ceph-doc-kb, IBM 9.0)</div>
-<ul>
-<li>IBM 9.0 Docs: Known issue — PGs not scaled down in upmap-read/read balancer modes (BZ#2302230) — workaround: <code><code>ceph osd rm-pg-upmap-primary &amp;lt;PG_ID&amp;gt;</code></code></li>
-<li>IBM 9.0 Docs: Tuning considerations (sysctl, TuneD) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=recommendations-tuning-considerations-storage-ceph</li>
-<li>IBM 9.0 Docs: Adjusting cluster map size (osd_map_cache_size, etc.) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=adjustments-adjusting-cluster-map-size</li>
-<li>IBM 9.0 Docs: Benchmarking with <code>rados bench — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=benchmark-benchmarking-ceph-performance</code></li>
-</ul>
-<div>---</div>
-<div class="summary-line">[RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-14348</li>
+<li>Issue reported in <code>rados component.</code></li>
 <li>Affected version(s): 8.1z4</li>
-<li>Component(s): rados</li>
-<li>Severity: normal</li>
-<li>Escalation: L3 escalation, IBM customer impact</li>
 </ul>
-<div class="section-head">Debug Commands</div>
+<div class="section-head">FIX STATUS</div>
 <ul>
-<li><code><code>ceph osd tree</code></code></li>
-<li><code><code>ceph osd pool ls detail</code></code></li>
-<li><code><code>ceph pg stat</code></code></li>
-<li><code><code>ceph health detail</code></code></li>
-<li><code><code>ceph crash ls-new</code></code></li>
-<li><code><code>ceph osd perf</code></code></li>
+<li>Current JIRA status: New</li>
+<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce rados issue on IBM Ceph 8.1z4</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 8.1z4.</div>
 <ul>
-<li>IBM Ceph version: 8.1z4</li>
-<li>Component: RADOS (core storage layer)</li>
-<li>Issue type: osd_failure, network, rfe</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z4 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
+<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is New. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z4 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Create test pool: <code><code>ceph osd pool create testpool 32</code></code></li>
-<li><span class="step-num">6.</span> Run I/O workload: <code><code>rados bench -p testpool 60 write --no-cleanup</code></code></li>
-<li><span class="step-num">7.</span> Monitor OSD status: <code><code>ceph osd tree</code></code></li>
-<li><span class="step-num">8.</span> Check for crashes: <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">9.</span> Get crash details: <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">10.</span> Check OSD logs: <code><code>cephadm shell -- ceph log last ceph-osd 200</code></code></li>
-<li><span class="step-num">11.</span> Check PG states: <code><code>ceph pg stat</code></code> and <code><code>ceph pg dump_stuck</code></code></li>
+<li>Need to assess existing <code>rados test coverage for this scenario</code></li>
 </ul>
-<div class="section-head">Validate</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-<li>Logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
-</ul>
-<div>---</div>
-<div>## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)</div>
-<pre>
-ceph osd perf                       # Print OSD perf summary stats
-ceph osd perf counters &lt;query_id&gt;   # Fetch OSD perf counters
-ceph osd dump                       # Print summary of OSD map
-ceph osd crush dump                 # Dump CRUSH map
-ceph osd crush rule dump            # Dump CRUSH rules
-</pre>
-<pre>
-ceph osd pool autoscale-status      # Report PG autoscaling recommendation
-ceph osd pool application get &lt;POOL&gt; # Get pool application metadata
-ceph osd reweight-by-pg             # Reweight OSDs by PG distribution
-ceph osd ok-to-upgrade &lt;BUCKET&gt; &lt;VER&gt;  # Check safe OSD upgrade count
-</pre></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rados issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/rados</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Functional test covering the reported <code>rados scenario</code></li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/rados</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div>---</div>
-<div>## KB-Sourced Test Suite References (enriched 2026-08-26)</div>
-<ul>
-<li>bluestore: qa/suites/rados/basic/tasks/rados_bench.yaml, qa/suites/bluestore</li>
+<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
 </ul></div>
 </div>
 

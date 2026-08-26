@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15780: [9.1] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,124 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1] SMB: User/group names missing for permissions
 
-[KB Enrichment 2026-08-26 12:10]
---- Known Issues &amp; Cross-References (smb) ---
-- IBMCEPH-10920 (BZ#2353529): SMB share not accessible with multiple AD shares; secrets.ldb missing. Affects 8.0.
-- IBMCEPH-12594 (BZ#2425712): SMB AD share access control (restrict access/login control) not working. RFE. Affects 8.1.
-- IBMCEPH-15780/IBMCEPH-16027/IBMCEPH-13484: AD user/group names resolve to SIDs after time (winbindd cache). Affects 8.1/9.1/9.2.
-- IBMCEPH-13192: Non-root user unable to execute file without read permission over CIFS (libcephfs limitation). Affects 9.0.
-- IBMCEPH-12231 (BZ#2400102): Cannot access Samba shares at scale (5000 shares). Affects 8.1.
-- IBMCEPH-16463: SMB extremely slow syncing many small files vs direct MDS mount. Affects 9.1. Under investigation.
-- IBMCEPH-17196 (RTC 354823): SMB connections issue after Netlogon patch. Under investigation.
-- IBMCEPH-17149 (RTC 360277): Slow responding Auth ID mapping (samlogon cache). Upstream MR: samba#4399.
-- IBMCEPH-16605: SMB-RGW mount fails with Permission denied. Affects 9.2.
-
---- Documentation References ---
-- IBM docs 9.0: SMB declarative method (YAML): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=shares-declarative-method-configuration-example
-- IBM docs 9.0: SMB workflow (enable module, create cluster, apply config): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage
-- IBM docs 9.0: Active Directory integration (SMB): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=clusters-creating-active-directory-access-resources
-- IBM docs 9.0: AD imperative method: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=mscs-integrating-active-directory-smb-by-using-imperative-method
-- IBM docs 9.0: Volume Shadow Copy (VSS) for SMB: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=management-configuring-volume-shadow-copy-service
-
-SUMMARY: [9.1] SMB: User/group names missing for permissions
-
-Issue Details:
-- JIRA: IBMCEPH-15780
+ROOT CAUSE:
+- Issue reported in smb component.
+- Permission or access control issue reported.
 - Affected version(s): 9.2
-- Component(s): smb
-- Severity: major
-- Escalation: L3 escalation, IBM customer impact
 
-Developer Analysis (from JIRA comments):
-- A fix is available for testing in build ceph-20.2.1-350. Moving to ON_QA
-- Verified the backport for the SID-to-name resolution issue with the following build: # ceph -v
-ceph version 20.2.1-367.el9cp (a5a909679465df5812cb0990847edd56f4cab2d3) tentacle (stable) # ceph config get mgr | grep samba
-mgr           advanced  mgr/cephadm/container_image_samba          cp.stg.icr.i
-
-Debug Commands:
-- `ceph smb cluster ls`
-- `ceph smb share ls &lt;cluster&gt;`
-- `smbclient -L //&lt;host&gt;/ -U &lt;user&gt;`</textarea>
+FIX STATUS:
+- Fix available in build 20.2.1-350.
+- Verified by: Aditya Roshan Ramteke</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce smb issue on IBM Ceph 9.2
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce smb issue reported in IBM Ceph 9.2.
 
-Environment:
-- IBM Ceph version: 9.2
-- Component: SMB/Samba Gateway
-- Issue type: access
+1. Deploy IBM Ceph 9.2 cluster with CephFS and SMB -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Enable SMB module -- `ceph mgr module enable smb`
+3. Create SMB cluster -- `ceph smb cluster create &lt;cluster-id&gt; user`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 9.2 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Create CephFS: `ceph fs volume create smbfs`
-6. Create SMB cluster: `ceph smb cluster create &lt;name&gt; user --define-user-pass=testuser%password`
-7. Create share: `ceph smb share create &lt;cluster&gt; share1 smbfs / --share-name=share1`
-8. Verify SMB service: `ceph orch ps --daemon-type smb`
-9. Connect with AD user: `smbclient //&lt;host&gt;/share1 -U &lt;domain&gt;/&lt;user&gt;%&lt;pass&gt;`
-10. Test file operations: `put testfile`, `get testfile`, `ls`
-11. Check permissions: `smbcacls //&lt;host&gt;/share1 / -U &lt;user&gt;%&lt;pass&gt;`
-12. Modify ACL via MMC or smbcacls and verify
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last smbd`
-
-[KB Enrichment 2026-08-26 12:10]
---- Verified CLI Commands (smb, Tentacle 9.x) ---
-Verified SMB commands (Tentacle/9.x):
-- `ceph smb cluster create &lt;cluster_id&gt; {user|active-directory} [--domain_realm] [--domain_join_user_pass] [--define_user_pass] [--custom_dns] [--placement]`
-- `ceph smb cluster ls`
-- `ceph smb cluster rm &lt;cluster_id&gt;`
-- `ceph smb share create &lt;cluster_id&gt; &lt;share_id&gt; &lt;cephfs_volume&gt; &lt;path&gt; [--subvolume]`
-- `ceph smb share ls &lt;cluster_id&gt;`
-- `ceph smb share rm &lt;cluster_id&gt; &lt;share_id&gt;`
-- `ceph smb share update &lt;cluster_id&gt; &lt;share_id&gt; [QoS params]`
-- `ceph smb apply -i &lt;resources.yaml&gt;`
-- `ceph smb show [resource_names]`
-- `ceph mgr module enable smb`
-</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for smb issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Verified. Fix verified. Need regression test to prevent recurrence.
 
-Existing Coverage:
-- Component test suite: `qa/suites/smb`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- Permission/ACL test may not cover this specific access pattern
 
-Coverage Gaps:
-- Functional test covering the reported smb scenario
-
-Recommended Tests:
-- Add regression test to `qa/suites/smb`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config
-
-[KB Enrichment 2026-08-26 12:10]
---- Related Fixes &amp; Test References (smb) ---
-- IBMCEPH-10920 (BZ#2353529): SMB share not accessible with multiple AD shares; secrets.ldb missing. Affects 8.0.
-- IBMCEPH-12594 (BZ#2425712): SMB AD share access control (restrict access/login control) not working. RFE. Affects 8.1.
-- IBMCEPH-15780/IBMCEPH-16027/IBMCEPH-13484: AD user/group names resolve to SIDs after time (winbindd cache). Affects 8.1/9.1/9.2.
-- IBMCEPH-13192: Non-root user unable to execute file without read permission over CIFS (libcephfs limitation). Affects 9.0.
-- IBMCEPH-12231 (BZ#2400102): Cannot access Samba shares at scale (5000 shares). Affects 8.1.
-- IBMCEPH-16463: SMB extremely slow syncing many small files vs direct MDS mount. Affects 9.1. Under investigation.
-- IBMCEPH-17196 (RTC 354823): SMB connections issue after Netlogon patch. Under investigation.
-- IBMCEPH-17149 (RTC 360277): Slow responding Auth ID mapping (samlogon cache). Upstream MR: samba#4399.
-- IBMCEPH-16605: SMB-RGW mount fails with Permission denied. Affects 9.2.
-- IBM docs 9.0: SMB declarative method (YAML): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=shares-declarative-method-configuration-example
-- IBM docs 9.0: SMB workflow (enable module, create cluster, apply config): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage
-- IBM docs 9.0: Active Directory integration (SMB): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=clusters-creating-active-directory-access-resources
-- IBM docs 9.0: AD imperative method: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=mscs-integrating-active-directory-smb-by-using-imperative-method
-- IBM docs 9.0: Volume Shadow Copy (VSS) for SMB: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=management-configuring-volume-shadow-copy-service
-</textarea>
+SCENARIOS NEEDED:
+- Functional test for smb: reproduce the reported scenario and verify correct behavior
+- Regression test: verify fix holds across supported versions</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -316,128 +230,36 @@ Recommended Tests:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>[KB Enrichment 2026-08-26 12:10]</div>
-<div>--- Known Issues &amp; Cross-References (smb) ---</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1] SMB: User/group names missing for permissions</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>IBMCEPH-10920 (BZ#2353529): SMB share not accessible with multiple AD shares; secrets.ldb missing. Affects 8.0.</li>
-<li>IBMCEPH-12594 (BZ#2425712): SMB AD share access control (restrict access/login control) not working. RFE. Affects 8.1.</li>
-<li>IBMCEPH-15780/IBMCEPH-16027/IBMCEPH-13484: AD user/group names resolve to SIDs after time (winbindd cache). Affects 8.1/9.1/9.2.</li>
-<li>IBMCEPH-13192: Non-root user unable to execute file without read permission over CIFS (libcephfs limitation). Affects 9.0.</li>
-<li>IBMCEPH-12231 (BZ#2400102): Cannot access Samba shares at scale (5000 shares). Affects 8.1.</li>
-<li>IBMCEPH-16463: SMB extremely slow syncing many small files vs direct MDS mount. Affects 9.1. Under investigation.</li>
-<li>IBMCEPH-17196 (RTC 354823): SMB connections issue after Netlogon patch. Under investigation.</li>
-<li>IBMCEPH-17149 (RTC 360277): Slow responding Auth ID mapping (samlogon cache). Upstream MR: samba#4399.</li>
-<li>IBMCEPH-16605: SMB-RGW <code>mount fails with Permission denied. Affects 9.2.</code></li>
-</ul>
-<div>--- Documentation References ---</div>
-<ul>
-<li>IBM docs 9.0: SMB declarative method (YAML): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=shares-declarative-method-configuration-example</li>
-<li>IBM docs 9.0: SMB workflow (enable module, create cluster, apply config): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage</li>
-<li>IBM docs 9.0: Active Directory integration (SMB): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=clusters-creating-active-directory-access-resources</li>
-<li>IBM docs 9.0: AD imperative method: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=mscs-integrating-active-directory-smb-by-using-imperative-method</li>
-<li>IBM docs 9.0: Volume Shadow Copy (VSS) for SMB: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=management-configuring-volume-shadow-copy-service</li>
-</ul>
-<div class="summary-line">[9.1] SMB: User/group names missing for permissions</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-15780</li>
+<li>Issue reported in smb component.</li>
+<li>Permission or access control issue reported.</li>
 <li>Affected version(s): 9.2</li>
-<li>Component(s): smb</li>
-<li>Severity: major</li>
-<li>Escalation: L3 escalation, IBM customer impact</li>
 </ul>
-<div>Developer Analysis (from JIRA comments):</div>
+<div class="section-head">FIX STATUS</div>
 <ul>
-<li>A fix is available for testing in build ceph-20.2.1-350. Moving to ON_QA</li>
-<li>Verified the backport for the SID-to-name resolution issue with the following build: # <code>ceph -v</code></li>
-</ul>
-<div>ceph version 20.2.1-367.el9cp (a5a909679465df5812cb0990847edd56f4cab2d3) tentacle (stable) # ceph config get mgr | grep samba</div>
-<div>mgr           advanced  mgr/cephadm/container_image_samba          cp.stg.icr.i</div>
-<div class="section-head">Debug Commands</div>
-<ul>
-<li><code><code>ceph smb cluster ls</code></code></li>
-<li><code><code>ceph smb share ls &amp;lt;cluster&amp;gt;</code></code></li>
-<li><code><code>smbclient -L //&amp;lt;host&amp;gt;/ -U &amp;lt;user&amp;gt;</code></code></li>
+<li>Fix available in build 20.2.1-350.</li>
+<li>Verified by: Aditya Roshan Ramteke</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce smb issue on IBM Ceph 9.2</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce smb issue reported in IBM Ceph 9.2.</div>
 <ul>
-<li>IBM Ceph version: 9.2</li>
-<li>Component: SMB/Samba Gateway</li>
-<li>Issue type: access</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster with CephFS and SMB -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
+<li><span class="step-num">3.</span> Create SMB cluster -- <code><code>ceph smb cluster create &amp;lt;cluster-id&amp;gt; user</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Verified. Fix verified. Need regression test to prevent recurrence.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Create CephFS: <code><code>ceph fs volume create smbfs</code></code></li>
-<li><span class="step-num">6.</span> Create SMB cluster: <code><code>ceph smb cluster create &amp;lt;name&amp;gt; user --define-user-pass=testuser%password</code></code></li>
-<li><span class="step-num">7.</span> Create share: <code><code>ceph smb share create &amp;lt;cluster&amp;gt; share1 smbfs / --share-name=share1</code></code></li>
-<li><span class="step-num">8.</span> Verify SMB service: <code><code>ceph orch ps --daemon-type smb</code></code></li>
-<li><span class="step-num">9.</span> Connect with AD user: <code><code>smbclient //&amp;lt;host&amp;gt;/share1 -U &amp;lt;domain&amp;gt;/&amp;lt;user&amp;gt;%&amp;lt;pass&amp;gt;</code></code></li>
-<li><span class="step-num">10.</span> Test file operations: <code>put testfile</code>, <code>get testfile</code>, <code>ls</code></li>
-<li><span class="step-num">11.</span> Check permissions: <code>smbcacls //&amp;lt;host&amp;gt;/share1 / -U &amp;lt;user&amp;gt;%&amp;lt;pass&amp;gt;</code></li>
-<li><span class="step-num">12.</span> Modify ACL via MMC or smbcacls and verify</li>
+<li>Permission/ACL test may not cover this specific access pattern</li>
 </ul>
-<div class="section-head">Validate</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-<li>Logs: <code><code>cephadm shell -- ceph log last smbd</code></code></li>
-</ul>
-<div>[KB Enrichment 2026-08-26 12:10]</div>
-<div>--- Verified CLI Commands (smb, Tentacle 9.x) ---</div>
-<div>Verified SMB commands (Tentacle/9.x):</div>
-<ul>
-<li><code><code>ceph smb cluster create &amp;lt;cluster_id&amp;gt; {user|active-directory} [--domain_realm] [--domain_join_user_pass] [--define_user_pass] [--custom_dns] [--placement]</code></code></li>
-<li><code><code>ceph smb cluster ls</code></code></li>
-<li><code><code>ceph smb cluster rm &amp;lt;cluster_id&amp;gt;</code></code></li>
-<li><code><code>ceph smb share create &amp;lt;cluster_id&amp;gt; &amp;lt;share_id&amp;gt; &amp;lt;cephfs_volume&amp;gt; &amp;lt;path&amp;gt; [--subvolume]</code></code></li>
-<li><code><code>ceph smb share ls &amp;lt;cluster_id&amp;gt;</code></code></li>
-<li><code><code>ceph smb share rm &amp;lt;cluster_id&amp;gt; &amp;lt;share_id&amp;gt;</code></code></li>
-<li><code><code>ceph smb share update &amp;lt;cluster_id&amp;gt; &amp;lt;share_id&amp;gt; [QoS params]</code></code></li>
-<li><code><code>ceph smb apply -i &amp;lt;resources.yaml&amp;gt;</code></code></li>
-<li><code><code>ceph smb show [resource_names]</code></code></li>
-<li><code><code>ceph mgr module enable smb</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for smb issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/smb</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Functional test covering the reported smb scenario</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/smb</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div>[KB Enrichment 2026-08-26 12:10]</div>
-<div>--- Related Fixes &amp; Test References (smb) ---</div>
-<ul>
-<li>IBMCEPH-10920 (BZ#2353529): SMB share not accessible with multiple AD shares; secrets.ldb missing. Affects 8.0.</li>
-<li>IBMCEPH-12594 (BZ#2425712): SMB AD share access control (restrict access/login control) not working. RFE. Affects 8.1.</li>
-<li>IBMCEPH-15780/IBMCEPH-16027/IBMCEPH-13484: AD user/group names resolve to SIDs after time (winbindd cache). Affects 8.1/9.1/9.2.</li>
-<li>IBMCEPH-13192: Non-root user unable to execute file without read permission over CIFS (libcephfs limitation). Affects 9.0.</li>
-<li>IBMCEPH-12231 (BZ#2400102): Cannot access Samba shares at scale (5000 shares). Affects 8.1.</li>
-<li>IBMCEPH-16463: SMB extremely slow syncing many small files vs direct MDS mount. Affects 9.1. Under investigation.</li>
-<li>IBMCEPH-17196 (RTC 354823): SMB connections issue after Netlogon patch. Under investigation.</li>
-<li>IBMCEPH-17149 (RTC 360277): Slow responding Auth ID mapping (samlogon cache). Upstream MR: samba#4399.</li>
-<li>IBMCEPH-16605: SMB-RGW <code>mount fails with Permission denied. Affects 9.2.</code></li>
-<li>IBM docs 9.0: SMB declarative method (YAML): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=shares-declarative-method-configuration-example</li>
-<li>IBM docs 9.0: SMB workflow (enable module, create cluster, apply config): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage</li>
-<li>IBM docs 9.0: Active Directory integration (SMB): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=clusters-creating-active-directory-access-resources</li>
-<li>IBM docs 9.0: AD imperative method: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=mscs-integrating-active-directory-smb-by-using-imperative-method</li>
-<li>IBM docs 9.0: Volume Shadow Copy (VSS) for SMB: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=management-configuring-volume-shadow-copy-service</li>
+<li>Functional test for smb: reproduce the reported scenario and verify correct behavior</li>
+<li>Regression test: verify fix holds across supported versions</li>
 </ul></div>
 </div>
 

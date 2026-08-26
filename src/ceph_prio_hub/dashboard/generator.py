@@ -463,7 +463,7 @@ def _render_index(rows: list[dict], stats: dict) -> str:
           data-labels="{_esc(','.join(r['labels']))}"
           data-qa="{_esc(r['qa_status'])}">
         <td><a href="issues/{r['jira_key'] if r.get('jira_key') else r['issue_id']}.html" class="key-link">{_esc(r['jira_key'])}</a></td>
-        <td class="summary-cell">{_esc(r['summary'][:90])}</td>
+        <td class="summary-cell" title="{_esc(r['summary'])}">{_esc(r['summary'][:90])}</td>
         <td>{_status_badge(r['status'], r['status_category'])}</td>
         <td>{_priority_badge(r['priority'])}</td>
         <td>{_qa_badge(r['qa_status'])}</td>
@@ -489,7 +489,7 @@ def _render_index(rows: list[dict], stats: dict) -> str:
 {_CSS}
 .key-link {{ color: var(--ibm-blue); text-decoration: none; font-weight: 500; white-space: nowrap; }}
 .key-link:hover {{ text-decoration: underline; }}
-.summary-cell {{ max-width: 300px; }}
+.summary-cell {{ max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
 .sm {{ font-size: 0.78rem; }}
 .date {{ color: var(--ibm-gray-50); white-space: nowrap; }}
 </style>
@@ -525,7 +525,7 @@ def _render_index(rows: list[dict], stats: dict) -> str:
     </div>
     <div style="margin-top:0.5rem;font-size:0.85rem;opacity:0.9;">
       {stats['needs_analysis']} issues need QA analysis &bull;
-      {stats['test_written']} have test coverage &bull;
+      {stats['test_written']} QA verified &bull;
       {stats['blocker']} blockers &bull; {stats['major']} major
     </div>
   </div>
@@ -536,7 +536,7 @@ def _render_index(rows: list[dict], stats: dict) -> str:
     <div class="metric-card"><div class="metric-value">{stats['in_progress']}</div><div class="metric-label">In Progress</div></div>
     <div class="metric-card green"><div class="metric-value">{stats['closed']}</div><div class="metric-label">Resolved</div></div>
     <div class="metric-card orange"><div class="metric-value">{stats['needs_analysis']}</div><div class="metric-label">Needs QA</div></div>
-    <div class="metric-card teal"><div class="metric-value">{stats['test_written']}</div><div class="metric-label">Test Coverage</div></div>
+    <div class="metric-card teal"><div class="metric-value">{stats['test_written']}</div><div class="metric-label">QA Verified</div></div>
     <div class="metric-card purple"><div class="metric-value">{stats['blocker']}</div><div class="metric-label">Blockers</div></div>
     <div class="metric-card"><div class="metric-value">{stats['major']}</div><div class="metric-label">Major</div></div>
   </div>
@@ -746,7 +746,9 @@ function applyFilters() {{
     row.style.display = show ? '' : 'none';
     if (show) vis++;
   }});
-  document.getElementById('visible-count').textContent = vis + ' issues';
+  const activeFilters = Object.values(selections).some(s => s.size > 0);
+  const prefix = activeFilters ? (notMode ? 'Excluding \\u2192 ' : 'Showing ') : '';
+  document.getElementById('visible-count').textContent = prefix + vis + ' issues';
 }}
 document.getElementById('filter-search').addEventListener('input', applyFilters);
 
@@ -1068,7 +1070,6 @@ def _render_issue_report(row: dict, issue: ConsolidatedIssue, tracking: Tracking
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
 {_analysis_block("Root Cause Analysis", row.get("analysis", ""))}
 {_analysis_block("Steps to Reproduce", row.get("repro_steps", ""))}

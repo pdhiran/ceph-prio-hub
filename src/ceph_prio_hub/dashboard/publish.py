@@ -25,6 +25,7 @@ from ceph_prio_hub.config import ServerConfig
 from ceph_prio_hub.dashboard.generator import generate_dashboard
 from ceph_prio_hub.jira.client import JiraClient, parse_jira_issue
 from ceph_prio_hub.tracker.state import IssueStateDB
+from ceph_prio_hub.tracker.tracking import TrackingDB
 
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -133,7 +134,8 @@ def main() -> None:
         logger.info("Skipping JIRA sync (--no-sync)")
 
     logger.info("Generating dashboard...")
-    index = generate_dashboard(db, site_dir)
+    tracking = TrackingDB()
+    index = generate_dashboard(db, site_dir, tracking)
     logger.info("Dashboard generated: %s", index)
 
     logger.info("Copying to docs/...")

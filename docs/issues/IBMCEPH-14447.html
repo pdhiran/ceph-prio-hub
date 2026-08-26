@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14447: [9.1 Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,128 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from ceph-issue-kb, ceph-doc-kb):
----
-Related known issues:
-  - IBMCEPH-17169: RGW crashes (SIGSEGV) during LC deletion on large-sharded (10001) bucket with 450+M objects [on_qa]
-  - IBMCEPH-8430: 300% CPU utilization during bucket manual reshard to 10000 shards (400M objects) [closed]
-  - IBMCEPH-15676: Multiple RGW crashes after 8.1z5 to 9.0z2 upgrade (segfault in io_context_pool) [closed]
-  - IBMCEPH-11343: Bucket index downsharding does not shrink to default 11 shards after LC deletion of large objects [closed] (fixed in 9.0)
-  - IBMCEPH-3587: Segfault in RGWGC::send_chain() during multisite sync run [closed] (fixed in 5.1)
-  - IBMCEPH-6463: RGW crashes with Segfault on s3:copy_obj post RHCS 5.3.1 upgrade (multisite) [closed]
-  - IBMCEPH-144: Multisite sync errors with bucket names containing colons [closed] (fixed in 6.1)
-  - IBMCEPH-3122: RGW single-site crashing on multipart upload after RHCS 4-&gt;5 upgrade [closed] (fixed in 5.0)
-  - [HOT] IBMCEPH-17812: 9.2: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]
-  - [HOT] IBMCEPH-17813: 9.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]
-  - [HOT] IBMCEPH-17814: 8.1: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]
-  - [HOT] IBMCEPH-17815: 7.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]
-IBM Storage Ceph 9.0 documentation references:
-  - Troubleshooting multi-site Ceph Object Gateway: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-multi-site-ceph-object-gateway
-  - Known Issues - Ceph Object Gateway multi-site: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=990-known-issues
-  - Deploying Ceph Object Gateway multi-site using the rgw module: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=ucmrm-deploying-ceph-object-gateway-multi-site-using-rgw-module
-  - Using multi-site sync policies: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=administration-using-multi-site-sync-policies
-  - Configuring multiple realms in the same storage cluster: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=administration-configuring-multiple-realms-in-same-storage-cluster
-  - Enabling non-blocking bucket resharding: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=resharding-enabling-non-blocking-bucket
----
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1 Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9
 
-SUMMARY: [9.1 Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9
-
-Issue Details:
-- JIRA: IBMCEPH-14447
+ROOT CAUSE:
+- Issue reported in rgw-multisite component.
+- This appears to be an upgrade-related issue or backport request.
 - Affected version(s): 8.0
-- Component(s): rgw-multisite
-- Severity: normal
-- Escalation: IBM customer impact
 
-Developer Analysis (from JIRA comments):
-- if this is a bug fix for 9.1 that needs to be documented, please add the needed information to the “release tab”.
-
-Key Error Indicators:
-- I believe the following comment by   is effectively the intended release note text for all versions of the issue:     the logs showed two separate crashes. 
-
-    Bug #76445: rgw: client disconnect causes frontend crash - rgw - Ceph Tracker  - When a
-
-Debug Commands:
-- `radosgw-admin sync status`
-- `radosgw-admin data sync status --source-zone=&lt;zone&gt;`
-- `radosgw-admin metadata sync status`
-- `radosgw-admin realm list`
-- `radosgw-admin zonegroup get`</textarea>
+FIX STATUS:
+- Current JIRA status: Closed
+- No fix confirmed in JIRA comments yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce rgw-multisite issue on IBM Ceph 8.0
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.0.
 
-Environment:
-- IBM Ceph version: 8.0
-- Component: RGW Multisite Replication
-- Issue type: upgrade, bucket, sync, network
+1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
+3. Monitor upgrade progress -- `ceph orch upgrade status`
+4. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 8.0 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Deploy primary zone RGW: `radosgw-admin realm create --rgw-realm=test --default`
-6. Create zonegroup: `radosgw-admin zonegroup create --rgw-zonegroup=default --master --default`
-7. Create primary zone: `radosgw-admin zone create --rgw-zone=zone1 --master --default`
-8. Deploy secondary zone RGW on secondary cluster
-9. Verify sync status: `radosgw-admin sync status`
-10. Create bucket and objects on primary: `aws --endpoint=http://&lt;primary&gt;:80 s3 cp testfile s3://testbucket/`
-11. Verify sync on secondary: `aws --endpoint=http://&lt;secondary&gt;:80 s3 ls s3://testbucket/`
-12. Check sync lag: `radosgw-admin data sync status --source-zone=zone1`
-
-Additional context from JIRA:
-- The bug verification is complete on ceph version 20.2.1-292.el9cp.  Steps  1. On a multisite + archive env, create bucket
-2. Upload 10K objects
-3. Parallel delete
-    # date;s5cmd --numworkers 64 --endpoint-url http://&lt;&gt; --credentials-file ~/.aws/cre
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-rgw`
-
-Verified Commands (from ceph-cmd-kb, Tentacle 20.x / IBM Ceph 9.x):
-  # Check sync status: radosgw-admin sync status [--rgw-realm REALM_NAME]
-  # List zonegroups: radosgw-admin zonegroup list
-  # Get zone config: radosgw-admin zone get [--rgw-zone=ZONE_NAME]
-  # Bootstrap realm: ceph rgw realm bootstrap --realm-name REALM --zonegroup-name ZG --zone-name ZONE --port PORT --placement=&#x27;HOST1 HOST2&#x27; --start-radosgw
-  # Create secondary zone: ceph rgw zone create -i /path/to/zone-spec.yaml
-  # List realm tokens: ceph rgw realm tokens
-  # Create zone credentials: ceph rgw realm zone-creds create --realm-name REALM --endpoints ENDPOINTS
-  # Reconcile realm: ceph rgw realm reconcile --realm-name REALM --zonegroup-name ZG --zone-name ZONE
-  # Update period after changes: radosgw-admin period update &amp;&amp; radosgw-admin period commit
-  # Create user in specific realm: radosgw-admin user create --uid=USER --display-name=NAME --rgw-realm=REALM --rgw-zonegroup=ZG --rgw-zone=ZONE</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for rgw-multisite issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
 
-Existing Coverage:
-- Component test suite: `qa/suites/rgw/multisite`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- Upgrade test may not cover the specific pre-conditions that trigger this issue
 
-Coverage Gaps:
-- Upgrade/migration path testing for the specific version transition
-- Pre/post upgrade validation checks
-
-Recommended Tests:
-- Add regression test to `qa/suites/rgw/multisite`
-- Negative test: verify proper error handling
-- Upgrade test: validate across version boundary
-- Integration test: end-to-end with customer-like config
-
-KB-Enriched Test References:
-  - Multisite sync tests: qa/suites/rgw/multisite, s3-tests multisite variants
-  - Known issue BZ#2210695: test sync after zone/zonegroup rename
-  - Known issue BZ#2430821: verify OLH cleanup in versioned buckets after LC expiration
-  - Sync policy tests: test forbidden-&gt;enabled transition, verify bucket sync run required
-  - Archive zone tests: verify immutable copy, LC-based version retention
-  - Upgrade tests: qa/suites/upgrade, cephci upgrade suites
-  - Known fix: IBMCEPH-13843 (fails to start after upgrade due to period decode) -- verify period migration
-  - Pre-upgrade: complete all resharding operations before upgrade (IBM doc requirement)</textarea>
+SCENARIOS NEEDED:
+- Upgrade test: validate behavior before and after upgrade on affected version
+- Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior
+- Regression test: verify fix holds across supported versions</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -320,136 +231,37 @@ KB-Enriched Test References:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from ceph-issue-kb, ceph-doc-kb):</div>
-<div>---</div>
-<div class="section-head">Related known issues</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1 Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>IBMCEPH-17169: RGW crashes (SIGSEGV) during LC deletion on large-sharded (10001) bucket with 450+M objects [on_qa]</li>
-<li>IBMCEPH-8430: 300% CPU utilization during bucket manual reshard to 10000 shards (400M objects) [closed]</li>
-<li>IBMCEPH-15676: Multiple RGW crashes after 8.1z5 to 9.0z2 upgrade (segfault in io_context_pool) [closed]</li>
-<li>IBMCEPH-11343: Bucket index downsharding does not shrink to default 11 shards after LC deletion of large objects [closed] (fixed in 9.0)</li>
-<li>IBMCEPH-3587: Segfault in RGWGC::send_chain() during multisite sync run [closed] (fixed in 5.1)</li>
-<li>IBMCEPH-6463: RGW crashes with Segfault on s3:copy_obj post RHCS 5.3.1 upgrade (multisite) [closed]</li>
-<li>IBMCEPH-144: Multisite sync errors with bucket names containing colons [closed] (fixed in 6.1)</li>
-<li>IBMCEPH-3122: RGW single-site crashing on multipart upload after RHCS 4-&gt;5 upgrade [closed] (fixed in 5.0)</li>
-<li>[HOT] IBMCEPH-17812: 9.2: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]</li>
-<li>[HOT] IBMCEPH-17813: 9.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]</li>
-<li>[HOT] IBMCEPH-17814: 8.1: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]</li>
-<li>[HOT] IBMCEPH-17815: 7.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]</li>
-</ul>
-<div>IBM Storage Ceph 9.0 documentation references:</div>
-<ul>
-<li>Troubleshooting multi-site Ceph Object Gateway: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-multi-site-ceph-object-gateway</li>
-<li>Known Issues - Ceph Object Gateway multi-site: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=990-known-issues</li>
-<li>Deploying Ceph Object Gateway multi-site using the <code>rgw module: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=ucmrm-deploying-ceph-object-gateway-multi-site-using-rgw-module</code></li>
-<li>Using multi-site sync policies: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=administration-using-multi-site-sync-policies</li>
-<li>Configuring multiple realms in the same storage cluster: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=administration-configuring-multiple-realms-in-same-storage-cluster</li>
-<li>Enabling non-blocking bucket resharding: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=resharding-enabling-non-blocking-bucket</li>
-</ul>
-<div>---</div>
-<div class="summary-line">[9.1 Backport] Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-14447</li>
+<li>Issue reported in rgw-multisite component.</li>
+<li>This appears to be an upgrade-related issue or backport request.</li>
 <li>Affected version(s): 8.0</li>
-<li>Component(s): rgw-multisite</li>
-<li>Severity: normal</li>
-<li>Escalation: IBM customer impact</li>
 </ul>
-<div>Developer Analysis (from JIRA comments):</div>
+<div class="section-head">FIX STATUS</div>
 <ul>
-<li>if this is a bug fix for 9.1 that needs to be documented, please add the needed information to the “release tab”.</li>
-</ul>
-<div class="section-head">Key Error Indicators</div>
-<ul>
-<li>I believe the following comment by   is effectively the intended release note text for all versions of the issue:     the logs showed two separate crashes.</li>
-</ul>
-<div>Bug #76445: rgw: client disconnect causes frontend crash - rgw - Ceph Tracker  - When a</div>
-<div class="section-head">Debug Commands</div>
-<ul>
-<li><code><code>radosgw-admin sync status</code></code></li>
-<li><code><code>radosgw-admin data sync status --source-zone=&amp;lt;zone&amp;gt;</code></code></li>
-<li><code><code>radosgw-admin metadata sync status</code></code></li>
-<li><code><code>radosgw-admin realm list</code></code></li>
-<li><code><code>radosgw-admin zonegroup get</code></code></li>
+<li>Current JIRA status: Closed</li>
+<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce rgw-multisite issue on IBM Ceph 8.0</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rgw-multisite issue reported in IBM Ceph 8.0.</div>
 <ul>
-<li>IBM Ceph version: 8.0</li>
-<li>Component: RGW Multisite Replication</li>
-<li>Issue type: upgrade, bucket, sync, network</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Deploy primary zone RGW: <code><code>radosgw-admin realm create --rgw-realm=test --default</code></code></li>
-<li><span class="step-num">6.</span> Create zonegroup: <code><code>radosgw-admin zonegroup create --rgw-zonegroup=default --master --default</code></code></li>
-<li><span class="step-num">7.</span> Create primary zone: <code><code>radosgw-admin zone create --rgw-zone=zone1 --master --default</code></code></li>
-<li><span class="step-num">8.</span> Deploy secondary zone RGW on secondary cluster</li>
-<li><span class="step-num">9.</span> Verify sync status: <code><code>radosgw-admin sync status</code></code></li>
-<li><span class="step-num">10.</span> Create bucket and objects on primary: <code>aws --endpoint=http://&amp;lt;primary&amp;gt;:80 s3 cp testfile s3://testbucket/</code></li>
-<li><span class="step-num">11.</span> Verify sync on secondary: <code>aws --endpoint=http://&amp;lt;secondary&amp;gt;:80 s3 ls s3://testbucket/</code></li>
-<li><span class="step-num">12.</span> Check sync lag: <code><code>radosgw-admin data sync status --source-zone=zone1</code></code></li>
+<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
 </ul>
-<div class="section-head">Additional context from JIRA</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>The bug verification is complete on <code>ceph version 20.2.1-292.el9cp.  Steps  1. On a multisite + archive env</code>, create bucket</li>
-<li><span class="step-num">2.</span> Upload 10K objects</li>
-<li><span class="step-num">3.</span> Parallel delete</li>
-</ul>
-<div># date;s5cmd --numworkers 64 --endpoint-url http://&lt;&gt; --credentials-file ~/.aws/cre</div>
-<div class="section-head">Validate</div>
-<ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-<li>Logs: <code><code>cephadm shell -- ceph log last ceph-rgw</code></code></li>
-</ul>
-<div>Verified Commands (from ceph-cmd-kb, Tentacle 20.x / IBM Ceph 9.x):</div>
-<div># Check sync status: radosgw-admin sync status [--rgw-realm REALM_NAME]</div>
-<div># List zonegroups: radosgw-admin zonegroup list</div>
-<div># Get zone config: radosgw-admin zone get [--rgw-zone=ZONE_NAME]</div>
-<div># Bootstrap realm: ceph rgw realm bootstrap --realm-name REALM --zonegroup-name ZG --zone-name ZONE --port PORT --placement=&#x27;HOST1 HOST2&#x27; --start-radosgw</div>
-<div># Create secondary zone: ceph rgw zone create -i /path/to/zone-spec.yaml</div>
-<div># List realm tokens: ceph rgw realm tokens</div>
-<div># Create zone credentials: ceph rgw realm zone-creds create --realm-name REALM --endpoints ENDPOINTS</div>
-<div># Reconcile realm: ceph rgw realm reconcile --realm-name REALM --zonegroup-name ZG --zone-name ZONE</div>
-<div># Update period after changes: radosgw-admin period update &amp;&amp; radosgw-admin period commit</div>
-<div># Create user in specific realm: radosgw-admin user create --uid=USER --display-name=NAME --rgw-realm=REALM --rgw-zonegroup=ZG --rgw-zone=ZONE</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rgw-multisite issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/rgw/multisite</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Upgrade/migration path testing for the specific version transition</li>
-<li>Pre/post upgrade validation checks</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/rgw/multisite</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Upgrade test: validate across version boundary</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div class="section-head">KB-Enriched Test References</div>
-<ul>
-<li>Multisite sync tests: qa/suites/rgw/multisite, s3-tests multisite variants</li>
-<li>Known issue BZ#2210695: test sync after zone/zonegroup rename</li>
-<li>Known issue BZ#2430821: verify OLH cleanup in versioned buckets after LC expiration</li>
-<li>Sync policy tests: test forbidden-&gt;enabled transition, verify bucket sync run required</li>
-<li>Archive zone tests: verify immutable copy, LC-based version retention</li>
-<li>Upgrade tests: qa/suites/upgrade, cephci upgrade suites</li>
-<li>Known fix: IBMCEPH-13843 (fails to start after upgrade due to period decode) -- verify period migration</li>
-<li>Pre-upgrade: complete all resharding operations before upgrade (IBM doc requirement)</li>
+<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
+<li>Functional test for rgw-multisite: reproduce the reported scenario and verify correct behavior</li>
+<li>Regression test: verify fix holds across supported versions</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13740: [9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:14 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,112 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump
 
-### Related MON Crash Issues (ceph-issue-kb)
-- IBMCEPH-9011: Mon crash assert(m &lt; ranks.size()) upon Mon removal (BZ#2280363, 7.1/8.1)
-- IBMCEPH-12984: ceph-mon crash assert(m &lt; ranks.size()) in MonMap::get_addrs (9.0)
-- IBMCEPH-17008: Crimson Mon daemon crash-loops after bootstrap (9.1z1)
-- IBMCEPH-17846: mon SIGABRT in OSDMap::pgtemp_undo_primaryfirst() on FastEC pool (new)
-
-### Related MON CPU/Memory Issues (ceph-issue-kb)
-- IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient (6.1/8.1, assigned — matches prio)
-- IBMCEPH-2709: ceph-mon peon consuming large memory (BZ#1630416, fixed 4.x)
-- IBMCEPH-6922: Slow Ops with hours of request times — OSD flapping (BZ#2217514)
-- IBMCEPH-6013: Small object recovery/backfill too slow (BZ#2163473, fixed 6.1)
-- IBMCEPH-9912: Slow requests causing MySQL RBD mount slowness (BZ#2316534)
-
-### Documentation References (ceph-doc-kb, IBM 9.0)
-
----
-
-SUMMARY: [9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump
-
-Issue Details:
-- JIRA: IBMCEPH-13740
+ROOT CAUSE:
+- Daemon crash reported in rados. No stack trace captured in JIRA metadata.
+- This appears to be an upgrade-related issue or backport request.
 - Affected version(s): 8.1
-- Component(s): rados
-- Severity: normal
-- Escalation: L3 escalation
 
-Developer Analysis (from JIRA comments):
-- Similar to it is parent Jira 13779, this should be considered as blocker as well for 9.0z3. As we are shipping the fix at lower version(8.1.z6) for Nokia we need to have this all the higher version being released after that. So this would be a blocker bug for 9.0z3. I have proposed it as blocker for
-
-Key Error Indicators:
-- Verified the tracker by checking the The MON daemons were restarted, and no crashes were observed. [ceph: root@ceph-bharath-7-1-29xvme-node1-installer /]# ceph crash ls
-[ceph: root@ceph-bharath-7-1-29xvme-node1-installer /]# ceph orch restart mon
-Sch
-
-Debug Commands:
-- `ceph osd tree`
-- `ceph osd pool ls detail`
-- `ceph pg stat`
-- `ceph health detail`
-- `ceph crash ls-new`
-- `ceph osd perf`</textarea>
+FIX STATUS:
+- Current JIRA status: Closed
+- No fix confirmed in JIRA comments yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">SUMMARY: Reproduce rados issue on IBM Ceph 8.1
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce rados issue reported in IBM Ceph 8.1.
 
-Environment:
-- IBM Ceph version: 8.1
-- Component: RADOS (core storage layer)
-- Issue type: upgrade, crash, network
+1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
+2. Add OSDs -- `ceph orch apply osd --all-available-devices`
+3. Create test pool -- `ceph osd pool create test-pool 32`
+4. Perform upgrade -- `ceph orch upgrade start --image &lt;target-image&gt;`
+5. Monitor upgrade progress -- `ceph orch upgrade status`
+6. Trigger the scenario described in the JIRA (see issue for specific conditions)
+7. Check for crash -- `ceph crash ls-new`
+8. Collect crash info -- `ceph crash info &lt;crash-id&gt;`
+9. Verify cluster health -- `ceph -s` and `ceph health detail`
 
-Workflow:
-1. Deploy IBM Ceph 8.1 cluster: `cephadm bootstrap --mon-ip=&lt;bootstrap-ip&gt;`
-2. Add hosts: `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Add OSDs: `ceph orch apply osd --all-available-devices`
-4. Verify cluster health: `ceph -s`
-5. Create test pool: `ceph osd pool create testpool 32`
-6. Run I/O workload: `rados bench -p testpool 60 write --no-cleanup`
-7. Monitor OSD status: `ceph osd tree`
-8. Check for crashes: `ceph crash ls-new`
-9. Get crash details: `ceph crash info &lt;crash-id&gt;`
-10. Check OSD logs: `cephadm shell -- ceph log last ceph-osd 200`
-11. Check PG states: `ceph pg stat` and `ceph pg dump_stuck`
-
-Validate:
-- Cluster health: `ceph health detail`
-- Daemon status: `ceph orch ps`
-- Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-osd`
-
----
-
-## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)
-
-```bash
-ceph daemon mon.&lt;NAME&gt; ops          # Show mon operations (detect slow ops)
-ceph quorum_status                  # Check MON quorum status
-ceph mon stat                       # Monitor statistics
-ceph config-key dump                # Dump config-key store
-```
-</textarea>
+NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test coverage assessment for rados issue
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.
 
-Existing Coverage:
-- Component test suite: `qa/suites/rados`
-- Pending: cephci repo integration for automated coverage check
+GAPS:
+- No crash regression test for this specific rados scenario
+- Need test that triggers the crash condition and verifies daemon stability
+- Upgrade test may not cover the specific pre-conditions that trigger this issue
 
-Coverage Gaps:
-- Crash/assert scenario needs dedicated negative test
-- Crash dump analysis in regression suite
-
-Recommended Tests:
-- Add regression test to `qa/suites/rados`
-- Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config
-
----
-
-## KB-Sourced Test Suite References (enriched 2026-08-26)
-
-- mon: qa/suites/rados/mon, qa/suites/rados/basic/tasks/rados_mon_thrash.yaml</textarea>
+SCENARIOS NEEDED:
+- Stability test: trigger the reported condition, verify no daemon crash
+- Upgrade test: validate behavior before and after upgrade on affected version
+- Functional test for rados: reproduce the reported scenario and verify correct behavior
+- Regression test: verify fix holds across supported versions</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -304,111 +239,45 @@ Recommended Tests:
   </div>
 </div>
 
-<h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)</div>
-<div>### Related MON Crash Issues (ceph-issue-kb)</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</div>
+<div class="section-head">ROOT CAUSE</div>
 <ul>
-<li>IBMCEPH-9011: Mon crash assert(m &lt; ranks.size()) upon Mon removal (BZ#2280363, 7.1/8.1)</li>
-<li>IBMCEPH-12984: ceph-mon crash assert(m &lt; ranks.size()) in MonMap::get_addrs (9.0)</li>
-<li>IBMCEPH-17008: Crimson Mon daemon crash-loops after bootstrap (9.1z1)</li>
-<li>IBMCEPH-17846: mon SIGABRT in OSDMap::pgtemp_undo_primaryfirst() on FastEC pool (new)</li>
-</ul>
-<div>### Related MON CPU/Memory Issues (ceph-issue-kb)</div>
-<ul>
-<li>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient (6.1/8.1, assigned — matches prio)</li>
-<li>IBMCEPH-2709: ceph-mon peon consuming large memory (BZ#1630416, fixed 4.x)</li>
-<li>IBMCEPH-6922: Slow Ops with hours of request times — OSD flapping (BZ#2217514)</li>
-<li>IBMCEPH-6013: Small object recovery/backfill too slow (BZ#2163473, fixed 6.1)</li>
-<li>IBMCEPH-9912: Slow requests causing MySQL RBD <code>mount slowness (BZ#2316534)</code></li>
-</ul>
-<div>### Documentation References (ceph-doc-kb, IBM 9.0)</div>
-<div>---</div>
-<div class="summary-line">[9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</div>
-<div class="section-head">Issue Details</div>
-<ul>
-<li>JIRA: IBMCEPH-13740</li>
+<li>Daemon crash reported in rados. No stack trace captured in JIRA metadata.</li>
+<li>This appears to be an upgrade-related issue or backport request.</li>
 <li>Affected version(s): 8.1</li>
-<li>Component(s): rados</li>
-<li>Severity: normal</li>
-<li>Escalation: L3 escalation</li>
 </ul>
-<div>Developer Analysis (from JIRA comments):</div>
+<div class="section-head">FIX STATUS</div>
 <ul>
-<li>Similar to it is parent Jira 13779, this should be considered as blocker as well for 9.0z3. As we are shipping the fix at lower version(8.1.z6) for Nokia we need to have this all the higher version being released after that. So this would be a blocker bug for 9.0z3. I have proposed it as blocker for</li>
-</ul>
-<div class="section-head">Key Error Indicators</div>
-<ul>
-<li>Verified the tracker by checking the The MON daemons were restarted, and no crashes were observed. [ceph: root@ceph-bharath-7-1-29xvme-node1-installer /]# <code>ceph crash ls</code></li>
-</ul>
-<div>[ceph: root@ceph-bharath-7-1-29xvme-node1-installer /]# ceph orch restart mon</div>
-<div>Sch</div>
-<div class="section-head">Debug Commands</div>
-<ul>
-<li><code><code>ceph osd tree</code></code></li>
-<li><code><code>ceph osd pool ls detail</code></code></li>
-<li><code><code>ceph pg stat</code></code></li>
-<li><code><code>ceph health detail</code></code></li>
-<li><code><code>ceph crash ls-new</code></code></li>
-<li><code><code>ceph osd perf</code></code></li>
+<li>Current JIRA status: Closed</li>
+<li>No fix confirmed in JIRA comments yet.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div class="summary-line">Reproduce rados issue on IBM Ceph 8.1</div>
-<div class="section-head">Environment</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce rados issue reported in IBM Ceph 8.1.</div>
 <ul>
-<li>IBM Ceph version: 8.1</li>
-<li>Component: RADOS (core storage layer)</li>
-<li>Issue type: upgrade, crash, network</li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
+<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
+<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
+<li><span class="step-num">4.</span> Perform upgrade -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
+<li><span class="step-num">5.</span> Monitor upgrade progress -- <code><code>ceph orch upgrade status</code></code></li>
+<li><span class="step-num">6.</span> Trigger the scenario described in the JIRA (see issue for specific conditions)</li>
+<li><span class="step-num">7.</span> Check for crash -- <code><code>ceph crash ls-new</code></code></li>
+<li><span class="step-num">8.</span> Collect crash info -- <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><span class="step-num">9.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
 </ul>
-<div class="section-head">Workflow</div>
+<div>NOTE: Specific trigger conditions may be described in the JIRA comments. Review the issue timeline for details.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is Closed. No confirmed fix yet. Needs investigation and test coverage.</div>
+<div class="section-head">GAPS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster: <code><code>cephadm bootstrap --mon-ip=&amp;lt;bootstrap-ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts: <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Add OSDs: <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health: <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Create test pool: <code><code>ceph osd pool create testpool 32</code></code></li>
-<li><span class="step-num">6.</span> Run I/O workload: <code><code>rados bench -p testpool 60 write --no-cleanup</code></code></li>
-<li><span class="step-num">7.</span> Monitor OSD status: <code><code>ceph osd tree</code></code></li>
-<li><span class="step-num">8.</span> Check for crashes: <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">9.</span> Get crash details: <code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
-<li><span class="step-num">10.</span> Check OSD logs: <code><code>cephadm shell -- ceph log last ceph-osd 200</code></code></li>
-<li><span class="step-num">11.</span> Check PG states: <code><code>ceph pg stat</code></code> and <code><code>ceph pg dump_stuck</code></code></li>
+<li>No crash regression test for this specific <code>rados scenario</code></li>
+<li>Need test that triggers the crash condition and verifies daemon stability</li>
+<li>Upgrade test may not cover the specific pre-conditions that trigger this issue</li>
 </ul>
-<div class="section-head">Validate</div>
+<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Cluster health: <code><code>ceph health detail</code></code></li>
-<li>Daemon status: <code><code>ceph orch ps</code></code></li>
-<li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
-<li>Logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
-</ul>
-<div>---</div>
-<div>## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)</div>
-<pre>
-ceph daemon mon.&lt;NAME&gt; ops          # Show mon operations (detect slow ops)
-ceph quorum_status                  # Check MON quorum status
-ceph mon stat                       # Monitor statistics
-ceph config-key dump                # Dump config-key store
-</pre></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rados issue</div>
-<div class="section-head">Existing Coverage</div>
-<ul>
-<li>Component test suite: <code>qa/suites/rados</code></li>
-<li>Pending: cephci repo integration for automated coverage check</li>
-</ul>
-<div class="section-head">Coverage Gaps</div>
-<ul>
-<li>Crash/assert scenario needs dedicated negative test</li>
-<li>Crash dump analysis in regression suite</li>
-</ul>
-<div class="section-head">Recommended Tests</div>
-<ul>
-<li>Add regression test to <code>qa/suites/rados</code></li>
-<li>Negative test: verify proper error handling</li>
-<li>Integration test: end-to-end with customer-like config</li>
-</ul>
-<div>---</div>
-<div>## KB-Sourced Test Suite References (enriched 2026-08-26)</div>
-<ul>
-<li>mon: qa/suites/rados/mon, qa/suites/rados/basic/tasks/rados_mon_thrash.yaml</li>
+<li>Stability test: trigger the reported condition, verify no daemon crash</li>
+<li>Upgrade test: validate behavior before and after upgrade on affected version</li>
+<li>Functional test for rados: reproduce the reported scenario and verify correct behavior</li>
+<li>Regression test: verify fix holds across supported versions</li>
 </ul></div>
 </div>
 
