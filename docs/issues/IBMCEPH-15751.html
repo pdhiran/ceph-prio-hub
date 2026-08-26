@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15751: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
+- IBMCEPH-17568: dispatch_remote() records crash dump for NotImplementedError (documented orchestrator pattern) [post]
+- IBMCEPH-13474: nvmeof module enable error - cannot import CLICommandBase [ceph-9.1, closed]
+- IBMCEPH-15751: Node-proxy hw status summary failing on CLI [ceph-8.1]
+- IBMCEPH-16996: ceph orch ls crashes reloading node-proxy spec (NodeProxySpec.__init__ unexpected kwarg) [on_qa]
+- IBMCEPH-6312: MGR Prometheus module errors during failover (cherrypy port binding) [fixed 4.0/4.1]
+- IBMCEPH-9459: Manager daemon crash with cephadm module during OSD removal [ceph-8.0, fixed]
+- IBMCEPH-10120: MGR crash with cephadm module post host removal (EC 8+6 MSR) [ceph-8.0]
+- RH KB 6751411: List of Supported/Not Supported RHCS Manager Modules
+- Doc ref: IBM 9.0 - Using Ceph Manager modules (ceph mgr module ls/enable/disable)
+- Doc ref: IBM 9.0 - Using Ceph Manager crash module (ceph crash ls/info/stat/prune/archive)
+- Commands: ceph mgr module ls, ceph mgr module enable &lt;module&gt;, ceph mgr module disable &lt;module&gt;, ceph mgr services, ceph crash info &lt;id&gt;
+
+SUMMARY: [IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli
 
 Issue Details:
 - JIRA: IBMCEPH-15751
@@ -238,7 +251,21 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-mgr`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-mgr`
+
+Verified Commands (from ceph-cmd-kb tentacle):
+  ceph mgr module ls                    # List active mgr modules
+  ceph mgr module enable &lt;module&gt; [--force]  # Enable mgr module
+  ceph mgr module disable &lt;module&gt;      # Disable mgr module
+  ceph mgr module force &lt;module&gt; --yes-i-really-mean-it  # Force disable always-on module
+  ceph crash ls                         # List all crash IDs
+  ceph crash ls-new                     # List new (unarchived) crashes
+  ceph crash info &lt;CRASH_ID&gt;            # View crash details
+  ceph crash stat                       # Summary grouped by age
+  ceph crash prune &lt;DAYS&gt;               # Remove crashes older than N days
+  ceph crash archive &lt;CRASH_ID&gt;         # Archive a crash report
+  ceph mgr dump                         # Dump latest MgrMap
+  ceph mgr versions                     # Check running ceph-mgr versions</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -254,7 +281,14 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/cephadm`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-referenced fixes and test suites:
+- IBMCEPH-17568: dispatch_remote NotImplementedError crash dump - verify no false-positive RECENT_MGR_MODULE_CRASH
+- IBMCEPH-9459/10120: cephadm module crash during OSD/host removal - test drain operations
+- IBMCEPH-16996: NodeProxySpec crash on orch ls - test hw_monitoring enable/disable cycle
+- IBMCEPH-6312: Prometheus module failover error - test mgr failover with prometheus enabled
+- Regression suite: qa/tasks/mgr/ (upstream mgr module tests)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -266,7 +300,21 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<ul>
+<li>IBMCEPH-17568: dispatch_remote() records crash dump for NotImplementedError (documented orchestrator pattern) [post]</li>
+<li>IBMCEPH-13474: nvmeof module enable error - cannot import CLICommandBase [ceph-9.1, closed]</li>
+<li>IBMCEPH-15751: Node-proxy hw status summary failing on CLI [ceph-8.1]</li>
+<li>IBMCEPH-16996: <code>ceph orch ls crashes reloading node-proxy spec (NodeProxySpec.__init__ unexpected kwarg) [on_qa]</code></li>
+<li>IBMCEPH-6312: MGR Prometheus module errors during failover (cherrypy port binding) [fixed 4.0/4.1]</li>
+<li>IBMCEPH-9459: Manager daemon crash with <code>cephadm module during OSD removal [ceph-8.0</code>, fixed]</li>
+<li>IBMCEPH-10120: MGR crash with <code>cephadm module post host removal (EC 8+6 MSR) [ceph-8.0]</code></li>
+<li>RH KB 6751411: List of Supported/Not Supported RHCS Manager Modules</li>
+<li>Doc ref: IBM 9.0 - Using Ceph Manager modules (<code>ceph mgr module ls/enable/disable)</code></li>
+<li>Doc ref: IBM 9.0 - Using Ceph Manager crash module (<code>ceph crash ls/info/stat/prune/archive)</code></li>
+<li>Commands: <code>ceph mgr module ls</code>, <code>ceph mgr module enable &lt;module&gt;</code>, <code>ceph mgr module disable &lt;module&gt;</code>, <code>ceph mgr services</code>, <code>ceph crash info &lt;id&gt;</code></li>
+</ul>
+<div class="summary-line">[IBM_Support][Node-proxy] Node proxy summary for hw status is failing on cli</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-15751</li>
@@ -320,7 +368,20 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-mgr</code></code></li>
-</ul></div>
+</ul>
+<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
+<div>ceph mgr module ls                    # List active mgr modules</div>
+<div>ceph mgr module enable &lt;module&gt; [--force]  # Enable mgr module</div>
+<div>ceph mgr module disable &lt;module&gt;      # Disable mgr module</div>
+<div>ceph mgr module force &lt;module&gt; --yes-i-really-mean-it  # Force disable always-on module</div>
+<div>ceph crash ls                         # List all crash IDs</div>
+<div>ceph crash ls-new                     # List new (unarchived) crashes</div>
+<div>ceph crash info &lt;CRASH_ID&gt;            # View crash details</div>
+<div>ceph crash stat                       # Summary grouped by age</div>
+<div>ceph crash prune &lt;DAYS&gt;               # Remove crashes older than N days</div>
+<div>ceph crash archive &lt;CRASH_ID&gt;         # Archive a crash report</div>
+<div>ceph mgr dump                         # Dump latest MgrMap</div>
+<div>ceph mgr versions                     # Check running ceph-mgr versions</div></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for ceph-mgr/orchestrator issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -336,6 +397,14 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/cephadm</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div class="section-head">KB-referenced fixes and test suites</div>
+<ul>
+<li>IBMCEPH-17568: dispatch_remote NotImplementedError crash dump - verify no false-positive RECENT_MGR_MODULE_CRASH</li>
+<li>IBMCEPH-9459/10120: <code>cephadm module crash during OSD/host removal - test drain operations</code></li>
+<li>IBMCEPH-16996: NodeProxySpec crash on orch ls - test hw_monitoring enable/disable cycle</li>
+<li>IBMCEPH-6312: Prometheus module failover error - test mgr failover with prometheus enabled</li>
+<li>Regression suite: qa/tasks/mgr/ (upstream mgr module tests)</li>
 </ul></div>
 </div>
 

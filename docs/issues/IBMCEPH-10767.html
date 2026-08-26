@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10767: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,60 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (KB-enriched 2026-08-26):
+
+CONTAINER/SERVICE START FAILURES (from ceph-issue-kb):
+- IBMCEPH-16473 (normal): OSD daemon fails with handle_auth_bad_method Permission denied. Resolved.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-16473
+  Error: &quot;monclient(hunting): handle_auth_bad_method failed to auth with my available methods: (13) Permission denied&quot;
+- IBMCEPH-1033 (major, 5.0): &quot;no container with name or id&quot; error for running services. Fixed in 5.0.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-1033
+- IBMCEPH-12976 (major, 9.0): Unable to start nfs container via &quot;cephadm shell --name&quot;. Error: pool missing from dict. Status: post.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-12976
+- IBMCEPH-16974 (normal, 9.2): oauth2-proxy fails to start due to OIDC discovery failure. Status: new.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-16974
+- IBMCEPH-14175 (normal, 9.1): NFS-RDMA daemon upgrade fails with 900s timeout. UPGRADE_EXCEPTION. Fixed.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-14175
+- IBMCEPH-9148 (major, 7.0): Cephadm crashed and module entered failed state. Fixed.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-9148
+- IBMCEPH-11471 (major, 8.1): Module &#x27;cephadm&#x27; failed: grace tool failed during upgrade. Fixed in 8.1.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-11471
+- IBMCEPH-1060 (major, 5.0): Module &#x27;cephadm&#x27; failed: auth get failed for client.crash. Fixed in 5.0.
+  URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-1060
+
+IBM Documentation References (from ceph-doc-kb, ibm-9.0):
+- Cephadm troubleshooting: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-cephadm
+- Check cephadm logs: `ceph -W cephadm` and `ceph log last cephadm`
+  URL: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-check-cephadm-logs
+- Upgrading IBM Storage Ceph cluster: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-storage-ceph-cluster-using-cephadm
+  Upgrade order: mgr -&gt; mon -&gt; crash -&gt; osd -&gt; mds -&gt; rgw -&gt; rbd-mirror -&gt; cephfs-mirror -&gt; smb -&gt; nvmeof
+- Staggered upgrade options: --daemon_types, --services, --hosts, --limit, --topological-labels
+  URL: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-running-staggered-upgrade
+- Daemon deployment via service spec/placement with labels: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=hosts-using-host-labels-deploy-daemons-specific
+- Certificate management (certmgr): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=operations-certificate-management
+
+Verified CLI Commands (from ceph-cmd-kb, tentacle/20.x):
+- `ceph orch upgrade start` -- flags: --image, --daemon_types, --hosts, --services, --limit, --no-osd-flags, --ceph_version, --automatically-accept-license, --crush_bucket_type, --crush_bucket_name
+- `ceph orch upgrade status` -- Check ongoing upgrade status (--format for output format)
+- `ceph orch upgrade pause` / `ceph orch upgrade resume` / `ceph orch upgrade stop`
+- `ceph orch upgrade ls` -- Check available versions (--tags, --show-all-versions)
+- `ceph orch daemon redeploy &lt;name&gt; [image]` -- Redeploy a daemon with specific image
+- `ceph orch daemon rm &lt;names&gt; [--force]` -- Remove specific daemons
+- `ceph orch ps [hostname] [--service_name] [--daemon_type] [--daemon_id] [--refresh]` -- List daemons
+- `ceph orch host add &lt;hostname&gt; [addr] [labels] [topological_labels] [--maintenance]`
+- `ceph orch host drain &lt;hostname&gt; [--force] [--keep-conf-keyring] [--zap-osd-devices]`
+- `ceph orch host maintenance enter &lt;hostname&gt; [--force] [--yes-i-really-mean-it]`
+- `ceph orch host maintenance exit &lt;hostname&gt; [--force] [--offline]`
+- `ceph orch host ok-to-stop &lt;hostname&gt;` -- Check if host can be safely stopped
+- `ceph orch host rm &lt;hostname&gt; [--force] [--offline] [--rm-crush-entry]`
+- `ceph orch host set-addr &lt;hostname&gt; &lt;addr&gt;` -- Update host address
+- `ceph orch host label add/rm &lt;hostname&gt; &lt;label&gt;`
+- `ceph orch host rescan &lt;hostname&gt; [--with-summary]` -- Disk rescan
+- `ceph cephadm prepare-host &lt;host&gt; [addr] [--user]` -- Prepare remote host
+
+---
+
+SUMMARY: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
 
 Issue Details:
 - JIRA: IBMCEPH-10767
@@ -239,7 +292,18 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last cephadm`</textarea>
+- Logs: `cephadm shell -- ceph log last cephadm`
+
+Verified Diagnostic Commands (from ceph-cmd-kb, tentacle/20.x):
+- Check cluster health: `ceph -s`
+- Watch cephadm logs live: `ceph -W cephadm`
+- View recent cephadm log: `ceph log last cephadm`
+- List all daemons: `ceph orch ps [--refresh]`
+- Check upgrade status: `ceph orch upgrade status`
+- List hosts and labels: `ceph orch host ls`
+- Redeploy daemon: `ceph orch daemon redeploy &lt;daemon_name&gt; [image]`
+- Restart daemon: `ceph orch daemon restart &lt;daemon_name&gt;`
+- Remove daemon: `ceph orch daemon rm &lt;daemon_name&gt; [--force]`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -256,7 +320,17 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/cephadm, cephci deploy suites`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-Enriched Test References (2026-08-26):
+- IBM docs: cephadm troubleshooting guide -- https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-cephadm
+- IBM docs: upgrade procedures -- https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-storage-ceph-cluster-using-cephadm
+- IBM docs: staggered upgrade -- https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-running-staggered-upgrade
+- Related fixed issues to verify regression coverage:
+  * IBMCEPH-16473: OSD auth_bad_method Permission denied (resolved)
+  * IBMCEPH-12976: NFS container start cephadm shell --name fails (9.0, post)
+  * IBMCEPH-11471: cephadm module grace tool failure during upgrade (8.1, fixed)
+  * IBMCEPH-14175: NFS-RDMA upgrade timeout (9.1, fixed)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -268,7 +342,81 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (KB-enriched 2026-08-26):</div>
+<div>CONTAINER/SERVICE START FAILURES (from ceph-issue-kb):</div>
+<ul>
+<li>IBMCEPH-16473 (normal): OSD daemon fails with handle_auth_bad_method Permission denied. Resolved.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-16473</div>
+<div>Error: &quot;monclient(hunting): handle_auth_bad_method failed to auth with my available methods: (13) Permission denied&quot;</div>
+<ul>
+<li>IBMCEPH-1033 (major, 5.0): &quot;no container with name or id&quot; error for running services. Fixed in 5.0.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-1033</div>
+<ul>
+<li>IBMCEPH-12976 (major, 9.0): Unable to start nfs container via &quot;<code>cephadm shell --name&quot;. Error: pool missing from dict. Status: post.</code></li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-12976</div>
+<ul>
+<li>IBMCEPH-16974 (normal, 9.2): oauth2-proxy fails to start due to OIDC discovery failure. Status: new.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-16974</div>
+<ul>
+<li>IBMCEPH-14175 (normal, 9.1): NFS-RDMA daemon upgrade fails with 900s timeout. UPGRADE_EXCEPTION. Fixed.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-14175</div>
+<ul>
+<li>IBMCEPH-9148 (major, 7.0): Cephadm crashed and module entered failed state. Fixed.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-9148</div>
+<ul>
+<li>IBMCEPH-11471 (major, 8.1): Module &#x27;cephadm&#x27; failed: grace tool failed during upgrade. Fixed in 8.1.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-11471</div>
+<ul>
+<li>IBMCEPH-1060 (major, 5.0): Module &#x27;cephadm&#x27; failed: auth get failed for client.crash. Fixed in 5.0.</li>
+</ul>
+<div>URL: https://ibm-ceph.atlassian.net/browse/IBMCEPH-1060</div>
+<div>IBM Documentation References (from ceph-doc-kb, ibm-9.0):</div>
+<ul>
+<li>Cephadm troubleshooting: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-cephadm</li>
+<li>Check <code>cephadm logs:</code><code><code>ceph -W cephadm</code></code> and <code><code>ceph log last cephadm</code></code></li>
+</ul>
+<div>URL: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-check-cephadm-logs</div>
+<ul>
+<li>Upgrading IBM Storage Ceph cluster: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-storage-ceph-cluster-using-cephadm</li>
+</ul>
+<div>Upgrade order: mgr -&gt; mon -&gt; crash -&gt; osd -&gt; mds -&gt; rgw -&gt; rbd-mirror -&gt; cephfs-mirror -&gt; smb -&gt; nvmeof</div>
+<ul>
+<li>Staggered upgrade options: --daemon_types, --services, --hosts, --limit, --topological-labels</li>
+</ul>
+<div>URL: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-running-staggered-upgrade</div>
+<ul>
+<li>Daemon deployment via service spec/placement with labels: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=hosts-using-host-labels-deploy-daemons-specific</li>
+<li>Certificate management (certmgr): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=operations-certificate-management</li>
+</ul>
+<div>Verified CLI Commands (from ceph-cmd-kb, tentacle/20.x):</div>
+<ul>
+<li><code><code>ceph orch upgrade start</code></code> -- flags: --image, --daemon_types, --hosts, --services, --limit, --no-osd-flags, --ceph_version, --automatically-accept-license, --crush_bucket_type, --crush_bucket_name</li>
+<li><code><code>ceph orch upgrade status</code></code> -- Check ongoing upgrade status (--format for output format)</li>
+<li><code><code>ceph orch upgrade pause</code></code> / <code><code>ceph orch upgrade resume</code></code> / <code><code>ceph orch upgrade stop</code></code></li>
+<li><code><code>ceph orch upgrade ls</code></code> -- Check available versions (--tags, --show-all-versions)</li>
+<li><code><code>ceph orch daemon redeploy &amp;lt;name&amp;gt; [image]</code></code> -- Redeploy a daemon with specific image</li>
+<li><code><code>ceph orch daemon rm &amp;lt;names&amp;gt; [--force]</code></code> -- Remove specific daemons</li>
+<li><code><code>ceph orch ps [hostname] [--service_name] [--daemon_type] [--daemon_id] [--refresh]</code></code> -- List daemons</li>
+<li><code><code>ceph orch host add &amp;lt;hostname&amp;gt; [addr] [labels] [topological_labels] [--maintenance]</code></code></li>
+<li><code><code>ceph orch host drain &amp;lt;hostname&amp;gt; [--force] [--keep-conf-keyring] [--zap-osd-devices]</code></code></li>
+<li><code><code>ceph orch host maintenance enter &amp;lt;hostname&amp;gt; [--force] [--yes-i-really-mean-it]</code></code></li>
+<li><code><code>ceph orch host maintenance exit &amp;lt;hostname&amp;gt; [--force] [--offline]</code></code></li>
+<li><code><code>ceph orch host ok-to-stop &amp;lt;hostname&amp;gt;</code></code> -- Check if host can be safely stopped</li>
+<li><code><code>ceph orch host rm &amp;lt;hostname&amp;gt; [--force] [--offline] [--rm-crush-entry]</code></code></li>
+<li><code><code>ceph orch host set-addr &amp;lt;hostname&amp;gt; &amp;lt;addr&amp;gt;</code></code> -- Update host address</li>
+<li><code><code>ceph orch host label add/rm &amp;lt;hostname&amp;gt; &amp;lt;label&amp;gt;</code></code></li>
+<li><code><code>ceph orch host rescan &amp;lt;hostname&amp;gt; [--with-summary]</code></code> -- Disk rescan</li>
+<li><code><code>ceph cephadm prepare-host &amp;lt;host&amp;gt; [addr] [--user]</code></code> -- Prepare remote host</li>
+</ul>
+<div>---</div>
+<div class="summary-line">[BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-10767</li>
@@ -322,6 +470,18 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last cephadm</code></code></li>
+</ul>
+<div>Verified Diagnostic Commands (from ceph-cmd-kb, tentacle/20.x):</div>
+<ul>
+<li>Check cluster health: <code><code>ceph -s</code></code></li>
+<li>Watch <code>cephadm logs live:</code><code><code>ceph -W cephadm</code></code></li>
+<li>View recent <code>cephadm log:</code><code><code>ceph log last cephadm</code></code></li>
+<li>List all daemons: <code><code>ceph orch ps [--refresh]</code></code></li>
+<li>Check upgrade status: <code><code>ceph orch upgrade status</code></code></li>
+<li>List hosts and labels: <code><code>ceph orch host ls</code></code></li>
+<li>Redeploy daemon: <code><code>ceph orch daemon redeploy &amp;lt;daemon_name&amp;gt; [image]</code></code></li>
+<li>Restart daemon: <code><code>ceph orch daemon restart &amp;lt;daemon_name&amp;gt;</code></code></li>
+<li>Remove daemon: <code><code>ceph orch daemon rm &amp;lt;daemon_name&amp;gt; [--force]</code></code></li>
 </ul></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for cephadm issue</div>
 <div class="section-head">Existing Coverage</div>
@@ -339,6 +499,17 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/cephadm, cephci deploy suites</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div>KB-Enriched Test References (2026-08-26):</div>
+<ul>
+<li>IBM docs: <code>cephadm troubleshooting guide -- https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-cephadm</code></li>
+<li>IBM docs: upgrade procedures -- https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-storage-ceph-cluster-using-cephadm</li>
+<li>IBM docs: staggered upgrade -- https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=upgrading-running-staggered-upgrade</li>
+<li>Related fixed issues to verify regression coverage:</li>
+<li>IBMCEPH-16473: OSD auth_bad_method Permission denied (resolved)</li>
+<li>IBMCEPH-12976: NFS container start <code>cephadm shell --name fails (9.0</code>, post)</li>
+<li>IBMCEPH-11471: <code>cephadm module grace tool failure during upgrade (8.1</code>, fixed)</li>
+<li>IBMCEPH-14175: NFS-RDMA upgrade timeout (9.1, fixed)</li>
 </ul></div>
 </div>
 

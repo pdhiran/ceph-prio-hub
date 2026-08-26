@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13755: [8.1z Backport] 403 response for HeadObject operation with s3:GetObject Action</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] 403 response for HeadObject operation with s3:GetObject Action
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from ceph-issue-kb, ceph-doc-kb):
+---
+Related known issues:
+  - IBMCEPH-17169: RGW crashes (SIGSEGV) during LC deletion on large-sharded (10001) bucket with 450+M objects [on_qa]
+  - IBMCEPH-8430: 300% CPU utilization during bucket manual reshard to 10000 shards (400M objects) [closed]
+  - IBMCEPH-15676: Multiple RGW crashes after 8.1z5 to 9.0z2 upgrade (segfault in io_context_pool) [closed]
+  - IBMCEPH-11343: Bucket index downsharding does not shrink to default 11 shards after LC deletion of large objects [closed] (fixed in 9.0)
+  - IBMCEPH-3587: Segfault in RGWGC::send_chain() during multisite sync run [closed] (fixed in 5.1)
+  - IBMCEPH-6463: RGW crashes with Segfault on s3:copy_obj post RHCS 5.3.1 upgrade (multisite) [closed]
+  - IBMCEPH-144: Multisite sync errors with bucket names containing colons [closed] (fixed in 6.1)
+  - IBMCEPH-3122: RGW single-site crashing on multipart upload after RHCS 4-&gt;5 upgrade [closed] (fixed in 5.0)
+  - IBMCEPH-12965: Dedup estimate increments Corrupted_ETAG counters for DeleteMarkers in versioned buckets [closed] (fixed in 9.0)
+  - IBMCEPH-10035: radosgw-admin lc process doesn&#x27;t remove objects if versioning is suspended [closed] (fixed in 8.1)
+  - IBMCEPH-12413: S3 object corruption on some objects in a bucket (8.1z1) [closed]
+  - IBMCEPH-5450: Archive zone: bucket index entries of deleted objects in versioned buckets left behind [closed] (fixed in 5.3)
+IBM Storage Ceph 9.0 documentation references:
+  - Enabling non-blocking bucket resharding: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=resharding-enabling-non-blocking-bucket
+---
+
+SUMMARY: [8.1z Backport] 403 response for HeadObject operation with s3:GetObject Action
 
 Issue Details:
 - JIRA: IBMCEPH-13755
@@ -231,7 +250,10 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-rgw`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-rgw`
+
+Verified Commands (from ceph-cmd-kb, Tentacle 20.x / IBM Ceph 9.x):
+  # General: radosgw-admin sync status, radosgw-admin bucket stats --bucket=BUCKET</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -247,7 +269,14 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/rgw, s3-tests`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-Enriched Test References:
+  - s3-tests suite: full S3 API compatibility tests
+  - Hot issue: IBMCEPH-17812/17813/17814/17815 (SigV4 presigned PUT regression) -- BLOCKER across all versions
+  - Upgrade tests: qa/suites/upgrade, cephci upgrade suites
+  - Known fix: IBMCEPH-13843 (fails to start after upgrade due to period decode) -- verify period migration
+  - Pre-upgrade: complete all resharding operations before upgrade (IBM doc requirement)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -259,7 +288,29 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] 403 response for HeadObject operation with s3:GetObject Action</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from ceph-issue-kb, ceph-doc-kb):</div>
+<div>---</div>
+<div class="section-head">Related known issues</div>
+<ul>
+<li>IBMCEPH-17169: RGW crashes (SIGSEGV) during LC deletion on large-sharded (10001) bucket with 450+M objects [on_qa]</li>
+<li>IBMCEPH-8430: 300% CPU utilization during bucket manual reshard to 10000 shards (400M objects) [closed]</li>
+<li>IBMCEPH-15676: Multiple RGW crashes after 8.1z5 to 9.0z2 upgrade (segfault in io_context_pool) [closed]</li>
+<li>IBMCEPH-11343: Bucket index downsharding does not shrink to default 11 shards after LC deletion of large objects [closed] (fixed in 9.0)</li>
+<li>IBMCEPH-3587: Segfault in RGWGC::send_chain() during multisite sync run [closed] (fixed in 5.1)</li>
+<li>IBMCEPH-6463: RGW crashes with Segfault on s3:copy_obj post RHCS 5.3.1 upgrade (multisite) [closed]</li>
+<li>IBMCEPH-144: Multisite sync errors with bucket names containing colons [closed] (fixed in 6.1)</li>
+<li>IBMCEPH-3122: RGW single-site crashing on multipart upload after RHCS 4-&gt;5 upgrade [closed] (fixed in 5.0)</li>
+<li>IBMCEPH-12965: Dedup estimate increments Corrupted_ETAG counters for DeleteMarkers in versioned buckets [closed] (fixed in 9.0)</li>
+<li>IBMCEPH-10035: <code>radosgw-admin lc process doesn&#x27;t remove objects if versioning is suspended [closed] (fixed in 8.1)</code></li>
+<li>IBMCEPH-12413: S3 object corruption on some objects in a bucket (8.1z1) [closed]</li>
+<li>IBMCEPH-5450: Archive zone: bucket index entries of deleted objects in versioned buckets left behind [closed] (fixed in 5.3)</li>
+</ul>
+<div>IBM Storage Ceph 9.0 documentation references:</div>
+<ul>
+<li>Enabling non-blocking bucket resharding: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=resharding-enabling-non-blocking-bucket</li>
+</ul>
+<div>---</div>
+<div class="summary-line">[8.1z Backport] 403 response for HeadObject operation with s3:GetObject Action</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-13755</li>
@@ -304,7 +355,9 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-rgw</code></code></li>
-</ul></div>
+</ul>
+<div>Verified Commands (from ceph-cmd-kb, Tentacle 20.x / IBM Ceph 9.x):</div>
+<div># General: radosgw-admin sync status, radosgw-admin bucket stats --bucket=BUCKET</div></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rgw issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -320,6 +373,14 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/rgw, s3-tests</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div class="section-head">KB-Enriched Test References</div>
+<ul>
+<li>s3-tests suite: full S3 API compatibility tests</li>
+<li>Hot issue: IBMCEPH-17812/17813/17814/17815 (SigV4 presigned PUT regression) -- BLOCKER across all versions</li>
+<li>Upgrade tests: qa/suites/upgrade, cephci upgrade suites</li>
+<li>Known fix: IBMCEPH-13843 (fails to start after upgrade due to period decode) -- verify period migration</li>
+<li>Pre-upgrade: complete all resharding operations before upgrade (IBM doc requirement)</li>
 </ul></div>
 </div>
 

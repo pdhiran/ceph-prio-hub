@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16610: [8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,22 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
+- IBMCEPH-16284: Implement skip firewalld management in cephadm-preflight.yml [ceph-8.1, new]
+- IBMCEPH-16610: [8.1z Backport] Preflight playbook should not force-enable firewalld [assigned]
+- IBMCEPH-16612: [9.1z Backport] Preflight playbook should not force-enable firewalld [new]
+- IBMCEPH-16611: [9.1z2 Backport] Preflight should not force-enable firewalld [closed]
+- IBMCEPH-13852: Preflight playbook should not force-enable firewalld (parent) [in progress]
+- IBMCEPH-8071: ceph-volume lvm batch --report fails on dm-cache LVM OSDs [fixed 4.2z1/5.*]
+- IBMCEPH-431: ceph-volume fails to get inventory list (KeyError ceph.cluster_name) [fixed 5.2]
+- IBMCEPH-7654: ceph lvm_volumes by path not working [fixed 4.1/5.*]
+- RH KB 5638881: ceph-volume fails with &#x27;RuntimeError: devices filtered in non-interactive mode&#x27; during re-deploy
+- Doc ref: IBM 9.0 - ceph-volume LVM plugin (prepare, activate, list, batch, zap, migrate, new-db, new-wal)
+- Doc ref: IBM 9.0 - Using batch mode (ceph-volume lvm batch --bluestore)
+- Doc ref: IBM 9.0 - Zapping data (ceph-volume lvm zap)
+- Commands: ceph-volume lvm batch --bluestore, ceph-volume lvm list, ceph-volume lvm zap --destroy --osd-id &lt;id&gt;, ceph-volume lvm prepare --bluestore --data &lt;vg/lv&gt;
+
+SUMMARY: [8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)
 
 Issue Details:
 - JIRA: IBMCEPH-16610
@@ -235,7 +250,19 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `journalctl -u ceph-ansible`</textarea>
+- Logs: `journalctl -u ceph-ansible`
+
+Verified Commands (from ceph-cmd-kb tentacle):
+  ceph-volume lvm list                  # List LVs associated with Ceph
+  ceph-volume lvm batch --bluestore /dev/sdX [/dev/sdY]  # Create OSDs on drives
+  ceph-volume lvm prepare --bluestore --data VG/LV       # Prepare LVM volume as OSD
+  ceph-volume lvm activate --bluestore OSD_ID OSD_FSID   # Activate OSD
+  ceph-volume lvm zap VG/LV [--destroy]                  # Zap logical volume
+  ceph-volume lvm zap --destroy --osd-id OSD_ID          # Purge devices by OSD ID
+  ceph-volume lvm new-db --osd-id ID --osd-fsid FSID --target VG/LV  # Attach DB volume
+  ceph-volume lvm new-wal --osd-id ID --osd-fsid FSID --target VG/LV  # Attach WAL volume
+  ceph-volume lvm migrate --osd-id ID --osd-fsid FSID --from data --target VG/LV
+  ceph-volume lvm deactivate OSD_ID     # Deactivate OSD</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -251,7 +278,13 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `ceph-ansible CI`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-referenced fixes and test suites:
+- IBMCEPH-16284/16610/16612: Preflight firewalld force-enable - test with firewalld disabled/absent
+- IBMCEPH-8071: ceph-volume batch fails on dm-cache LVs - test with dm-cache overlay
+- RH KB 5638881: ceph-volume non-interactive filter - test re-deploy scenario
+- Regression: cephci preflight suite (cephadm-ansible tests)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -263,7 +296,23 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<ul>
+<li>IBMCEPH-16284: Implement skip firewalld management in cephadm-preflight.yml [ceph-8.1, new]</li>
+<li>IBMCEPH-16610: [8.1z Backport] Preflight playbook should not force-enable firewalld [assigned]</li>
+<li>IBMCEPH-16612: [9.1z Backport] Preflight playbook should not force-enable firewalld [new]</li>
+<li>IBMCEPH-16611: [9.1z2 Backport] Preflight should not force-enable firewalld [closed]</li>
+<li>IBMCEPH-13852: Preflight playbook should not force-enable firewalld (parent) [in progress]</li>
+<li>IBMCEPH-8071: ceph-volume lvm batch --report fails on dm-cache LVM OSDs [fixed 4.2z1/5.*]</li>
+<li>IBMCEPH-431: ceph-volume fails to get inventory list (KeyError ceph.cluster_name) [fixed 5.2]</li>
+<li>IBMCEPH-7654: <code>ceph lvm_volumes by path not working [fixed 4.1/5.*]</code></li>
+<li>RH KB 5638881: ceph-volume fails with &#x27;RuntimeError: devices filtered in non-interactive mode&#x27; during re-deploy</li>
+<li>Doc ref: IBM 9.0 - ceph-volume LVM plugin (prepare, activate, list, batch, zap, migrate, new-db, new-wal)</li>
+<li>Doc ref: IBM 9.0 - Using batch mode (ceph-volume lvm batch --bluestore)</li>
+<li>Doc ref: IBM 9.0 - Zapping data (ceph-volume lvm zap)</li>
+<li>Commands: ceph-volume lvm batch --bluestore, ceph-volume lvm list, ceph-volume lvm zap --destroy --osd-id &lt;id&gt;, ceph-volume lvm prepare --bluestore --data &lt;vg/lv&gt;</li>
+</ul>
+<div class="summary-line">[8.1z Backport]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-16610</li>
@@ -314,7 +363,18 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>journalctl -u ceph-ansible</code></code></li>
-</ul></div>
+</ul>
+<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
+<div>ceph-volume lvm list                  # List LVs associated with Ceph</div>
+<div>ceph-volume lvm batch --bluestore /dev/sdX [/dev/sdY]  # Create OSDs on drives</div>
+<div>ceph-volume lvm prepare --bluestore --data VG/LV       # Prepare LVM volume as OSD</div>
+<div>ceph-volume lvm activate --bluestore OSD_ID OSD_FSID   # Activate OSD</div>
+<div>ceph-volume lvm zap VG/LV [--destroy]                  # Zap logical volume</div>
+<div>ceph-volume lvm zap --destroy --osd-id OSD_ID          # Purge devices by OSD ID</div>
+<div>ceph-volume lvm new-db --osd-id ID --osd-fsid FSID --target VG/LV  # Attach DB volume</div>
+<div>ceph-volume lvm new-wal --osd-id ID --osd-fsid FSID --target VG/LV  # Attach WAL volume</div>
+<div>ceph-volume lvm migrate --osd-id ID --osd-fsid FSID --from data --target VG/LV</div>
+<div>ceph-volume lvm deactivate OSD_ID     # Deactivate OSD</div></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for ceph-ansible issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -330,6 +390,13 @@ Recommended Tests:
 <li>Add regression test to <code>ceph-ansible CI</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div class="section-head">KB-referenced fixes and test suites</div>
+<ul>
+<li>IBMCEPH-16284/16610/16612: Preflight firewalld force-enable - test with firewalld disabled/absent</li>
+<li>IBMCEPH-8071: ceph-volume batch fails on dm-cache LVs - test with dm-cache overlay</li>
+<li>RH KB 5638881: ceph-volume non-interactive filter - test re-deploy scenario</li>
+<li>Regression: cephci preflight suite (cephadm-ansible tests)</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12820: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,20 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from ceph-issue-kb, ceph-doc-kb):
+---
+Related known issues:
+  - [HOT] IBMCEPH-17812: 9.2: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]
+  - [HOT] IBMCEPH-17813: 9.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]
+  - [HOT] IBMCEPH-17814: 8.1: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]
+  - [HOT] IBMCEPH-17815: 7.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]
+  - [HOT] IBMCEPH-17497: SIGSEGV in RGWBucketInstanceMetadataHandler::list_keys_next() during dedup estimate (active workload) [verified]
+  - [HOT] IBMCEPH-16402: Startup crash due to race between lifecycle and quota handler [verified]
+  - [HOT] IBMCEPH-17775: RGW background schema validation (Apple RFE -- scrub-like process for missing RADOS objects) [assigned]
+  - [HOT] IBMCEPH-15127: Access permissions lost after migrating user to account (IAM) [assigned]
+---
+
+SUMMARY: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.
 
 Issue Details:
 - JIRA: IBMCEPH-12820
@@ -238,7 +251,10 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-rgw`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-rgw`
+
+Verified Commands (from ceph-cmd-kb, Tentacle 20.x / IBM Ceph 9.x):
+  # General: radosgw-admin sync status, radosgw-admin bucket stats --bucket=BUCKET</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -255,7 +271,10 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/rgw, s3-tests`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-Enriched Test References:
+  - General RGW tests: s3-tests full suite, qa/suites/rgw</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -267,7 +286,21 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from ceph-issue-kb, ceph-doc-kb):</div>
+<div>---</div>
+<div class="section-head">Related known issues</div>
+<ul>
+<li>[HOT] IBMCEPH-17812: 9.2: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]</li>
+<li>[HOT] IBMCEPH-17813: 9.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]</li>
+<li>[HOT] IBMCEPH-17814: 8.1: SigV4 fix breaks presigned PUT URLs [on_qa] [PRIORITY: blocker]</li>
+<li>[HOT] IBMCEPH-17815: 7.1: SigV4 fix breaks presigned PUT URLs [modified] [PRIORITY: blocker]</li>
+<li>[HOT] IBMCEPH-17497: SIGSEGV in RGWBucketInstanceMetadataHandler::list_keys_next() during dedup estimate (active workload) [verified]</li>
+<li>[HOT] IBMCEPH-16402: Startup crash due to race between lifecycle and quota handler [verified]</li>
+<li>[HOT] IBMCEPH-17775: RGW background schema validation (Apple RFE -- scrub-like process for missing RADOS objects) [assigned]</li>
+<li>[HOT] IBMCEPH-15127: Access permissions lost after migrating user to account (IAM) [assigned]</li>
+</ul>
+<div>---</div>
+<div class="summary-line">[BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-12820</li>
@@ -320,7 +353,9 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-rgw</code></code></li>
-</ul></div>
+</ul>
+<div>Verified Commands (from ceph-cmd-kb, Tentacle 20.x / IBM Ceph 9.x):</div>
+<div># General: radosgw-admin sync status, radosgw-admin bucket stats --bucket=BUCKET</div></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rgw issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -337,6 +372,10 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/rgw, s3-tests</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div class="section-head">KB-Enriched Test References</div>
+<ul>
+<li>General RGW tests: s3-tests full suite, qa/suites/rgw</li>
 </ul></div>
 </div>
 

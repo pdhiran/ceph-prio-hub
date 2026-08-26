@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15689: Inclusion of RHEL-9 as Bootstrap Compatible for Ceph 9.9.0</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,13 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Inclusion of RHEL-9 as Bootstrap Compatible for Ceph 9.9.0
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
+- Doc ref: IBM 9.0 - Service specification of the Ceph Orchestrator (service_type, placement, unmanaged)
+- Doc ref: IBM 9.0 - Introduction to the Ceph Orchestrator (bridge between cluster and deployment tools)
+- Doc ref: IBM 9.0 - Data location (/var/log/ceph/FSID, /var/lib/ceph/FSID, crash reports)
+- Commands: ceph orch ls, ceph orch apply, ceph mgr module ls, ceph -s, ceph health detail
+
+SUMMARY: Inclusion of RHEL-9 as Bootstrap Compatible for Ceph 9.9.0
 
 Issue Details:
 - JIRA: IBMCEPH-15689
@@ -248,7 +254,14 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Inclusion of RHEL-9 as Bootstrap Compatible for Ceph 9.9.0</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<ul>
+<li>Doc ref: IBM 9.0 - Service specification of the Ceph Orchestrator (service_type, placement, unmanaged)</li>
+<li>Doc ref: IBM 9.0 - Introduction to the Ceph Orchestrator (bridge between cluster and deployment tools)</li>
+<li>Doc ref: IBM 9.0 - Data location (/var/log/ceph/FSID, /var/lib/ceph/FSID, crash reports)</li>
+<li>Commands: <code>ceph orch ls</code>, <code>ceph orch apply</code>, <code>ceph mgr module ls</code>, <code>ceph -s</code>, <code>ceph health detail</code></li>
+</ul>
+<div class="summary-line">Inclusion of RHEL-9 as Bootstrap Compatible for Ceph 9.9.0</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-15689</li>

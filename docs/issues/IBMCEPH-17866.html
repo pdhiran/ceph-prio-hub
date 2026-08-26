@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17866: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool
+      <textarea id="ed-analysis" rows="8" style="width:100%;">## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)
+
+### Hot RADOS Issues (ceph-issue-kb)
+- IBMCEPH-16598: EC truncate+write planning for shard sizes — data corruption risk (9.1z)
+- IBMCEPH-16972: OSD enters error state post Monitor connection scores tests (9.1z1)
+- IBMCEPH-17866: RFE: Warnings when applying 0-weight CRUSH rules to pool
+- IBMCEPH-17828: PG rebuild duration only considered for non-primary OSD (9.1z2)
+- IBMCEPH-17541: PG Inconsistent omap digest mismatch on s390x after upgrade (9.0, blocker)
+- IBMCEPH-14459: QoS support for high priority operations (target 10.0)
+- IBMCEPH-14722: Pool Migration — RADOS (target 10.0)
+
+### Documentation References (ceph-doc-kb, IBM 9.0)
+- IBM 9.0 Docs: Known issue — PGs not scaled down in upmap-read/read balancer modes (BZ#2302230) — workaround: `ceph osd rm-pg-upmap-primary &lt;PG_ID&gt;`
+- IBM 9.0 Docs: Tuning considerations (sysctl, TuneD) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=recommendations-tuning-considerations-storage-ceph
+- IBM 9.0 Docs: Adjusting cluster map size (osd_map_cache_size, etc.) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=adjustments-adjusting-cluster-map-size
+- IBM 9.0 Docs: Benchmarking with rados bench — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=benchmark-benchmarking-ceph-performance
+
+---
+
+SUMMARY: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool
 
 Issue Details:
 - JIRA: IBMCEPH-17866
@@ -233,7 +252,19 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-osd`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-osd`
+
+---
+
+## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)
+
+```bash
+ceph osd pool autoscale-status      # Report PG autoscaling recommendation
+ceph osd pool application get &lt;POOL&gt; # Get pool application metadata
+ceph osd reweight-by-pg             # Reweight OSDs by PG distribution
+ceph osd ok-to-upgrade &lt;BUCKET&gt; &lt;VER&gt;  # Check safe OSD upgrade count
+```
+</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -249,7 +280,13 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/rados`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+---
+
+## KB-Sourced Test Suite References (enriched 2026-08-26)
+
+- crush: qa/suites/rados/crush, qa/workunits/rados/test_crush_tool.sh</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -261,7 +298,26 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)</div>
+<div>### Hot RADOS Issues (ceph-issue-kb)</div>
+<ul>
+<li>IBMCEPH-16598: EC truncate+write planning for shard sizes — data corruption risk (9.1z)</li>
+<li>IBMCEPH-16972: OSD enters error state post Monitor connection scores tests (9.1z1)</li>
+<li>IBMCEPH-17866: RFE: Warnings when applying 0-weight CRUSH rules to pool</li>
+<li>IBMCEPH-17828: PG rebuild duration only considered for non-primary OSD (9.1z2)</li>
+<li>IBMCEPH-17541: PG Inconsistent omap digest mismatch on s390x after upgrade (9.0, blocker)</li>
+<li>IBMCEPH-14459: QoS support for high priority operations (target 10.0)</li>
+<li>IBMCEPH-14722: Pool Migration — RADOS (target 10.0)</li>
+</ul>
+<div>### Documentation References (ceph-doc-kb, IBM 9.0)</div>
+<ul>
+<li>IBM 9.0 Docs: Known issue — PGs not scaled down in upmap-read/read balancer modes (BZ#2302230) — workaround: <code><code>ceph osd rm-pg-upmap-primary &amp;lt;PG_ID&amp;gt;</code></code></li>
+<li>IBM 9.0 Docs: Tuning considerations (sysctl, TuneD) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=recommendations-tuning-considerations-storage-ceph</li>
+<li>IBM 9.0 Docs: Adjusting cluster map size (osd_map_cache_size, etc.) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=adjustments-adjusting-cluster-map-size</li>
+<li>IBM 9.0 Docs: Benchmarking with <code>rados bench — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=benchmark-benchmarking-ceph-performance</code></li>
+</ul>
+<div>---</div>
+<div class="summary-line">[RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-17866</li>
@@ -308,7 +364,15 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
-</ul></div>
+</ul>
+<div>---</div>
+<div>## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)</div>
+<pre>
+ceph osd pool autoscale-status      # Report PG autoscaling recommendation
+ceph osd pool application get &lt;POOL&gt; # Get pool application metadata
+ceph osd reweight-by-pg             # Reweight OSDs by PG distribution
+ceph osd ok-to-upgrade &lt;BUCKET&gt; &lt;VER&gt;  # Check safe OSD upgrade count
+</pre></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rados issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -324,6 +388,11 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/rados</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div>---</div>
+<div>## KB-Sourced Test Suite References (enriched 2026-08-26)</div>
+<ul>
+<li>crush: qa/suites/rados/crush, qa/workunits/rados/test_crush_tool.sh</li>
 </ul></div>
 </div>
 

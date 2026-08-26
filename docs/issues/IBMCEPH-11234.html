@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11234: [BZ#2361754] [IBM_Support] rbd trash purge schedule ls doesn&#x27;t list all scheduled times for trash processing on a pool</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,19 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2361754] [IBM_Support] rbd trash purge schedule ls doesn&#x27;t list all scheduled times for trash processing on a pool
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
+- IBMCEPH-17854: NooBaa DB Pod fails to mount RBD volume (Exit Code 108, Transport Endpoint Shutdown) [new]
+- IBMCEPH-10376: rbd map error exit status 110 - sysfs write failed (ODF 4.15.8) [ceph-7.1, closed]
+- IBMCEPH-13721: Ceph-CSI RBD Volume Mount Failure after update to 3.16 - sysfs write failed [ceph-8.0z5, closed]
+- IBMCEPH-12327: High latencies on RBD volumes exported via iSCSI GW on Oracle RAC DB [ceph-5.3]
+- IBMCEPH-4168: [DOC] RBD over NVMeOF Tech Preview
+- RH KB 7081819: Can&#x27;t mount RBD image within Ceph Tools Pod (Operation not permitted)
+- RH KB 6964036: RBD PVC stays Pending - multi node access modes only supported on block type volumes
+- Doc ref: IBM 9.0 - Common block image CLI commands (rbd create, ls, resize, snap, clone)
+- Doc ref: IBM 9.0 - Monitoring performance of Ceph Block Devices (rbd perf image iotop/iostat)
+- Commands: rbd device list, rbd device unmap, rbd perf image iotop, rbd perf image iostat, ceph rbd perf, rbd map, rbd unmap
+
+SUMMARY: [BZ#2361754] [IBM_Support] rbd trash purge schedule ls doesn&#x27;t list all scheduled times for trash processing on a pool
 
 Issue Details:
 - JIRA: IBMCEPH-11234
@@ -231,7 +243,21 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-osd`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-osd`
+
+Verified Commands (from ceph-cmd-kb tentacle):
+  rbd create IMAGE --size MB --pool POOL   # Create block device image
+  rbd ls POOL                              # List images in pool
+  rbd device list                          # List mapped rbd images
+  rbd device unmap IMAGE                   # Unmap rbd device
+  rbd perf image iotop                     # Display iotop-style perf
+  rbd perf image iostat                    # Display iostat-style perf
+  rbd resize --image IMAGE --size SIZE     # Resize image
+  rbd snap create POOL/IMAGE@SNAP          # Create snapshot
+  rbd clone POOL/IMAGE@SNAP POOL/CHILD     # Clone snapshot
+  ceph rbd perf                            # Retrieve RBD IO performance counters
+  ceph rbd mirror snapshot                 # Add mirror snapshot schedule
+  ceph rbd trash                           # Add trash purge schedule</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -248,7 +274,14 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/rbd`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-referenced fixes and test suites:
+- IBMCEPH-10376/13721: RBD sysfs write failed (exit 110) - test rbd map under kernel version matrix
+- IBMCEPH-17854: RBD mount failure exit 108 - test pod restarts with RBD PVCs
+- IBMCEPH-12327: iSCSI GW high latency - benchmark with fio on iSCSI-exported RBD volumes
+- RH KB 7081819: permissions on ceph tools pod RBD mount - test privileged vs unprivileged
+- Regression: qa/workunits/rbd/ (upstream RBD tests)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -260,7 +293,20 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2361754] [IBM_Support] rbd trash purge schedule ls doesn&#x27;t list all scheduled times for trash processing on a pool</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<ul>
+<li>IBMCEPH-17854: NooBaa DB Pod fails to <code>mount RBD volume (Exit Code 108</code>, Transport Endpoint Shutdown) [new]</li>
+<li>IBMCEPH-10376: <code>rbd map error exit status 110 - sysfs write failed (ODF 4.15.8) [ceph-7.1</code>, closed]</li>
+<li>IBMCEPH-13721: Ceph-CSI RBD Volume Mount Failure after update to 3.16 - sysfs write failed [ceph-8.0z5, closed]</li>
+<li>IBMCEPH-12327: High latencies on RBD volumes exported via iSCSI GW on Oracle RAC DB [ceph-5.3]</li>
+<li>IBMCEPH-4168: [DOC] RBD over NVMeOF Tech Preview</li>
+<li>RH KB 7081819: Can&#x27;t <code>mount RBD image within Ceph Tools Pod (Operation not permitted)</code></li>
+<li>RH KB 6964036: RBD PVC stays Pending - multi node access modes only supported on block type volumes</li>
+<li>Doc ref: IBM 9.0 - Common block image CLI commands (<code>rbd create</code>, ls, resize, snap, clone)</li>
+<li>Doc ref: IBM 9.0 - Monitoring performance of Ceph Block Devices (<code>rbd perf image iotop/iostat)</code></li>
+<li>Commands: <code>rbd device list</code>, <code>rbd device unmap</code>, <code>rbd perf image iotop</code>, <code>rbd perf image iostat</code>, <code>ceph rbd perf</code>, <code>rbd map</code>, <code>rbd unmap</code></li>
+</ul>
+<div class="summary-line">[BZ#2361754] [IBM_Support] rbd trash purge schedule ls doesn&#x27;t list all scheduled times for trash processing on a pool</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-11234</li>
@@ -304,7 +350,20 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
-</ul></div>
+</ul>
+<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
+<div>rbd create IMAGE --size MB --pool POOL   # Create block device image</div>
+<div>rbd ls POOL                              # List images in pool</div>
+<div>rbd device list                          # List mapped rbd images</div>
+<div>rbd device unmap IMAGE                   # Unmap rbd device</div>
+<div>rbd perf image iotop                     # Display iotop-style perf</div>
+<div>rbd perf image iostat                    # Display iostat-style perf</div>
+<div>rbd resize --image IMAGE --size SIZE     # Resize image</div>
+<div>rbd snap create POOL/IMAGE@SNAP          # Create snapshot</div>
+<div>rbd clone POOL/IMAGE@SNAP POOL/CHILD     # Clone snapshot</div>
+<div>ceph rbd perf                            # Retrieve RBD IO performance counters</div>
+<div>ceph rbd mirror snapshot                 # Add mirror snapshot schedule</div>
+<div>ceph rbd trash                           # Add trash purge schedule</div></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rbd issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -321,6 +380,14 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/rbd</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div class="section-head">KB-referenced fixes and test suites</div>
+<ul>
+<li>IBMCEPH-10376/13721: RBD sysfs write failed (exit 110) - test <code>rbd map under kernel version matrix</code></li>
+<li>IBMCEPH-17854: RBD <code>mount failure exit 108 - test pod restarts with RBD PVCs</code></li>
+<li>IBMCEPH-12327: iSCSI GW high latency - benchmark with <code>fio on iSCSI-exported RBD volumes</code></li>
+<li>RH KB 7081819: permissions on <code>ceph tools pod RBD mount - test privileged vs unprivileged</code></li>
+<li>Regression: qa/workunits/rbd/ (upstream RBD tests)</li>
 </ul></div>
 </div>
 

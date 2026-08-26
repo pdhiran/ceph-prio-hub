@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13287: NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,28 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
+      <textarea id="ed-analysis" rows="8" style="width:100%;">
+
+[KB Enrichment 2026-08-26 12:10]
+--- Known Issues &amp; Cross-References (nfs-ganesha/ceph) ---
+- IBMCEPH-10067 (BZ#2320396): NFS-Ganesha memory leak on v3 mount causing crash on scale cluster (2000 exports). Fixed in 8.0.
+- IBMCEPH-11065 (BZ#2357486): Remote I/O errors (posix2fsal_error) after transport endpoint shutdown. Fixed in 8.1.
+- IBMCEPH-11104 (BZ#2358628): NFS Ganesha crash during concurrent I/O + lookup from multiple clients. Affects 8.0/8.1.
+- IBMCEPH-10467 (BZ#2338406): Ganesha crash during failover with haproxy-protocol ingress. Fixed in 8.1.
+- IBMCEPH-13762: NFS-Ganesha crash with libntirpc assertion when RDMA client disconnects abruptly. Affects 9.0.
+- IBMCEPH-13635: NFS mount fails unless NFSv4.1 explicitly used. Fixed in 9.0z1.
+- IBMCEPH-12691 (BZ#2412184): Unable to mount after client reboot with TLS enabled. Fixed in 9.0z1.
+- IBMCEPH-13031 (BZ#2413977): NFS mount inaccessible after Ganesha restart when BYOK enabled. Affects 9.0.
+- IBMCEPH-11701 (BZ#2375725): New mount fails with posix2fsal_error after NFS server hosting node reboot. Fixed in 8.1z2.
+- IBM docs known issue: NFS shares may go missing after upgrade due to empty RADOS object. Workaround: recreate exports.
+
+--- Documentation References ---
+- IBM docs 9.0: Basic NFS CLI commands: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=storage-getting-started-file
+- IBM docs 9.0 Known Issue: NFS shares missing after upgrade (BZ#2418562): recreate exports + restart service. https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=990-known-issues
+- IBM docs 9.0: NFS+CephFS workflow (subvolume path -&gt; export create -&gt; mount): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage
+- IBM docs 9.0: TLS security in NFS (9.9.0.2+): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=whats-new-in-storage-ceph-990
+
+SUMMARY: NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
 
 Issue Details:
 - JIRA: IBMCEPH-13287
@@ -246,7 +267,22 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last nfs`</textarea>
+- Logs: `cephadm shell -- ceph log last nfs`
+
+[KB Enrichment 2026-08-26 12:10]
+--- Verified CLI Commands (nfs-ganesha/ceph, Tentacle 9.x) ---
+Verified NFS commands (Tentacle/9.x):
+- `ceph nfs cluster create &lt;cluster_id&gt; [placement] [--ingress] [--virtual_ip] [--port] [--enable-nfsv3] [--enable-rdma]`
+- `ceph nfs cluster info [cluster_id]`
+- `ceph nfs cluster rm &lt;cluster_id&gt;` (alias: delete, deprecated)
+- `ceph nfs export create cephfs &lt;cluster_id&gt; &lt;pseudo_path&gt; &lt;fs_name&gt; [--path] [--readonly]`
+- `ceph nfs export ls &lt;cluster_id&gt; [--detailed]`
+- `ceph nfs export info &lt;cluster_id&gt; &lt;pseudo_path&gt;`
+- `ceph nfs export rm &lt;cluster_id&gt; &lt;pseudo_path&gt;`
+- `ceph nfs export qos enable bandwidth_control &lt;cluster_id&gt; &lt;pseudo_path&gt; &lt;value&gt;`
+- `ceph nfs export qos get &lt;cluster_id&gt; &lt;pseudo_path&gt;`
+- `ceph nfs cluster qos enable &lt;cluster_id&gt; &lt;value&gt;`
+</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -263,7 +299,25 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/nfs`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+[KB Enrichment 2026-08-26 12:10]
+--- Related Fixes &amp; Test References (nfs-ganesha/ceph) ---
+- IBMCEPH-10067 (BZ#2320396): NFS-Ganesha memory leak on v3 mount causing crash on scale cluster (2000 exports). Fixed in 8.0.
+- IBMCEPH-11065 (BZ#2357486): Remote I/O errors (posix2fsal_error) after transport endpoint shutdown. Fixed in 8.1.
+- IBMCEPH-11104 (BZ#2358628): NFS Ganesha crash during concurrent I/O + lookup from multiple clients. Affects 8.0/8.1.
+- IBMCEPH-10467 (BZ#2338406): Ganesha crash during failover with haproxy-protocol ingress. Fixed in 8.1.
+- IBMCEPH-13762: NFS-Ganesha crash with libntirpc assertion when RDMA client disconnects abruptly. Affects 9.0.
+- IBMCEPH-13635: NFS mount fails unless NFSv4.1 explicitly used. Fixed in 9.0z1.
+- IBMCEPH-12691 (BZ#2412184): Unable to mount after client reboot with TLS enabled. Fixed in 9.0z1.
+- IBMCEPH-13031 (BZ#2413977): NFS mount inaccessible after Ganesha restart when BYOK enabled. Affects 9.0.
+- IBMCEPH-11701 (BZ#2375725): New mount fails with posix2fsal_error after NFS server hosting node reboot. Fixed in 8.1z2.
+- IBM docs known issue: NFS shares may go missing after upgrade due to empty RADOS object. Workaround: recreate exports.
+- IBM docs 9.0: Basic NFS CLI commands: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=storage-getting-started-file
+- IBM docs 9.0 Known Issue: NFS shares missing after upgrade (BZ#2418562): recreate exports + restart service. https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=990-known-issues
+- IBM docs 9.0: NFS+CephFS workflow (subvolume path -&gt; export create -&gt; mount): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage
+- IBM docs 9.0: TLS security in NFS (9.9.0.2+): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=whats-new-in-storage-ceph-990
+</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -275,7 +329,28 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>[KB Enrichment 2026-08-26 12:10]</div>
+<div>--- Known Issues &amp; Cross-References (nfs-ganesha/ceph) ---</div>
+<ul>
+<li>IBMCEPH-10067 (BZ#2320396): NFS-Ganesha memory leak on v3 <code>mount causing crash on scale cluster (2000 exports). Fixed in 8.0.</code></li>
+<li>IBMCEPH-11065 (BZ#2357486): Remote I/O errors (posix2fsal_error) after transport endpoint shutdown. Fixed in 8.1.</li>
+<li>IBMCEPH-11104 (BZ#2358628): NFS Ganesha crash during concurrent I/O + lookup from multiple clients. Affects 8.0/8.1.</li>
+<li>IBMCEPH-10467 (BZ#2338406): Ganesha crash during failover with haproxy-protocol ingress. Fixed in 8.1.</li>
+<li>IBMCEPH-13762: NFS-Ganesha crash with libntirpc assertion when RDMA client disconnects abruptly. Affects 9.0.</li>
+<li>IBMCEPH-13635: NFS <code>mount fails unless NFSv4.1 explicitly used. Fixed in 9.0z1.</code></li>
+<li>IBMCEPH-12691 (BZ#2412184): Unable to <code>mount after client reboot with TLS enabled. Fixed in 9.0z1.</code></li>
+<li>IBMCEPH-13031 (BZ#2413977): NFS <code>mount inaccessible after Ganesha restart when BYOK enabled. Affects 9.0.</code></li>
+<li>IBMCEPH-11701 (BZ#2375725): New <code>mount fails with posix2fsal_error after NFS server hosting node reboot. Fixed in 8.1z2.</code></li>
+<li>IBM docs known issue: NFS shares may go missing after upgrade due to empty RADOS object. Workaround: recreate exports.</li>
+</ul>
+<div>--- Documentation References ---</div>
+<ul>
+<li>IBM docs 9.0: Basic NFS CLI commands: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=storage-getting-started-file</li>
+<li>IBM docs 9.0 Known Issue: NFS shares missing after upgrade (BZ#2418562): recreate exports + restart service. https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=990-known-issues</li>
+<li>IBM docs 9.0: NFS+CephFS workflow (subvolume path -&gt; export create -&gt; mount): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage</li>
+<li>IBM docs 9.0: TLS security in NFS (9.9.0.2+): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=whats-new-in-storage-ceph-990</li>
+</ul>
+<div class="summary-line">NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-13287</li>
@@ -337,6 +412,21 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last nfs</code></code></li>
+</ul>
+<div>[KB Enrichment 2026-08-26 12:10]</div>
+<div>--- Verified CLI Commands (nfs-ganesha/ceph, Tentacle 9.x) ---</div>
+<div>Verified NFS commands (Tentacle/9.x):</div>
+<ul>
+<li><code><code>ceph nfs cluster create &amp;lt;cluster_id&amp;gt; [placement] [--ingress] [--virtual_ip] [--port] [--enable-nfsv3] [--enable-rdma]</code></code></li>
+<li><code><code>ceph nfs cluster info [cluster_id]</code></code></li>
+<li><code><code>ceph nfs cluster rm &amp;lt;cluster_id&amp;gt;</code></code> (alias: delete, deprecated)</li>
+<li><code><code>ceph nfs export create cephfs &amp;lt;cluster_id&amp;gt; &amp;lt;pseudo_path&amp;gt; &amp;lt;fs_name&amp;gt; [--path] [--readonly]</code></code></li>
+<li><code><code>ceph nfs export ls &amp;lt;cluster_id&amp;gt; [--detailed]</code></code></li>
+<li><code><code>ceph nfs export info &amp;lt;cluster_id&amp;gt; &amp;lt;pseudo_path&amp;gt;</code></code></li>
+<li><code><code>ceph nfs export rm &amp;lt;cluster_id&amp;gt; &amp;lt;pseudo_path&amp;gt;</code></code></li>
+<li><code><code>ceph nfs export qos enable bandwidth_control &amp;lt;cluster_id&amp;gt; &amp;lt;pseudo_path&amp;gt; &amp;lt;value&amp;gt;</code></code></li>
+<li><code><code>ceph nfs export qos get &amp;lt;cluster_id&amp;gt; &amp;lt;pseudo_path&amp;gt;</code></code></li>
+<li><code><code>ceph nfs cluster qos enable &amp;lt;cluster_id&amp;gt; &amp;lt;value&amp;gt;</code></code></li>
 </ul></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for nfs-ganesha/ceph issue</div>
 <div class="section-head">Existing Coverage</div>
@@ -354,6 +444,24 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/nfs</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div>[KB Enrichment 2026-08-26 12:10]</div>
+<div>--- Related Fixes &amp; Test References (nfs-ganesha/ceph) ---</div>
+<ul>
+<li>IBMCEPH-10067 (BZ#2320396): NFS-Ganesha memory leak on v3 <code>mount causing crash on scale cluster (2000 exports). Fixed in 8.0.</code></li>
+<li>IBMCEPH-11065 (BZ#2357486): Remote I/O errors (posix2fsal_error) after transport endpoint shutdown. Fixed in 8.1.</li>
+<li>IBMCEPH-11104 (BZ#2358628): NFS Ganesha crash during concurrent I/O + lookup from multiple clients. Affects 8.0/8.1.</li>
+<li>IBMCEPH-10467 (BZ#2338406): Ganesha crash during failover with haproxy-protocol ingress. Fixed in 8.1.</li>
+<li>IBMCEPH-13762: NFS-Ganesha crash with libntirpc assertion when RDMA client disconnects abruptly. Affects 9.0.</li>
+<li>IBMCEPH-13635: NFS <code>mount fails unless NFSv4.1 explicitly used. Fixed in 9.0z1.</code></li>
+<li>IBMCEPH-12691 (BZ#2412184): Unable to <code>mount after client reboot with TLS enabled. Fixed in 9.0z1.</code></li>
+<li>IBMCEPH-13031 (BZ#2413977): NFS <code>mount inaccessible after Ganesha restart when BYOK enabled. Affects 9.0.</code></li>
+<li>IBMCEPH-11701 (BZ#2375725): New <code>mount fails with posix2fsal_error after NFS server hosting node reboot. Fixed in 8.1z2.</code></li>
+<li>IBM docs known issue: NFS shares may go missing after upgrade due to empty RADOS object. Workaround: recreate exports.</li>
+<li>IBM docs 9.0: Basic NFS CLI commands: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=storage-getting-started-file</li>
+<li>IBM docs 9.0 Known Issue: NFS shares missing after upgrade (BZ#2418562): recreate exports + restart service. https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=990-known-issues</li>
+<li>IBM docs 9.0: NFS+CephFS workflow (subvolume path -&gt; export create -&gt; mount): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=started-file-storage</li>
+<li>IBM docs 9.0: TLS security in NFS (9.9.0.2+): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=whats-new-in-storage-ceph-990</li>
 </ul></div>
 </div>
 

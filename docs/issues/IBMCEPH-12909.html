@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12909: [BZ#2432313] [GSS] Ceph command to clear &quot;clear_shards_repaired&quot; fails in squid</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,23 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2432313] [GSS] Ceph command to clear &quot;clear_shards_repaired&quot; fails in squid
+      <textarea id="ed-analysis" rows="8" style="width:100%;">## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)
+
+### Documentation References (ceph-doc-kb, IBM 9.0)
+- IBM 9.0 Docs: Stopping and starting rebalancing — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=osds-stopping-starting-rebalancing
+- IBM 9.0 Docs: Placement groups are down — use `ceph pg &lt;ID&gt; query` to identify blocked peering — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=errors-placement-groups-are-down
+- IBM 9.0 Docs: Troubleshooting clusters in stretch mode — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-clusters-in-stretch-mode
+- IBM 9.0 Docs: PG states reference — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=groups-placement-group-states
+- IBM 9.0 Docs: OSD recovery config — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=configuration-osd-recovery
+- IBM 9.0 Docs: Listing stuck PGs — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=tcpg-listing-placement-groups-stuck-in-stale-inactive-unclean-states
+- IBM 9.0 Docs: Known issue — PGs not scaled down in upmap-read/read balancer modes (BZ#2302230) — workaround: `ceph osd rm-pg-upmap-primary &lt;PG_ID&gt;`
+- IBM 9.0 Docs: Tuning considerations (sysctl, TuneD) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=recommendations-tuning-considerations-storage-ceph
+- IBM 9.0 Docs: Adjusting cluster map size (osd_map_cache_size, etc.) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=adjustments-adjusting-cluster-map-size
+- IBM 9.0 Docs: Benchmarking with rados bench — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=benchmark-benchmarking-ceph-performance
+
+---
+
+SUMMARY: [BZ#2432313] [GSS] Ceph command to clear &quot;clear_shards_repaired&quot; fails in squid
 
 Issue Details:
 - JIRA: IBMCEPH-12909
@@ -239,7 +255,20 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-osd`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-osd`
+
+---
+
+## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)
+
+```bash
+ceph crash ls-new                  # List new (unarchived) crash reports
+ceph crash info &lt;crash_id&gt;          # Get details of a specific crash
+ceph health detail                  # Check overall cluster health and warnings
+ceph osd tree                       # Show OSD topology and status
+ceph pg dump_pools_json             # Dump PG pool info in JSON
+```
+</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -256,7 +285,13 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/rados`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+---
+
+## KB-Sourced Test Suite References (enriched 2026-08-26)
+
+- rados general: qa/suites/rados/thrash, qa/suites/rados/basic, cephci rados tier-1/tier-2</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -268,7 +303,22 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2432313] [GSS] Ceph command to clear &quot;clear_shards_repaired&quot; fails in squid</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)</div>
+<div>### Documentation References (ceph-doc-kb, IBM 9.0)</div>
+<ul>
+<li>IBM 9.0 Docs: Stopping and starting rebalancing — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=osds-stopping-starting-rebalancing</li>
+<li>IBM 9.0 Docs: Placement groups are down — use <code><code>ceph pg &amp;lt;ID&amp;gt; query</code></code> to identify blocked peering — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=errors-placement-groups-are-down</li>
+<li>IBM 9.0 Docs: Troubleshooting clusters in stretch mode — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=troubleshooting-clusters-in-stretch-mode</li>
+<li>IBM 9.0 Docs: PG states reference — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=groups-placement-group-states</li>
+<li>IBM 9.0 Docs: OSD recovery config — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=configuration-osd-recovery</li>
+<li>IBM 9.0 Docs: Listing stuck PGs — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=tcpg-listing-placement-groups-stuck-in-stale-inactive-unclean-states</li>
+<li>IBM 9.0 Docs: Known issue — PGs not scaled down in upmap-read/read balancer modes (BZ#2302230) — workaround: <code><code>ceph osd rm-pg-upmap-primary &amp;lt;PG_ID&amp;gt;</code></code></li>
+<li>IBM 9.0 Docs: Tuning considerations (sysctl, TuneD) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=recommendations-tuning-considerations-storage-ceph</li>
+<li>IBM 9.0 Docs: Adjusting cluster map size (osd_map_cache_size, etc.) — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=adjustments-adjusting-cluster-map-size</li>
+<li>IBM 9.0 Docs: Benchmarking with <code>rados bench — https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=benchmark-benchmarking-ceph-performance</code></li>
+</ul>
+<div>---</div>
+<div class="summary-line">[BZ#2432313] [GSS] Ceph command to clear &quot;clear_shards_repaired&quot; fails in squid</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-12909</li>
@@ -322,7 +372,16 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
-</ul></div>
+</ul>
+<div>---</div>
+<div>## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)</div>
+<pre>
+ceph crash ls-new                  # List new (unarchived) crash reports
+ceph crash info &lt;crash_id&gt;          # Get details of a specific crash
+ceph health detail                  # Check overall cluster health and warnings
+ceph osd tree                       # Show OSD topology and status
+ceph pg dump_pools_json             # Dump PG pool info in JSON
+</pre></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rados issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -339,6 +398,11 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/rados</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div>---</div>
+<div>## KB-Sourced Test Suite References (enriched 2026-08-26)</div>
+<ul>
+<li><code>rados general: qa/suites/rados/thrash</code>, qa/suites/rados/basic, cephci <code>rados tier-1/tier-2</code></li>
 </ul></div>
 </div>
 

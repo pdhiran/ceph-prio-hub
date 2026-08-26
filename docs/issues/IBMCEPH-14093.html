@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14093: [8.1z Backport] Ceph MDS is crashing during the journal replay phase.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] Ceph MDS is crashing during the journal replay phase.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">
+
+[KB Enrichment 2026-08-26 12:10]
+--- Known Issues &amp; Cross-References (cephfs) ---
+- IBMCEPH-6575 (BZ#2190080): CephFS clones stuck in Pending state after MDS restart/crash; MDS unable to find inode from peers when max_mds=1. Fixed in 5.3z3. Workaround: mount+find to force inode load.
+- IBMCEPH-9979 (BZ#2313193): Snapshot create/ls on quiesced subvolume returns socket timeout error. Affects 8.0+.
+- IBMCEPH-11775 (BZ#2379716): Clone ops consuming complete disk space; quota not enforced during clone. Fixed in 8.1z2.
+- IBMCEPH-4490 (BZ#2094822): Clone operations fail with Assertion Error when &gt;100 clones. Fixed in 5.3z1.
+- IBMCEPH-11811 (BZ#2381879): MDS crash during system test in MDSTableClient::got_journaled_ack. Affects 8.1.
+- IBMCEPH-13409: ceph-mgr SIGSEGV in mgr-fin thread during CephFS async subvolume clone copy on aarch64. Affects 8.0.
+- IBMCEPH-16486: MDS Crash ceph_assert(inotablev == mds-&gt;inotable-&gt;get_version()) during replay. Affects 9.1.
+- IBMCEPH-13439: MDS crash ceph_assert(sin-&gt;first &lt;= snapid) in Locker::_do_null_snapflush during chaos testing. Affects 8.0.
+- IBMCEPH-9978 (BZ#2314644): Clone of 200k inode subvolume takes &gt;2.5hrs. Performance issue. Affects 8.0.
+- IBMCEPH-16594: MDS crashes if adding mirroring checkpoint for older snapshot. Affects 9.2.
+- IBMCEPH-8656 (BZ#2271767): Snapshot on mirror destination causes mirror failure. Fixed in 8.0.
+
+--- Hot Issues (cephfs) ---
+- IBMCEPH-17894: cephfs-mirror daemon stuck in error after kill -9 during active sync (9.2)
+- IBMCEPH-16512: Subvolume Quarantine: subvolume ls returns incomplete list while any subvolume is quarantined (9.2, blocker)
+- IBMCEPH-17222: cephfs-mirror daemon SIGSEGV crash-loop after kill during active snapshot sync (9.2, blocker)
+- IBMCEPH-16365: MDS crashed FAILED ceph_assert(cap_imports[ino].size() == 1) (8.1, post)
+- IBMCEPH-16989: Upgrade 9.1z1-&gt;9.2 fails with mgr daemon keyring parse error (aes256k related) (9.2)
+- IBMCEPH-16952: Mirror peer breaks after auth rotate to aes256k (9.1z1)
+- IBMCEPH-16334: Up to 2 minutes IO pause per MDS during upgrade (in progress)
+
+--- Documentation References ---
+- IBM docs 9.0: Cloning CephFS subvolume snapshots (dashboard): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-cloning-cephfs-subvolume
+- IBM docs 9.0: Creating CephFS subvolume snapshots: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-creating-cephfs-subvolume
+- IBM docs 9.0: Snapshot schedule management: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=schedules-adding-snapshot-schedule-cephfs-subvolume
+
+SUMMARY: [8.1z Backport] Ceph MDS is crashing during the journal replay phase.
 
 Issue Details:
 - JIRA: IBMCEPH-14093
@@ -241,7 +271,21 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-mds`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-mds`
+
+[KB Enrichment 2026-08-26 12:10]
+--- Verified CLI Commands (cephfs, Tentacle 9.x) ---
+Verified CephFS commands (Tentacle/9.x):
+- `ceph fs subvolume snapshot clone &lt;vol&gt; &lt;sub&gt; &lt;snap&gt; &lt;target_sub&gt; [--pool_layout] [--group_name] [--target_group_name]`
+- `ceph fs subvolume snapshot create &lt;vol&gt; &lt;sub&gt; &lt;snap&gt; [--group_name]`
+- `ceph fs subvolume snapshot ls &lt;vol&gt; &lt;sub&gt; [--group_name]`
+- `ceph fs subvolume snapshot rm &lt;vol&gt; &lt;sub&gt; &lt;snap&gt; [--group_name] [--force]`
+- `ceph fs subvolume snapshot info &lt;vol&gt; &lt;sub&gt; &lt;snap&gt; [--group_name]`
+- `ceph fs subvolume snapshot getpath &lt;vol&gt; &lt;sub&gt; &lt;snap&gt; [--group_name]`
+- `ceph fs subvolume create &lt;vol&gt; &lt;sub&gt; [--size] [--group_name] [--pool_layout] [--namespace-isolated] [--casesensitive]`
+- `ceph fs subvolume info &lt;vol&gt; &lt;sub&gt; [--group_name]`
+- `ceph fs subvolume getpath &lt;vol&gt; &lt;sub&gt; [--group_name]`
+</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -258,7 +302,25 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/fs`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+[KB Enrichment 2026-08-26 12:10]
+--- Related Fixes &amp; Test References (cephfs) ---
+- IBMCEPH-6575 (BZ#2190080): CephFS clones stuck in Pending state after MDS restart/crash; MDS unable to find inode from peers when max_mds=1. Fixed in 5.3z3. Workaround: mount+find to force inode load.
+- IBMCEPH-9979 (BZ#2313193): Snapshot create/ls on quiesced subvolume returns socket timeout error. Affects 8.0+.
+- IBMCEPH-11775 (BZ#2379716): Clone ops consuming complete disk space; quota not enforced during clone. Fixed in 8.1z2.
+- IBMCEPH-4490 (BZ#2094822): Clone operations fail with Assertion Error when &gt;100 clones. Fixed in 5.3z1.
+- IBMCEPH-11811 (BZ#2381879): MDS crash during system test in MDSTableClient::got_journaled_ack. Affects 8.1.
+- IBMCEPH-13409: ceph-mgr SIGSEGV in mgr-fin thread during CephFS async subvolume clone copy on aarch64. Affects 8.0.
+- IBMCEPH-16486: MDS Crash ceph_assert(inotablev == mds-&gt;inotable-&gt;get_version()) during replay. Affects 9.1.
+- IBMCEPH-13439: MDS crash ceph_assert(sin-&gt;first &lt;= snapid) in Locker::_do_null_snapflush during chaos testing. Affects 8.0.
+- IBMCEPH-9978 (BZ#2314644): Clone of 200k inode subvolume takes &gt;2.5hrs. Performance issue. Affects 8.0.
+- IBMCEPH-16594: MDS crashes if adding mirroring checkpoint for older snapshot. Affects 9.2.
+- IBMCEPH-8656 (BZ#2271767): Snapshot on mirror destination causes mirror failure. Fixed in 8.0.
+- IBM docs 9.0: Cloning CephFS subvolume snapshots (dashboard): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-cloning-cephfs-subvolume
+- IBM docs 9.0: Creating CephFS subvolume snapshots: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-creating-cephfs-subvolume
+- IBM docs 9.0: Snapshot schedule management: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=schedules-adding-snapshot-schedule-cephfs-subvolume
+</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -270,7 +332,38 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] Ceph MDS is crashing during the journal replay phase.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>[KB Enrichment 2026-08-26 12:10]</div>
+<div>--- Known Issues &amp; Cross-References (cephfs) ---</div>
+<ul>
+<li>IBMCEPH-6575 (BZ#2190080): CephFS clones stuck in Pending state after MDS restart/crash; MDS unable to find inode from peers when max_mds=1. Fixed in 5.3z3. Workaround: mount+find to force inode load.</li>
+<li>IBMCEPH-9979 (BZ#2313193): Snapshot create/ls on quiesced subvolume returns socket timeout error. Affects 8.0+.</li>
+<li>IBMCEPH-11775 (BZ#2379716): Clone ops consuming complete disk space; quota not enforced during clone. Fixed in 8.1z2.</li>
+<li>IBMCEPH-4490 (BZ#2094822): Clone operations fail with Assertion Error when &gt;100 clones. Fixed in 5.3z1.</li>
+<li>IBMCEPH-11811 (BZ#2381879): MDS crash during system test in MDSTableClient::got_journaled_ack. Affects 8.1.</li>
+<li>IBMCEPH-13409: ceph-mgr SIGSEGV in mgr-fin thread during CephFS async subvolume clone copy on aarch64. Affects 8.0.</li>
+<li>IBMCEPH-16486: MDS Crash ceph_assert(inotablev == mds-&gt;inotable-&gt;get_version()) during replay. Affects 9.1.</li>
+<li>IBMCEPH-13439: MDS crash ceph_assert(sin-&gt;first &lt;= snapid) in Locker::_do_null_snapflush during chaos testing. Affects 8.0.</li>
+<li>IBMCEPH-9978 (BZ#2314644): Clone of 200k inode subvolume takes &gt;2.5hrs. Performance issue. Affects 8.0.</li>
+<li>IBMCEPH-16594: MDS crashes if adding mirroring checkpoint for older snapshot. Affects 9.2.</li>
+<li>IBMCEPH-8656 (BZ#2271767): Snapshot on mirror destination causes mirror failure. Fixed in 8.0.</li>
+</ul>
+<div>--- Hot Issues (cephfs) ---</div>
+<ul>
+<li>IBMCEPH-17894: cephfs-mirror daemon stuck in error after kill -9 during active sync (9.2)</li>
+<li>IBMCEPH-16512: Subvolume Quarantine: subvolume ls returns incomplete list while any subvolume is quarantined (9.2, blocker)</li>
+<li>IBMCEPH-17222: cephfs-mirror daemon SIGSEGV crash-loop after kill during active snapshot sync (9.2, blocker)</li>
+<li>IBMCEPH-16365: MDS crashed FAILED ceph_assert(cap_imports[ino].size() == 1) (8.1, post)</li>
+<li>IBMCEPH-16989: Upgrade 9.1z1-&gt;9.2 fails with mgr daemon keyring parse error (aes256k related) (9.2)</li>
+<li>IBMCEPH-16952: Mirror peer breaks after auth rotate to aes256k (9.1z1)</li>
+<li>IBMCEPH-16334: Up to 2 minutes IO pause per MDS during upgrade (in progress)</li>
+</ul>
+<div>--- Documentation References ---</div>
+<ul>
+<li>IBM docs 9.0: Cloning CephFS subvolume snapshots (dashboard): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-cloning-cephfs-subvolume</li>
+<li>IBM docs 9.0: Creating CephFS subvolume snapshots: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-creating-cephfs-subvolume</li>
+<li>IBM docs 9.0: Snapshot schedule management: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=schedules-adding-snapshot-schedule-cephfs-subvolume</li>
+</ul>
+<div class="summary-line">[8.1z Backport] Ceph MDS is crashing during the journal replay phase.</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-14093</li>
@@ -327,6 +420,20 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-mds</code></code></li>
+</ul>
+<div>[KB Enrichment 2026-08-26 12:10]</div>
+<div>--- Verified CLI Commands (cephfs, Tentacle 9.x) ---</div>
+<div>Verified CephFS commands (Tentacle/9.x):</div>
+<ul>
+<li><code><code>ceph fs subvolume snapshot clone &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; &amp;lt;snap&amp;gt; &amp;lt;target_sub&amp;gt; [--pool_layout] [--group_name] [--target_group_name]</code></code></li>
+<li><code><code>ceph fs subvolume snapshot create &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; &amp;lt;snap&amp;gt; [--group_name]</code></code></li>
+<li><code><code>ceph fs subvolume snapshot ls &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; [--group_name]</code></code></li>
+<li><code><code>ceph fs subvolume snapshot rm &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; &amp;lt;snap&amp;gt; [--group_name] [--force]</code></code></li>
+<li><code><code>ceph fs subvolume snapshot info &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; &amp;lt;snap&amp;gt; [--group_name]</code></code></li>
+<li><code><code>ceph fs subvolume snapshot getpath &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; &amp;lt;snap&amp;gt; [--group_name]</code></code></li>
+<li><code><code>ceph fs subvolume create &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; [--size] [--group_name] [--pool_layout] [--namespace-isolated] [--casesensitive]</code></code></li>
+<li><code><code>ceph fs subvolume info &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; [--group_name]</code></code></li>
+<li><code><code>ceph fs subvolume getpath &amp;lt;vol&amp;gt; &amp;lt;sub&amp;gt; [--group_name]</code></code></li>
 </ul></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for cephfs issue</div>
 <div class="section-head">Existing Coverage</div>
@@ -344,6 +451,24 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/fs</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div>[KB Enrichment 2026-08-26 12:10]</div>
+<div>--- Related Fixes &amp; Test References (cephfs) ---</div>
+<ul>
+<li>IBMCEPH-6575 (BZ#2190080): CephFS clones stuck in Pending state after MDS restart/crash; MDS unable to find inode from peers when max_mds=1. Fixed in 5.3z3. Workaround: mount+find to force inode load.</li>
+<li>IBMCEPH-9979 (BZ#2313193): Snapshot create/ls on quiesced subvolume returns socket timeout error. Affects 8.0+.</li>
+<li>IBMCEPH-11775 (BZ#2379716): Clone ops consuming complete disk space; quota not enforced during clone. Fixed in 8.1z2.</li>
+<li>IBMCEPH-4490 (BZ#2094822): Clone operations fail with Assertion Error when &gt;100 clones. Fixed in 5.3z1.</li>
+<li>IBMCEPH-11811 (BZ#2381879): MDS crash during system test in MDSTableClient::got_journaled_ack. Affects 8.1.</li>
+<li>IBMCEPH-13409: ceph-mgr SIGSEGV in mgr-fin thread during CephFS async subvolume clone copy on aarch64. Affects 8.0.</li>
+<li>IBMCEPH-16486: MDS Crash ceph_assert(inotablev == mds-&gt;inotable-&gt;get_version()) during replay. Affects 9.1.</li>
+<li>IBMCEPH-13439: MDS crash ceph_assert(sin-&gt;first &lt;= snapid) in Locker::_do_null_snapflush during chaos testing. Affects 8.0.</li>
+<li>IBMCEPH-9978 (BZ#2314644): Clone of 200k inode subvolume takes &gt;2.5hrs. Performance issue. Affects 8.0.</li>
+<li>IBMCEPH-16594: MDS crashes if adding mirroring checkpoint for older snapshot. Affects 9.2.</li>
+<li>IBMCEPH-8656 (BZ#2271767): Snapshot on mirror destination causes mirror failure. Fixed in 8.0.</li>
+<li>IBM docs 9.0: Cloning CephFS subvolume snapshots (dashboard): https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-cloning-cephfs-subvolume</li>
+<li>IBM docs 9.0: Creating CephFS subvolume snapshots: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=snapshots-creating-cephfs-subvolume</li>
+<li>IBM docs 9.0: Snapshot schedule management: https://www.ibm.com/docs/en/storage-ceph/9.9.0?topic=schedules-adding-snapshot-schedule-cephfs-subvolume</li>
 </ul></div>
 </div>
 

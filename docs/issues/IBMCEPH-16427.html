@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16427: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,19 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error
+      <textarea id="ed-analysis" rows="8" style="width:100%;">Known Issues &amp; Cross-References (from KB enrichment):
+- IBMCEPH-6792: Dashboard does not display Grafana graphs (500 error, fixed via BZ#2212967) [ceph-4.3]
+- IBMCEPH-7421: RGW page 500 error when beast port config includes ssl_port [ceph-7.0, fixed]
+- IBMCEPH-11030: 500 Internal Server Error for buckets with LC policies [ceph-8.1, fixed]
+- IBMCEPH-11354: RFE - Move browser certificate exceptions to dashboard window [ceph-8.1, assigned]
+- IBMCEPH-4672: Grafana &#x27;RGW Overview - HAProxy Metrics&#x27; not populated with SSL ingress [ceph-5.2]
+- IBMCEPH-10277: HTTPError 401 Unauthorized for Grafana dashboard injection during upgrade [ceph-ansible, fixed 5.3z8]
+- RH KB 6525991: Dashboard 500 Internal Server Error collecting metrics (ConnectionError/BadStatusLine)
+- Doc ref: IBM 9.0 - Enabling monitoring stack (set-grafana-api-url, set-grafana-api-ssl-verify False)
+- Doc ref: IBM 9.0 - Certificate management (ceph orch certmgr cert/key set)
+- Commands: ceph dashboard set-grafana-api-url, ceph dashboard set-grafana-api-ssl-verify, ceph mgr module disable/enable dashboard
+
+SUMMARY: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error
 
 Issue Details:
 - JIRA: IBMCEPH-16427
@@ -240,7 +252,19 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-mgr`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-mgr`
+
+Verified Commands (from ceph-cmd-kb tentacle):
+  ceph mgr module ls                    # List active mgr modules
+  ceph mgr module enable dashboard      # Enable dashboard module
+  ceph mgr module disable dashboard     # Disable dashboard module (for reset)
+  ceph dashboard set-grafana-api-url &#x27;https://HOST:3000&#x27;
+  ceph dashboard set-grafana-api-ssl-verify False
+  ceph dashboard set-prometheus-api-host &#x27;http://HOST:9095&#x27;
+  ceph dashboard set-alertmanager-api-host &#x27;http://HOST:9093&#x27;
+  ceph dashboard feature                # Enable/disable features in dashboard
+  ceph dashboard debug                  # Control/report debug status
+  ceph mgr services                     # List service endpoints provided by mgr modules</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -256,7 +280,14 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/tasks/mgr/dashboard`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+KB-referenced fixes and test suites:
+- BZ#2212967 (IBMCEPH-6792): Grafana graph display fix - verify post-upgrade
+- BZ#2238470 (IBMCEPH-7421): RGW page 500 with ssl_port - test beast config with/without ssl_port
+- BZ#2364875 (IBMCEPH-11030): LC policy 500 error - test bucket lifecycle operations via dashboard
+- RH KB 6525991: Dashboard metrics 500 - test under mgr failover conditions
+- Regression suite: qa/tasks/mgr/dashboard (upstream Ceph test suite)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -268,7 +299,20 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>Known Issues &amp; Cross-References (from KB enrichment):</div>
+<ul>
+<li>IBMCEPH-6792: Dashboard does not display Grafana graphs (500 error, fixed via BZ#2212967) [ceph-4.3]</li>
+<li>IBMCEPH-7421: RGW page 500 error when beast port config includes ssl_port [ceph-7.0, fixed]</li>
+<li>IBMCEPH-11030: 500 Internal Server Error for buckets with LC policies [ceph-8.1, fixed]</li>
+<li>IBMCEPH-11354: RFE - Move browser certificate exceptions to dashboard window [ceph-8.1, assigned]</li>
+<li>IBMCEPH-4672: Grafana &#x27;RGW Overview - HAProxy Metrics&#x27; not populated with SSL ingress [ceph-5.2]</li>
+<li>IBMCEPH-10277: HTTPError 401 Unauthorized for Grafana dashboard injection during upgrade [ceph-ansible, fixed 5.3z8]</li>
+<li>RH KB 6525991: Dashboard 500 Internal Server Error collecting metrics (ConnectionError/BadStatusLine)</li>
+<li>Doc ref: IBM 9.0 - Enabling monitoring stack (set-grafana-api-url, set-grafana-api-ssl-verify False)</li>
+<li>Doc ref: IBM 9.0 - Certificate management (<code>ceph orch certmgr cert/key set)</code></li>
+<li>Commands: <code>ceph dashboard set-grafana-api-url</code>, <code>ceph dashboard set-grafana-api-ssl-verify</code>, <code>ceph mgr module disable/enable dashboard</code></li>
+</ul>
+<div class="summary-line">[9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-16427</li>
@@ -324,7 +368,18 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-mgr</code></code></li>
-</ul></div>
+</ul>
+<div>Verified Commands (from ceph-cmd-kb tentacle):</div>
+<div>ceph mgr module ls                    # List active mgr modules</div>
+<div>ceph mgr module enable dashboard      # Enable dashboard module</div>
+<div>ceph mgr module disable dashboard     # Disable dashboard module (for reset)</div>
+<div>ceph dashboard set-grafana-api-url &#x27;https://HOST:3000&#x27;</div>
+<div>ceph dashboard set-grafana-api-ssl-verify False</div>
+<div>ceph dashboard set-prometheus-api-host &#x27;http://HOST:9095&#x27;</div>
+<div>ceph dashboard set-alertmanager-api-host &#x27;http://HOST:9093&#x27;</div>
+<div>ceph dashboard feature                # Enable/disable features in dashboard</div>
+<div>ceph dashboard debug                  # Control/report debug status</div>
+<div>ceph mgr services                     # List service endpoints provided by mgr modules</div></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for ceph-dashboard issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -340,6 +395,14 @@ Recommended Tests:
 <li>Add regression test to <code>qa/tasks/mgr/dashboard</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div class="section-head">KB-referenced fixes and test suites</div>
+<ul>
+<li>BZ#2212967 (IBMCEPH-6792): Grafana graph display fix - verify post-upgrade</li>
+<li>BZ#2238470 (IBMCEPH-7421): RGW page 500 with ssl_port - test beast config with/without ssl_port</li>
+<li>BZ#2364875 (IBMCEPH-11030): LC policy 500 error - test bucket lifecycle operations via dashboard</li>
+<li>RH KB 6525991: Dashboard metrics 500 - test under mgr failover conditions</li>
+<li>Regression suite: qa/tasks/mgr/dashboard (upstream Ceph test suite)</li>
 </ul></div>
 </div>
 

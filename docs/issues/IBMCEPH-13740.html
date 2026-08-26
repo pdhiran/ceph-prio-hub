@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13740: [9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 04:59 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 06:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,7 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump
+      <textarea id="ed-analysis" rows="8" style="width:100%;">## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)
+
+### Related MON Crash Issues (ceph-issue-kb)
+- IBMCEPH-9011: Mon crash assert(m &lt; ranks.size()) upon Mon removal (BZ#2280363, 7.1/8.1)
+- IBMCEPH-12984: ceph-mon crash assert(m &lt; ranks.size()) in MonMap::get_addrs (9.0)
+- IBMCEPH-17008: Crimson Mon daemon crash-loops after bootstrap (9.1z1)
+- IBMCEPH-17846: mon SIGABRT in OSDMap::pgtemp_undo_primaryfirst() on FastEC pool (new)
+
+### Related MON CPU/Memory Issues (ceph-issue-kb)
+- IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient (6.1/8.1, assigned — matches prio)
+- IBMCEPH-2709: ceph-mon peon consuming large memory (BZ#1630416, fixed 4.x)
+- IBMCEPH-6922: Slow Ops with hours of request times — OSD flapping (BZ#2217514)
+- IBMCEPH-6013: Small object recovery/backfill too slow (BZ#2163473, fixed 6.1)
+- IBMCEPH-9912: Slow requests causing MySQL RBD mount slowness (BZ#2316534)
+
+### Documentation References (ceph-doc-kb, IBM 9.0)
+
+---
+
+SUMMARY: [9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump
 
 Issue Details:
 - JIRA: IBMCEPH-13740
@@ -240,7 +259,19 @@ Validate:
 - Cluster health: `ceph health detail`
 - Daemon status: `ceph orch ps`
 - Crash dumps: `ceph crash ls-new`
-- Logs: `cephadm shell -- ceph log last ceph-osd`</textarea>
+- Logs: `cephadm shell -- ceph log last ceph-osd`
+
+---
+
+## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)
+
+```bash
+ceph daemon mon.&lt;NAME&gt; ops          # Show mon operations (detect slow ops)
+ceph quorum_status                  # Check MON quorum status
+ceph mon stat                       # Monitor statistics
+ceph config-key dump                # Dump config-key store
+```
+</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
@@ -257,7 +288,13 @@ Coverage Gaps:
 Recommended Tests:
 - Add regression test to `qa/suites/rados`
 - Negative test: verify proper error handling
-- Integration test: end-to-end with customer-like config</textarea>
+- Integration test: end-to-end with customer-like config
+
+---
+
+## KB-Sourced Test Suite References (enriched 2026-08-26)
+
+- mon: qa/suites/rados/mon, qa/suites/rados/basic/tasks/rados_mon_thrash.yaml</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -269,7 +306,25 @@ Recommended Tests:
 
 <h2>Analysis</h2>
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>## Known Issues &amp; Cross-References (from KB enrichment 2026-08-26)</div>
+<div>### Related MON Crash Issues (ceph-issue-kb)</div>
+<ul>
+<li>IBMCEPH-9011: Mon crash assert(m &lt; ranks.size()) upon Mon removal (BZ#2280363, 7.1/8.1)</li>
+<li>IBMCEPH-12984: ceph-mon crash assert(m &lt; ranks.size()) in MonMap::get_addrs (9.0)</li>
+<li>IBMCEPH-17008: Crimson Mon daemon crash-loops after bootstrap (9.1z1)</li>
+<li>IBMCEPH-17846: mon SIGABRT in OSDMap::pgtemp_undo_primaryfirst() on FastEC pool (new)</li>
+</ul>
+<div>### Related MON CPU/Memory Issues (ceph-issue-kb)</div>
+<ul>
+<li>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient (6.1/8.1, assigned — matches prio)</li>
+<li>IBMCEPH-2709: ceph-mon peon consuming large memory (BZ#1630416, fixed 4.x)</li>
+<li>IBMCEPH-6922: Slow Ops with hours of request times — OSD flapping (BZ#2217514)</li>
+<li>IBMCEPH-6013: Small object recovery/backfill too slow (BZ#2163473, fixed 6.1)</li>
+<li>IBMCEPH-9912: Slow requests causing MySQL RBD <code>mount slowness (BZ#2316534)</code></li>
+</ul>
+<div>### Documentation References (ceph-doc-kb, IBM 9.0)</div>
+<div>---</div>
+<div class="summary-line">[9.0z Backport] [ODF][Nokia]MON crashed - need help analyzing dump</div>
 <div class="section-head">Issue Details</div>
 <ul>
 <li>JIRA: IBMCEPH-13740</li>
@@ -324,7 +379,15 @@ Recommended Tests:
 <li>Daemon status: <code><code>ceph orch ps</code></code></li>
 <li>Crash dumps: <code><code>ceph crash ls-new</code></code></li>
 <li>Logs: <code><code>cephadm shell -- ceph log last ceph-osd</code></code></li>
-</ul></div>
+</ul>
+<div>---</div>
+<div>## Verified Diagnostic Commands (ceph-cmd-kb, Tentacle 20.x)</div>
+<pre>
+ceph daemon mon.&lt;NAME&gt; ops          # Show mon operations (detect slow ops)
+ceph quorum_status                  # Check MON quorum status
+ceph mon stat                       # Monitor statistics
+ceph config-key dump                # Dump config-key store
+</pre></div>
 <div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test coverage assessment for rados issue</div>
 <div class="section-head">Existing Coverage</div>
 <ul>
@@ -341,6 +404,11 @@ Recommended Tests:
 <li>Add regression test to <code>qa/suites/rados</code></li>
 <li>Negative test: verify proper error handling</li>
 <li>Integration test: end-to-end with customer-like config</li>
+</ul>
+<div>---</div>
+<div>## KB-Sourced Test Suite References (enriched 2026-08-26)</div>
+<ul>
+<li>mon: qa/suites/rados/mon, qa/suites/rados/basic/tasks/rados_mon_thrash.yaml</li>
 </ul></div>
 </div>
 
