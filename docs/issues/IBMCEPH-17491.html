@@ -81,44 +81,53 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
 
-.edit-btn {
-  font-size: 0.72rem; padding: 3px 12px; border-radius: 4px; border: 1px solid var(--ibm-blue);
-  background: #fff; color: var(--ibm-blue); cursor: pointer; font-weight: 500;
-  margin-left: 0.5rem; vertical-align: middle; transition: all 0.15s;
+.pencil-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border: none; background: transparent;
+  cursor: pointer; border-radius: 3px; vertical-align: middle;
+  opacity: 0.35; transition: all 0.15s; margin-left: 0.3rem; padding: 0;
 }
-.edit-btn:hover { background: var(--ibm-blue); color: #fff; }
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
-}
-@media (max-width: 900px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
-.edit-field label {
-  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ibm-gray-50);
-  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
-}
-.edit-field select, .edit-field textarea {
-  font-family: inherit; font-size: 0.82rem; padding: 0.35rem 0.5rem;
-  border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
+.pencil-btn:hover { opacity: 1; background: rgba(15,98,254,0.08); }
+.pencil-btn svg { width: 13px; height: 13px; fill: var(--ibm-blue); }
+
+.inline-edit { display: none; margin-top: 0.3rem; }
+.inline-edit.active { display: block; }
+.inline-edit select, .inline-edit textarea {
+  font-family: inherit; font-size: 0.82rem; padding: 0.3rem 0.5rem;
+  border: 1px solid var(--ibm-blue); border-radius: 4px; background: #fff;
   color: var(--ibm-gray-90); width: 100%; box-sizing: border-box;
 }
-.edit-field select:focus, .edit-field textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
-.save-btn {
+.inline-edit select:focus, .inline-edit textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.inline-edit select { max-width: 200px; }
+
+.field-view { display: inline; }
+.field-view.hidden { display: none; }
+
+.save-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: #fff; border-top: 2px solid var(--ibm-blue);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  padding: 0.6rem 2rem; display: none; align-items: center; gap: 0.75rem;
+}
+.save-bar.visible { display: flex; }
+.save-bar .save-btn {
   font-size: 0.8rem; padding: 0.4rem 1.2rem; border-radius: 4px; border: none;
   background: var(--ibm-blue); color: #fff; cursor: pointer; font-weight: 500;
-  transition: background 0.15s;
 }
-.save-btn:hover { background: #0353e9; }
-.cancel-btn {
+.save-bar .save-btn:hover { background: #0353e9; }
+.save-bar .discard-btn {
   font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 4px;
   border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
   cursor: pointer; font-weight: 500;
 }
-.cancel-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .discard-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .change-count { font-size: 0.78rem; color: var(--ibm-gray-50); }
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17491: [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 09:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -141,109 +150,74 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div class="qa-section" id="qa-section">
-  <h3>QA Tracking <button class="edit-btn" id="edit-toggle" onclick="toggleEdit()">Edit</button></h3>
-
-  <div id="qa-view">
-    <div class="qa-grid">
-      <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
-      <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-      <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>QA Status <button class="pencil-btn" onclick="editField('qa_status')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_status"><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></span>
+        <div class="inline-edit" id="edit-qa_status">
+          <select id="ed-qa-status" onchange="markDirty()">
+            <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="qa-grid">
-      <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field">
+      <dt>QA Owner <button class="pencil-btn" onclick="editField('qa_assignee')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_assignee"><span style="color:var(--ibm-gray-50);">Unassigned</span></span>
+        <div class="inline-edit" id="edit-qa_assignee">
+          <select id="ed-qa-assignee" onchange="markDirty()">
+            <option value="">-- Unassigned --</option>
+            <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: cephfs</div>
+    <div class="qa-field">
+      <dt>Internal Priority <button class="pencil-btn" onclick="editField('priority')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-priority">P2</span>
+        <div class="inline-edit" id="edit-priority">
+          <select id="ed-priority" onchange="markDirty()">
+            <option value="">-- None --</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2" selected>P2</option><option value="P3">P3</option>
+          </select>
+        </div>
+      </dd>
+    </div>
   </div>
-
-  <div id="qa-edit" style="display:none;">
-    <div class="edit-grid">
-      <div class="edit-field">
-        <label>QA Status</label>
-        <select id="ed-qa-status">
-          <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>QA Owner</label>
-        <select id="ed-qa-assignee">
-          <option value="">-- Unassigned --</option>
-          <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Internal Priority</label>
-        <select id="ed-priority">
-          <option value="">-- None --</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2" selected>P2</option><option value="P3">P3</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Hotfix Status</label>
-        <select id="ed-hotfix">
-          <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
-        </select>
-      </div>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>Hotfix Status <button class="pencil-btn" onclick="editField('hotfix')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-hotfix"><span style="color:var(--ibm-gray-50);">--</span></span>
+        <div class="inline-edit" id="edit-hotfix">
+          <select id="ed-hotfix" onchange="markDirty()">
+            <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Notes</label>
-      <textarea id="ed-notes" rows="2" style="width:100%;">Auto-analyzed from JIRA data. Components: cephfs</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crash during cap reconnect replay due to assertion assuming single client per inode in cap_imports map (8.1z backport of IBMCEPH-16365).
-ROOT CAUSE: During MDS restart/failover, multiple CephFS clients reconnect and send CLIENT_RECONNECT messages for capabilities they held. These are stored in cap_imports[ino][client]. The function remove_replay_cap_reconnect() in MDCache.h:681 asserts cap_imports[ino].size() == 1, assuming only one client has caps on any given inode. When two or more clients held caps on the same inode before the MDS restart, this assertion fails because the map contains entries for multiple clients. The code then calls cap_imports.erase(ino) which would remove all client entries, but the assertion aborts the MDS before reaching that line. The crash cascades between both MDS ranks (a and b) as they repeatedly restart and crash in the same path.
-KEY EVIDENCE:
-- Assertion: FAILED ceph_assert(cap_imports[ino].size() == 1) at MDCache.h:681
-- Backtrace: MDCache::try_reconnect_cap() -&gt; Server::reply_client_request() -&gt; Finisher thread
-- 10 crashes in rapid succession across both MDS ranks (a and b) between 2026-05-27 and 2026-06-28
-- VMware/ODF environment with odf-operator.v4.20.2
-- Clone of IBMCEPH-16365 (original bug) for 8.1z backport
-- Upstream patch not yet merged per comment from Bipin Kunal (2026-08-13)
-FIX STATUS: PR opened upstream (referenced in IBMCEPH-16365). The fix modifies remove_replay_cap_reconnect() to remove only the specific client entry and delete the inode entry only when no reconnect records remain. Moved out of current z-release; targeted for next z-release. 9.1z backport tracked in IBMCEPH-17490.</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger MDS crash via cap_imports assertion during multi-client reconnect replay.
-Environment: IBM Ceph 8.1 (19.2.1) with CephFS, 2 active MDS ranks, multiple kernel or FUSE clients.
-1. Deploy CephFS with 2 active MDS ranks -- intent: establish multi-rank MDS for failover testing
-   ceph fs set cephfs max_mds 2
-2. Mount CephFS from 2+ clients (kernel mount preferred) -- intent: create multiple clients with shared inode caps
-   mount -t ceph mon1:/ /mnt/cephfs -o name=admin
-3. From both clients, open and hold the same file simultaneously -- intent: ensure both clients hold caps on same inode
-   Client A: tail -f /mnt/cephfs/shared-file
-   Client B: cat /mnt/cephfs/shared-file
-4. Force MDS restart while clients hold caps -- intent: trigger reconnect replay with multiple clients per inode
-   ceph mds fail 0
-5. Monitor crash logs -- intent: detect assertion failure
-   ceph crash ls-new
-DIAGNOSTIC COMMANDS:
-- ceph crash ls-new
-- ceph crash info &lt;crash-id&gt;
-- ceph daemon mds.&lt;name&gt; session ls (check active sessions)
-- ceph daemon mds.&lt;name&gt; dump_mds_cache (inspect cap state)</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test covers multi-client cap reconnect replay assertion during MDS restart.
-GAPS:
-- No test validates remove_replay_cap_reconnect() with &gt;1 client holding caps on same inode
-- No test exercises MDS failover with multiple clients holding overlapping capabilities
-- No crash resilience test for rapid MDS restart cycles with active client sessions
-SCENARIOS NEEDED:
-- Multi-client same-inode caps: 2+ clients open same file, force MDS restart; verify MDS recovers without crash
-- Rapid MDS failover cycling: repeatedly fail MDS with active multi-client workload; verify no assertion failures
-- Cross-rank cap migration: with max_mds=2, ensure cap reconnect across rank migration handles multiple clients
-- ODF environment: test on OCP/ODF VMware deployment matching customer topology</textarea>
-    </div>
-    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-      <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
-      <button class="cancel-btn" onclick="toggleEdit()">Cancel</button>
-      <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);align-self:center;"></span>
+    <div class="qa-field" style="grid-column: span 2;">
+      <dt>Notes <button class="pencil-btn" onclick="editField('notes')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-notes">Auto-analyzed from JIRA data. Components: cephfs</span>
+        <div class="inline-edit" id="edit-notes">
+          <textarea id="ed-notes" rows="2" onchange="markDirty()" oninput="markDirty()">Auto-analyzed from JIRA data. Components: cephfs</textarea>
+        </div>
+      </dd>
     </div>
   </div>
 </div>
 
-<div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crash during cap reconnect replay due to assertion assuming single client per inode in cap_imports map (8.1z backport of IBMCEPH-16365).</div>
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Root Cause Analysis</div>
+    <button class="pencil-btn" onclick="editField('analysis')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-analysis">
+    <div class="analysis-box"><div class="summary-line">MDS crash during cap reconnect replay due to assertion assuming single client per inode in cap_imports map (8.1z backport of IBMCEPH-16365).</div>
 <div>ROOT CAUSE: During MDS restart/failover, multiple CephFS clients reconnect and send CLIENT_RECONNECT messages for capabilities they held. These are stored in cap_imports[ino][client]. The function remove_replay_cap_reconnect() in MDCache.h:681 asserts cap_imports[ino].size() == 1, assuming only one client has caps on any given inode. When two or more clients held caps on the same inode before the MDS restart, this assertion fails because the map contains entries for multiple clients. The code then calls cap_imports.erase(ino) which would remove all client entries, but the assertion aborts the MDS before reaching that line. The crash cascades between both MDS ranks (a and b) as they repeatedly restart and crash in the same path.</div>
 <div class="section-head">KEY EVIDENCE</div>
 <ul>
@@ -255,7 +229,28 @@ SCENARIOS NEEDED:
 <li>Upstream patch not yet merged per comment from Bipin Kunal (2026-08-13)</li>
 </ul>
 <div>FIX STATUS: PR opened upstream (referenced in IBMCEPH-16365). The fix modifies remove_replay_cap_reconnect() to remove only the specific client entry and delete the inode entry only when no reconnect records remain. Moved out of current z-release; targeted for next z-release. 9.1z backport tracked in IBMCEPH-17490.</div></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger MDS crash via cap_imports assertion during multi-client reconnect replay.</div>
+  </span>
+  <div class="inline-edit" id="edit-analysis">
+    <textarea id="ed-analysis" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">SUMMARY: MDS crash during cap reconnect replay due to assertion assuming single client per inode in cap_imports map (8.1z backport of IBMCEPH-16365).
+ROOT CAUSE: During MDS restart/failover, multiple CephFS clients reconnect and send CLIENT_RECONNECT messages for capabilities they held. These are stored in cap_imports[ino][client]. The function remove_replay_cap_reconnect() in MDCache.h:681 asserts cap_imports[ino].size() == 1, assuming only one client has caps on any given inode. When two or more clients held caps on the same inode before the MDS restart, this assertion fails because the map contains entries for multiple clients. The code then calls cap_imports.erase(ino) which would remove all client entries, but the assertion aborts the MDS before reaching that line. The crash cascades between both MDS ranks (a and b) as they repeatedly restart and crash in the same path.
+KEY EVIDENCE:
+- Assertion: FAILED ceph_assert(cap_imports[ino].size() == 1) at MDCache.h:681
+- Backtrace: MDCache::try_reconnect_cap() -&gt; Server::reply_client_request() -&gt; Finisher thread
+- 10 crashes in rapid succession across both MDS ranks (a and b) between 2026-05-27 and 2026-06-28
+- VMware/ODF environment with odf-operator.v4.20.2
+- Clone of IBMCEPH-16365 (original bug) for 8.1z backport
+- Upstream patch not yet merged per comment from Bipin Kunal (2026-08-13)
+FIX STATUS: PR opened upstream (referenced in IBMCEPH-16365). The fix modifies remove_replay_cap_reconnect() to remove only the specific client entry and delete the inode entry only when no reconnect records remain. Moved out of current z-release; targeted for next z-release. 9.1z backport tracked in IBMCEPH-17490.</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Steps to Reproduce</div>
+    <button class="pencil-btn" onclick="editField('repro')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-repro">
+    <div class="analysis-box"><div>Goal: Trigger MDS crash via cap_imports assertion during multi-client reconnect replay.</div>
 <div>Environment: IBM Ceph 8.1 (19.2.1) with CephFS, 2 active MDS ranks, multiple kernel or FUSE clients.</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy CephFS with 2 active MDS ranks -- intent: establish multi-rank MDS for failover testing</li>
@@ -285,7 +280,36 @@ SCENARIOS NEEDED:
 <li><code>ceph daemon mds.&lt;name&gt; session ls (check active sessions)</code></li>
 <li><code>ceph daemon mds.&lt;name&gt; dump_mds_cache (inspect cap state)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test covers multi-client cap reconnect replay assertion during MDS restart.</div>
+  </span>
+  <div class="inline-edit" id="edit-repro">
+    <textarea id="ed-repro" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">Goal: Trigger MDS crash via cap_imports assertion during multi-client reconnect replay.
+Environment: IBM Ceph 8.1 (19.2.1) with CephFS, 2 active MDS ranks, multiple kernel or FUSE clients.
+1. Deploy CephFS with 2 active MDS ranks -- intent: establish multi-rank MDS for failover testing
+   ceph fs set cephfs max_mds 2
+2. Mount CephFS from 2+ clients (kernel mount preferred) -- intent: create multiple clients with shared inode caps
+   mount -t ceph mon1:/ /mnt/cephfs -o name=admin
+3. From both clients, open and hold the same file simultaneously -- intent: ensure both clients hold caps on same inode
+   Client A: tail -f /mnt/cephfs/shared-file
+   Client B: cat /mnt/cephfs/shared-file
+4. Force MDS restart while clients hold caps -- intent: trigger reconnect replay with multiple clients per inode
+   ceph mds fail 0
+5. Monitor crash logs -- intent: detect assertion failure
+   ceph crash ls-new
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph daemon mds.&lt;name&gt; session ls (check active sessions)
+- ceph daemon mds.&lt;name&gt; dump_mds_cache (inspect cap state)</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Test Coverage</div>
+    <button class="pencil-btn" onclick="editField('coverage')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-coverage">
+    <div class="analysis-box"><div class="summary-line">No existing test covers multi-client cap reconnect replay assertion during MDS restart.</div>
 <div class="section-head">GAPS</div>
 <ul>
 <li>No test validates remove_replay_cap_reconnect() with &gt;1 client holding caps on same inode</li>
@@ -299,6 +323,26 @@ SCENARIOS NEEDED:
 <li>Cross-rank cap migration: with max_mds=2, ensure cap reconnect across rank migration handles multiple clients</li>
 <li>ODF environment: test on OCP/ODF VMware deployment matching customer topology</li>
 </ul></div>
+  </span>
+  <div class="inline-edit" id="edit-coverage">
+    <textarea id="ed-coverage" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">SUMMARY: No existing test covers multi-client cap reconnect replay assertion during MDS restart.
+GAPS:
+- No test validates remove_replay_cap_reconnect() with &gt;1 client holding caps on same inode
+- No test exercises MDS failover with multiple clients holding overlapping capabilities
+- No crash resilience test for rapid MDS restart cycles with active client sessions
+SCENARIOS NEEDED:
+- Multi-client same-inode caps: 2+ clients open same file, force MDS restart; verify MDS recovers without crash
+- Rapid MDS failover cycling: repeatedly fail MDS with active multi-client workload; verify no assertion failures
+- Cross-rank cap migration: with max_mds=2, ensure cap reconnect across rank migration handles multiple clients
+- ODF environment: test on OCP/ODF VMware deployment matching customer topology</textarea>
+  </div>
+</div>
+
+<div class="save-bar" id="save-bar">
+  <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
+  <button class="discard-btn" onclick="discardAll()">Discard</button>
+  <span class="change-count" id="change-count"></span>
+  <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);margin-left:auto;"></span>
 </div>
 
 
@@ -315,22 +359,46 @@ const REPO_OWNER = 'pdhiran';
 const REPO_NAME = 'ceph-prio-hub';
 const TRACKING_PATH = 'tracking.json';
 
-function toggleEdit() {
-  const view = document.getElementById('qa-view');
-  const edit = document.getElementById('qa-edit');
-  const btn = document.getElementById('edit-toggle');
-  const analysis = document.getElementById('analysis-view');
-  if (edit.style.display === 'none') {
-    edit.style.display = 'block';
-    view.style.display = 'none';
-    analysis.style.display = 'none';
-    btn.textContent = 'Cancel';
+const dirtyFields = new Set();
+
+function editField(field) {
+  const viewEl = document.getElementById('view-' + field);
+  const editEl = document.getElementById('edit-' + field);
+  if (!editEl) return;
+  const isOpen = editEl.classList.contains('active');
+  if (isOpen) {
+    editEl.classList.remove('active');
+    if (viewEl) viewEl.classList.remove('hidden');
   } else {
-    edit.style.display = 'none';
-    view.style.display = 'block';
-    analysis.style.display = 'block';
-    btn.textContent = 'Edit';
+    editEl.classList.add('active');
+    if (viewEl) viewEl.classList.add('hidden');
+    const input = editEl.querySelector('select, textarea');
+    if (input) input.focus();
   }
+}
+
+function markDirty() {
+  const fields = ['qa_status','qa_assignee','priority','hotfix','notes','analysis','repro','coverage'];
+  dirtyFields.clear();
+  fields.forEach(f => {
+    const el = document.getElementById('edit-' + f);
+    if (el && el.classList.contains('active')) dirtyFields.add(f);
+  });
+  const bar = document.getElementById('save-bar');
+  const count = document.getElementById('change-count');
+  if (dirtyFields.size > 0) {
+    bar.classList.add('visible');
+    count.textContent = dirtyFields.size + ' field' + (dirtyFields.size > 1 ? 's' : '') + ' modified';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function discardAll() {
+  document.querySelectorAll('.inline-edit.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.field-view.hidden').forEach(el => el.classList.remove('hidden'));
+  dirtyFields.clear();
+  document.getElementById('save-bar').classList.remove('visible');
 }
 
 function getToken() {
@@ -392,8 +460,9 @@ async function saveChanges() {
     });
 
     if (putResp.ok) {
-      status.textContent = 'Saved! Reload to see changes.';
+      status.textContent = 'Saved!';
       status.style.color = 'var(--ibm-green)';
+      setTimeout(() => location.reload(), 1200);
     } else {
       const err = await putResp.json();
       status.textContent = 'Error: ' + (err.message || putResp.status);

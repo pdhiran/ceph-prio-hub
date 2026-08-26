@@ -81,44 +81,53 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
 
-.edit-btn {
-  font-size: 0.72rem; padding: 3px 12px; border-radius: 4px; border: 1px solid var(--ibm-blue);
-  background: #fff; color: var(--ibm-blue); cursor: pointer; font-weight: 500;
-  margin-left: 0.5rem; vertical-align: middle; transition: all 0.15s;
+.pencil-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border: none; background: transparent;
+  cursor: pointer; border-radius: 3px; vertical-align: middle;
+  opacity: 0.35; transition: all 0.15s; margin-left: 0.3rem; padding: 0;
 }
-.edit-btn:hover { background: var(--ibm-blue); color: #fff; }
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
-}
-@media (max-width: 900px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
-.edit-field label {
-  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ibm-gray-50);
-  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
-}
-.edit-field select, .edit-field textarea {
-  font-family: inherit; font-size: 0.82rem; padding: 0.35rem 0.5rem;
-  border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
+.pencil-btn:hover { opacity: 1; background: rgba(15,98,254,0.08); }
+.pencil-btn svg { width: 13px; height: 13px; fill: var(--ibm-blue); }
+
+.inline-edit { display: none; margin-top: 0.3rem; }
+.inline-edit.active { display: block; }
+.inline-edit select, .inline-edit textarea {
+  font-family: inherit; font-size: 0.82rem; padding: 0.3rem 0.5rem;
+  border: 1px solid var(--ibm-blue); border-radius: 4px; background: #fff;
   color: var(--ibm-gray-90); width: 100%; box-sizing: border-box;
 }
-.edit-field select:focus, .edit-field textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
-.save-btn {
+.inline-edit select:focus, .inline-edit textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.inline-edit select { max-width: 200px; }
+
+.field-view { display: inline; }
+.field-view.hidden { display: none; }
+
+.save-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: #fff; border-top: 2px solid var(--ibm-blue);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  padding: 0.6rem 2rem; display: none; align-items: center; gap: 0.75rem;
+}
+.save-bar.visible { display: flex; }
+.save-bar .save-btn {
   font-size: 0.8rem; padding: 0.4rem 1.2rem; border-radius: 4px; border: none;
   background: var(--ibm-blue); color: #fff; cursor: pointer; font-weight: 500;
-  transition: background 0.15s;
 }
-.save-btn:hover { background: #0353e9; }
-.cancel-btn {
+.save-bar .save-btn:hover { background: #0353e9; }
+.save-bar .discard-btn {
   font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 4px;
   border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
   cursor: pointer; font-weight: 500;
 }
-.cancel-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .discard-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .change-count { font-size: 0.78rem; color: var(--ibm-gray-50); }
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15699: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 09:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -141,115 +150,74 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div class="qa-section" id="qa-section">
-  <h3>QA Tracking <button class="edit-btn" id="edit-toggle" onclick="toggleEdit()">Edit</button></h3>
-
-  <div id="qa-view">
-    <div class="qa-grid">
-      <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
-      <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-      <div class="qa-field"><dt>Internal Priority</dt><dd>P2</dd></div>
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>QA Status <button class="pencil-btn" onclick="editField('qa_status')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_status"><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></span>
+        <div class="inline-edit" id="edit-qa_status">
+          <select id="ed-qa-status" onchange="markDirty()">
+            <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="qa-grid">
-      <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field">
+      <dt>QA Owner <button class="pencil-btn" onclick="editField('qa_assignee')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_assignee"><span style="color:var(--ibm-gray-50);">Unassigned</span></span>
+        <div class="inline-edit" id="edit-qa_assignee">
+          <select id="ed-qa-assignee" onchange="markDirty()">
+            <option value="">-- Unassigned --</option>
+            <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: ceph-dashboard, management &amp; ui</div>
+    <div class="qa-field">
+      <dt>Internal Priority <button class="pencil-btn" onclick="editField('priority')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-priority">P2</span>
+        <div class="inline-edit" id="edit-priority">
+          <select id="ed-priority" onchange="markDirty()">
+            <option value="">-- None --</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2" selected>P2</option><option value="P3">P3</option>
+          </select>
+        </div>
+      </dd>
+    </div>
   </div>
-
-  <div id="qa-edit" style="display:none;">
-    <div class="edit-grid">
-      <div class="edit-field">
-        <label>QA Status</label>
-        <select id="ed-qa-status">
-          <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>QA Owner</label>
-        <select id="ed-qa-assignee">
-          <option value="">-- Unassigned --</option>
-          <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Internal Priority</label>
-        <select id="ed-priority">
-          <option value="">-- None --</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2" selected>P2</option><option value="P3">P3</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Hotfix Status</label>
-        <select id="ed-hotfix">
-          <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
-        </select>
-      </div>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>Hotfix Status <button class="pencil-btn" onclick="editField('hotfix')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-hotfix"><span style="color:var(--ibm-gray-50);">--</span></span>
+        <div class="inline-edit" id="edit-hotfix">
+          <select id="ed-hotfix" onchange="markDirty()">
+            <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Notes</label>
-      <textarea id="ed-notes" rows="2" style="width:100%;">Auto-analyzed from JIRA data. Components: ceph-dashboard, management &amp; ui</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW SSL certificate upload via Dashboard fails with 500 Internal Server Error on IBM Ceph 9.0z2 due to field naming mismatch introduced by certmgr changes.
-
-ROOT CAUSE:
-In Ceph 9.0, the cephadm certmgr feature changed the internal key name from `ssl_cert` to `rgw_frontend_ssl_certificate`. The Dashboard&#x27;s service edit flow on 9.0 passes the certificate through `ServiceSpec.from_json()` which calls `validate()`. During validation, when `ssl=true` and `ssl_cert` is empty (because the Dashboard used the old field name), the code attempts to parse `rgw_frontend_ssl_certificate` as a combined PEM. If only a certificate OR only a key is provided (not both), `parse_combined_pem_file()` returns incomplete data, causing `SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)`. This is a 9.0-only regression; versions 9.1+ include the CertMgr UI which handles the new field correctly.
-
-KEY EVIDENCE:
-- Stack trace: `service_spec.py:1764 validate() -&gt; raise SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)`
-- Aarti Dhikale confirmed: `ssl_cert` is not populated correctly at runtime due to the field name change (commit a59cb5b5e2be)
-- Abhishek Desai: &quot;The issue is specific to 9.0 cause the certmgr cephadm changed the key for ssl_cert to rgw_frontend_ssl_cert&quot;
-- Velmurugan R confirmed the issue is resolved in 9.9.1.0
-- PR raised: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1893 (for 9.0)
-
-FIX STATUS:
-- Status: Closed (Done)
-- Fix: Not needed for 9.1+; CertMgr feature in Dashboard handles this correctly from 9.1 onwards
-- Secondary issue: CA trust store not mounted in ceph-mgr container (workaround: mount host CA trust store)</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate RGW SSL certificate upload through Dashboard on IBM Ceph 9.0
-Environment: IBM Ceph 9.0z2, RGW service with SSL configured via spec file
-
-1. Deploy an RGW service with SSL using a spec file containing `ssl_cert` and `ssl_key` fields -- intent: establish baseline SSL config
-   ```
-   ceph orch apply -i rgw-spec-ssl.yaml
-   ```
-2. Log into Dashboard, navigate to Administration -&gt; Services -&gt; rgw.service -&gt; Edit -- intent: verify certificate visibility
-3. Observe that configured SSL certificate is NOT displayed -- intent: confirm display bug
-4. Attempt to upload an SSL certificate (PEM format with cert only, no key) through the Dashboard -- intent: trigger the validation error
-5. Observe HTTP 500 Internal Server Error -- intent: confirm the bug
-
-DIAGNOSTIC COMMANDS:
-- `journalctl -u ceph-mgr* | grep &#x27;SpecValidationError&#x27;`
-- `ceph orch ls --service-type rgw --export`
-- `ceph mgr module ls | grep dashboard`</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No specific QE test exists for SSL certificate upload via Dashboard on version transitions (8.1 -&gt; 9.0 -&gt; 9.1).
-
-GAPS:
-- No test validates that `ssl_cert` field naming is consistent between Dashboard UI and ServiceSpec across versions
-- No test for uploading cert-only or key-only through the Dashboard
-- No regression test for certmgr field name migration
-
-SCENARIOS NEEDED:
-- Upload SSL cert+key PEM via Dashboard on 9.1+ and verify RGW starts with SSL
-- Verify SSL cert visibility in Dashboard after applying RGW spec with ssl_cert field
-- Test upgrade from 8.1 to 9.x preserves SSL cert display in Dashboard
-- Negative test: upload cert-only (no key) and verify clear error message (not 500)</textarea>
-    </div>
-    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-      <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
-      <button class="cancel-btn" onclick="toggleEdit()">Cancel</button>
-      <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);align-self:center;"></span>
+    <div class="qa-field" style="grid-column: span 2;">
+      <dt>Notes <button class="pencil-btn" onclick="editField('notes')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-notes">Auto-analyzed from JIRA data. Components: ceph-dashboard, management &amp; ui</span>
+        <div class="inline-edit" id="edit-notes">
+          <textarea id="ed-notes" rows="2" onchange="markDirty()" oninput="markDirty()">Auto-analyzed from JIRA data. Components: ceph-dashboard, management &amp; ui</textarea>
+        </div>
+      </dd>
     </div>
   </div>
 </div>
 
-<div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW SSL certificate upload via Dashboard fails with 500 Internal Server Error on IBM Ceph 9.0z2 due to field naming mismatch introduced by certmgr changes.</div>
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Root Cause Analysis</div>
+    <button class="pencil-btn" onclick="editField('analysis')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-analysis">
+    <div class="analysis-box"><div class="summary-line">RGW SSL certificate upload via Dashboard fails with 500 Internal Server Error on IBM Ceph 9.0z2 due to field naming mismatch introduced by certmgr changes.</div>
 <div class="section-head">ROOT CAUSE</div>
 <div>In Ceph 9.0, the cephadm certmgr feature changed the internal key name from <code>ssl_cert</code> to <code>rgw_frontend_ssl_certificate</code>. The Dashboard&#x27;s service edit flow on 9.0 passes the certificate through <code>ServiceSpec.from_json()</code> which calls <code>validate()</code>. During validation, when <code>ssl=true</code> and <code>ssl_cert</code> is empty (because the Dashboard used the old field name), the code attempts to parse <code>rgw_frontend_ssl_certificate</code> as a combined PEM. If only a certificate OR only a key is provided (not both), <code>parse_combined_pem_file()</code> returns incomplete data, causing <code>SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)</code>. This is a 9.0-only regression; versions 9.1+ include the CertMgr UI which handles the new field correctly.</div>
 <div class="section-head">KEY EVIDENCE</div>
@@ -266,7 +234,34 @@ SCENARIOS NEEDED:
 <li>Fix: Not needed for 9.1+; CertMgr feature in Dashboard handles this correctly from 9.1 onwards</li>
 <li>Secondary issue: CA trust store not mounted in ceph-mgr container (workaround: <code>mount host CA trust store)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate RGW SSL certificate upload through Dashboard on IBM Ceph 9.0</div>
+  </span>
+  <div class="inline-edit" id="edit-analysis">
+    <textarea id="ed-analysis" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">SUMMARY: RGW SSL certificate upload via Dashboard fails with 500 Internal Server Error on IBM Ceph 9.0z2 due to field naming mismatch introduced by certmgr changes.
+
+ROOT CAUSE:
+In Ceph 9.0, the cephadm certmgr feature changed the internal key name from `ssl_cert` to `rgw_frontend_ssl_certificate`. The Dashboard&#x27;s service edit flow on 9.0 passes the certificate through `ServiceSpec.from_json()` which calls `validate()`. During validation, when `ssl=true` and `ssl_cert` is empty (because the Dashboard used the old field name), the code attempts to parse `rgw_frontend_ssl_certificate` as a combined PEM. If only a certificate OR only a key is provided (not both), `parse_combined_pem_file()` returns incomplete data, causing `SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)`. This is a 9.0-only regression; versions 9.1+ include the CertMgr UI which handles the new field correctly.
+
+KEY EVIDENCE:
+- Stack trace: `service_spec.py:1764 validate() -&gt; raise SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)`
+- Aarti Dhikale confirmed: `ssl_cert` is not populated correctly at runtime due to the field name change (commit a59cb5b5e2be)
+- Abhishek Desai: &quot;The issue is specific to 9.0 cause the certmgr cephadm changed the key for ssl_cert to rgw_frontend_ssl_cert&quot;
+- Velmurugan R confirmed the issue is resolved in 9.9.1.0
+- PR raised: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1893 (for 9.0)
+
+FIX STATUS:
+- Status: Closed (Done)
+- Fix: Not needed for 9.1+; CertMgr feature in Dashboard handles this correctly from 9.1 onwards
+- Secondary issue: CA trust store not mounted in ceph-mgr container (workaround: mount host CA trust store)</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Steps to Reproduce</div>
+    <button class="pencil-btn" onclick="editField('repro')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-repro">
+    <div class="analysis-box"><div>Goal: Validate RGW SSL certificate upload through Dashboard on IBM Ceph 9.0</div>
 <div>Environment: IBM Ceph 9.0z2, RGW service with SSL configured via spec file</div>
 <ul>
 <li><span class="step-num">1.</span> Deploy an RGW service with SSL using a spec file containing <code>ssl_cert</code> and <code>ssl_key</code> fields -- intent: establish baseline SSL config</li>
@@ -286,7 +281,34 @@ SCENARIOS NEEDED:
 <li><code><code>ceph orch ls --service-type rgw --export</code></code></li>
 <li><code><code>ceph mgr module ls | grep dashboard</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No specific QE test exists for SSL certificate upload via Dashboard on version transitions (8.1 -&gt; 9.0 -&gt; 9.1).</div>
+  </span>
+  <div class="inline-edit" id="edit-repro">
+    <textarea id="ed-repro" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">Goal: Validate RGW SSL certificate upload through Dashboard on IBM Ceph 9.0
+Environment: IBM Ceph 9.0z2, RGW service with SSL configured via spec file
+
+1. Deploy an RGW service with SSL using a spec file containing `ssl_cert` and `ssl_key` fields -- intent: establish baseline SSL config
+   ```
+   ceph orch apply -i rgw-spec-ssl.yaml
+   ```
+2. Log into Dashboard, navigate to Administration -&gt; Services -&gt; rgw.service -&gt; Edit -- intent: verify certificate visibility
+3. Observe that configured SSL certificate is NOT displayed -- intent: confirm display bug
+4. Attempt to upload an SSL certificate (PEM format with cert only, no key) through the Dashboard -- intent: trigger the validation error
+5. Observe HTTP 500 Internal Server Error -- intent: confirm the bug
+
+DIAGNOSTIC COMMANDS:
+- `journalctl -u ceph-mgr* | grep &#x27;SpecValidationError&#x27;`
+- `ceph orch ls --service-type rgw --export`
+- `ceph mgr module ls | grep dashboard`</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Test Coverage</div>
+    <button class="pencil-btn" onclick="editField('coverage')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-coverage">
+    <div class="analysis-box"><div class="summary-line">No specific QE test exists for SSL certificate upload via Dashboard on version transitions (8.1 -&gt; 9.0 -&gt; 9.1).</div>
 <div class="section-head">GAPS</div>
 <ul>
 <li>No test validates that <code>ssl_cert</code> field naming is consistent between Dashboard UI and ServiceSpec across versions</li>
@@ -300,6 +322,28 @@ SCENARIOS NEEDED:
 <li>Test upgrade from 8.1 to 9.x preserves SSL cert display in Dashboard</li>
 <li>Negative test: upload cert-only (no key) and verify clear error message (not 500)</li>
 </ul></div>
+  </span>
+  <div class="inline-edit" id="edit-coverage">
+    <textarea id="ed-coverage" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">SUMMARY: No specific QE test exists for SSL certificate upload via Dashboard on version transitions (8.1 -&gt; 9.0 -&gt; 9.1).
+
+GAPS:
+- No test validates that `ssl_cert` field naming is consistent between Dashboard UI and ServiceSpec across versions
+- No test for uploading cert-only or key-only through the Dashboard
+- No regression test for certmgr field name migration
+
+SCENARIOS NEEDED:
+- Upload SSL cert+key PEM via Dashboard on 9.1+ and verify RGW starts with SSL
+- Verify SSL cert visibility in Dashboard after applying RGW spec with ssl_cert field
+- Test upgrade from 8.1 to 9.x preserves SSL cert display in Dashboard
+- Negative test: upload cert-only (no key) and verify clear error message (not 500)</textarea>
+  </div>
+</div>
+
+<div class="save-bar" id="save-bar">
+  <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
+  <button class="discard-btn" onclick="discardAll()">Discard</button>
+  <span class="change-count" id="change-count"></span>
+  <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);margin-left:auto;"></span>
 </div>
 
 
@@ -339,22 +383,46 @@ const REPO_OWNER = 'pdhiran';
 const REPO_NAME = 'ceph-prio-hub';
 const TRACKING_PATH = 'tracking.json';
 
-function toggleEdit() {
-  const view = document.getElementById('qa-view');
-  const edit = document.getElementById('qa-edit');
-  const btn = document.getElementById('edit-toggle');
-  const analysis = document.getElementById('analysis-view');
-  if (edit.style.display === 'none') {
-    edit.style.display = 'block';
-    view.style.display = 'none';
-    analysis.style.display = 'none';
-    btn.textContent = 'Cancel';
+const dirtyFields = new Set();
+
+function editField(field) {
+  const viewEl = document.getElementById('view-' + field);
+  const editEl = document.getElementById('edit-' + field);
+  if (!editEl) return;
+  const isOpen = editEl.classList.contains('active');
+  if (isOpen) {
+    editEl.classList.remove('active');
+    if (viewEl) viewEl.classList.remove('hidden');
   } else {
-    edit.style.display = 'none';
-    view.style.display = 'block';
-    analysis.style.display = 'block';
-    btn.textContent = 'Edit';
+    editEl.classList.add('active');
+    if (viewEl) viewEl.classList.add('hidden');
+    const input = editEl.querySelector('select, textarea');
+    if (input) input.focus();
   }
+}
+
+function markDirty() {
+  const fields = ['qa_status','qa_assignee','priority','hotfix','notes','analysis','repro','coverage'];
+  dirtyFields.clear();
+  fields.forEach(f => {
+    const el = document.getElementById('edit-' + f);
+    if (el && el.classList.contains('active')) dirtyFields.add(f);
+  });
+  const bar = document.getElementById('save-bar');
+  const count = document.getElementById('change-count');
+  if (dirtyFields.size > 0) {
+    bar.classList.add('visible');
+    count.textContent = dirtyFields.size + ' field' + (dirtyFields.size > 1 ? 's' : '') + ' modified';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function discardAll() {
+  document.querySelectorAll('.inline-edit.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.field-view.hidden').forEach(el => el.classList.remove('hidden'));
+  dirtyFields.clear();
+  document.getElementById('save-bar').classList.remove('visible');
 }
 
 function getToken() {
@@ -416,8 +484,9 @@ async function saveChanges() {
     });
 
     if (putResp.ok) {
-      status.textContent = 'Saved! Reload to see changes.';
+      status.textContent = 'Saved!';
       status.style.color = 'var(--ibm-green)';
+      setTimeout(() => location.reload(), 1200);
     } else {
       const err = await putResp.json();
       status.textContent = 'Error: ' + (err.message || putResp.status);

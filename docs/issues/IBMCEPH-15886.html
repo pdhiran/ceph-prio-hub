@@ -81,44 +81,53 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
 
-.edit-btn {
-  font-size: 0.72rem; padding: 3px 12px; border-radius: 4px; border: 1px solid var(--ibm-blue);
-  background: #fff; color: var(--ibm-blue); cursor: pointer; font-weight: 500;
-  margin-left: 0.5rem; vertical-align: middle; transition: all 0.15s;
+.pencil-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border: none; background: transparent;
+  cursor: pointer; border-radius: 3px; vertical-align: middle;
+  opacity: 0.35; transition: all 0.15s; margin-left: 0.3rem; padding: 0;
 }
-.edit-btn:hover { background: var(--ibm-blue); color: #fff; }
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
-}
-@media (max-width: 900px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
-.edit-field label {
-  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ibm-gray-50);
-  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
-}
-.edit-field select, .edit-field textarea {
-  font-family: inherit; font-size: 0.82rem; padding: 0.35rem 0.5rem;
-  border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
+.pencil-btn:hover { opacity: 1; background: rgba(15,98,254,0.08); }
+.pencil-btn svg { width: 13px; height: 13px; fill: var(--ibm-blue); }
+
+.inline-edit { display: none; margin-top: 0.3rem; }
+.inline-edit.active { display: block; }
+.inline-edit select, .inline-edit textarea {
+  font-family: inherit; font-size: 0.82rem; padding: 0.3rem 0.5rem;
+  border: 1px solid var(--ibm-blue); border-radius: 4px; background: #fff;
   color: var(--ibm-gray-90); width: 100%; box-sizing: border-box;
 }
-.edit-field select:focus, .edit-field textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
-.save-btn {
+.inline-edit select:focus, .inline-edit textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.inline-edit select { max-width: 200px; }
+
+.field-view { display: inline; }
+.field-view.hidden { display: none; }
+
+.save-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: #fff; border-top: 2px solid var(--ibm-blue);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  padding: 0.6rem 2rem; display: none; align-items: center; gap: 0.75rem;
+}
+.save-bar.visible { display: flex; }
+.save-bar .save-btn {
   font-size: 0.8rem; padding: 0.4rem 1.2rem; border-radius: 4px; border: none;
   background: var(--ibm-blue); color: #fff; cursor: pointer; font-weight: 500;
-  transition: background 0.15s;
 }
-.save-btn:hover { background: #0353e9; }
-.cancel-btn {
+.save-bar .save-btn:hover { background: #0353e9; }
+.save-bar .discard-btn {
   font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 4px;
   border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
   cursor: pointer; font-weight: 500;
 }
-.cancel-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .discard-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .change-count { font-size: 0.78rem; color: var(--ibm-gray-50); }
 </style>
 </head>
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15886: [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 09:45 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -141,109 +150,74 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div class="qa-section" id="qa-section">
-  <h3>QA Tracking <button class="edit-btn" id="edit-toggle" onclick="toggleEdit()">Edit</button></h3>
-
-  <div id="qa-view">
-    <div class="qa-grid">
-      <div class="qa-field"><dt>QA Status</dt><dd><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></dd></div>
-      <div class="qa-field"><dt>QA Owner</dt><dd><span style="color:var(--ibm-gray-50);">Unassigned</span></dd></div>
-      <div class="qa-field"><dt>Internal Priority</dt><dd>P1</dd></div>
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>QA Status <button class="pencil-btn" onclick="editField('qa_status')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_status"><span class="badge-outline" style="white-space:nowrap;color:#da1e28;background:#da1e2818;border-color:#da1e2840;">Needs Analysis</span></span>
+        <div class="inline-edit" id="edit-qa_status">
+          <select id="ed-qa-status" onchange="markDirty()">
+            <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="qa-grid">
-      <div class="qa-field"><dt>Hotfix Status</dt><dd><span style="color:var(--ibm-gray-50);">--</span></dd></div>
+    <div class="qa-field">
+      <dt>QA Owner <button class="pencil-btn" onclick="editField('qa_assignee')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_assignee"><span style="color:var(--ibm-gray-50);">Unassigned</span></span>
+        <div class="inline-edit" id="edit-qa_assignee">
+          <select id="ed-qa-assignee" onchange="markDirty()">
+            <option value="">-- Unassigned --</option>
+            <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> Auto-analyzed from JIRA data. Components: nfs-ganesha/ceph</div>
+    <div class="qa-field">
+      <dt>Internal Priority <button class="pencil-btn" onclick="editField('priority')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-priority">P1</span>
+        <div class="inline-edit" id="edit-priority">
+          <select id="ed-priority" onchange="markDirty()">
+            <option value="">-- None --</option><option value="P0">P0</option><option value="P1" selected>P1</option><option value="P2">P2</option><option value="P3">P3</option>
+          </select>
+        </div>
+      </dd>
+    </div>
   </div>
-
-  <div id="qa-edit" style="display:none;">
-    <div class="edit-grid">
-      <div class="edit-field">
-        <label>QA Status</label>
-        <select id="ed-qa-status">
-          <option value="not_assessed">Not Assessed</option><option value="needs_analysis" selected>Needs Analysis</option><option value="reproducing">Reproducing</option><option value="test_written">Test Written</option><option value="verified">Verified</option><option value="wont_fix">Won't Fix</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>QA Owner</label>
-        <select id="ed-qa-assignee">
-          <option value="">-- Unassigned --</option>
-          <option value="Aarti Sharma">Aarti Sharma</option><option value="Adarsha Dinda">Adarsha Dinda</option><option value="Aditya Roshan Ramteke">Aditya Roshan Ramteke</option><option value="Anuchaithra Rao">Anuchaithra Rao</option><option value="Anushree Hallur">Anushree Hallur</option><option value="Arunkumar Ravindranath">Arunkumar Ravindranath</option><option value="Chaitanya Dommeti">Chaitanya Dommeti</option><option value="Chaithra Kulal">Chaithra Kulal</option><option value="Deepshikha Singh">Deepshikha Singh</option><option value="Divya Gowri Pentakota">Divya Gowri Pentakota</option><option value="Harish Acharya">Harish Acharya</option><option value="Harsh Kumar">Harsh Kumar</option><option value="Hemanth Kumar Y J">Hemanth Kumar Y J</option><option value="Hemanth Maheswarla">Hemanth Maheswarla</option><option value="Jaya Prakash P">Jaya Prakash P</option><option value="K Amarnath Reddy">K Amarnath Reddy</option><option value="Kinjal Dhaduk">Kinjal Dhaduk</option><option value="Krishna Ramaswamy">Krishna Ramaswamy</option><option value="Lahari Mucchala">Lahari Mucchala</option><option value="Madhavi Kasturi">Madhavi Kasturi</option><option value="Manan Khanna">Manan Khanna</option><option value="Manasa Gowri H S">Manasa Gowri H S</option><option value="Manimaran M">Manimaran M</option><option value="Manish Singh">Manish Singh</option><option value="Manisha Reddem">Manisha Reddem</option><option value="Manohar M">Manohar M</option><option value="Mohit Bisht">Mohit Bisht</option><option value="Neha Gangadhar">Neha Gangadhar</option><option value="Obanna Komera">Obanna Komera</option><option value="Pawan Vinayak Dhiran">Pawan Vinayak Dhiran</option><option value="Pragadeeswaran Sathyanarayanan">Pragadeeswaran Sathyanarayanan</option><option value="Rahul Lepakshi">Rahul Lepakshi</option><option value="Rakesh Narayan Chilkunda">Rakesh Narayan Chilkunda</option><option value="Sandeep Yadav">Sandeep Yadav</option><option value="Sayalee Raut">Sayalee Raut</option><option value="Shanthakumar Rajan">Shanthakumar Rajan</option><option value="Sohan Singh">Sohan Singh</option><option value="Srinivasa Bharath Kanta">Srinivasa Bharath Kanta</option><option value="Sunil Angadi">Sunil Angadi</option><option value="Sunil Kumar N">Sunil Kumar N</option><option value="Tejas Chandramouli">Tejas Chandramouli</option><option value="Tintu Mathew">Tintu Mathew</option><option value="Vaibhav Mahajan">Vaibhav Mahajan</option><option value="Veera Reddy">Veera Reddy</option><option value="Venkatesh Ravula">Venkatesh Ravula</option><option value="Vidushi Mishra">Vidushi Mishra</option><option value="Vidya Lokesh">Vidya Lokesh</option><option value="Vinayak Papnoi">Vinayak Papnoi</option><option value="Vipin M S">Vipin M S</option><option value="Vivek Das">Vivek Das</option><option value="Yuri Weinstein">Yuri Weinstein</option><option value="Yuva Teja Sree Gayam">Yuva Teja Sree Gayam</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Internal Priority</label>
-        <select id="ed-priority">
-          <option value="">-- None --</option><option value="P0">P0</option><option value="P1" selected>P1</option><option value="P2">P2</option><option value="P3">P3</option>
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Hotfix Status</label>
-        <select id="ed-hotfix">
-          <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
-        </select>
-      </div>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>Hotfix Status <button class="pencil-btn" onclick="editField('hotfix')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-hotfix"><span style="color:var(--ibm-gray-50);">--</span></span>
+        <div class="inline-edit" id="edit-hotfix">
+          <select id="ed-hotfix" onchange="markDirty()">
+            <option value="" selected>-- None --</option><option value="requested">requested</option><option value="delivered">delivered</option><option value="not_needed">not_needed</option>
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Notes</label>
-      <textarea id="ed-notes" rows="2" style="width:100%;">Auto-analyzed from JIRA data. Components: nfs-ganesha/ceph</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
-```
-SUMMARY: NFS mount point becomes read-only after cluster upgrade due to stale grace table entry causing infinite NFS4ERR_GRACE
-ROOT CAUSE: After upgrading to 8.1z6, an erroneous entry &#x27;node0&#x27; was found in the RADOS grace table alongside the valid &#x27;nfs.fileserver1.0&#x27; entry. This caused a coordination deadlock: the running Ganesha instance (nfs.fileserver1.0) expected the non-existent &#x27;node0&#x27; to also enter and complete grace. Since &#x27;node0&#x27; never existed, the recovery epoch (rec) remained non-zero, rados_cluster_try_lift_grace() kept returning false, and grace period never lifted. All OP_OPEN operations returned NFS4ERR_GRACE indefinitely -- clients could list directories (READDIR doesn&#x27;t require OPEN) but couldn&#x27;t read/write files. The stale &#x27;node0&#x27; entry likely originated from a pre-8.1z3 NFS cluster setup that was upgraded through multiple versions.
-KEY EVIDENCE:
-- Grace table dump: cur=425 rec=424, two entries: nfs.fileserver1.0 (E) and node0 (NE)
-- Continuous &#x27;check grace:reclaim complete(0) clid count(0)&#x27; every 10s -- grace never lifts
-- Export 1 failed with EPERM from ceph_start_reclaim() (main.c:456)
-- All OP_OPEN -&gt; NFS4ERR_GRACE (code path: open4_validate_claim -&gt; nfs_get_grace_status)
-- rados_grace_lift() succeeds (ret=0) but rec != 0 prevents grace lift
-- Workaround: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns fileserver1 remove node0
-FIX STATUS: Resolved via workaround (remove stale grace entry + restart Ganesha). Unable to reproduce in QE (tried 8.0z2-&gt;8.1z3-&gt;8.1z6 upgrade path). Root cause is stale grace state from unknown pre-8.1z3 upgrade path. Closed as &#x27;insufficient data&#x27;. Preventive: check grace table content before upgrades.
-```</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
-```
-Goal: Reproduce NFS grace period deadlock from stale grace table entry
-Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), active-passive NFS with ingress
-1. Deploy NFS cluster on pre-8.1z3 version (where node IDs were &#x27;node&lt;N&gt;&#x27; format)
-2. Upgrade through: pre-8.1z3 -&gt; 8.1z3 -&gt; 8.1z6
-3. After upgrade, check: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
-4. If stale entries present, mount NFS and try file operations (cat, touch)
-5. Observe hang -- NFS4ERR_GRACE returned for all OPEN operations
-DIAGNOSTIC COMMANDS:
-- ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
-- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;nfs_try_lift_grace&#x27;
-- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;NFS4ERR_GRACE&#x27;
-```</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
-```
-SUMMARY: QE attempted reproduction (8.0z2-&gt;8.1z3-&gt;8.1z6) but did not hit the issue. Gap in testing pre-8.1z3 upgrade paths.
-GAPS: No test validates grace table integrity across NFS cluster upgrades. No test covers upgrade paths from very old NFS versions where node IDs used &#x27;node&lt;N&gt;&#x27; format.
-SCENARIOS NEEDED:
-- Pre-upgrade grace table validation check
-- Post-upgrade grace table integrity check (no stale entries)
-- NFS operations test immediately after upgrade (file read/write, not just mount)
-- Grace table corruption injection test: add stale entry, verify detection/recovery
-- Upgrade path test from earliest supported version through all z-streams
-```</textarea>
-    </div>
-    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-      <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
-      <button class="cancel-btn" onclick="toggleEdit()">Cancel</button>
-      <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);align-self:center;"></span>
+    <div class="qa-field" style="grid-column: span 2;">
+      <dt>Notes <button class="pencil-btn" onclick="editField('notes')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-notes">Auto-analyzed from JIRA data. Components: nfs-ganesha/ceph</span>
+        <div class="inline-edit" id="edit-notes">
+          <textarea id="ed-notes" rows="2" onchange="markDirty()" oninput="markDirty()">Auto-analyzed from JIRA data. Components: nfs-ganesha/ceph</textarea>
+        </div>
+      </dd>
     </div>
   </div>
 </div>
 
-<div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Root Cause Analysis</div>
+    <button class="pencil-btn" onclick="editField('analysis')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-analysis">
+    <div class="analysis-box"><div>### Root Cause Analysis:</div>
 <pre>
 SUMMARY: NFS mount point becomes read-only after cluster upgrade due to stale grace table entry causing infinite NFS4ERR_GRACE
 ROOT CAUSE: After upgrading to 8.1z6, an erroneous entry &#x27;node0&#x27; was found in the RADOS grace table alongside the valid &#x27;nfs.fileserver1.0&#x27; entry. This caused a coordination deadlock: the running Ganesha instance (nfs.fileserver1.0) expected the non-existent &#x27;node0&#x27; to also enter and complete grace. Since &#x27;node0&#x27; never existed, the recovery epoch (rec) remained non-zero, rados_cluster_try_lift_grace() kept returning false, and grace period never lifted. All OP_OPEN operations returned NFS4ERR_GRACE indefinitely -- clients could list directories (READDIR doesn&#x27;t require OPEN) but couldn&#x27;t read/write files. The stale &#x27;node0&#x27; entry likely originated from a pre-8.1z3 NFS cluster setup that was upgraded through multiple versions.
@@ -256,7 +230,31 @@ KEY EVIDENCE:
 - Workaround: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns fileserver1 remove node0
 FIX STATUS: Resolved via workaround (remove stale grace entry + restart Ganesha). Unable to reproduce in QE (tried 8.0z2-&gt;8.1z3-&gt;8.1z6 upgrade path). Root cause is stale grace state from unknown pre-8.1z3 upgrade path. Closed as &#x27;insufficient data&#x27;. Preventive: check grace table content before upgrades.
 </pre></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+  </span>
+  <div class="inline-edit" id="edit-analysis">
+    <textarea id="ed-analysis" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">### Root Cause Analysis:
+```
+SUMMARY: NFS mount point becomes read-only after cluster upgrade due to stale grace table entry causing infinite NFS4ERR_GRACE
+ROOT CAUSE: After upgrading to 8.1z6, an erroneous entry &#x27;node0&#x27; was found in the RADOS grace table alongside the valid &#x27;nfs.fileserver1.0&#x27; entry. This caused a coordination deadlock: the running Ganesha instance (nfs.fileserver1.0) expected the non-existent &#x27;node0&#x27; to also enter and complete grace. Since &#x27;node0&#x27; never existed, the recovery epoch (rec) remained non-zero, rados_cluster_try_lift_grace() kept returning false, and grace period never lifted. All OP_OPEN operations returned NFS4ERR_GRACE indefinitely -- clients could list directories (READDIR doesn&#x27;t require OPEN) but couldn&#x27;t read/write files. The stale &#x27;node0&#x27; entry likely originated from a pre-8.1z3 NFS cluster setup that was upgraded through multiple versions.
+KEY EVIDENCE:
+- Grace table dump: cur=425 rec=424, two entries: nfs.fileserver1.0 (E) and node0 (NE)
+- Continuous &#x27;check grace:reclaim complete(0) clid count(0)&#x27; every 10s -- grace never lifts
+- Export 1 failed with EPERM from ceph_start_reclaim() (main.c:456)
+- All OP_OPEN -&gt; NFS4ERR_GRACE (code path: open4_validate_claim -&gt; nfs_get_grace_status)
+- rados_grace_lift() succeeds (ret=0) but rec != 0 prevents grace lift
+- Workaround: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns fileserver1 remove node0
+FIX STATUS: Resolved via workaround (remove stale grace entry + restart Ganesha). Unable to reproduce in QE (tried 8.0z2-&gt;8.1z3-&gt;8.1z6 upgrade path). Root cause is stale grace state from unknown pre-8.1z3 upgrade path. Closed as &#x27;insufficient data&#x27;. Preventive: check grace table content before upgrades.
+```</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Steps to Reproduce</div>
+    <button class="pencil-btn" onclick="editField('repro')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-repro">
+    <div class="analysis-box"><div>### Steps to Reproduce:</div>
 <pre>
 Goal: Reproduce NFS grace period deadlock from stale grace table entry
 Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), active-passive NFS with ingress
@@ -270,7 +268,32 @@ DIAGNOSTIC COMMANDS:
 - journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;nfs_try_lift_grace&#x27;
 - journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;NFS4ERR_GRACE&#x27;
 </pre></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+  </span>
+  <div class="inline-edit" id="edit-repro">
+    <textarea id="ed-repro" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">### Steps to Reproduce:
+```
+Goal: Reproduce NFS grace period deadlock from stale grace table entry
+Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), active-passive NFS with ingress
+1. Deploy NFS cluster on pre-8.1z3 version (where node IDs were &#x27;node&lt;N&gt;&#x27; format)
+2. Upgrade through: pre-8.1z3 -&gt; 8.1z3 -&gt; 8.1z6
+3. After upgrade, check: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
+4. If stale entries present, mount NFS and try file operations (cat, touch)
+5. Observe hang -- NFS4ERR_GRACE returned for all OPEN operations
+DIAGNOSTIC COMMANDS:
+- ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;nfs_try_lift_grace&#x27;
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;NFS4ERR_GRACE&#x27;
+```</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Test Coverage</div>
+    <button class="pencil-btn" onclick="editField('coverage')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-coverage">
+    <div class="analysis-box"><div>### Test Coverage:</div>
 <pre>
 SUMMARY: QE attempted reproduction (8.0z2-&gt;8.1z3-&gt;8.1z6) but did not hit the issue. Gap in testing pre-8.1z3 upgrade paths.
 GAPS: No test validates grace table integrity across NFS cluster upgrades. No test covers upgrade paths from very old NFS versions where node IDs used &#x27;node&lt;N&gt;&#x27; format.
@@ -281,6 +304,27 @@ SCENARIOS NEEDED:
 - Grace table corruption injection test: add stale entry, verify detection/recovery
 - Upgrade path test from earliest supported version through all z-streams
 </pre></div>
+  </span>
+  <div class="inline-edit" id="edit-coverage">
+    <textarea id="ed-coverage" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">### Test Coverage:
+```
+SUMMARY: QE attempted reproduction (8.0z2-&gt;8.1z3-&gt;8.1z6) but did not hit the issue. Gap in testing pre-8.1z3 upgrade paths.
+GAPS: No test validates grace table integrity across NFS cluster upgrades. No test covers upgrade paths from very old NFS versions where node IDs used &#x27;node&lt;N&gt;&#x27; format.
+SCENARIOS NEEDED:
+- Pre-upgrade grace table validation check
+- Post-upgrade grace table integrity check (no stale entries)
+- NFS operations test immediately after upgrade (file read/write, not just mount)
+- Grace table corruption injection test: add stale entry, verify detection/recovery
+- Upgrade path test from earliest supported version through all z-streams
+```</textarea>
+  </div>
+</div>
+
+<div class="save-bar" id="save-bar">
+  <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
+  <button class="discard-btn" onclick="discardAll()">Discard</button>
+  <span class="change-count" id="change-count"></span>
+  <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);margin-left:auto;"></span>
 </div>
 
 
@@ -316,22 +360,46 @@ const REPO_OWNER = 'pdhiran';
 const REPO_NAME = 'ceph-prio-hub';
 const TRACKING_PATH = 'tracking.json';
 
-function toggleEdit() {
-  const view = document.getElementById('qa-view');
-  const edit = document.getElementById('qa-edit');
-  const btn = document.getElementById('edit-toggle');
-  const analysis = document.getElementById('analysis-view');
-  if (edit.style.display === 'none') {
-    edit.style.display = 'block';
-    view.style.display = 'none';
-    analysis.style.display = 'none';
-    btn.textContent = 'Cancel';
+const dirtyFields = new Set();
+
+function editField(field) {
+  const viewEl = document.getElementById('view-' + field);
+  const editEl = document.getElementById('edit-' + field);
+  if (!editEl) return;
+  const isOpen = editEl.classList.contains('active');
+  if (isOpen) {
+    editEl.classList.remove('active');
+    if (viewEl) viewEl.classList.remove('hidden');
   } else {
-    edit.style.display = 'none';
-    view.style.display = 'block';
-    analysis.style.display = 'block';
-    btn.textContent = 'Edit';
+    editEl.classList.add('active');
+    if (viewEl) viewEl.classList.add('hidden');
+    const input = editEl.querySelector('select, textarea');
+    if (input) input.focus();
   }
+}
+
+function markDirty() {
+  const fields = ['qa_status','qa_assignee','priority','hotfix','notes','analysis','repro','coverage'];
+  dirtyFields.clear();
+  fields.forEach(f => {
+    const el = document.getElementById('edit-' + f);
+    if (el && el.classList.contains('active')) dirtyFields.add(f);
+  });
+  const bar = document.getElementById('save-bar');
+  const count = document.getElementById('change-count');
+  if (dirtyFields.size > 0) {
+    bar.classList.add('visible');
+    count.textContent = dirtyFields.size + ' field' + (dirtyFields.size > 1 ? 's' : '') + ' modified';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function discardAll() {
+  document.querySelectorAll('.inline-edit.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.field-view.hidden').forEach(el => el.classList.remove('hidden'));
+  dirtyFields.clear();
+  document.getElementById('save-bar').classList.remove('visible');
 }
 
 function getToken() {
@@ -393,8 +461,9 @@ async function saveChanges() {
     });
 
     if (putResp.ok) {
-      status.textContent = 'Saved! Reload to see changes.';
+      status.textContent = 'Saved!';
       status.style.color = 'var(--ibm-green)';
+      setTimeout(() => location.reload(), 1200);
     } else {
       const err = await putResp.json();
       status.textContent = 'Error: ' + (err.message || putResp.status);

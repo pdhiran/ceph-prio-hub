@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-26T07:43:32.287128Z",
+  "generated": "2026-08-26T09:45:55.273483Z",
   "issues": [
     {
       "issue_id": "756bd53ae7dd4e43",
@@ -167,7 +167,7 @@
       "summary": "Module 'cephadm' has failed: dictionary changed size during iteration in NFS deprovisioning",
       "status": "POST",
       "status_category": "In Progress",
-      "qa_status": "needs_analysis",
+      "qa_status": "not_assessed",
       "qa_assignee": "",
       "internal_priority": "P2"
     },
