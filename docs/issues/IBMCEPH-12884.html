@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12884: [BZ#2431850] [IBM_Support] Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,53 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2431850] [IBM_Support] Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Shantanu Bhardwaj] Created  attachment 2123765  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2123765&amp;action=edit ] MGR Debug logs from internal cluster
-- [Timothy Nguyen] My analysis so far is the problem is that the cluster is skipping application of the spec, leading to vdh not being redeployed as OSD, you can see it in the mgr logs in   , this skip is triggered by  last_device_change  being less then  osdspec_last_applied  which is seen in the
-- [Shantanu Bhardwaj] Timothy, The OSD got deployed by “--all-available-devices” spec but not from the problematic service (osd.hdd2).  OSD deployment was also successful when direct deployment was attempted with below command ceph orch daemon add osd shan-vm3:/dev/vdh Cephadm debug logs were enabled
-- [Timothy Nguyen] For step forward, recommend customer alternative solution you and Prashant agreed on, I will investigate adding additional logs on code side to make identifying this issue easier from now on, and I will also investigate the block.db behavior.
-- [Timothy Nguyen] The root cause is  occupied_slots &lt; fast_slots_per_device this comparison logic is in the function get_physical_fast_allocs, which is in src/ceph-volume/ceph-volume/lvm/batch.py The behavior below is when batching on a new device that is empty [2026-03-06 21:49:59,566][ceph_volum
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: OSD spec does not redeploy OSD after set-unmanaged/set-managed cycle when DB device has existing LVMs
+ROOT CAUSE: In ceph-volume&#x27;s batch.py, the function get_physical_fast_allocs uses occupied_slots &lt; fast_slots_per_device comparison to determine DB device availability. After zapping an OSD, the DB device (e.g., /dev/vdf) retains existing LVM volumes from other OSDs. fast_slots_per_device does not account for these pre-existing LVMs, causing the comparison to fail (occupied_slots=1 &lt; fast_slots_per_device=1 evaluates to false). The batch logic is not prepared for existing LVMs on DB devices, and the osdspec_last_applied timestamp gets updated even though deployment failed, preventing further retry attempts.
+KEY EVIDENCE:
+- MGR debug log: &#x27;skipping apply of shan-vm3 on DriveGroupSpec... (no change)&#x27;
+- Drive selection correctly finds data device (/dev/vdh) and DB device (/dev/vdf)
+- DB device /dev/vdf shows &#x27;LVM detected&#x27; due to existing LVMs from other OSDs
+- Root cause confirmed: occupied_slots 1 &lt; fast_slots_per_device 1 (false)
+- Upstream PR merged for better logging
+FIX STATUS: Fixed in 9.1 (downstream MR 1697 merged). Workaround: manual OSD deployment via &#x27;ceph orch daemon add osd &lt;host&gt;:&lt;device&gt;&#x27;.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2431850]  Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce OSD spec failure to redeploy after set-unmanaged/set-managed with shared DB device
+Environment: IBM Ceph 8.1z4 (19.2.1-292) (affected), 9.1+ (fixed)
+1. Create OSD spec with separate DB device: service_type: osd, data_devices: {rotational: 1}, db_devices: {paths: [/dev/vdf]}
+2. Apply spec: ceph orch apply -i hdd2.spec -- intent: deploy OSDs with dedicated DB
+3. Verify OSDs deployed: ceph osd tree, ceph orch ls
+4. Set unmanaged: ceph orch set-unmanaged osd.hdd2
+5. Remove one OSD: ceph orch osd rm &lt;id&gt; --zap
+6. Set managed: ceph orch set-managed osd.hdd2
+7. Wait and observe: ceph orch ls -- intent: OSD count should not increase
+8. Enable debug: ceph config set mgr mgr/cephadm/log_to_file true; ceph config set mgr mgr/cephadm/log_level debug
+9. Check logs for &#x27;skipping apply&#x27; message
+DIAGNOSTIC COMMANDS:
+- ceph orch device ls (check device availability)
+- ceph orch device ls --refresh (reset last_device_update)
+- lsblk (verify LVM state on DB device)
+- ceph -W cephadm (watch cephadm events)
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: [BZ#2431850]  Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Verified on 9.1 (20.2.1-236) by QE — OSD correctly redeployed after set-unmanaged/set-managed cycle
+GAPS: Original bug required shared DB device scenario which is complex to set up in CI
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- OSD spec with shared DB device: deploy → set-unmanaged → zap OSD → set-managed → verify redeployment
+- Multiple OSDs sharing same DB device with different data devices
+- OSD replacement workflow when DB device has existing LVMs
+- ceph orch device ls --refresh as workaround validation
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,41 +246,47 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2431850] [IBM_Support] Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Shantanu Bhardwaj] Created  attachment 2123765  [[details]| https://bugzilla.redhat.com/attachment.cgi?id=2123765&amp;action=edit ] MGR Debug logs from internal cluster</li>
-<li>[Timothy Nguyen] My analysis so far is the problem is that the cluster is skipping application of the spec, leading to vdh not being redeployed as OSD, you can see it in the mgr logs in   , this skip is triggered by  last_device_change  being less then  osdspec_last_applied  which is seen in the</li>
-<li>[Shantanu Bhardwaj] Timothy, The OSD got deployed by “--all-available-devices” spec but not from the problematic service (osd.hdd2).  OSD deployment was also successful when direct deployment was attempted with below command <code>ceph orch daemon add osd shan-vm3:/dev/vdh Cephadm debug logs were enabled</code></li>
-<li>[Timothy Nguyen] For step forward, recommend customer alternative solution you and Prashant agreed on, I will investigate adding additional logs on code side to make identifying this issue easier from now on, and I will also investigate the block.db behavior.</li>
-<li>[Timothy Nguyen] The root cause is  occupied_slots &lt; fast_slots_per_device this comparison logic is in the function get_physical_fast_allocs, which is in src/ceph-volume/ceph-volume/lvm/batch.py The behavior below is when batching on a new device that is empty [2026-03-06 21:49:59,566][ceph_volum</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2431850]  Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: [BZ#2431850]  Spec file doesn&#x27;t deploy OSD daemon post running set-unmanaged and set-managed</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: OSD spec does not redeploy OSD after set-unmanaged/set-managed cycle when DB device has existing LVMs
+ROOT CAUSE: In ceph-volume&#x27;s batch.py, the function get_physical_fast_allocs uses occupied_slots &lt; fast_slots_per_device comparison to determine DB device availability. After zapping an OSD, the DB device (e.g., /dev/vdf) retains existing LVM volumes from other OSDs. fast_slots_per_device does not account for these pre-existing LVMs, causing the comparison to fail (occupied_slots=1 &lt; fast_slots_per_device=1 evaluates to false). The batch logic is not prepared for existing LVMs on DB devices, and the osdspec_last_applied timestamp gets updated even though deployment failed, preventing further retry attempts.
+KEY EVIDENCE:
+- MGR debug log: &#x27;skipping apply of shan-vm3 on DriveGroupSpec... (no change)&#x27;
+- Drive selection correctly finds data device (/dev/vdh) and DB device (/dev/vdf)
+- DB device /dev/vdf shows &#x27;LVM detected&#x27; due to existing LVMs from other OSDs
+- Root cause confirmed: occupied_slots 1 &lt; fast_slots_per_device 1 (false)
+- Upstream PR merged for better logging
+FIX STATUS: Fixed in 9.1 (downstream MR 1697 merged). Workaround: manual OSD deployment via &#x27;ceph orch daemon add osd &lt;host&gt;:&lt;device&gt;&#x27;.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce OSD spec failure to redeploy after set-unmanaged/set-managed with shared DB device
+Environment: IBM Ceph 8.1z4 (19.2.1-292) (affected), 9.1+ (fixed)
+1. Create OSD spec with separate DB device: service_type: osd, data_devices: {rotational: 1}, db_devices: {paths: [/dev/vdf]}
+2. Apply spec: ceph orch apply -i hdd2.spec -- intent: deploy OSDs with dedicated DB
+3. Verify OSDs deployed: ceph osd tree, ceph orch ls
+4. Set unmanaged: ceph orch set-unmanaged osd.hdd2
+5. Remove one OSD: ceph orch osd rm &lt;id&gt; --zap
+6. Set managed: ceph orch set-managed osd.hdd2
+7. Wait and observe: ceph orch ls -- intent: OSD count should not increase
+8. Enable debug: ceph config set mgr mgr/cephadm/log_to_file true; ceph config set mgr mgr/cephadm/log_level debug
+9. Check logs for &#x27;skipping apply&#x27; message
+DIAGNOSTIC COMMANDS:
+- ceph orch device ls (check device availability)
+- ceph orch device ls --refresh (reset last_device_update)
+- lsblk (verify LVM state on DB device)
+- ceph -W cephadm (watch cephadm events)
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Verified on 9.1 (20.2.1-236) by QE — OSD correctly redeployed after set-unmanaged/set-managed cycle
+GAPS: Original bug required shared DB device scenario which is complex to set up in CI
+SCENARIOS NEEDED:
+- OSD spec with shared DB device: deploy → set-unmanaged → zap OSD → set-managed → verify redeployment
+- Multiple OSDs sharing same DB device with different data devices
+- OSD replacement workflow when DB device has existing LVMs
+- ceph orch device ls --refresh as workaround validation
+</pre></div>
 </div>
 
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12177: [BZ#2396660] [ibm_support] RFE: Make the PG autoscaler default threshold an exposed option rather than hardcoded</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,28 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2396660] [ibm_support] RFE: Make the PG autoscaler default threshold an exposed option rather than hardcoded
-
-ROOT CAUSE:
-- Affected version(s): 9.1
-- Component: ceph-mgr/core
-
-ENGINEERING FINDINGS:
-- [Yaarit Hatuka] can you take a look please? 9.1z2 will be GA soon, so it needs to be moved out, in case the fix is not in.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to expose PG autoscaler threshold as a central config option -- CLOSED as no longer relevant.
+ROOT CAUSE: The PG autoscaler&#x27;s default threshold (3.0) was hardcoded in module.py rather than exposed as a central config option. The reporter requested making it a conventional ceph config option for visibility. However, the autoscaler has since been updated with a dynamic threshold value for splitting, making this request obsolete.
+KEY EVIDENCE:
+- Hardcoded threshold=3.0 in pg_autoscaler module.py
+- Per-pool override existed via ceph osd pool set threshold
+- Closed by Kamoltat Sirivadhna (2026-08-13): &#x27;no longer relevant, autoscaler now has dynamic threshold for splitting&#x27;
+FIX STATUS: CLOSED as &#x27;not a bug&#x27;. The autoscaler&#x27;s dynamic threshold implementation addresses the underlying concern.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2396660] [ibm_support] RFE: Make the PG autoscaler default threshold an exposed option rather than hardcoded
-Environment: IBM Ceph 9.1, component: ceph-mgr/core
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Apply the configuration change described in the JIRA
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: N/A -- issue is closed as resolved by dynamic threshold.
+Environment: N/A.
+DIAGNOSTIC COMMANDS:
+- ceph osd pool autoscale-status (verify dynamic threshold behavior)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Scale test may not reach threshold that triggers this issue
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue closed. Verify dynamic threshold behavior exists in current autoscaler tests.
+GAPS: Verify QE coverage for dynamic PG autoscaler threshold.
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-mgr/core scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Dynamic threshold: verify autoscaler uses dynamic threshold for PG splitting decisions
+- Per-pool override: verify ceph osd pool set threshold still works for manual tuning</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +221,27 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2396660] [ibm_support] RFE: Make the PG autoscaler default threshold an exposed option rather than hardcoded</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to expose PG autoscaler threshold as a central config option -- CLOSED as no longer relevant.</div>
+<div>ROOT CAUSE: The PG autoscaler&#x27;s default threshold (3.0) was hardcoded in module.py rather than exposed as a central config option. The reporter requested making it a conventional ceph config option for visibility. However, the autoscaler has since been updated with a dynamic threshold value for splitting, making this request obsolete.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1</li>
-<li>Component: ceph-mgr/core</li>
+<li>Hardcoded threshold=3.0 in pg_autoscaler module.py</li>
+<li>Per-pool override existed via <code>ceph osd pool set threshold</code></li>
+<li>Closed by Kamoltat Sirivadhna (2026-08-13): &#x27;no longer relevant, autoscaler now has dynamic threshold for splitting&#x27;</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: CLOSED as &#x27;not a bug&#x27;. The autoscaler&#x27;s dynamic threshold implementation addresses the underlying concern.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: N/A -- issue is closed as resolved by dynamic threshold.</div>
+<div>Environment: N/A.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Yaarit Hatuka] can you take a look please? 9.1z2 will be GA soon, so it needs to be moved out, in case the fix is not in.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph osd pool autoscale-status (verify dynamic threshold behavior)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2396660] [ibm_support] RFE: Make the PG autoscaler default threshold an exposed option rather than hardcoded</div>
-<div>Environment: IBM Ceph 9.1, component: ceph-mgr/core</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Scale test may not reach threshold that triggers this issue</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue closed. Verify dynamic threshold behavior exists in current autoscaler tests.</div>
+<div>GAPS: Verify QE coverage for dynamic PG autoscaler threshold.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-mgr/core scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Dynamic threshold: verify autoscaler uses dynamic threshold for PG splitting decisions</li>
+<li>Per-pool override: verify <code>ceph osd pool set threshold still works for manual tuning</code></li>
 </ul></div>
 </div>
 

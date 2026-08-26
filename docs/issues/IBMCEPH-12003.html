@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12003: [BZ#2391397] [IBM_Support] Guidance for config osds_per_device</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2391397] [IBM_Support] Guidance for config osds_per_device
-
-ROOT CAUSE:
-- Affected version(s): 6.1
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Documentation/guidance request for osds_per_device configuration - customer reduced IOPS capacity by 3x by switching from 36x3TB NVMe to 12x16TB NVMe without adjusting OSD count per device.
+ROOT CAUSE: Customer replaced 36 NVMe x 3TB with 12 NVMe x 16TB devices, reducing total RocksDB instances and IOPS capacity by ~3x. IBM documentation states &#x27;one ceph-osd daemon for one storage drive&#x27; without guidance on splitting large NVMe devices. The osds_per_device parameter exists but lacks deployment guidelines on when to use it, CPU/memory requirements, and performance implications.
+KEY EVIDENCE:
+- Customer: 7 nodes, 12 NVMe x 16TB, heavy RGW workload (1.1 PiB, 11.66G objects)
+- Each OSD consuming 28.8-29.1 GB memory, 512GB/node, 128 CPU/node
+- PGs per OSD averaging 300+ with mon_max_pg_per_osd=1000
+- Kyle Bader&#x27;s guidance: need &gt;8 CPUs per OSD after splitting for it to be a win
+- Blog references: https://ceph.io/en/news/blog/2023/reef-osds-per-nvme/ and https://ceph.io/en/news/blog/2022/ceph-osd-cpu-scaling/
+FIX STATUS: Open/New. Guidance provided via blog references but no formal documentation update or product recommendation.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2391397]  Guidance for config osds_per_device
-Environment: IBM Ceph 6.1, component: rados
-
-1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Apply the configuration change described in the JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate osds_per_device performance impact with large NVMe devices
+Environment: IBM Ceph with large NVMe devices (8TB+)
+1. Deploy with osds_per_device=1 on large NVMe, run RGW benchmark -- intent: establish baseline
+2. Redeploy with osds_per_device=2, repeat benchmark -- intent: measure improvement
+3. Redeploy with osds_per_device=3, repeat benchmark -- intent: find diminishing returns
+4. Monitor CPU per OSD ratio throughout -- intent: verify &gt;8 CPU threshold
+DIAGNOSTIC COMMANDS:
+- ceph osd df tree (verify OSD layout)
+- ceph tell osd.* perf dump (performance metrics)
+- ceph config get osd osd_memory_target
+- nproc / ceph osd ls | wc -l (CPU per OSD ratio)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No formal test suite for osds_per_device performance validation.
+GAPS: No benchmark comparing osds_per_device=1,2,3,4 with same hardware. No upgrade test from 1 to N OSDs per device. No resource (CPU/memory) consumption validation.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. Performance comparison: osds_per_device=1 vs 2 vs 3 with RGW workload on 16TB NVMe
+2. Resource consumption validation: CPU and memory per OSD at different split levels
+3. Upgrade workflow: adding osds_per_device after initial single-OSD deployment</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,30 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2391397] [IBM_Support] Guidance for config osds_per_device</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Documentation/guidance request for osds_per_device configuration - customer reduced IOPS capacity by 3x by switching from 36x3TB NVMe to 12x16TB NVMe without adjusting OSD count per device.</div>
+<div>ROOT CAUSE: Customer replaced 36 NVMe x 3TB with 12 NVMe x 16TB devices, reducing total RocksDB instances and IOPS capacity by ~3x. IBM documentation states &#x27;one ceph-osd daemon for one storage drive&#x27; without guidance on splitting large NVMe devices. The osds_per_device parameter exists but lacks deployment guidelines on when to use it, CPU/memory requirements, and performance implications.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 6.1</li>
-<li>Component: rados</li>
+<li>Customer: 7 nodes, 12 NVMe x 16TB, heavy RGW workload (1.1 PiB, 11.66G objects)</li>
+<li>Each OSD consuming 28.8-29.1 GB memory, 512GB/node, 128 CPU/node</li>
+<li>PGs per OSD averaging 300+ with mon_max_pg_per_osd=1000</li>
+<li>Kyle Bader&#x27;s guidance: need &gt;8 CPUs per OSD after splitting for it to be a win</li>
+<li>Blog references: https://ceph.io/en/news/blog/2023/reef-osds-per-nvme/ and https://ceph.io/en/news/blog/2022/ceph-osd-cpu-scaling/</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Open/New. Guidance provided via blog references but no formal documentation update or product recommendation.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate osds_per_device performance impact with large NVMe devices</div>
+<div>Environment: IBM Ceph with large NVMe devices (8TB+)</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2391397]  Guidance for config osds_per_device</div>
-<div>Environment: IBM Ceph 6.1, component: rados</div>
+<li><span class="step-num">1.</span> Deploy with osds_per_device=1 on large NVMe, run RGW benchmark -- intent: establish baseline</li>
+<li><span class="step-num">2.</span> Redeploy with osds_per_device=2, repeat benchmark -- intent: measure improvement</li>
+<li><span class="step-num">3.</span> Redeploy with osds_per_device=3, repeat benchmark -- intent: find diminishing returns</li>
+<li><span class="step-num">4.</span> Monitor CPU per OSD ratio throughout -- intent: verify &gt;8 CPU threshold</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><code>ceph osd df tree (verify OSD layout)</code></li>
+<li><code>ceph tell osd.* perf dump (performance metrics)</code></li>
+<li><code>ceph config get osd osd_memory_target</code></li>
+<li>nproc / <code>ceph osd ls | wc -l (CPU per OSD ratio)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No formal test suite for osds_per_device performance validation.</div>
+<div>GAPS: No benchmark comparing osds_per_device=1,2,3,4 with same hardware. No upgrade test from 1 to N OSDs per device. No resource (CPU/memory) consumption validation.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Performance comparison: osds_per_device=1 vs 2 vs 3 with RGW workload on 16TB NVMe</li>
+<li><span class="step-num">2.</span> Resource consumption validation: CPU and memory per OSD at different split levels</li>
+<li><span class="step-num">3.</span> Upgrade workflow: adding osds_per_device after initial single-OSD deployment</li>
 </ul></div>
 </div>
 

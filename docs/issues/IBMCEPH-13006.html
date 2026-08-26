@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13006: RGW objects get deleted inspite of object lock being set</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW objects get deleted inspite of object lock being set
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3, 8.1z4
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Varuni Sawant] Adding the RGW debug logs from the issue reproducer in my local environment.  We tried to capture the debug logs in customer’s environment however were the logs were not captured due to rate limiting while object deletion.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Not a bug -- S3 object lock in COMPLIANCE mode correctly allows delete markers while protecting versioned object data.
+ROOT CAUSE: This is expected S3 behavior, not a bug. In COMPLIANCE mode, creating a delete marker (simple DELETE without version-id) is allowed -- it hides the current version but does not delete the underlying object data. The actual versioned object remains protected and cannot be permanently deleted (DELETE with version-id returns AccessDenied). The customer confused delete marker creation with actual object deletion. The objects remained accessible via their version IDs.
+KEY EVIDENCE:
+- &#x27;aws s3 rm&#x27; succeeded (creates delete marker) but versioned objects still present in list-object-versions
+- Attempting &#x27;aws s3api delete-object --version-id&#x27; correctly returns &#x27;AccessDenied: forbidden by object lock&#x27;
+- Verified on 8.1z5 (19.2.1-329.el9cp) -- same expected behavior
+- Closed as &#x27;not a bug&#x27; after confirming with RGW engineering
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Expected S3 behavior documented in AWS S3 specification.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- RGW objects get deleted inspite of object lock being set
-Environment: IBM Ceph 8.1z3, component: rgw
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-support has filed an issue   against 8.1z4 that appears to show that object lock for compliance is not being enforced.  I need to identify someone to help look at this.  To start with  @user-U04HJ7RSGQ4  could you help confirm that the scenario makes sense and whether we can repr</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify S3 object lock COMPLIANCE mode correctly protects versioned objects while allowing delete markers
+Environment: IBM Ceph 8.1z4+ (19.2.1-292.el9cp)
+1. aws s3api create-bucket --bucket worm-bucket --object-lock-enabled-for-bucket -- intent: create lock-enabled bucket
+2. aws s3api put-object-lock-configuration --bucket worm-bucket --object-lock-configuration &#x27;{&quot;ObjectLockEnabled&quot;:&quot;Enabled&quot;,&quot;Rule&quot;:{&quot;DefaultRetention&quot;:{&quot;Mode&quot;:&quot;COMPLIANCE&quot;,&quot;Days&quot;:10}}}&#x27; -- intent: set compliance mode
+3. Upload object with retention -- intent: protect object
+4. aws s3 rm s3://worm-bucket/&lt;key&gt; -- intent: verify delete marker is created (expected: succeeds)
+5. aws s3api delete-object --bucket worm-bucket --key &lt;key&gt; --version-id &lt;vid&gt; -- intent: verify versioned delete is blocked (expected: AccessDenied)
+DIAGNOSTIC COMMANDS:
+- aws s3api list-object-versions --bucket &lt;name&gt;
+- aws s3api get-object-retention --bucket &lt;name&gt; --key &lt;key&gt;
+- aws s3api head-object --bucket &lt;name&gt; --key &lt;key&gt; --version-id &lt;vid&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: RGW objects get deleted inspite of object lock being set
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: S3 object lock COMPLIANCE mode behavior is well-understood and likely covered in upstream rgw tests.
+GAPS: QE should have a clear test distinguishing delete-marker creation (allowed) from versioned-object deletion (blocked) in COMPLIANCE mode.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Verify simple DELETE creates delete marker but does not remove object data
+- Verify DELETE with version-id is blocked during retention period
+- Verify object is accessible via version-id after delete marker creation</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW objects get deleted inspite of object lock being set</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Not a bug -- S3 object lock in COMPLIANCE mode correctly allows delete markers while protecting versioned object data.</div>
+<div>ROOT CAUSE: This is expected S3 behavior, not a bug. In COMPLIANCE mode, creating a delete marker (simple DELETE without version-id) is allowed -- it hides the current version but does not delete the underlying object data. The actual versioned object remains protected and cannot be permanently deleted (DELETE with version-id returns AccessDenied). The customer confused delete marker creation with actual object deletion. The objects remained accessible via their version IDs.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3, 8.1z4</li>
-<li>Component: rgw</li>
+<li>&#x27;aws s3 rm&#x27; succeeded (creates delete marker) but versioned objects still present in list-object-versions</li>
+<li>Attempting &#x27;aws s3api delete-object --version-id&#x27; correctly returns &#x27;AccessDenied: forbidden by object lock&#x27;</li>
+<li>Verified on 8.1z5 (19.2.1-329.el9cp) -- same expected behavior</li>
+<li>Closed as &#x27;not a bug&#x27; after confirming with RGW engineering</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Expected S3 behavior documented in AWS S3 specification.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify S3 object lock COMPLIANCE mode correctly protects versioned objects while allowing delete markers</div>
+<div>Environment: IBM Ceph 8.1z4+ (19.2.1-292.el9cp)</div>
 <ul>
-<li>[Varuni Sawant] Adding the RGW debug logs from the issue reproducer in my local environment.  We tried to capture the debug logs in customer’s environment however were the logs were not captured due to rate limiting while object deletion.</li>
+<li><span class="step-num">1.</span> aws s3api create-bucket --bucket worm-bucket --object-lock-enabled-for-bucket -- intent: create lock-enabled bucket</li>
+<li><span class="step-num">2.</span> aws s3api put-object-lock-configuration --bucket worm-bucket --object-lock-configuration &#x27;{&quot;ObjectLockEnabled&quot;:&quot;Enabled&quot;,&quot;Rule&quot;:{&quot;DefaultRetention&quot;:{&quot;Mode&quot;:&quot;COMPLIANCE&quot;,&quot;Days&quot;:10}}}&#x27; -- intent: set compliance mode</li>
+<li><span class="step-num">3.</span> Upload object with retention -- intent: protect object</li>
+<li><span class="step-num">4.</span> aws s3 rm s3://worm-bucket/&lt;key&gt; -- intent: verify delete marker is created (expected: succeeds)</li>
+<li><span class="step-num">5.</span> aws s3api delete-object --bucket worm-bucket --key &lt;key&gt; --version-id &lt;vid&gt; -- intent: verify versioned delete is blocked (expected: AccessDenied)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>aws s3api list-object-versions --bucket &lt;name&gt;</li>
+<li>aws s3api get-object-retention --bucket &lt;name&gt; --key &lt;key&gt;</li>
+<li>aws s3api head-object --bucket &lt;name&gt; --key &lt;key&gt; --version-id &lt;vid&gt;</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- RGW objects get deleted inspite of object lock being set</div>
-<div>Environment: IBM Ceph 8.1z3, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>support has filed an issue   against 8.1z4 that appears to show that object lock for compliance is not being enforced.  I need to identify someone to help look at this.  To start with  @user-U04HJ7RSGQ4  could you help confirm that the scenario makes sense and whether we can repr</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: RGW objects get deleted inspite of object lock being set</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">S3 object lock COMPLIANCE mode behavior is well-understood and likely covered in upstream rgw tests.</div>
+<div>GAPS: QE should have a clear test distinguishing delete-marker creation (allowed) from versioned-object deletion (blocked) in COMPLIANCE mode.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Verify simple DELETE creates delete marker but does not remove object data</li>
+<li>Verify DELETE with version-id is blocked during retention period</li>
+<li>Verify object is accessible via version-id after delete marker creation</li>
 </ul></div>
 </div>
 

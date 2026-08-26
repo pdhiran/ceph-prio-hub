@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16034: [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,53 +189,28 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)
-
-ROOT CAUSE:
-- Daemon crash reported in rados.
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1z5
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Hey, this is proposed blocker for 8.1z8, please merge the patch quickly.
-- [Vipin M S] verified the fix in ceph version 19.2.1-401.el9cp. We did not observe monitor crashes.
-
-1) Reproduced the issue in ceph version 19.2.1-396.el9cp, by having down_in OSDs + new OSDs &gt; in osds.
-Automation Logs:- http://takshashila.cephbt.tadn.ibm.com/logs/archive/ceph-qe-user-logs/v
-- [RIVKA POLLACK] In the meantime, with the help of Rovo and other AI tools, I created release notes text. please review and update, if needed. Also - I notice in the description -This caused repeated monitor crashes, preventing quorum formation. One monitor also exited with: not in monmap and
-
-FIX STATUS:
-- Fix available in build 19.2.1-400.
-- Verified by: Vipin M S</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 8.1z backport of OSDMap assertion fix (num_down_in_osds &lt;= num_in_osds) -- fix verified.
+ROOT CAUSE: Same as IBMCEPH-16020. This is the 8.1z (Squid) backport. Assertion at OSDMap.cc:7295.
+KEY EVIDENCE:
+- MR merged by Radosław Zarzyński
+- Fix in build ceph-19.2.1-400
+- Reproduced on 19.2.1-396, verified fixed on 19.2.1-401 by Vipin M S (3/3 pass)
+- Full stack trace captured at OSDMap.cc:7295
+- Proposed blocker for 8.1z8
+FIX STATUS: Verified. Fix in ceph-19.2.1-401.el9cp. Verified 3/3 pass by Vipin M S. Release notes drafted by RIVKA POLLACK, reviewed by Radosław Zarzyński.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)
-Environment: IBM Ceph 8.1z5, component: rados
-
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Trigger the failure scenario (see engineering findings below)
-7. Check for daemon crash -- `ceph crash ls-new`
-8. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-16020 -- verify on 8.1z Squid builds.
+Environment: Ceph 8.1z (19.2.1-401.el9cp)
+See IBMCEPH-16020 for detailed steps.
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-16020.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
-
-GAPS:
-- No crash regression test for: [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)
-- Upgrade path may lack pre-condition coverage for this scenario
-
-SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified on 8.1z with 3/3 pass rate. Same gaps as IBMCEPH-16020.
+GAPS: Same as IBMCEPH-16020.
+SCENARIOS NEEDED: Same as IBMCEPH-16020.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -246,56 +221,24 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">8.1z backport of OSDMap assertion fix (num_down_in_osds &lt;= num_in_osds) -- fix verified.</div>
+<div>ROOT CAUSE: Same as IBMCEPH-16020. This is the 8.1z (Squid) backport. Assertion at OSDMap.cc:7295.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rados.</li>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: rados</li>
+<li>MR merged by Radosław Zarzyński</li>
+<li>Fix in build ceph-19.2.1-400</li>
+<li>Reproduced on 19.2.1-396, verified fixed on 19.2.1-401 by Vipin M S (3/3 pass)</li>
+<li>Full stack trace captured at OSDMap.cc:7295</li>
+<li>Proposed blocker for 8.1z8</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Bipin Kunal] Hey, this is proposed blocker for 8.1z8, please merge the patch quickly.</li>
-<li>[Vipin M S] verified the fix in <code>ceph version 19.2.1-401.el9cp. We did not observe monitor crashes.</code></li>
-</ul>
-<ul>
-<li><span class="step-num">1.</span> Reproduced the issue in <code>ceph version 19.2.1-396.el9cp</code>, by having down_in OSDs + new OSDs &gt; in osds.</li>
-</ul>
-<div>Automation Logs:- http://takshashila.cephbt.tadn.ibm.com/logs/archive/ceph-qe-user-logs/v</div>
-<ul>
-<li>[RIVKA POLLACK] In the meantime, with the help of Rovo and other AI tools, I created release notes text. please review and update, if needed. Also - I notice in the description -This caused repeated monitor crashes, preventing quorum formation. One monitor also exited with: not in monmap and</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Fix available in build 19.2.1-400.</li>
-<li>Verified by: Vipin M S</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</div>
-<div>Environment: IBM Ceph 8.1z5, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">7.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">8.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [8.1z Backport] OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</li>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div>FIX STATUS: Verified. Fix in ceph-19.2.1-401.el9cp. Verified 3/3 pass by Vipin M S. Release notes drafted by RIVKA POLLACK, reviewed by Radosław Zarzyński.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-16020 -- verify on 8.1z Squid builds.</div>
+<div>Environment: Ceph 8.1z (19.2.1-401.el9cp)</div>
+<div>See IBMCEPH-16020 for detailed steps.</div>
+<div>DIAGNOSTIC COMMANDS: Same as IBMCEPH-16020.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified on 8.1z with 3/3 pass rate. Same gaps as IBMCEPH-16020.</div>
+<div>GAPS: Same as IBMCEPH-16020.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-16020.</div></div>
 </div>
 
 

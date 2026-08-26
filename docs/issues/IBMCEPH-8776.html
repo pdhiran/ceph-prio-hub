@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-8776: [BZ#2273979] [IBM Support] Unable to retrieve images for upgrade from the dashboard</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2273979] [IBM Support] Unable to retrieve images for upgrade from the dashboard
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 7.0
-- Component: ceph-dashboard
-
-ENGINEERING FINDINGS:
-- [Nizamudeen A] hey Sergii, sorry for missing out on this. Honestly, we have a lot of bugs around this and we’ve been looking for solutions as we speak.. But the bug is not with dashboard, its in cephadm. Most precisely on  ceph orch upgrade ls  command where it tries to list the available versi
-- [Nizamudeen A] Hi Steve, the one I pasted is the main on that we are tracking where Adam left the comments. That comment is exactly explains why dashboard is constantly complaining. And so far we don’t have a solution and as you said, we are looking to disable it downstream and allow users to u
-- [Ankush Behl] we have removed the check already in dashboard as part of 9.2 and 9.1.  Do we want to backport and fix it in any other release?
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Dashboard upgrade check fails to retrieve images from registry -- upgrade check disabled in 9.1/9.2.
+ROOT CAUSE: The Ceph Dashboard &#x27;Cluster -&gt; Upgrade&#x27; menu attempts to list available upgrade images by calling &#x27;ceph orch upgrade ls&#x27;, which queries the container registry API (e.g., https://cp.icr.io/v2/cp/ibm-ceph/ceph-7-rhel9:latest/tags/list). This fails with 404/401 errors because: (1) the registry requires authentication that the MGR module doesn&#x27;t have configured, (2) there&#x27;s no mechanism to pass registry credentials from podman login to the MGR&#x27;s Python requests library, and (3) the IBM/RH registry API endpoints may not support the tag listing format expected. The issue exists since Ceph 7 and affects all downstream deployments, especially air-gapped clusters. The upgrade functionality via CLI (&#x27;ceph orch upgrade start &lt;image&gt;&#x27;) works fine -- only the dashboard&#x27;s image discovery is broken.
+KEY EVIDENCE:
+- Error: &#x27;404 Client Error: Not Found for url: https://cp.icr.io/v2/cp/ibm-ceph/ceph-7-rhel9:latest/tags/list&#x27;
+- Nizamudeen A: &#x27;bug is not with dashboard, its in cephadm... ceph orch upgrade ls&#x27;
+- Adam King explained the registry auth architecture issue
+- Ankush Behl: &#x27;we have removed the check already in dashboard as part of 9.2 and 9.1&#x27;
+- Backport to 8.1z under consideration but not urgent
+FIX STATUS: Fixed in 9.1 and 9.2 by disabling the upgrade check in the dashboard. 8.1z backport under discussion. Assigned to Aashish Sharma.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2273979]  Unable to retrieve images for upgrade from the dashboard
-Environment: IBM Ceph 7.0, component: ceph-dashboard
-
-1. Deploy IBM Ceph 7.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate dashboard upgrade image retrieval failure.
+Environment: IBM Storage Ceph 7.x, 8.x (pre-fix), or 9.0 (pre-fix)
+1. Access Ceph Dashboard -- intent: navigate to upgrade feature
+2. Go to Cluster -&gt; Upgrade -- intent: trigger image list retrieval
+3. Observe &#x27;Not retrieving updates&#x27; warning -- intent: confirm the error
+4. Check MGR logs -- intent: see the HTTP error
+   ceph log last 20 mgr | grep -i upgrade
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade ls (CLI equivalent of the dashboard check)
+- ceph log last 50 mgr
+- ceph config dump | grep container_image</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix (disable upgrade check) applied in 9.1/9.2. No test for the disabled state.
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+- No test validates upgrade check is disabled in dashboard on 9.1/9.2
+- No test for 8.1z if backport is applied
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</textarea>
+- Test: Verify Ceph Dashboard does NOT show &#x27;Not retrieving updates&#x27; error on 9.1+
+- Test: Verify &#x27;ceph orch upgrade start &lt;image&gt;&#x27; works correctly via CLI (unaffected path)
+- Test: If 8.1z backport happens, verify upgrade check is disabled in that version too</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,42 +233,43 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2273979] [IBM Support] Unable to retrieve images for upgrade from the dashboard</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Dashboard upgrade check fails to retrieve images from registry -- upgrade check disabled in 9.1/9.2.</div>
+<div>ROOT CAUSE: The Ceph Dashboard &#x27;Cluster -&gt; Upgrade&#x27; menu attempts to list available upgrade images by calling &#x27;ceph orch upgrade ls&#x27;, which queries the container registry API (e.g., https://cp.icr.io/v2/cp/ibm-ceph/ceph-7-rhel9:latest/tags/list). This fails with 404/401 errors because: (1) the registry requires authentication that the MGR module doesn&#x27;t have configured, (2) there&#x27;s no mechanism to pass registry credentials from podman login to the MGR&#x27;s Python requests library, and (3) the IBM/RH registry API endpoints may not support the tag listing format expected. The issue exists since Ceph 7 and affects all downstream deployments, especially air-gapped clusters. The upgrade functionality via CLI (&#x27;ceph orch upgrade start &lt;image&gt;&#x27;) works fine -- only the dashboard&#x27;s image discovery is broken.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 7.0</li>
-<li>Component: ceph-dashboard</li>
+<li>Error: &#x27;404 Client Error: Not Found for url: https://cp.icr.io/v2/cp/ibm-ceph/ceph-7-rhel9:latest/tags/list&#x27;</li>
+<li>Nizamudeen A: &#x27;bug is not with dashboard, its in cephadm... <code>ceph orch upgrade ls&#x27;</code></li>
+<li>Adam King explained the registry auth architecture issue</li>
+<li>Ankush Behl: &#x27;we have removed the check already in dashboard as part of 9.2 and 9.1&#x27;</li>
+<li>Backport to 8.1z under consideration but not urgent</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 9.1 and 9.2 by disabling the upgrade check in the dashboard. 8.1z backport under discussion. Assigned to Aashish Sharma.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate dashboard upgrade image retrieval failure.</div>
+<div>Environment: IBM Storage Ceph 7.x, 8.x (pre-fix), or 9.0 (pre-fix)</div>
 <ul>
-<li>[Nizamudeen A] hey Sergii, sorry for missing out on this. Honestly, we have a lot of bugs around this and we’ve been looking for solutions as we speak.. But the bug is not with dashboard, its in cephadm. Most precisely on  <code>ceph orch upgrade ls  command where it tries to list the available versi</code></li>
-<li>[Nizamudeen A] Hi Steve, the one I pasted is the main on that we are tracking where Adam left the comments. That comment is exactly explains why dashboard is constantly complaining. And so far we don’t have a solution and as you said, we are looking to disable it downstream and allow users to u</li>
-<li>[Ankush Behl] we have removed the check already in dashboard as part of 9.2 and 9.1.  Do we want to backport and fix it in any other release?</li>
+<li><span class="step-num">1.</span> Access Ceph Dashboard -- intent: navigate to upgrade feature</li>
+<li><span class="step-num">2.</span> Go to Cluster -&gt; Upgrade -- intent: trigger image list retrieval</li>
+<li><span class="step-num">3.</span> Observe &#x27;Not retrieving updates&#x27; warning -- intent: confirm the error</li>
+<li><span class="step-num">4.</span> Check MGR logs -- intent: see the HTTP error</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph log last 20 mgr | grep -i upgrade</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li><code>ceph orch upgrade ls (CLI equivalent of the dashboard check)</code></li>
+<li><code>ceph log last 50 mgr</code></li>
+<li><code>ceph config dump | grep container_image</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2273979]  Unable to retrieve images for upgrade from the dashboard</div>
-<div>Environment: IBM Ceph 7.0, component: ceph-dashboard</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix (disable upgrade check) applied in 9.1/9.2. No test for the disabled state.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No test validates upgrade check is disabled in dashboard on 9.1/9.2</li>
+<li>No test for 8.1z if backport is applied</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Test: Verify Ceph Dashboard does NOT show &#x27;Not retrieving updates&#x27; error on 9.1+</li>
+<li>Test: Verify &#x27;<code>ceph orch upgrade start &lt;image&gt;&#x27; works correctly via CLI (unaffected path)</code></li>
+<li>Test: If 8.1z backport happens, verify upgrade check is disabled in that version too</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14080: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode 
-
-ROOT CAUSE:
-- Daemon crash reported in ceph-mgr/crash.
-- Affected version(s): 7.1
-- Component: ceph-mgr/crash
-
-ENGINEERING FINDINGS:
-- [Velmurugan R] Even Though the hosts are not labeled with osd but it has the osd daemons #cat ceph_orch_host_ls | grep -v osd  HOST              ADDR      LABELS                       STATUS   host21.obfuscateddomain1.wd 26.64.85.18  ceph,sku_archive_v1     #grep host194 ceph_orch_ps  crash.s-3
-- [Swati Thombe] Hi    As the issue is currently not reproducible, the inventory data does not provide significant insight in this case. To capture more meaningful data, we will run the inventory capture script before entering maintenance mode and stop it after exiting maintenance mode. We will s
-- [Swati Thombe] Hello    We have not received an update regarding the requested inventory data. As the issue is currently not reproducible, we are unable to proceed with further analysis. If the issue is no longer occurring, we would like to close this case. Should the issue reoccur, please reop
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MGR crashes with KeyError during maintenance mode exit because cephadm cache.get_hosts() returns a host not present in inventory._inventory.
+ROOT CAUSE: After upgrading to 7.1z9, some OSD hosts lack the &#x27;osd&#x27; label despite running OSD daemons. When such a host exits maintenance mode, the cephadm serve loop&#x27;s refresh() function iterates over cache.get_hosts() and checks inventory._inventory[host].get(&#x27;status&#x27;) -- but the host is not in the inventory dict, causing a Python KeyError that crashes the MGR module. The inconsistency between cache and inventory occurs intermittently after reboot, where the first maintenance exit attempt fails while the second succeeds. The exact trigger for the cache/inventory desynchronization is unknown and not reproducible in lab.
+KEY EVIDENCE:
+- Crash: KeyError: &#x27;s-3qswg04.sys.az1.cust.atl.wd&#x27; at serve.py:252
+- Stack: inventory._inventory[host].get(&#x27;status&#x27;, &#x27;&#x27;).lower() == &#x27;maintenance&#x27;
+- Hosts lack &#x27;osd&#x27; label but have running OSD daemons
+- First maintenance exit attempt fails, second succeeds
+- Not reproducible in lab
+- Similar KeyError issues seen in IBMCEPH-related trackers after host removal + upgrade
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Not reproducible. Customer will reopen if issue recurs with requested inventory captures.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode
-Environment: IBM Ceph 7.1, component: ceph-mgr/crash
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Trigger the failure scenario (see engineering findings below)
-3. Check for daemon crash -- `ceph crash ls-new`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi Team,       We attempted to reproduce the issue in our lab environment. The cluster was upgraded from version 7.1z8 to 7.1z9. We intentionally removed the &quot;osd&quot; label from one of the hosts, even though it still had OSD daemons running. However, maintenance mode enter and exit</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce MGR KeyError crash during maintenance mode exit with missing inventory entry
+Environment: IBM Ceph 7.1z9 (18.2.1-381.el9cp)
+1. Deploy cluster, remove &#x27;osd&#x27; label from a host that has OSD daemons -- intent: match customer state
+2. Reboot the unlabeled host -- intent: potentially trigger inventory desync
+3. ceph orch host maintenance enter &lt;host&gt; -- intent: enter maintenance mode
+4. ceph orch host maintenance exit &lt;host&gt; -- intent: trigger potential crash
+5. Capture &#x27;ceph config-key get mgr/cephadm/inventory&#x27; before and after each step
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph config-key get mgr/cephadm/inventory
+- ceph orch host ls
+- ceph orch ps &lt;host&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Not reproducible; defensive coding improvement needed in cephadm serve.py.
+GAPS: No test for maintenance mode exit when host exists in cache but not in inventory; no test for hosts without &#x27;osd&#x27; label running OSD daemons.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported ceph-mgr/crash scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test maintenance enter/exit on host without &#x27;osd&#x27; label but with running OSDs
+- Test maintenance operations after host reboot
+- Verify cephadm inventory consistency after mgr failover</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,43 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MGR crashes with KeyError during maintenance mode exit because cephadm cache.get_hosts() returns a host not present in inventory._inventory.</div>
+<div>ROOT CAUSE: After upgrading to 7.1z9, some OSD hosts lack the &#x27;osd&#x27; label despite running OSD daemons. When such a host exits maintenance mode, the cephadm serve loop&#x27;s refresh() function iterates over cache.get_hosts() and checks inventory._inventory[host].get(&#x27;status&#x27;) -- but the host is not in the inventory dict, causing a Python KeyError that crashes the MGR module. The inconsistency between cache and inventory occurs intermittently after reboot, where the first maintenance exit attempt fails while the second succeeds. The exact trigger for the cache/inventory desynchronization is unknown and not reproducible in lab.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in ceph-mgr/crash.</li>
-<li>Affected version(s): 7.1</li>
-<li>Component: ceph-mgr/crash</li>
+<li>Crash: KeyError: &#x27;s-3qswg04.sys.az1.cust.atl.wd&#x27; at serve.py:252</li>
+<li>Stack: inventory._inventory[host].get(&#x27;status&#x27;, &#x27;&#x27;).lower() == &#x27;maintenance&#x27;</li>
+<li>Hosts lack &#x27;osd&#x27; label but have running OSD daemons</li>
+<li>First maintenance exit attempt fails, second succeeds</li>
+<li>Not reproducible in lab</li>
+<li>Similar KeyError issues seen in IBMCEPH-related trackers after host removal + upgrade</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Not reproducible. Customer will reopen if issue recurs with requested inventory captures.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce MGR KeyError crash during maintenance mode exit with missing inventory entry</div>
+<div>Environment: IBM Ceph 7.1z9 (18.2.1-381.el9cp)</div>
 <ul>
-<li>[Velmurugan R] Even Though the hosts are not labeled with osd but it has the osd daemons #cat ceph_orch_host_ls | grep -v osd  HOST              ADDR      LABELS                       STATUS   host21.obfuscateddomain1.wd 26.64.85.18  ceph,sku_archive_v1     #grep host194 ceph_orch_ps  crash.s-3</li>
-<li>[Swati Thombe] Hi    As the issue is currently not reproducible, the inventory data does not provide significant insight in this case. To capture more meaningful data, we will run the inventory capture script before entering maintenance mode and stop it after exiting maintenance mode. We will s</li>
-<li>[Swati Thombe] Hello    We have not received an update regarding the requested inventory data. As the issue is currently not reproducible, we are unable to proceed with further analysis. If the issue is no longer occurring, we would like to close this case. Should the issue reoccur, please reop</li>
+<li><span class="step-num">1.</span> Deploy cluster, remove &#x27;osd&#x27; label from a host that has OSD daemons -- intent: match customer state</li>
+<li><span class="step-num">2.</span> Reboot the unlabeled host -- intent: potentially trigger inventory desync</li>
+<li><span class="step-num">3.</span> <code>ceph orch host maintenance enter &lt;host&gt; -- intent: enter maintenance mode</code></li>
+<li><span class="step-num">4.</span> <code>ceph orch host maintenance exit &lt;host&gt; -- intent: trigger potential crash</code></li>
+<li><span class="step-num">5.</span> Capture &#x27;<code>ceph config-key get mgr/cephadm/inventory&#x27; before and after each step</code></li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph crash ls-new</code></li>
+<li><code>ceph crash info &lt;crash-id&gt;</code></li>
+<li><code>ceph config-key get mgr/cephadm/inventory</code></li>
+<li><code>ceph orch host ls</code></li>
+<li><code>ceph orch ps &lt;host&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode</div>
-<div>Environment: IBM Ceph 7.1, component: ceph-mgr/crash</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">3.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi Team,       We attempted to reproduce the issue in our lab environment. The cluster was upgraded from version 7.1z8 to 7.1z9. We intentionally removed the &quot;osd&quot; label from one of the hosts, even though it still had OSD daemons running. However, maintenance mode enter and exit</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [MGR][MaintenanceMode] Mgr crashes while host exiting the maintenance mode</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Not reproducible; defensive coding improvement needed in cephadm serve.py.</div>
+<div>GAPS: No test for maintenance mode exit when host exists in cache but not in inventory; no test for hosts without &#x27;osd&#x27; label running OSD daemons.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported ceph-mgr/crash scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test maintenance enter/exit on host without &#x27;osd&#x27; label but with running OSDs</li>
+<li>Test maintenance operations after host reboot</li>
+<li>Verify <code>cephadm inventory consistency after mgr failover</code></li>
 </ul></div>
 </div>
 

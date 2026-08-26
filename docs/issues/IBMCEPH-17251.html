@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17251: compression_min_blob_size accepts illegal values</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: compression_min_blob_size accepts illegal values
-
-ROOT CAUSE:
-- Affected version(s): not specified
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: BlueStore accepts non-power-of-two values for compression_min_blob_size, causing OSD crashes during compression workloads.
+ROOT CAUSE: BlueStore&#x27;s pool configuration validation does not enforce power-of-two constraints on compression_min_blob_size, compression_max_blob_size, bluestore_csum_min_block, and bluestore_csum_max_block. Values like 10000 or 32000 are accepted without error but cause OSD crashes when compression code paths assume power-of-two alignment for blob splitting and checksum block calculations. This is a long-standing validation gap, not a regression.
+KEY EVIDENCE:
+- 100% reproducible with non-power-of-two values (e.g., 32000)
+- Power-of-two values (16384, 32768, 65536) work correctly
+- OSD crashes during compression workloads (elbencho test with snappy compression)
+- Upstream tracker and PR exist for the fix
+- Workaround: only use power-of-two values
+- Proposed fix: return -EINVAL for invalid values
+FIX STATUS: New (unresolved). Upstream PR submitted. Proposed fix enforces strict power-of-two validation for compression and checksum block size parameters.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- compression_min_blob_size accepts illegal values
-Environment: IBM Ceph 9.x, component: rados
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce OSD crash from invalid compression_min_blob_size value.
+Environment: Any Ceph cluster (upstream main or IBM Ceph)
+1. ceph osd pool create test-pool 32 -- intent: create test pool
+2. ceph osd pool set test-pool compression_algorithm snappy -- intent: enable compression
+3. ceph osd pool set test-pool compression_mode force -- intent: force compression on all writes
+4. ceph osd pool set test-pool compression_min_blob_size 32000 -- intent: set invalid non-power-of-two value
+5. Run elbencho or rados bench write workload against pool -- intent: trigger compression code path
+6. Observe OSD crash -- intent: confirm bug
+DIAGNOSTIC COMMANDS:
+- ceph osd pool get test-pool compression_min_blob_size -- verify setting
+- journalctl -u ceph-osd@&lt;id&gt; -- capture crash backtrace
+- ceph crash ls-new -- check crash records
+- ceph health detail -- observe OSD down warnings</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: compression_min_blob_size accepts illegal values
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No input validation test exists for compression blob size parameters.
+GAPS: No test validates that non-power-of-two values are rejected. No test confirms OSD stability with edge-case compression parameters.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Negative test: attempt to set non-power-of-two compression_min_blob_size values (expect EINVAL)
+- Positive test: verify valid power-of-two values are accepted and work
+- Stress test: compression workloads with boundary power-of-two values (512, 4194304)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">compression_min_blob_size accepts illegal values</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">BlueStore accepts non-power-of-two values for compression_min_blob_size, causing OSD crashes during compression workloads.</div>
+<div>ROOT CAUSE: BlueStore&#x27;s pool configuration validation does not enforce power-of-two constraints on compression_min_blob_size, compression_max_blob_size, bluestore_csum_min_block, and bluestore_csum_max_block. Values like 10000 or 32000 are accepted without error but cause OSD crashes when compression code paths assume power-of-two alignment for blob splitting and checksum block calculations. This is a long-standing validation gap, not a regression.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: rados</li>
+<li>100% reproducible with non-power-of-two values (e.g., 32000)</li>
+<li>Power-of-two values (16384, 32768, 65536) work correctly</li>
+<li>OSD crashes during compression workloads (elbencho test with snappy compression)</li>
+<li>Upstream tracker and PR exist for the fix</li>
+<li>Workaround: only use power-of-two values</li>
+<li>Proposed fix: return -EINVAL for invalid values</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: New (unresolved). Upstream PR submitted. Proposed fix enforces strict power-of-two validation for compression and checksum block size parameters.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce OSD crash from invalid compression_min_blob_size value.</div>
+<div>Environment: Any Ceph cluster (upstream main or IBM Ceph)</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- compression_min_blob_size accepts illegal values</div>
-<div>Environment: IBM Ceph 9.x, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: compression_min_blob_size accepts illegal values</code></li>
+<li><span class="step-num">1.</span> <code>ceph osd pool create test-pool 32 -- intent: create test pool</code></li>
+<li><span class="step-num">2.</span> <code>ceph osd pool set test-pool compression_algorithm snappy -- intent: enable compression</code></li>
+<li><span class="step-num">3.</span> <code>ceph osd pool set test-pool compression_mode force -- intent: force compression on all writes</code></li>
+<li><span class="step-num">4.</span> <code>ceph osd pool set test-pool compression_min_blob_size 32000 -- intent: set invalid non-power-of-two value</code></li>
+<li><span class="step-num">5.</span> Run elbencho or <code>rados bench write workload against pool -- intent: trigger compression code path</code></li>
+<li><span class="step-num">6.</span> Observe OSD crash -- intent: confirm bug</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd pool get test-pool compression_min_blob_size -- verify setting</code></li>
+<li><code>journalctl -u ceph-osd@&lt;id&gt; -- capture crash backtrace</code></li>
+<li><code>ceph crash ls-new -- check crash records</code></li>
+<li><code>ceph health detail -- observe OSD down warnings</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No input validation test exists for compression blob size parameters.</div>
+<div>GAPS: No test validates that non-power-of-two values are rejected. No test confirms OSD stability with edge-case compression parameters.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Negative test: attempt to set non-power-of-two compression_min_blob_size values (expect EINVAL)</li>
+<li>Positive test: verify valid power-of-two values are accepted and work</li>
+<li>Stress test: compression workloads with boundary power-of-two values (512, 4194304)</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12665: [BZ#2426864] [IBM_Support][NFS] Ownership for files and directories are not changing for NFS export with no_root_squash</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,50 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2426864] [IBM_Support][NFS] Ownership for files and directories are not changing for NFS export with no_root_squash
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1
-- Component: nfs-ganesha
-
-ENGINEERING FINDINGS:
-- [Shantanu Bhardwaj] Issue got resolved temporarily after restarting the NFS Daemons using &quot;ceph orch restart&quot; and remounting the Exports on client side.  However issue reappeared once customer rebooted the client node and NFS exports were remounted after that.
-- [Thomas Serlin] For the hotfix request that was filed today, devs can cherry-pick their fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin-ceph-8.1-rhel-9-hotfix-bz2426864-patches Thanks, Thomas
-- [Thomas Serlin] (In reply to tserlin from comment #16) &gt; For the hotfix request that was filed today, devs can cherry-pick their &gt; fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): &gt;  &gt;  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin- &gt; ceph-8.1-rhel-
-- [Thomas Serlin] QE can use this to verify the hotfix, based on 8.1 z4: $ podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z4.0.hotfix.bz2426864 The hotfix builds in the container are: nfs-ganesha-6.5-29.0.hotfix.bz2426864.el9cp ceph-19.2.1-292.0.hotfix.bz2426864.el9cp Based on these two hot
-- [Chaithra Kulal] Hi Team, RGW-Dashboard BZ2417688 validation completed with hotfix build: ceph version 19.2.1-292.0.hotfix.bz2426864.el9cp No issues seen. Test result :  https://docs.google.com/document/d/1U2WupM66bQnmxVBZ0_3WVQWEa394mDZ_UqdLA-nHGc4/edit?tab=t.0 Thanks, Chaithra
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: File/directory ownership reverts to &#x27;nobody:nogroup&#x27; after ~30 minutes on NFS export with no_root_squash when NFS server and client have different DNS domain names, due to NFSv4 ID mapping domain mismatch.
+ROOT CAUSE: NFSv4 uses domain-qualified user/group names for ownership mapping. When the NFS-Ganesha server&#x27;s hostname domain (e.g., &#x27;random.com&#x27;) differs from the NFS client&#x27;s domain (e.g., &#x27;something.com&#x27;), the NFS client cannot map the server-reported UIDs to local users after the attribute cache expires (~30 min default). The client then falls back to &#x27;nobody:nogroup&#x27;. The fix adds the client&#x27;s domain to the idmap.conf file on the Ganesha server side. A persistent fix requires cephadm to preserve idmap.conf across container restarts/redeployments.
+KEY EVIDENCE:
+- Server hostname: ceph-node.random.com; Client hostname: spunadikar.something.com
+- Ownership shows correctly immediately after chown, reverts to nobody:nogroup after ~30 minutes (NFS attribute cache timeout)
+- Fix: set `Domain=something.com` in idmap.conf on Ganesha container
+- Residual issue: idmap.conf reverts to blank after node reboot (cephadm redeploys container from scratch)
+- Code fix: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/272a2fb810178d5482b8010d6e9b3025d67ac8d4
+FIX STATUS: Fixed in 9.0z1. Hotfix delivered for 8.1z4 on Jan 14, 2026. Persistent idmap.conf across reboots requires separate cephadm enhancement.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_squash
-Environment: IBM Ceph 8.1, component: nfs-ganesha
-
-1. Deploy IBM Ceph 8.1 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Run baseline benchmark (fio/rados bench) -- record metrics
-6. Trigger the performance scenario described in JIRA
-7. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Was able to reproduce this issue locally: 1. NFS server (Ganesha side): Domain used is &quot;random.com&quot; [root@ceph-msaini-r9ft0j-node2 ganesha]# hostname -f ceph-msaini-r9ft0j-node2.random.com [root@ceph-msaini-r9ft0j-node2 ganesha]# cat /etc/hosts 127.0.0.1   localhost localhost.ran</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ownership revert to nobody:nogroup on cross-domain NFS mount
+Environment: IBM Ceph 8.1z3 (19.2.1-274.el9cp)
+1. Deploy NFS cluster with Ganesha on a host with domain &#x27;example1.com&#x27; -- intent: set up server domain
+2. Create NFS export with no_root_squash -- intent: allow root operations
+3. Mount NFS export from a client with different domain &#x27;example2.com&#x27; -- intent: create domain mismatch
+4. As root on client, create files and chown to a local user: `touch /mnt/file1 &amp;&amp; chown testuser:testuser /mnt/file1` -- intent: set ownership
+5. Verify ownership shows correctly: `ls -la /mnt/file1` -- intent: confirm initial state
+6. Wait 30+ minutes and re-check: `ls -la /mnt/file1` -- intent: observe ownership revert to nobody:nogroup
+DIAGNOSTIC COMMANDS:
+- `hostname -f` on both server and client -- check domain mismatch
+- `cat /var/lib/ceph/&lt;fsid&gt;/nfs.&lt;cluster&gt;/etc/ganesha/idmap.conf` -- check idmap configuration
+- `nfsstat -m` on client -- check mount options and attribute cache settings</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified in 9.0z1 (20.1.0-150.el9cp). Ownership persists after fix.
+GAPS: No automated test for cross-domain NFSv4 ID mapping. No test for idmap.conf persistence across container restarts.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported nfs-ganesha scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- NFS mount between hosts with mismatched DNS domains, verify ownership stability over 60+ minutes
+- Test with actimeo mount option variations
+- Verify idmap.conf persists across: NFS daemon restart, host reboot, ceph orch redeploy
+- Test with multiple users and groups across domain boundary</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -243,48 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2426864] [IBM_Support][NFS] Ownership for files and directories are not changing for NFS export with no_root_squash</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">File/directory ownership reverts to &#x27;nobody:nogroup&#x27; after ~30 minutes on NFS export with no_root_squash when NFS server and client have different DNS domain names, due to NFSv4 ID mapping domain mismatch.</div>
+<div>ROOT CAUSE: NFSv4 uses domain-qualified user/group names for ownership mapping. When the NFS-Ganesha server&#x27;s hostname domain (e.g., &#x27;random.com&#x27;) differs from the NFS client&#x27;s domain (e.g., &#x27;something.com&#x27;), the NFS client cannot map the server-reported UIDs to local users after the attribute cache expires (~30 min default). The client then falls back to &#x27;nobody:nogroup&#x27;. The fix adds the client&#x27;s domain to the idmap.conf file on the Ganesha server side. A persistent fix requires cephadm to preserve idmap.conf across container restarts/redeployments.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: nfs-ganesha</li>
+<li>Server hostname: ceph-node.random.com; Client hostname: spunadikar.something.com</li>
+<li>Ownership shows correctly immediately after chown, reverts to nobody:nogroup after ~30 minutes (NFS attribute cache timeout)</li>
+<li>Fix: set <code>Domain=something.com</code> in idmap.conf on Ganesha container</li>
+<li>Residual issue: idmap.conf reverts to blank after node reboot (<code>cephadm redeploys container from scratch)</code></li>
+<li>Code fix: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/272a2fb810178d5482b8010d6e9b3025d67ac8d4</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 9.0z1. Hotfix delivered for 8.1z4 on Jan 14, 2026. Persistent idmap.conf across reboots requires separate cephadm enhancement.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ownership revert to nobody:nogroup on cross-domain NFS mount</div>
+<div>Environment: IBM Ceph 8.1z3 (19.2.1-274.el9cp)</div>
 <ul>
-<li>[Shantanu Bhardwaj] Issue got resolved temporarily after restarting the NFS Daemons using &quot;<code>ceph orch restart&quot; and remounting the Exports on client side.  However issue reappeared once customer rebooted the client node and NFS exports were remounted after that.</code></li>
-<li>[Thomas Serlin] For the hotfix request that was filed today, devs can cherry-pick their fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin-ceph-8.1-rhel-9-hotfix-bz2426864-patches Thanks, Thomas</li>
-<li>[Thomas Serlin] (In reply to tserlin from comment #16) &gt; For the hotfix request that was filed today, devs can cherry-pick their &gt; fixes to this branch (based on the nfs-ganesha shipped with 8.1 z4): &gt;  &gt;  https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commits/private-tserlin- &gt; ceph-8.1-rhel-</li>
-<li>[Thomas Serlin] QE can use this to verify the hotfix, based on 8.1 z4: $ <code>podman pull cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z4.0.hotfix.bz2426864 The hotfix builds in the container are: nfs-ganesha-6.5-29.0.hotfix.bz2426864.el9cp ceph-19.2.1-292.0.hotfix.bz2426864.el9cp Based on these two hot</code></li>
-<li>[Chaithra Kulal] Hi Team, RGW-Dashboard BZ2417688 validation completed with hotfix build: <code>ceph version 19.2.1-292.0.hotfix.bz2426864.el9cp No issues seen. Test result :  https://docs.google.com/document/d/1U2WupM66bQnmxVBZ0_3WVQWEa394mDZ_UqdLA-nHGc4/edit?tab=t.0 Thanks</code>, Chaithra</li>
+<li><span class="step-num">1.</span> Deploy NFS cluster with Ganesha on a host with domain &#x27;example1.com&#x27; -- intent: set up server domain</li>
+<li><span class="step-num">2.</span> Create NFS export with no_root_squash -- intent: allow root operations</li>
+<li><span class="step-num">3.</span> Mount NFS export from a client with different domain &#x27;example2.com&#x27; -- intent: create domain mismatch</li>
+<li><span class="step-num">4.</span> As root on client, create files and chown to a local user: <code>touch /mnt/file1 &amp;amp;&amp;amp; chown testuser:testuser /mnt/file1</code> -- intent: set ownership</li>
+<li><span class="step-num">5.</span> Verify ownership shows correctly: <code>ls -la /mnt/file1</code> -- intent: confirm initial state</li>
+<li><span class="step-num">6.</span> Wait 30+ minutes and re-check: <code>ls -la /mnt/file1</code> -- intent: observe ownership revert to nobody:nogroup</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>hostname -f</code> on both server and client -- check domain mismatch</li>
+<li><code>cat /var/lib/ceph/&amp;lt;fsid&amp;gt;/nfs.&amp;lt;cluster&amp;gt;/etc/ganesha/idmap.conf</code> -- check idmap configuration</li>
+<li><code>nfsstat -m</code> on client -- check <code>mount options and attribute cache settings</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_squash</div>
-<div>Environment: IBM Ceph 8.1, component: nfs-ganesha</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">6.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Was able to reproduce this issue locally: 1. NFS server (Ganesha side): Domain used is &quot;random.com&quot; [root@ceph-msaini-r9ft0j-node2 ganesha]# hostname -f ceph-msaini-r9ft0j-node2.random.com [root@ceph-msaini-r9ft0j-node2 ganesha]# cat /etc/hosts 127.0.0.1   localhost localhost.ran</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: [BZ#2426864] [NFS] Ownership for files and directories are not changing for NFS export with no_root_</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified in 9.0z1 (20.1.0-150.el9cp). Ownership persists after fix.</div>
+<div>GAPS: No automated test for cross-domain NFSv4 ID mapping. No test for idmap.conf persistence across container restarts.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported nfs-ganesha scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>NFS <code>mount between hosts with mismatched DNS domains</code>, verify ownership stability over 60+ minutes</li>
+<li>Test with actimeo <code>mount option variations</code></li>
+<li>Verify idmap.conf persists across: NFS daemon restart, host reboot, <code>ceph orch redeploy</code></li>
+<li>Test with multiple users and groups across domain boundary</li>
 </ul></div>
 </div>
 

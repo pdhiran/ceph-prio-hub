@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10894: [BZ#2353274] [IBM_Support] [RGW] Conditional write doesn&#x27;t work with Java client in S3</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,46 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2353274] [IBM_Support] [RGW] Conditional write doesn&#x27;t work with Java client in S3
-
-ROOT CAUSE:
-- Affected version(s): 5.3
-- Component: rgw
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: RGW conditional write (If-Match PUT) returns 412 PreconditionFailed even with correct ETag on S3 API
+ROOT CAUSE: This was filed against IBM Ceph 5.3 which did not fully support conditional write behavior. The S3 conditional PUT with If-Match header was not implemented for non-versioned objects in the 5.3 RGW codebase. The feature was implemented in 8.1z5 and higher. Engineer Matt Benjamin confirmed: &quot;5.3 definitely did not support all conditional write behavior. 8.1z5 and higher do.&quot;
+KEY EVIDENCE:
+- Customer (Mastercard) used s3cmd with If-Match header for PUT; GET with If-Match worked but PUT failed with 412
+- ETag was verified correct (fa5f892d298b2b850f3263688cc51887) and consistent
+- Resolution: &quot;not a bug&quot; -- feature not available in 5.3, resolved in 8.1z5+
+FIX STATUS: Closed as CURRENTRELEASE. Conditional write fully supported in 8.1z5+.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2353274]  [RGW] Conditional write doesn&#x27;t work with Java client in S3
-Environment: IBM Ceph 5.3, component: rgw
-
-1. Deploy IBM Ceph 5.3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Verify conditional write (If-Match PUT) works correctly on RGW S3 API
+Environment: IBM Ceph 5.3 (affected), 8.1z5+ (fixed)
+1. Upload an object: aws s3api put-object --bucket test-bucket --key test-object --body 5mb-file.bin -- intent: get ETag
+2. Note the returned ETag value
+3. Verify GET with If-Match works: aws s3api get-object --bucket test-bucket --key test-object --if-match &#x27;&quot;&lt;etag&gt;&quot;&#x27; downloaded.bin -- intent: confirm If-Match works for reads
+4. Attempt conditional PUT: s3cmd put updated-file.bin s3://test-bucket/test-object --add-header=&quot;If-Match: \&quot;&lt;etag&gt;\&quot;&quot; -- intent: trigger conditional write
+5. Observe 412 PreconditionFailed on 5.3; should succeed on 8.1z5+
+DIAGNOSTIC COMMANDS:
+- aws s3api head-object --bucket test-bucket --key test-object (verify ETag)
+- Check RGW version: ceph version
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: [BZ#2353274]  [RGW] Conditional write doesn&#x27;t work with Java client in S3
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Conditional write feature tested as part of 8.1z5 release
+GAPS: No automated regression test verifying conditional PUT with If-Match across S3 clients (AWS CLI, s3cmd, Java SDK)
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Conditional PUT with If-Match on non-versioned bucket (various clients)
+- Conditional PUT with If-Match on versioned bucket
+- If-Match with stale ETag (expect 412)
+- If-None-Match conditional write
+- Multipart upload with If-Match conditions
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,33 +239,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2353274] [IBM_Support] [RGW] Conditional write doesn&#x27;t work with Java client in S3</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Affected version(s): 5.3</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2353274]  [RGW] Conditional write doesn&#x27;t work with Java client in S3</div>
-<div>Environment: IBM Ceph 5.3, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [BZ#2353274]  [RGW] Conditional write doesn&#x27;t work with Java client in S3</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: RGW conditional write (If-Match PUT) returns 412 PreconditionFailed even with correct ETag on S3 API
+ROOT CAUSE: This was filed against IBM Ceph 5.3 which did not fully support conditional write behavior. The S3 conditional PUT with If-Match header was not implemented for non-versioned objects in the 5.3 RGW codebase. The feature was implemented in 8.1z5 and higher. Engineer Matt Benjamin confirmed: &quot;5.3 definitely did not support all conditional write behavior. 8.1z5 and higher do.&quot;
+KEY EVIDENCE:
+- Customer (Mastercard) used s3cmd with If-Match header for PUT; GET with If-Match worked but PUT failed with 412
+- ETag was verified correct (fa5f892d298b2b850f3263688cc51887) and consistent
+- Resolution: &quot;not a bug&quot; -- feature not available in 5.3, resolved in 8.1z5+
+FIX STATUS: Closed as CURRENTRELEASE. Conditional write fully supported in 8.1z5+.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Verify conditional write (If-Match PUT) works correctly on RGW S3 API
+Environment: IBM Ceph 5.3 (affected), 8.1z5+ (fixed)
+1. Upload an object: aws s3api put-object --bucket test-bucket --key test-object --body 5mb-file.bin -- intent: get ETag
+2. Note the returned ETag value
+3. Verify GET with If-Match works: aws s3api get-object --bucket test-bucket --key test-object --if-match &#x27;&quot;&lt;etag&gt;&quot;&#x27; downloaded.bin -- intent: confirm If-Match works for reads
+4. Attempt conditional PUT: s3cmd put updated-file.bin s3://test-bucket/test-object --add-header=&quot;If-Match: \&quot;&lt;etag&gt;\&quot;&quot; -- intent: trigger conditional write
+5. Observe 412 PreconditionFailed on 5.3; should succeed on 8.1z5+
+DIAGNOSTIC COMMANDS:
+- aws s3api head-object --bucket test-bucket --key test-object (verify ETag)
+- Check RGW version: ceph version
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Conditional write feature tested as part of 8.1z5 release
+GAPS: No automated regression test verifying conditional PUT with If-Match across S3 clients (AWS CLI, s3cmd, Java SDK)
+SCENARIOS NEEDED:
+- Conditional PUT with If-Match on non-versioned bucket (various clients)
+- Conditional PUT with If-Match on versioned bucket
+- If-Match with stale ETag (expect 412)
+- If-None-Match conditional write
+- Multipart upload with If-Match conditions
+</pre></div>
 </div>
 
 

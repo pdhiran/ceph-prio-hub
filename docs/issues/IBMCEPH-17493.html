@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17493: [8.1z Backport] - [BZ#2422122] [GSS]  All 3 OSDs are failing Journal Log Replay on startup.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,44 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] - [BZ#2422122] [GSS]  All 3 OSDs are failing Journal Log Replay on startup.
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Please do this today. Please cross check if the fix in in 9.2 branch. Ideally it should be in 9.2 as the fix was shipped in 9.1 cc
-- [Manya Dogra] Yes, I have cross verified that the fix is present in the 9.2 branch.
-- [Manya Dogra] The fix is also present in the 8.1 branch. I&#x27;ve attached the commit ID and the tracker for reference.  Commit ID:  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/9769150ac8cf44970cd640d8eff589ba8f882982 Tracker:   cc:
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: BlueFS assertion failure during RocksDB WAL replay on OSD startup due to insufficient allocation space (8.1z backport).
+ROOT CAUSE: All 3 OSDs on an OpenShift cluster fail to start with FAILED ceph_assert(cut_off == p-&gt;length) in BlueFS::truncate() at BlueFS.cc:3790. The crash occurs during RocksDB journal log replay at OSD startup (BlueStore::_mount -&gt; BlueStore::_open_db -&gt; RocksDBStore::do_open -&gt; RecoverLogFiles -&gt; WriteLevel0TableForRecovery -&gt; WritableFileWriter::Close -&gt; BlueFS::truncate). Immediately before the assertion, BlueFS logs &#x27;unable to allocate 0x90000 on bdev 1&#x27; with 42% fragmentation and only 0x25bf92000 free space. The customer had a nearly-full cluster (3x100GB OSDs with 80+ GiB PVCs) and mass-restarted all Ceph pods simultaneously via &#x27;oc delete pod -n openshift-storage -A&#x27;. The abrupt restart of all OSDs while near-full caused RocksDB WAL entries that could not be properly replayed due to BlueFS allocation failures.
+KEY EVIDENCE:
+- Assertion: FAILED ceph_assert(cut_off == p-&gt;length) at BlueFS.cc:3790
+- bluefs _allocate unable to allocate 0x90000 on bdev 1, fragmentation 0.42
+- ceph version 19.2.1-292.el9cp (Squid/8.1)
+- All 3 OSDs affected simultaneously (mass pod deletion on OpenShift)
+- Cluster was nearfull/full at time of incident
+- Backport from IBMCEPH-12414, fix confirmed present in 8.1 and 9.2 branches
+FIX STATUS: CLOSED as Done. Fix confirmed present in both 8.1 branch (commit 9769150ac8cf) and 9.2 branch. Verified by Manya Dogra (2026-08-06).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport] - [BZ#2422122] [GSS]  All 3 OSDs are failing Journal Log Replay on startup.
-Environment: IBM Ceph 8.1, component: rados
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger BlueFS truncation assertion during OSD startup on a near-full cluster after abrupt restart.
+Environment: IBM Ceph 8.1 (19.2.1-292.el9cp) on OpenShift/ODF with small OSDs.
+1. Deploy cluster with small OSDs (e.g., 100GB) -- intent: make it easy to reach near-full
+2. Fill cluster to nearfull ratio -- intent: create conditions for BlueFS allocation pressure
+   rados bench -p testpool 300 write --no-cleanup
+3. While cluster is near-full, simultaneously restart all OSD pods -- intent: trigger WAL replay under allocation pressure
+   oc delete pod -l app=rook-ceph-osd -n openshift-storage
+4. Check OSD startup logs for assertion failure -- intent: detect BlueFS truncation crash
+   oc logs &lt;osd-pod&gt; -n openshift-storage
+DIAGNOSTIC COMMANDS:
+- ceph osd df (check %RAW USED per OSD)
+- ceph health detail (look for nearfull/full warnings)
+- ceph crash ls-new (check for BlueFS assertion crashes)
+- Check OSD container logs for &#x27;BlueFS&#x27; and &#x27;ceph_assert&#x27;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix is already shipped in 8.1 and 9.2 branches. Verification was done manually.
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+- No automated test for BlueFS WAL replay under near-full conditions with simultaneous OSD restart
+- No test simulates OpenShift mass-pod-deletion scenario on small clusters
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Near-full OSD restart: fill cluster to nearfull, simultaneously restart all OSDs; verify clean startup
+- BlueFS fragmentation stress: create high BlueFS fragmentation via sustained writes then restart; verify WAL replay succeeds
+- OCP mass restart: on OpenShift, delete all OSD pods simultaneously; verify recovery</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,43 +237,51 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] - [BZ#2422122] [GSS]  All 3 OSDs are failing Journal Log Replay on startup.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">BlueFS assertion failure during RocksDB WAL replay on OSD startup due to insufficient allocation space (8.1z backport).</div>
+<div>ROOT CAUSE: All 3 OSDs on an OpenShift cluster fail to start with FAILED ceph_assert(cut_off == p-&gt;length) in BlueFS::truncate() at BlueFS.cc:3790. The crash occurs during RocksDB journal log replay at OSD startup (BlueStore::_mount -&gt; BlueStore::_open_db -&gt; RocksDBStore::do_open -&gt; RecoverLogFiles -&gt; WriteLevel0TableForRecovery -&gt; WritableFileWriter::Close -&gt; BlueFS::truncate). Immediately before the assertion, BlueFS logs &#x27;unable to allocate 0x90000 on bdev 1&#x27; with 42% fragmentation and only 0x25bf92000 free space. The customer had a nearly-full cluster (3x100GB OSDs with 80+ GiB PVCs) and mass-restarted all Ceph pods simultaneously via &#x27;oc delete pod -n openshift-storage -A&#x27;. The abrupt restart of all OSDs while near-full caused RocksDB WAL entries that could not be properly replayed due to BlueFS allocation failures.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: rados</li>
+<li>Assertion: FAILED ceph_assert(cut_off == p-&gt;length) at BlueFS.cc:3790</li>
+<li>bluefs _allocate unable to allocate 0x90000 on bdev 1, fragmentation 0.42</li>
+<li><code>ceph version 19.2.1-292.el9cp (Squid/8.1)</code></li>
+<li>All 3 OSDs affected simultaneously (mass pod deletion on OpenShift)</li>
+<li>Cluster was nearfull/full at time of incident</li>
+<li>Backport from IBMCEPH-12414, fix confirmed present in 8.1 and 9.2 branches</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: CLOSED as Done. Fix confirmed present in both 8.1 branch (commit 9769150ac8cf) and 9.2 branch. Verified by Manya Dogra (2026-08-06).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger BlueFS truncation assertion during OSD startup on a near-full cluster after abrupt restart.</div>
+<div>Environment: IBM Ceph 8.1 (19.2.1-292.el9cp) on OpenShift/ODF with small OSDs.</div>
 <ul>
-<li>[Bipin Kunal] Please do this today. Please cross check if the fix in in 9.2 branch. Ideally it should be in 9.2 as the fix was shipped in 9.1 cc</li>
-<li>[Manya Dogra] Yes, I have cross verified that the fix is present in the 9.2 branch.</li>
-<li>[Manya Dogra] The fix is also present in the 8.1 branch. I&#x27;ve attached the commit ID and the tracker for reference.  Commit ID:  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/9769150ac8cf44970cd640d8eff589ba8f882982 Tracker:   cc:</li>
+<li><span class="step-num">1.</span> Deploy cluster with small OSDs (e.g., 100GB) -- intent: make it easy to reach near-full</li>
+<li><span class="step-num">2.</span> Fill cluster to nearfull ratio -- intent: create conditions for BlueFS allocation pressure</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>rados bench -p testpool 300 write --no-cleanup</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport] - [BZ#2422122] [GSS]  All 3 OSDs are failing Journal Log Replay on startup.</div>
-<div>Environment: IBM Ceph 8.1, component: rados</div>
+<li><span class="step-num">3.</span> While cluster is near-full, simultaneously restart all OSD pods -- intent: trigger WAL replay under allocation pressure</li>
+</ul>
+<div>oc delete pod -l app=rook-ceph-osd -n openshift-storage</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">4.</span> Check OSD startup logs for assertion failure -- intent: detect BlueFS truncation crash</li>
+</ul>
+<div>oc logs &lt;osd-pod&gt; -n openshift-storage</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd df (check %RAW USED per OSD)</code></li>
+<li><code>ceph health detail (look for nearfull/full warnings)</code></li>
+<li><code>ceph crash ls-new (check for BlueFS assertion crashes)</code></li>
+<li>Check OSD container logs for &#x27;BlueFS&#x27; and &#x27;ceph_assert&#x27;</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix is already shipped in 8.1 and 9.2 branches. Verification was done manually.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No automated test for BlueFS WAL replay under near-full conditions with simultaneous OSD restart</li>
+<li>No test simulates OpenShift mass-pod-deletion scenario on small clusters</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Near-full OSD restart: fill cluster to nearfull, simultaneously restart all OSDs; verify clean startup</li>
+<li>BlueFS fragmentation stress: create high BlueFS fragmentation via sustained writes then restart; verify WAL replay succeeds</li>
+<li>OCP mass restart: on OpenShift, delete all OSD pods simultaneously; verify recovery</li>
 </ul></div>
 </div>
 

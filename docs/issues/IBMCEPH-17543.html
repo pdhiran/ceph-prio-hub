@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17543: radosgw-admin gc list command with --bypass-gc triggers a segfault</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,32 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: radosgw-admin gc list command with --bypass-gc triggers a segfault
-
-ROOT CAUSE:
-- Daemon crash reported in rgw.
-- Affected version(s): 9.1
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Duplicate of IBMCEPH-17052 - radosgw-admin gc list with --bypass-gc triggers same null pointer SIGSEGV due to uninitialized GC object.
+ROOT CAUSE: Same mechanism as IBMCEPH-17052. When `radosgw-admin gc list --bypass-gc` is invoked, need_gc becomes false (GC_LIST is in gc_ops_list but bypass_gc negates it), storage driver initializes without GC, then `list_gc_objs()` calls `gc-&gt;list()` where gc is nullptr. Stack trace confirms this=0x0 in RGWGC::list().
+KEY EVIDENCE:
+- Stack trace: RGWGC::list(this=0x0) at rgw_gc.cc
+- Same version as IBMCEPH-17052: 20.2.1-294.el9cp
+- Closed as duplicate of IBMCEPH-17052
+- Both addressed in single upstream PR
+FIX STATUS: Duplicate of IBMCEPH-17052. Single upstream PR addresses both gc list and gc process. Fix in progress by Aarti Dhikale.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- radosgw-admin gc list command with --bypass-gc triggers a segfault
-Environment: IBM Ceph 9.1, component: rgw
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Trigger the failure scenario (see engineering findings below)
-4. Check for daemon crash -- `ceph crash ls-new`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce radosgw-admin gc list segfault with --bypass-gc
+Environment: IBM Ceph 9.1 (20.2.1-294.el9cp)
+1. Deploy RGW environment -- intent: have working gc subsystem
+2. Run: `radosgw-admin gc list` -- intent: verify normal operation works
+3. Run: `radosgw-admin gc list --bypass-gc` -- intent: trigger segfault
+DIAGNOSTIC COMMANDS:
+- radosgw-admin gc list (should return [] or entries)
+- radosgw-admin gc list --bypass-gc (triggers crash)
+- coredumpctl list</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: radosgw-admin gc list command with --bypass-gc triggers a segfault
-
-SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Covered under IBMCEPH-17052 analysis. Same fix, same test needs.
+GAPS: Same as IBMCEPH-17052.
+SCENARIOS NEEDED: Same as IBMCEPH-17052 - verify gc list --bypass-gc returns clean error after fix.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,43 +225,32 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">radosgw-admin gc list command with --bypass-gc triggers a segfault</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Duplicate of IBMCEPH-17052 - radosgw-admin gc list with --bypass-gc triggers same null pointer SIGSEGV due to uninitialized GC object.</div>
+<div>ROOT CAUSE: Same mechanism as IBMCEPH-17052. When <code>radosgw-admin gc list --bypass-gc</code> is invoked, need_gc becomes false (GC_LIST is in gc_ops_list but bypass_gc negates it), storage driver initializes without GC, then <code>list_gc_objs()</code> calls <code>gc-&gt;list()</code> where gc is nullptr. Stack trace confirms this=0x0 in RGWGC::list().</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rgw.</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: rgw</li>
+<li>Stack trace: RGWGC::list(this=0x0) at rgw_gc.cc</li>
+<li>Same version as IBMCEPH-17052: 20.2.1-294.el9cp</li>
+<li>Closed as duplicate of IBMCEPH-17052</li>
+<li>Both addressed in single upstream PR</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Duplicate of IBMCEPH-17052. Single upstream PR addresses both gc list and gc process. Fix in progress by Aarti Dhikale.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce radosgw-admin gc list segfault with --bypass-gc</div>
+<div>Environment: IBM Ceph 9.1 (20.2.1-294.el9cp)</div>
 <ul>
-<li>[Aarti Dhikale] Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg</li>
+<li><span class="step-num">1.</span> Deploy RGW environment -- intent: have working gc subsystem</li>
+<li><span class="step-num">2.</span> Run: <code><code>radosgw-admin gc list</code></code> -- intent: verify normal operation works</li>
+<li><span class="step-num">3.</span> Run: <code><code>radosgw-admin gc list --bypass-gc</code></code> -- intent: trigger segfault</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>radosgw-admin gc list (should return [] or entries)</code></li>
+<li><code>radosgw-admin gc list --bypass-gc (triggers crash)</code></li>
+<li>coredumpctl list</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- radosgw-admin gc list command with --bypass-gc triggers a segfault</div>
-<div>Environment: IBM Ceph 9.1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">4.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hello Team, I tried checking for other commands that could cause an issue when  --bypass-gc  is passed and found that  gc list  also results in a crash. I was able to reproduce the issue and generate the coredump. I decoded the coredump and found the following: Root cause: radosg</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: <code>radosgw-admin gc list command with --bypass-gc triggers a segfault</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Covered under IBMCEPH-17052 analysis. Same fix, same test needs.</div>
+<div>GAPS: Same as IBMCEPH-17052.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-17052 - verify gc list --bypass-gc returns clean error after fix.</div></div>
 </div>
 
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13385: [RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,33 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion
-
-ROOT CAUSE:
-- Affected version(s): 9.1
-- Component: rgw
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to add Prometheus counter for objects processed by RGW lifecycle policies (transitioned or marked for deletion).
+ROOT CAUSE: Currently gc_retire_object in RGW perf dump tracks garbage-collected objects, but no equivalent metric exists for lifecycle (LC) operations. Administrators cannot monitor LC processing rate, identify slowdowns, or verify policy effectiveness without polling radosgw-admin lc list output. This hampers operational visibility for customers with heavy LC workloads.
+KEY EVIDENCE:
+- gc_retire_object exists for GC but nothing equivalent for LC
+- Reported against 9.1
+- No engineering comments or implementation plan
+- Filed by Karun Josy (L3/QE)
+FIX STATUS: Status &#x27;new&#x27;. No implementation timeline. Assigned to Matthew Benjamin.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion
-Environment: IBM Ceph 9.1, component: rgw
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: N/A - RFE for new metric, no bug to reproduce
+Environment: IBM Ceph 9.1
+1. Configure LC policy on bucket with many objects -- intent: establish LC processing
+2. Verify no LC counter in: ceph daemon client.rgw.&lt;id&gt; perf dump -- intent: confirm absence
+3. Monitor LC progress only via: radosgw-admin lc list -- intent: show current limitation
+DIAGNOSTIC COMMANDS:
+- ceph daemon client.rgw.&lt;id&gt; perf dump | grep -i lc
+- radosgw-admin lc list
+- radosgw-admin lc process</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: [RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA. This is an RFE with no implementation.
+GAPS: No Prometheus metric for LC processed objects exists to test.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. When implemented: verify counter increments per LC-processed object
+2. Verify counter resets on RGW restart
+3. Verify counter accuracy against actual object deletion/transition count
+4. Verify Prometheus scrape correctly exposes the metric</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -226,31 +229,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to add Prometheus counter for objects processed by RGW lifecycle policies (transitioned or marked for deletion).</div>
+<div>ROOT CAUSE: Currently gc_retire_object in RGW perf dump tracks garbage-collected objects, but no equivalent metric exists for lifecycle (LC) operations. Administrators cannot monitor LC processing rate, identify slowdowns, or verify policy effectiveness without polling radosgw-admin lc list output. This hampers operational visibility for customers with heavy LC workloads.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1</li>
-<li>Component: rgw</li>
+<li>gc_retire_object exists for GC but nothing equivalent for LC</li>
+<li>Reported against 9.1</li>
+<li>No engineering comments or implementation plan</li>
+<li>Filed by Karun Josy (L3/QE)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Status &#x27;new&#x27;. No implementation timeline. Assigned to Matthew Benjamin.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: N/A - RFE for new metric, no bug to reproduce</div>
+<div>Environment: IBM Ceph 9.1</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion</div>
-<div>Environment: IBM Ceph 9.1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [RFE]RGW Lifecycle Tracker: Counter for Objects Lifecycled or Marked for Deletion</code></li>
+<li><span class="step-num">1.</span> Configure LC policy on bucket with many objects -- intent: establish LC processing</li>
+<li><span class="step-num">2.</span> Verify no LC counter in: <code>ceph daemon client.rgw.&lt;id&gt; perf dump -- intent: confirm absence</code></li>
+<li><span class="step-num">3.</span> Monitor LC progress only via: <code>radosgw-admin lc list -- intent: show current limitation</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph daemon client.rgw.&lt;id&gt; perf dump | grep -i lc</code></li>
+<li><code>radosgw-admin lc list</code></li>
+<li><code>radosgw-admin lc process</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA. This is an RFE with no implementation.</div>
+<div>GAPS: No Prometheus metric for LC processed objects exists to test.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> When implemented: verify counter increments per LC-processed object</li>
+<li><span class="step-num">2.</span> Verify counter resets on RGW restart</li>
+<li><span class="step-num">3.</span> Verify counter accuracy against actual object deletion/transition count</li>
+<li><span class="step-num">4.</span> Verify Prometheus scrape correctly exposes the metric</li>
 </ul></div>
 </div>
 

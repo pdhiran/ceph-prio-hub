@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15691: [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,39 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm-agent daemon version displays as &lt;unknown&gt; in `ceph orch ps` because the VersionStatusUpdater class has no handling for the non-containerized agent daemon type.
 
 ROOT CAUSE:
-- Affected version(s): 9.1
-- Component: cephadm
+The cephadm VersionStatusUpdater class determines daemon versions by exec-ing into the daemon&#x27;s container and querying the version. The cephadm-agent is intentionally not containerized — it runs as a native Python process to avoid container management overhead for every data push. Because the agent daemon type is not included in the VersionStatusUpdater&#x27;s special-case handling (which already exists for NFS, iSCSI, Prometheus, Grafana, etc.), the version detection mechanism returns null, causing `ceph orch ps` to display `&lt;unknown&gt;` for both the VERSION and IMAGE ID columns. The fix populates the agent version from the cephadm version itself.
 
-ENGINEERING FINDINGS:
-- [Swati Thombe] Hi    We were able to successfully reproduce the issue in our test environment and observed the same behavior, where the Agent version is shown as  Unknown . We are currently investigating the code path involved and will share further findings and updates once our analysis is com
-- [Swati Thombe] //Internal Discussion //  I spent some time tracing through the code path and found the root cause. When we list daemons, the  VersionStatusUpdater  class is responsible for determining the version of each daemon. It already has dedicated handling for several daemon types such as
-- [Swati Thombe] We have received the necessary approval and have started implementing the code changes to fix the Cephadm Agent version issue.
-- [Bipin Kunal] Thanks    for moving it back to 9.2.    please  get the fix merged quickly and have it backported.
+KEY EVIDENCE:
+- Reproducible 3/3 on Ceph 9.1 (20.2.1-280)
+- Root cause traced by Swati Thombe: VersionStatusUpdater missing agent daemon type handling (comment 2026-06-05)
+- Agent is intentionally non-containerized to avoid start/stop overhead per data push
+- Impact extends to upgrade verification — without version info, operators cannot confirm agent daemons were upgraded
+- PR raised upstream, approved for 9.2 target (moved back from 10.0 after pushback)
 
 FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+- Status: In Progress
+- Upstream PR raised and nearly ready. Targeted for 9.2 release. Ceph Tracker Bug #77111.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;
-Environment: IBM Ceph 9.1, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify cephadm-agent displays &lt;unknown&gt; version and validate fix
+Environment: IBM Ceph 9.1 (20.2.1-280 or similar)
 
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy a Ceph cluster -- intent: baseline environment
+2. Enable cephadm-agent: `ceph config set mgr mgr/cephadm/use_agent true` -- intent: deploy agent daemons
+3. Wait for agents to deploy on all hosts -- intent: ensure agents are running
+4. Run `ceph orch ps --daemon-type agent` -- intent: observe &lt;unknown&gt; version
+5. Run `ceph versions` -- intent: confirm agent is not reported in version output
+
+DIAGNOSTIC COMMANDS:
+- `ceph orch ps --daemon-type agent`
+- `ceph versions`
+- `ceph config get mgr mgr/cephadm/use_agent`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test coverage for agent daemon version reporting. New tests needed.
 
 GAPS:
-- Existing cephadm tests may not cover: [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;
+- No test verifies version field for non-containerized daemon types
+- No upgrade test checks that agent daemons report updated version post-upgrade
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Verify `ceph orch ps --daemon-type agent` shows a valid version string (not &lt;unknown&gt;)
+- After cluster upgrade, verify agent version matches the new cephadm version
+- Verify `ceph versions` output includes or appropriately handles agent daemons</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,38 +243,48 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm-agent daemon version displays as &lt;unknown&gt; in `ceph orch ps` because the VersionStatusUpdater class has no handling for the non-containerized agent daemon type.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The cephadm VersionStatusUpdater class determines daemon versions by exec-ing into the daemon&#x27;s container and querying the version. The cephadm-agent is intentionally not containerized — it runs as a native Python process to avoid container management overhead for every data push. Because the agent daemon type is not included in the VersionStatusUpdater&#x27;s special-case handling (which already exists for NFS, iSCSI, Prometheus, Grafana, etc.), the version detection mechanism returns null, causing <code>ceph orch ps</code> to display <code>&lt;unknown&gt;</code> for both the VERSION and IMAGE ID columns. The fix populates the agent version from the cephadm version itself.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Swati Thombe] Hi    We were able to successfully reproduce the issue in our test environment and observed the same behavior, where the Agent version is shown as  Unknown . We are currently investigating the code path involved and will share further findings and updates once our analysis is com</li>
-<li>[Swati Thombe] //Internal Discussion //  I spent some time tracing through the code path and found the root cause. When we list daemons, the  VersionStatusUpdater  class is responsible for determining the version of each daemon. It already has dedicated handling for several daemon types such as</li>
-<li>[Swati Thombe] We have received the necessary approval and have started implementing the code changes to fix the Cephadm Agent version issue.</li>
-<li>[Bipin Kunal] Thanks    for moving it back to 9.2.    please  get the fix merged quickly and have it backported.</li>
+<li>Reproducible 3/3 on Ceph 9.1 (20.2.1-280)</li>
+<li>Root cause traced by Swati Thombe: VersionStatusUpdater missing agent daemon type handling (comment 2026-06-05)</li>
+<li>Agent is intentionally non-containerized to avoid start/stop overhead per data push</li>
+<li>Impact extends to upgrade verification — without version info, operators cannot confirm agent daemons were upgraded</li>
+<li>PR raised upstream, approved for 9.2 target (moved back from 10.0 after pushback)</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
+<li>Status: In Progress</li>
+<li>Upstream PR raised and nearly ready. Targeted for 9.2 release. Ceph Tracker Bug #77111.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</div>
-<div>Environment: IBM Ceph 9.1, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify cephadm-agent displays &lt;unknown&gt; version and validate fix</div>
+<div>Environment: IBM Ceph 9.1 (20.2.1-280 or similar)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy a Ceph cluster -- intent: baseline environment</li>
+<li><span class="step-num">2.</span> Enable cephadm-agent: <code><code>ceph config set mgr mgr/cephadm/use_agent true</code></code> -- intent: deploy agent daemons</li>
+<li><span class="step-num">3.</span> Wait for agents to deploy on all hosts -- intent: ensure agents are running</li>
+<li><span class="step-num">4.</span> Run <code><code>ceph orch ps --daemon-type agent</code></code> -- intent: observe &lt;unknown&gt; version</li>
+<li><span class="step-num">5.</span> Run <code><code>ceph versions</code></code> -- intent: confirm agent is not reported in version output</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph orch ps --daemon-type agent</code></code></li>
+<li><code><code>ceph versions</code></code></li>
+<li><code><code>ceph config get mgr mgr/cephadm/use_agent</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test coverage for agent daemon version reporting. New tests needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>cephadm tests may not cover: [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</code></li>
+<li>No test verifies version field for non-containerized daemon types</li>
+<li>No upgrade test checks that agent daemons report updated version post-upgrade</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Verify <code><code>ceph orch ps --daemon-type agent</code></code> shows a valid version string (not &lt;unknown&gt;)</li>
+<li>After cluster upgrade, verify agent version matches the new <code>cephadm version</code></li>
+<li>Verify <code><code>ceph versions</code></code> output includes or appropriately handles agent daemons</li>
 </ul></div>
 </div>
 

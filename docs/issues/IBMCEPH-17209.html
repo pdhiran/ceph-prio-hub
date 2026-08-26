@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17209: [9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,39 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.1
-- Component: cephadm
-
-FIX STATUS:
-- Fix available in build 20.2.1-351.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2163</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: mgmt-gateway service enters infinite reconciliation loop on 9.9.1.0 due to missing CA certificate in NGINX config and dependency mismatch in cephadm.
+ROOT CAUSE: Two bugs: (1) external_server.conf.j2 enables OCSP stapling but never references ssl_trusted_certificate /etc/nginx/ssl/ca.crt, causing NGINX to log &#x27;ssl_stapling ignored, issuer certificate not found&#x27;. (2) generate_config() calls MgmtGatewayService.get_dependencies() without passing svc_spec, so certificate-related dependencies are never saved during deployment. During reconcile, cephadm recalculates dependencies WITH svc_spec and finds a mismatch, triggering continuous reconfig every ~7-9 seconds.
+KEY EVIDENCE:
+- nginx: [warn] &#x27;ssl_stapling&#x27; ignored, issuer certificate not found
+- Dependency diff: stored vs computed differs by &#x27;certificate_source: cephadm-signed&#x27;
+- 100% reproducible
+- Workaround: ceph orch set-unmanaged mgmt-gateway
+- Fix MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2163 (9.1z)
+- Verified on build 20.2.1-364.el9cp (9.9.1.2)
+FIX STATUS: Verified. Fix merged to 9.1 and 9.2 branches. Available in build ceph-20.2.1-351+ (9.1z) and ceph-20.2.2-150+ (9.2).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code
-Environment: IBM Ceph 9.1, component: cephadm
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify mgmt-gateway no longer cycles after fix.
+Environment: IBM Ceph 9.9.1.2+ (20.2.1-351+)
+1. Deploy mgmt-gateway with certificate_source: cephadm-signed -- intent: use default cert config
+2. ceph orch apply -i &lt;mgmt-gw-spec&gt; -- intent: apply service spec
+3. Watch &#x27;ceph orch ps --daemon-type mgmt-gateway&#x27; for 5 minutes -- intent: confirm daemon stays running
+4. Verify no continuous reconfig in cephadm logs -- intent: confirm dependency match
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type mgmt-gateway -- check daemon stability
+- ceph log last 50 -- check for reconfiguration messages
+- podman logs &lt;mgmt-gateway-container&gt; -- check NGINX warnings
+- ceph orch ls mgmt-gateway --export -- check spec configuration</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QA verified on builds 20.2.1-364 (9.1z) and 20.2.2-169 (9.2).
+GAPS: No automated test deploys mgmt-gateway with cephadm-signed certificates and monitors for cycling. No long-running stability test for mgmt-gateway daemon.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Deploy mgmt-gateway with cephadm-signed and verify 10-minute stability
+- Deploy mgmt-gateway with inline certificate and verify stability
+- Upgrade test: verify mgmt-gateway remains stable across minor version upgrades</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,37 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">mgmt-gateway service enters infinite reconciliation loop on 9.9.1.0 due to missing CA certificate in NGINX config and dependency mismatch in cephadm.</div>
+<div>ROOT CAUSE: Two bugs: (1) external_server.conf.j2 enables OCSP stapling but never references ssl_trusted_certificate /etc/nginx/ssl/ca.crt, causing NGINX to log &#x27;ssl_stapling ignored, issuer certificate not found&#x27;. (2) generate_config() calls MgmtGatewayService.get_dependencies() without passing svc_spec, so certificate-related dependencies are never saved during deployment. During reconcile, cephadm recalculates dependencies WITH svc_spec and finds a mismatch, triggering continuous reconfig every ~7-9 seconds.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: cephadm</li>
+<li>nginx: [warn] &#x27;ssl_stapling&#x27; ignored, issuer certificate not found</li>
+<li>Dependency diff: stored vs computed differs by &#x27;certificate_source: cephadm-signed&#x27;</li>
+<li>100% reproducible</li>
+<li>Workaround: <code>ceph orch set-unmanaged mgmt-gateway</code></li>
+<li>Fix MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2163 (9.1z)</li>
+<li>Verified on build 20.2.1-364.el9cp (9.9.1.2)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Verified. Fix merged to 9.1 and 9.2 branches. Available in build ceph-20.2.1-351+ (9.1z) and ceph-20.2.2-150+ (9.2).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify mgmt-gateway no longer cycles after fix.</div>
+<div>Environment: IBM Ceph 9.9.1.2+ (20.2.1-351+)</div>
 <ul>
-<li>Fix available in build 20.2.1-351.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2163</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] mgmt-gateway continuously cycling on 9.9.1.0 code</div>
-<div>Environment: IBM Ceph 9.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li><span class="step-num">1.</span> Deploy mgmt-gateway with certificate_source: cephadm-signed -- intent: use default cert config</li>
+<li><span class="step-num">2.</span> <code>ceph orch apply -i &lt;mgmt-gw-spec&gt; -- intent: apply service spec</code></li>
+<li><span class="step-num">3.</span> Watch &#x27;<code>ceph orch ps --daemon-type mgmt-gateway&#x27; for 5 minutes -- intent: confirm daemon stays running</code></li>
+<li><span class="step-num">4.</span> Verify no continuous reconfig in <code>cephadm logs -- intent: confirm dependency match</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch ps --daemon-type mgmt-gateway -- check daemon stability</code></li>
+<li><code>ceph log last 50 -- check for reconfiguration messages</code></li>
+<li><code>podman logs &lt;mgmt-gateway-container&gt; -- check NGINX warnings</code></li>
+<li><code>ceph orch ls mgmt-gateway --export -- check spec configuration</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QA verified on builds 20.2.1-364 (9.1z) and 20.2.2-169 (9.2).</div>
+<div>GAPS: No automated test deploys mgmt-gateway with cephadm-signed certificates and monitors for cycling. No long-running stability test for mgmt-gateway daemon.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Deploy mgmt-gateway with cephadm-signed and verify 10-minute stability</li>
+<li>Deploy mgmt-gateway with inline certificate and verify stability</li>
+<li>Upgrade test: verify mgmt-gateway remains stable across minor version upgrades</li>
 </ul></div>
 </div>
 

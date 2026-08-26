@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13888: Persistent configuration of idmap.conf on the deployed NFS cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Persistent configuration of idmap.conf on the deployed NFS cluster
-
-ROOT CAUSE:
-- Affected version(s): 8.1z5
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Timothy Nguyen] please let me know if fix works for Cu with no issue, if so, I think you mentioned documentation issues, we should transition this bug to doc bug, or close it and open a doc bug.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS idmap.conf settings are not persistent across upgrades when configured manually.
+ROOT CAUSE: The idmap.conf file at /var/lib/ceph/{fsid}/NFS-Daemon/etc/ganesha/idmap.conf is managed by cephadm and gets overwritten during cluster upgrades because cephadm redeployments regenerate daemon config from the stored service specification. Manual edits to container-managed paths are ephemeral by design. The correct mechanism is to include the idmap_conf field in the NFS service specification YAML, which persists across upgrades as it is stored in the orchestrator&#x27;s configuration store.
+KEY EVIDENCE:
+- Customer confirmed 100% reproducibility on 8.1z5 (19.2.1-331.el9cp)
+- Engineer (Timothy Nguyen) provided the fix: add idmap_conf to NFS spec YAML and redeploy
+- Feature has existed since 7.1 but documentation was inadequate
+- Resolution: Won&#x27;t Do (code change unnecessary; documentation bug opened as IBMCEPH-15833)
+FIX STATUS: Closed as Won&#x27;t Do. Documentation ticket IBMCEPH-15833 opened to add &#x27;deploying NFS with idmap settings&#x27; subsection to upstream and IBM docs from 7.1 onward.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Persistent configuration of idmap.conf on the deployed NFS cluster
-Environment: IBM Ceph 8.1z5, component: cephadm
-
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Apply the configuration change described in the JIRA
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify NFS idmap.conf persistence across upgrades using service specification method
+Environment: IBM Ceph 8.1z5 [19.2.1-331.el9cp]
+1. Deploy NFS cluster without idmap_conf in the service spec -- intent: establish baseline
+2. Manually edit /var/lib/ceph/{fsid}/NFS-Daemon/etc/ganesha/idmap.conf -- intent: simulate customer workflow
+3. Perform cluster upgrade (ceph orch upgrade start) -- intent: trigger cephadm redeployment
+4. Verify idmap.conf contents are reset to empty -- intent: confirm the bug
+5. Now apply spec with idmap_conf field and redeploy:
+   ceph orch apply -i nfs.yml &amp;&amp; ceph orch redeploy nfs.&lt;service_id&gt; -- intent: verify fix
+6. Perform another upgrade and verify idmap.conf persists -- intent: confirm persistence
+DIAGNOSTIC COMMANDS:
+- ceph orch ls --service-type nfs --export
+- cat /var/lib/ceph/{fsid}/NFS-Daemon/etc/ganesha/idmap.conf
+- ceph orch redeploy nfs.&lt;service_id&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test coverage exists for idmap.conf persistence across upgrades.
+GAPS: No test verifies that NFS service spec idmap_conf fields survive an orchestrator-driven upgrade cycle. No test for the manual-edit-gets-overwritten negative case.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Deploy NFS with idmap_conf in spec, upgrade cluster, verify idmap.conf content matches spec
+2. Negative test: manual edit without spec should be overwritten on redeploy
+3. Spec modification (change domain) + redeploy should update idmap.conf</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,34 +232,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Persistent configuration of idmap.conf on the deployed NFS cluster</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS idmap.conf settings are not persistent across upgrades when configured manually.</div>
+<div>ROOT CAUSE: The idmap.conf file at /var/lib/ceph/{fsid}/NFS-Daemon/etc/ganesha/idmap.conf is managed by cephadm and gets overwritten during cluster upgrades because cephadm redeployments regenerate daemon config from the stored service specification. Manual edits to container-managed paths are ephemeral by design. The correct mechanism is to include the idmap_conf field in the NFS service specification YAML, which persists across upgrades as it is stored in the orchestrator&#x27;s configuration store.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: cephadm</li>
+<li>Customer confirmed 100% reproducibility on 8.1z5 (19.2.1-331.el9cp)</li>
+<li>Engineer (Timothy Nguyen) provided the fix: add idmap_conf to NFS spec YAML and redeploy</li>
+<li>Feature has existed since 7.1 but documentation was inadequate</li>
+<li>Resolution: Won&#x27;t Do (code change unnecessary; documentation bug opened as IBMCEPH-15833)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as Won&#x27;t Do. Documentation ticket IBMCEPH-15833 opened to add &#x27;deploying NFS with idmap settings&#x27; subsection to upstream and IBM docs from 7.1 onward.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify NFS idmap.conf persistence across upgrades using service specification method</div>
+<div>Environment: IBM Ceph 8.1z5 [19.2.1-331.el9cp]</div>
 <ul>
-<li>[Timothy Nguyen] please let me know if fix works for Cu with no issue, if so, I think you mentioned documentation issues, we should transition this bug to doc bug, or close it and open a doc bug.</li>
+<li><span class="step-num">1.</span> Deploy NFS cluster without idmap_conf in the service spec -- intent: establish baseline</li>
+<li><span class="step-num">2.</span> Manually edit /var/lib/ceph/{fsid}/NFS-Daemon/etc/ganesha/idmap.conf -- intent: simulate customer workflow</li>
+<li><span class="step-num">3.</span> Perform cluster upgrade (<code>ceph orch upgrade start) -- intent: trigger cephadm redeployment</code></li>
+<li><span class="step-num">4.</span> Verify idmap.conf contents are reset to empty -- intent: confirm the bug</li>
+<li><span class="step-num">5.</span> Now apply spec with idmap_conf field and redeploy:</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph orch apply -i nfs.yml &amp;&amp; ceph orch redeploy nfs.&lt;service_id&gt; -- intent: verify fix</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Persistent configuration of idmap.conf on the deployed NFS cluster</div>
-<div>Environment: IBM Ceph 8.1z5, component: cephadm</div>
+<li><span class="step-num">6.</span> Perform another upgrade and verify idmap.conf persists -- intent: confirm persistence</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><code>ceph orch ls --service-type nfs --export</code></li>
+<li>cat /var/lib/ceph/{fsid}/NFS-Daemon/etc/ganesha/idmap.conf</li>
+<li><code>ceph orch redeploy nfs.&lt;service_id&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test coverage exists for idmap.conf persistence across upgrades.</div>
+<div>GAPS: No test verifies that NFS service spec idmap_conf fields survive an orchestrator-driven upgrade cycle. No test for the manual-edit-gets-overwritten negative case.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Deploy NFS with idmap_conf in spec, upgrade cluster, verify idmap.conf content matches spec</li>
+<li><span class="step-num">2.</span> Negative test: manual edit without spec should be overwritten on redeploy</li>
+<li><span class="step-num">3.</span> Spec modification (change domain) + redeploy should update idmap.conf</li>
 </ul></div>
 </div>
 

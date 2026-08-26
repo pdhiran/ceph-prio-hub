@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17412: [IBM Support] INSERT AS SELECT fails writing to S3 (HTTP 400 errors) </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM Support] INSERT AS SELECT fails writing to S3 (HTTP 400 errors) 
-
-ROOT CAUSE:
-- Affected version(s): not specified
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Ashish Singh] Hi Team, + On investigating the RGW debug, we are noticing that some of PUT requests are failing with  http status=400 , and  err_no=-2019 new_err_no=-2019   + The ERROR code  -2019  is for  ERR_TOO_LARGE . It is defined here -  https://github.com/ceph/ceph/blob/squid/src/rgw/rgw
-- [Aarti Dhikale] Thanks for the analysis and updates, please let me know if any information or assistance is required from the our side.
-- [Matthew Benjamin] Do we have a compact reproducer for this?  As you state, only the last part of multipart upload can vary part size, and must be &lt;= to same.
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Two distinct S3 upload failure modes: oversized single PUT exceeding rgw_max_put_size (HTTP 400) and multipart upload signature mismatch from truncated parts (HTTP 403).
+ROOT CAUSE: The Watsonx.data Spark Streaming application exhibits two failure paths when writing to RGW on IBM Ceph 8.1z6 (19.2.1-366.el9cp). (1) HTTP 400 failures: Presto/Spark issues single PUT requests with CONTENT_LENGTH exceeding rgw_max_put_size (default 5GB). RGW logs show CONTENT_LENGTH=5829528110 (5.4GB) and 6934835077 (6.4GB) hitting ERR_TOO_LARGE (error code -2019). The client does not use multipart upload for these objects. Increasing rgw_max_put_size to 10GB resolved this path. (2) HTTP 403 failures: During multipart uploads, an intermediate part (not the final part) arrives with only ~8MB instead of the expected 32MB part size. RGW computes the signature based on the received body, which doesn&#x27;t match the client&#x27;s signature calculated for 32MB, returning ERR_SIGNATURE_NO_MATCH (op status=-2027). A proxy between Spark and RGW may be truncating the body. The client aborts the entire upload upon receiving 403.
+KEY EVIDENCE:
+- Failed PUTs show CONTENT_LENGTH &gt; 5GB with err_no=-2019 (ERR_TOO_LARGE) and http_status=400
+- Successful PUTs show CONTENT_LENGTH=33554432 (32MB multipart parts) with http_status=200
+- Part 6 failure: 8389280 bytes (~8MB) instead of 32MB, causing signature mismatch
+- Workaround confirmed: rgw_max_put_size set to 10GB resolves the 400 errors
+- Client: Hadoop 3.4.0 aws-sdk-java/2.31.19 on RHEL 9 with OpenJ9 JVM
+- Reproducer being developed by WatsonX data team
+FIX STATUS: Under active investigation. Ashish Singh confirmed rgw_max_put_size increase fixes 400 errors. The 403 errors require understanding why intermediate multipart parts arrive truncated -- likely a proxy/load-balancer issue rather than a Ceph bug. Kyle Bader requested Content-length and x-amz-decoded-content-length headers for the failed request plus client-side Spark logs.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- INSERT AS SELECT fails writing to S3 (HTTP 400 errors)
-Environment: IBM Ceph 9.x, component: rgw
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce both rgw_max_put_size exceeded (HTTP 400) and multipart signature mismatch (HTTP 403) failure modes.
+Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp) with RGW behind a proxy/load-balancer.
+1. Deploy RGW with default rgw_max_put_size (5GB) -- intent: use default limit to trigger ERR_TOO_LARGE
+   ceph config get client.rgw rgw_max_put_size
+2. Create an S3 user and bucket -- intent: establish upload target
+   radosgw-admin user create --uid=test-user --display-name=test-user
+   aws s3 mb s3://test-bucket
+3. Upload a file &gt;5GB as a single PUT (not multipart) using aws-sdk-java or s3cmd without multipart -- intent: trigger HTTP 400 ERR_TOO_LARGE
+   dd if=/dev/urandom of=/tmp/large.bin bs=1M count=6000
+   aws s3 cp /tmp/large.bin s3://test-bucket/ --no-multipart-threshold 10GB
+4. For the 403 path, run sustained multipart uploads through a proxy that may introduce network instability -- intent: trigger partial part delivery
+5. Monitor RGW debug logs at level 20 -- intent: observe CONTENT_LENGTH, signature validation, and error codes
+   ceph config set client.rgw debug_rgw 20
+DIAGNOSTIC COMMANDS:
+- ceph config get client.rgw rgw_max_put_size
+- grep &#x27;err_no=-2019&#x27; /var/log/ceph/*/ceph-client.rgw*.log (ERR_TOO_LARGE)
+- grep &#x27;err_no=-2027&#x27; /var/log/ceph/*/ceph-client.rgw*.log (ERR_SIGNATURE_NO_MATCH)
+- grep &#x27;http_status=400\|http_status=403&#x27; /var/log/ceph/*/ceph-client.rgw*.log</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test specifically covers single PUT exceeding rgw_max_put_size or multipart part truncation scenarios.
 GAPS:
-- Existing rgw tests may not cover: INSERT AS SELECT fails writing to S3 (HTTP 400 errors)
-
+- No test validates RGW behavior when single PUT CONTENT_LENGTH exceeds rgw_max_put_size
+- No test simulates truncated multipart upload parts to verify signature validation and error response
+- No test verifies the interaction between aws-sdk-java/2.31.x checksum behavior and RGW
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- Single PUT &gt; rgw_max_put_size: upload object exceeding default 5GB limit; verify HTTP 400 returned cleanly
+- rgw_max_put_size override: set to 10GB; verify 6GB single PUT succeeds
+- Multipart part size mismatch: inject a truncated intermediate part; verify RGW returns appropriate error (403 vs 400 debate)
+- Multipart abort handling: verify client cleanup after part failure works correctly
+- Proxy-induced truncation: test multipart uploads through HAProxy with connection resets</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,37 +244,60 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM Support] INSERT AS SELECT fails writing to S3 (HTTP 400 errors)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Two distinct S3 upload failure modes: oversized single PUT exceeding rgw_max_put_size (HTTP 400) and multipart upload signature mismatch from truncated parts (HTTP 403).</div>
+<div>ROOT CAUSE: The Watsonx.data Spark Streaming application exhibits two failure paths when writing to RGW on IBM Ceph 8.1z6 (19.2.1-366.el9cp). (1) HTTP 400 failures: Presto/Spark issues single PUT requests with CONTENT_LENGTH exceeding rgw_max_put_size (default 5GB). RGW logs show CONTENT_LENGTH=5829528110 (5.4GB) and 6934835077 (6.4GB) hitting ERR_TOO_LARGE (error code -2019). The client does not use multipart upload for these objects. Increasing rgw_max_put_size to 10GB resolved this path. (2) HTTP 403 failures: During multipart uploads, an intermediate part (not the final part) arrives with only ~8MB instead of the expected 32MB part size. RGW computes the signature based on the received body, which doesn&#x27;t match the client&#x27;s signature calculated for 32MB, returning ERR_SIGNATURE_NO_MATCH (op status=-2027). A proxy between Spark and RGW may be truncating the body. The client aborts the entire upload upon receiving 403.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: rgw</li>
+<li>Failed PUTs show CONTENT_LENGTH &gt; 5GB with err_no=-2019 (ERR_TOO_LARGE) and http_status=400</li>
+<li>Successful PUTs show CONTENT_LENGTH=33554432 (32MB multipart parts) with http_status=200</li>
+<li>Part 6 failure: 8389280 bytes (~8MB) instead of 32MB, causing signature mismatch</li>
+<li>Workaround confirmed: rgw_max_put_size set to 10GB resolves the 400 errors</li>
+<li>Client: Hadoop 3.4.0 aws-sdk-java/2.31.19 on RHEL 9 with OpenJ9 JVM</li>
+<li>Reproducer being developed by WatsonX data team</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Under active investigation. Ashish Singh confirmed rgw_max_put_size increase fixes 400 errors. The 403 errors require understanding why intermediate multipart parts arrive truncated -- likely a proxy/load-balancer issue rather than a Ceph bug. Kyle Bader requested Content-length and x-amz-decoded-content-length headers for the failed request plus client-side Spark logs.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce both rgw_max_put_size exceeded (HTTP 400) and multipart signature mismatch (HTTP 403) failure modes.</div>
+<div>Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp) with RGW behind a proxy/load-balancer.</div>
 <ul>
-<li>[Ashish Singh] Hi Team, + On investigating the RGW debug, we are noticing that some of PUT requests are failing with  http status=400 , and  err_no=-2019 new_err_no=-2019   + The ERROR code  -2019  is for  ERR_TOO_LARGE . It is defined here -  https://github.com/ceph/ceph/blob/squid/src/rgw/rgw</li>
-<li>[Aarti Dhikale] Thanks for the analysis and updates, please let me know if any information or assistance is required from the our side.</li>
-<li>[Matthew Benjamin] Do we have a compact reproducer for this?  As you state, only the last part of multipart upload can vary part size, and must be &lt;= to same.</li>
+<li><span class="step-num">1.</span> Deploy RGW with default rgw_max_put_size (5GB) -- intent: use default limit to trigger ERR_TOO_LARGE</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph config get client.rgw rgw_max_put_size</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- INSERT AS SELECT fails writing to S3 (HTTP 400 errors)</div>
-<div>Environment: IBM Ceph 9.x, component: rgw</div>
+<li><span class="step-num">2.</span> Create an S3 user and bucket -- intent: establish upload target</li>
+</ul>
+<div>radosgw-admin user create --uid=test-user --display-name=test-user</div>
+<div>aws s3 mb s3://test-bucket</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Upload a file &gt;5GB as a single PUT (not multipart) using aws-sdk-java or s3cmd without multipart -- intent: trigger HTTP 400 ERR_TOO_LARGE</li>
+</ul>
+<div>dd if=/dev/urandom of=/tmp/large.bin bs=1M count=6000</div>
+<div>aws s3 cp /tmp/large.bin s3://test-bucket/ --no-multipart-threshold 10GB</div>
+<ul>
+<li><span class="step-num">4.</span> For the 403 path, run sustained multipart uploads through a proxy that may introduce network instability -- intent: trigger partial part delivery</li>
+<li><span class="step-num">5.</span> Monitor RGW debug logs at level 20 -- intent: observe CONTENT_LENGTH, signature validation, and error codes</li>
+</ul>
+<div>ceph config set client.rgw debug_rgw 20</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config get client.rgw rgw_max_put_size</code></li>
+<li>grep &#x27;err_no=-2019&#x27; /var/log/ceph/*/ceph-client.rgw*.log (ERR_TOO_LARGE)</li>
+<li>grep &#x27;err_no=-2027&#x27; /var/log/ceph/*/ceph-client.rgw*.log (ERR_SIGNATURE_NO_MATCH)</li>
+<li>grep &#x27;http_status=400\|http_status=403&#x27; /var/log/ceph/*/ceph-client.rgw*.log</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test specifically covers single PUT exceeding rgw_max_put_size or multipart part truncation scenarios.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rgw tests may not cover: INSERT AS SELECT fails writing to S3 (HTTP 400 errors)</code></li>
+<li>No test validates RGW behavior when single PUT CONTENT_LENGTH exceeds rgw_max_put_size</li>
+<li>No test simulates truncated multipart upload parts to verify signature validation and error response</li>
+<li>No test verifies the interaction between aws-sdk-java/2.31.x checksum behavior and RGW</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Single PUT &gt; rgw_max_put_size: upload object exceeding default 5GB limit; verify HTTP 400 returned cleanly</li>
+<li>rgw_max_put_size override: set to 10GB; verify 6GB single PUT succeeds</li>
+<li>Multipart part size mismatch: inject a truncated intermediate part; verify RGW returns appropriate error (403 vs 400 debate)</li>
+<li>Multipart abort handling: verify client cleanup after part failure works correctly</li>
+<li>Proxy-induced truncation: test multipart uploads through HAProxy with connection resets</li>
 </ul></div>
 </div>
 

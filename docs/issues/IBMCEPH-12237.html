@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12237: [BZ#2400258] [ibm_support] Enable the Grafana rendering service</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2400258] [ibm_support] Enable the Grafana rendering service
-
-ROOT CAUSE:
-- Affected version(s): 9.1
-- Component: ceph-dashboard
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to enable Grafana image rendering service in Ceph -- closed, won&#x27;t do.
+ROOT CAUSE: This was a feature request (RFE) to enable the Grafana rendering service (https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/) in Ceph-managed Grafana. This would allow generating PNG images of dashboards/graphs via API/curl, useful for customers without desktop access to Grafana. The feature was requested to be off by default due to resource overhead.
+KEY EVIDENCE:
+- Ankush Behl: &#x27;No plans to proceed. We aim to reduce reliance on Grafana long-term.&#x27;
+- Closed as &#x27;won&#x27;t do&#x27;
+- Long-term strategy is to reduce Grafana dependency, not enhance it
+FIX STATUS: Closed as &#x27;won&#x27;t do&#x27;. No development planned. Grafana reliance being reduced long-term.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2400258] [ibm_support] Enable the Grafana rendering service
-Environment: IBM Ceph 9.1, component: ceph-dashboard
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: N/A -- this is a closed RFE.
+Environment: N/A
+No reproduction steps applicable.
+DIAGNOSTIC COMMANDS: N/A</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing ceph-dashboard tests may not cover: [BZ#2400258] [ibm_support] Enable the Grafana rendering service
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: N/A -- RFE closed as won&#x27;t do. No test coverage needed.
+GAPS: N/A
+SCENARIOS NEEDED: N/A</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,34 +219,22 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2400258] [ibm_support] Enable the Grafana rendering service</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to enable Grafana image rendering service in Ceph -- closed, won&#x27;t do.</div>
+<div>ROOT CAUSE: This was a feature request (RFE) to enable the Grafana rendering service (https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/) in Ceph-managed Grafana. This would allow generating PNG images of dashboards/graphs via API/curl, useful for customers without desktop access to Grafana. The feature was requested to be off by default due to resource overhead.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1</li>
-<li>Component: ceph-dashboard</li>
+<li>Ankush Behl: &#x27;No plans to proceed. We aim to reduce reliance on Grafana long-term.&#x27;</li>
+<li>Closed as &#x27;won&#x27;t do&#x27;</li>
+<li>Long-term strategy is to reduce Grafana dependency, not enhance it</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2400258] [ibm_support] Enable the Grafana rendering service</div>
-<div>Environment: IBM Ceph 9.1, component: ceph-dashboard</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing ceph-dashboard tests may not cover: [BZ#2400258] [ibm_support] Enable the Grafana rendering service</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div>FIX STATUS: Closed as &#x27;won&#x27;t do&#x27;. No development planned. Grafana reliance being reduced long-term.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: N/A -- this is a closed RFE.</div>
+<div>Environment: N/A</div>
+<div>No reproduction steps applicable.</div>
+<div>DIAGNOSTIC COMMANDS: N/A</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">N/A -- RFE closed as won&#x27;t do. No test coverage needed.</div>
+<div>GAPS: N/A</div>
+<div>SCENARIOS NEEDED: N/A</div></div>
 </div>
 
 

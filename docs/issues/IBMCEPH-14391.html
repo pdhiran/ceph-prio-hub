@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14391: MOD multisite promote secondary fails </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,48 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MOD multisite promote secondary fails 
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: rgw-multisite
-
-ENGINEERING FINDINGS:
-- [Uri Tanis] ceph orch apply rgw test --realm=test_realm --zone=us-east-1 --zonegroup=us --placement=&quot;1 vmrgws-0&quot; The above command specifies invalid flags; --realm, --zonegroup and --zone. They all should be prefixed by --rgw
-- [Vivek Maurya] Hi   , The support team fixed the secondary promotion issue.  Now the question:  After promoting a secondary (slave/non-master) zone to master in a Ceph RGW multisite setup, the  radosgw-admin period get  command shows mostly empty strings in the  sync_status  array.  Is this nor
-- [Michael Kadmiel] Yes please close this case.  It seems resolved,   I’f there’s anything further I’ll let you know and we can decide how to move foreward.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW multisite secondary promotion failed due to operator error (wrong realm) and residual metadata artifacts -- not a bug.
+ROOT CAUSE: Customer promoted a secondary zone to master using &#x27;radosgw-admin zone modify --rgw-zone second-site-zone --master --default&#x27; but forgot to specify &#x27;--rgw-realm=multisite-realm&#x27;, causing the promotion to apply to the wrong realm. This corrupted the multisite sync metadata. Subsequent attempts to rebuild the multisite setup failed with &#x27;No such file or directory&#x27; errors because residual artifacts from the incorrect promotion persisted in RADOS objects (rgw.meta pool). The &#x27;period get&#x27; output showed empty strings in sync_status array, which are normal -- each element is a metadata sync shard marker, and empty entries mean no sync activity on those shards.
+KEY EVIDENCE:
+- Customer omitted --rgw-realm flag during zone promotion
+- RGW log: &#x27;cache get: name=site.rgw.meta+root+sync.np hit: (negative entry)&#x27; -&gt; missing sync metadata object
+- sync_status array with empty entries is normal (inactive shards)
+- Shilpa Jagannath confirmed: &#x27;empty entries mean there wasn&#x27;t any sync activity on those shards&#x27;
+- Support team successfully set up fresh multisite following correct procedure
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Resolution was operator error. The support team provided step-by-step multisite setup instructions that work correctly.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MOD multisite promote secondary fails
-Environment: IBM Ceph 7.1, component: rgw-multisite
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate multisite sync failure when promotion is applied to wrong realm.
+Environment: Ceph 7.1 with two-site multisite
+1. Set up multisite with two realms per site -- intent: create the complex topology
+   radosgw-admin realm create --rgw-realm=multisite --default
+   radosgw-admin zonegroup create --rgw-zonegroup=multizg --rgw-realm=multisite --master --default
+2. Promote secondary zone WITHOUT specifying realm -- intent: trigger the bug
+   radosgw-admin zone modify --rgw-zone &lt;secondary-zone&gt; --master --default
+   radosgw-admin period update --commit
+3. Observe broken sync status -- intent: confirm the corruption
+   radosgw-admin sync status
+4. Attempt realm pull from other site -- intent: see the &#x27;No such file or directory&#x27; error
+   radosgw-admin realm pull --url=&lt;primary-url&gt; --access-key=&lt;key&gt; --secret-key=&lt;secret&gt;
+DIAGNOSTIC COMMANDS:
+- radosgw-admin sync status
+- radosgw-admin period get
+- rados -p default.rgw.meta ls | grep realm
+- radosgw-admin zonegroup get</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test covers multisite promotion with missing --rgw-realm flag.
 GAPS:
-- Existing rgw-multisite tests may not cover: MOD multisite promote secondary fails
-
+- No negative test for zone promotion without specifying realm when multiple realms exist
+- No test validates sync_status array interpretation after promotion
+- No test for recovery from corrupted multisite metadata
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test: Promote secondary zone without --rgw-realm, verify error handling or clear error message
+- Test: Verify radosgw-admin validates realm parameter presence when multiple realms exist
+- Test: Complete multisite setup/teardown/rebuild cycle following IBM documentation
+- Test: Validate sync_status empty entries are normal after fresh multisite setup</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,37 +241,57 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MOD multisite promote secondary fails</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW multisite secondary promotion failed due to operator error (wrong realm) and residual metadata artifacts -- not a bug.</div>
+<div>ROOT CAUSE: Customer promoted a secondary zone to master using &#x27;radosgw-admin zone modify --rgw-zone second-site-zone --master --default&#x27; but forgot to specify &#x27;--rgw-realm=multisite-realm&#x27;, causing the promotion to apply to the wrong realm. This corrupted the multisite sync metadata. Subsequent attempts to rebuild the multisite setup failed with &#x27;No such file or directory&#x27; errors because residual artifacts from the incorrect promotion persisted in RADOS objects (rgw.meta pool). The &#x27;period get&#x27; output showed empty strings in sync_status array, which are normal -- each element is a metadata sync shard marker, and empty entries mean no sync activity on those shards.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: rgw-multisite</li>
+<li>Customer omitted --rgw-realm flag during zone promotion</li>
+<li>RGW log: &#x27;cache get: name=site.rgw.meta+root+sync.np hit: (negative entry)&#x27; -&gt; missing sync metadata object</li>
+<li>sync_status array with empty entries is normal (inactive shards)</li>
+<li>Shilpa Jagannath confirmed: &#x27;empty entries mean there wasn&#x27;t any sync activity on those shards&#x27;</li>
+<li>Support team successfully set up fresh multisite following correct procedure</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Resolution was operator error. The support team provided step-by-step multisite setup instructions that work correctly.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate multisite sync failure when promotion is applied to wrong realm.</div>
+<div>Environment: Ceph 7.1 with two-site multisite</div>
 <ul>
-<li>[Uri Tanis] <code>ceph orch apply rgw test --realm=test_realm --zone=us-east-1 --zonegroup=us --placement=&quot;1 vmrgws-0&quot; The above command specifies invalid flags; --realm</code>, --zonegroup and --zone. They all should be prefixed by --rgw</li>
-<li>[Vivek Maurya] Hi   , The support team fixed the secondary promotion issue.  Now the question:  After promoting a secondary (slave/non-master) zone to master in a Ceph RGW multisite setup, the  <code>radosgw-admin period get  command shows mostly empty strings in the  sync_status  array.  Is this nor</code></li>
-<li>[Michael Kadmiel] Yes please close this case.  It seems resolved,   I’f there’s anything further I’ll let you know and we can decide how to move foreward.</li>
+<li><span class="step-num">1.</span> Set up multisite with two realms per site -- intent: create the complex topology</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>radosgw-admin realm create --rgw-realm=multisite --default</div>
+<div>radosgw-admin zonegroup create --rgw-zonegroup=multizg --rgw-realm=multisite --master --default</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MOD multisite promote secondary fails</div>
-<div>Environment: IBM Ceph 7.1, component: rgw-multisite</div>
+<li><span class="step-num">2.</span> Promote secondary zone WITHOUT specifying realm -- intent: trigger the bug</li>
+</ul>
+<div>radosgw-admin zone modify --rgw-zone &lt;secondary-zone&gt; --master --default</div>
+<div>radosgw-admin period update --commit</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Observe broken sync status -- intent: confirm the corruption</li>
+</ul>
+<div>radosgw-admin sync status</div>
+<ul>
+<li><span class="step-num">4.</span> Attempt realm pull from other site -- intent: see the &#x27;No such file or directory&#x27; error</li>
+</ul>
+<div>radosgw-admin realm pull --url=&lt;primary-url&gt; --access-key=&lt;key&gt; --secret-key=&lt;secret&gt;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>radosgw-admin sync status</code></li>
+<li><code>radosgw-admin period get</code></li>
+<li><code>rados -p default.rgw.meta ls | grep realm</code></li>
+<li><code>radosgw-admin zonegroup get</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test covers multisite promotion with missing --rgw-realm flag.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing rgw-multisite tests may not cover: MOD multisite promote secondary fails</li>
+<li>No negative test for zone promotion without specifying realm when multiple realms exist</li>
+<li>No test validates sync_status array interpretation after promotion</li>
+<li>No test for recovery from corrupted multisite metadata</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test: Promote secondary zone without --rgw-realm, verify error handling or clear error message</li>
+<li>Test: Verify <code>radosgw-admin validates realm parameter presence when multiple realms exist</code></li>
+<li>Test: Complete multisite setup/teardown/rebuild cycle following IBM documentation</li>
+<li>Test: Validate sync_status empty entries are normal after fresh multisite setup</li>
 </ul></div>
 </div>
 

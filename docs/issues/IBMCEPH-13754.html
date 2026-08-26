@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13754: [9.0z Backport] 403 response for HeadObject operation with s3:GetObject Action</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,35 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z Backport] 403 response for HeadObject operation with s3:GetObject Action
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1z3
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] I have marked this as blocker for 9.0z3 as hotfix has been provided to a customer. More details here   . The fix is even getting in 8.1z6, so the fix should be made available in all subsequent higher versions to prevent regression. -Bipin Kunal
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: [9.0z Backport] HeadObject 403 with s3:GetObject on versioned bucket — same root cause as IBMCEPH-13494
+ROOT CAUSE: This is the 9.0z backport of the fix for IBMCEPH-13494. The RGW object instance is prematurely set during read_obj_policy() → get_obj_policy_from_attr() → RadosReadOp::prepare(), causing IAM action to incorrectly select s3:GetObjectVersion instead of s3:GetObject for requests without explicit versionId on versioned buckets.
+KEY EVIDENCE:
+- Cloned from IBMCEPH-13494 (parent bug)
+- Marked as blocker for 9.0z3 since hotfix was delivered to customer on 8.1z5
+- Verified on 20.1.0-195.el9cp by Hemanth Maheswarla
+FIX STATUS: Fixed in 9.0z3 release. Closed.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0z Backport] 403 response for HeadObject operation with s3:GetObject Action
-Environment: IBM Ceph 8.1z3, component: rgw
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Same as IBMCEPH-13494 — verify 403 fix on 9.0z branch
+Environment: IBM Ceph 9.0 (affected), 9.0z3+ (fixed)
+1-6. Same steps as IBMCEPH-13494 repro
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-13494
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
-SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Verified on 9.0z3 build (20.1.0-195). Same test coverage as IBMCEPH-13494.
+GAPS: Same gaps as IBMCEPH-13494
+SCENARIOS NEEDED: Same scenarios as IBMCEPH-13494 applied to 9.0z branch
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,41 +228,29 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z Backport] 403 response for HeadObject operation with s3:GetObject Action</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Bipin Kunal] I have marked this as blocker for 9.0z3 as hotfix has been provided to a customer. More details here   . The fix is even getting in 8.1z6, so the fix should be made available in all subsequent higher versions to prevent regression. -Bipin Kunal</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0z Backport] 403 response for HeadObject operation with s3:GetObject Action</div>
-<div>Environment: IBM Ceph 8.1z3, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: [9.0z Backport] HeadObject 403 with s3:GetObject on versioned bucket — same root cause as IBMCEPH-13494
+ROOT CAUSE: This is the 9.0z backport of the fix for IBMCEPH-13494. The RGW object instance is prematurely set during read_obj_policy() → get_obj_policy_from_attr() → RadosReadOp::prepare(), causing IAM action to incorrectly select s3:GetObjectVersion instead of s3:GetObject for requests without explicit versionId on versioned buckets.
+KEY EVIDENCE:
+- Cloned from IBMCEPH-13494 (parent bug)
+- Marked as blocker for 9.0z3 since hotfix was delivered to customer on 8.1z5
+- Verified on 20.1.0-195.el9cp by Hemanth Maheswarla
+FIX STATUS: Fixed in 9.0z3 release. Closed.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Same as IBMCEPH-13494 — verify 403 fix on 9.0z branch
+Environment: IBM Ceph 9.0 (affected), 9.0z3+ (fixed)
+1-6. Same steps as IBMCEPH-13494 repro
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-13494
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Verified on 9.0z3 build (20.1.0-195). Same test coverage as IBMCEPH-13494.
+GAPS: Same gaps as IBMCEPH-13494
+SCENARIOS NEEDED: Same scenarios as IBMCEPH-13494 applied to 9.0z branch
+</pre></div>
 </div>
 
 

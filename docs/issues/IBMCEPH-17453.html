@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17453: [8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,44 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z5
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: ganesha-rados-grace command times out (10s) during NFS service deployment, causing transient CEPHADM_APPLY_SPEC_FAIL (8.1z backport).
+ROOT CAUSE: During NFS daemon provisioning, cephadm runs &#x27;ganesha-rados-grace --pool .nfs --ns &lt;cluster-id&gt; add 0&#x27; to register the daemon in the grace table. This command has a hardcoded 10-second timeout. Under cluster load or .nfs pool latency, the command exceeds the timeout, causing cephadm to raise CEPHADM_APPLY_SPEC_FAIL. The failures are transient -- the health warning appears then clears within 1-4 minutes as the next reconciliation cycle succeeds. This causes health flapping that alarms monitoring systems.
+KEY EVIDENCE:
+- Error: &#x27;ganesha-rados-grace ... add 0&#x27; timed out after 10 seconds
+- Health flapping: CEPHADM_APPLY_SPEC_FAIL appears and clears within minutes
+- Version: 19.2.1-331.el9cp (8.1z5)
+- IBM Cloud Acadia customer, case TS022093470
+- Clone of IBMCEPH-14352 (original tracking)
+- Upstream patch not yet merged (moved to next z-release)
+FIX STATUS: New. Upstream patch pending merge. Moved out of current z-release by Bipin Kunal (2026-08-13). 9.1z backport tracked in IBMCEPH-17452.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL
-Environment: IBM Ceph 8.1z5, component: cephadm
-
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Run baseline benchmark (fio/rados bench) -- record metrics
-6. Trigger the performance scenario described in JIRA
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger ganesha-rados-grace timeout during NFS service deployment under load.
+Environment: IBM Ceph 8.1z5+ cluster with multiple NFS services.
+1. Create load on the .nfs RADOS pool -- intent: increase RADOS latency
+   rados bench -p .nfs 60 write --no-cleanup
+2. Rapidly deploy multiple NFS services -- intent: trigger concurrent grace table operations
+   for i in $(seq 1 5); do ceph nfs cluster create nfs-$i --placement=&#x27;count:1&#x27; &amp; done
+3. Monitor health for CEPHADM_APPLY_SPEC_FAIL -- intent: detect timeout failures
+   watch -n 1 ceph health detail
+DIAGNOSTIC COMMANDS:
+- ceph health detail (look for CEPHADM_APPLY_SPEC_FAIL)
+- ceph log last 50 cephadm (look for ganesha-rados-grace timeout)
+- rados -p .nfs ls (check .nfs pool health)
+- ceph orch ls nfs (check NFS service status)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for ganesha-rados-grace timeout during NFS provisioning.
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-- No performance baseline test for: [8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_S
-
+- No test exercises NFS deployment under .nfs pool latency
+- No test for ganesha-rados-grace timeout handling and retry behavior
+- No test for health flapping from transient CEPHADM_APPLY_SPEC_FAIL
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Grace timeout under load: deploy NFS while .nfs pool is under write load; verify eventual success
+- Concurrent NFS deployment: deploy 5+ NFS services simultaneously; verify all succeed
+- Health flapping: verify transient CEPHADM_APPLY_SPEC_FAIL clears within expected timeframe</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,44 +237,51 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">ganesha-rados-grace command times out (10s) during NFS service deployment, causing transient CEPHADM_APPLY_SPEC_FAIL (8.1z backport).</div>
+<div>ROOT CAUSE: During NFS daemon provisioning, cephadm runs &#x27;ganesha-rados-grace --pool .nfs --ns &lt;cluster-id&gt; add 0&#x27; to register the daemon in the grace table. This command has a hardcoded 10-second timeout. Under cluster load or .nfs pool latency, the command exceeds the timeout, causing cephadm to raise CEPHADM_APPLY_SPEC_FAIL. The failures are transient -- the health warning appears then clears within 1-4 minutes as the next reconciliation cycle succeeds. This causes health flapping that alarms monitoring systems.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: cephadm</li>
+<li>Error: &#x27;ganesha-rados-grace ... add 0&#x27; timed out after 10 seconds</li>
+<li>Health flapping: CEPHADM_APPLY_SPEC_FAIL appears and clears within minutes</li>
+<li>Version: 19.2.1-331.el9cp (8.1z5)</li>
+<li>IBM Cloud Acadia customer, case TS022093470</li>
+<li>Clone of IBMCEPH-14352 (original tracking)</li>
+<li>Upstream patch not yet merged (moved to next z-release)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: New. Upstream patch pending merge. Moved out of current z-release by Bipin Kunal (2026-08-13). 9.1z backport tracked in IBMCEPH-17452.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger ganesha-rados-grace timeout during NFS service deployment under load.</div>
+<div>Environment: IBM Ceph 8.1z5+ cluster with multiple NFS services.</div>
 <ul>
-<li>[Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.</li>
+<li><span class="step-num">1.</span> Create load on the .nfs RADOS pool -- intent: increase RADOS latency</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>rados bench -p .nfs 60 write --no-cleanup</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</div>
-<div>Environment: IBM Ceph 8.1z5, component: cephadm</div>
+<li><span class="step-num">2.</span> Rapidly deploy multiple NFS services -- intent: trigger concurrent grace table operations</li>
+</ul>
+<div>for i in $(seq 1 5); do ceph nfs cluster create nfs-$i --placement=&#x27;count:1&#x27; &amp; done</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">6.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Monitor health for CEPHADM_APPLY_SPEC_FAIL -- intent: detect timeout failures</li>
+</ul>
+<div>watch -n 1 ceph health detail</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph health detail (look for CEPHADM_APPLY_SPEC_FAIL)</code></li>
+<li><code>ceph log last 50 cephadm (look for ganesha-rados-grace timeout)</code></li>
+<li><code>rados -p .nfs ls (check .nfs pool health)</code></li>
+<li><code>ceph orch ls nfs (check NFS service status)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for ganesha-rados-grace timeout during NFS provisioning.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-<li>No performance baseline test for: [8.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_S</li>
+<li>No test exercises NFS deployment under .nfs pool latency</li>
+<li>No test for ganesha-rados-grace timeout handling and retry behavior</li>
+<li>No test for health flapping from transient CEPHADM_APPLY_SPEC_FAIL</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Grace timeout under load: deploy NFS while .nfs pool is under write load; verify eventual success</li>
+<li>Concurrent NFS deployment: deploy 5+ NFS services simultaneously; verify all succeed</li>
+<li>Health flapping: verify transient CEPHADM_APPLY_SPEC_FAIL clears within expected timeframe</li>
 </ul></div>
 </div>
 

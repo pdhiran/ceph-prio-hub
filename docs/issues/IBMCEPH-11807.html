@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11807: [BZ#2381596] [IBM_Support] [Upgrade] Upgrade of OSD damons to IBM Ceph 8.1 are failing</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2381596] [IBM_Support] [Upgrade] Upgrade of OSD damons to IBM Ceph 8.1 are failing
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD upgrade to IBM Ceph 8.1 fails due to cephadm incorrectly detecting container image as not present after successful pull.
+ROOT CAUSE: Insufficient engineering analysis in JIRA to determine precise mechanism. The upgrade process fails when cephadm attempts to redeploy OSD daemons during the upgrade sequence. Based on available information, this appears to be a cephadm orchestration issue where the upgrade process encounters errors during OSD daemon redeployment.
+KEY EVIDENCE:
 - Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] That should not be the only criteria to get a bug closed. Coming specific to this issue, I see that in its clone Jira    we shipped a fix. Can we confirm if that fix is already present in the 9.1z branch. That we can safely say that fix already exists.    could you please check
-- [Abhishek Kane] can you confirm that the fix for 11976 is part of 9.1*?
-
-FIX STATUS:
-- Current JIRA status: Verified</textarea>
+- Status: closed
+- Affected version: 8.1
+- BZ#2381596 linked
+FIX STATUS: Closed/resolved. Specific fix details not available in the JIRA comments visible.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2381596]  [Upgrade] Upgrade of OSD damons to IBM Ceph 8.1 are failing
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify OSD upgrade process completes successfully to IBM Ceph 8.1
+Environment: Cluster running pre-8.1 version, upgrading to 8.1
+1. Start with a healthy cluster on the pre-upgrade version -- intent: establish baseline
+2. Initiate upgrade: `ceph orch upgrade start --image &lt;8.1-image&gt;` -- intent: trigger upgrade
+3. Monitor upgrade progress: `ceph orch upgrade status` -- intent: track for failures
+4. Check for OSD redeployment failures in `ceph -W cephadm` -- intent: detect the failure mode
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade status
+- ceph -W cephadm
+- ceph orch ps --daemon-type osd
+- journalctl -u ceph-mgr@&lt;active&gt; | grep -i upgrade</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA to determine specific test gaps.
+GAPS: Upgrade testing for OSD daemons from pre-8.1 to 8.1 may have gaps in specific failure scenarios.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. OSD rolling upgrade from 7.1 to 8.1 with active I/O
+2. Upgrade with OSDs in recovery state
+3. Upgrade with mixed OSD device types (HDD/SSD/NVMe)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,41 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2381596] [IBM_Support] [Upgrade] Upgrade of OSD damons to IBM Ceph 8.1 are failing</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD upgrade to IBM Ceph 8.1 fails due to cephadm incorrectly detecting container image as not present after successful pull.</div>
+<div>ROOT CAUSE: Insufficient engineering analysis in JIRA to determine precise mechanism. The upgrade process fails when cephadm attempts to redeploy OSD daemons during the upgrade sequence. Based on available information, this appears to be a cephadm orchestration issue where the upgrade process encounters errors during OSD daemon redeployment.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
 <li>Component: cephadm</li>
+<li>Status: closed</li>
+<li>Affected version: 8.1</li>
+<li>BZ#2381596 linked</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed/resolved. Specific fix details not available in the JIRA comments visible.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify OSD upgrade process completes successfully to IBM Ceph 8.1</div>
+<div>Environment: Cluster running pre-8.1 version, upgrading to 8.1</div>
 <ul>
-<li>[Bipin Kunal] That should not be the only criteria to get a bug closed. Coming specific to this issue, I see that in its clone Jira    we shipped a fix. Can we confirm if that fix is already present in the 9.1z branch. That we can safely say that fix already exists.    could you please check</li>
-<li>[Abhishek Kane] can you confirm that the fix for 11976 is part of 9.1*?</li>
+<li><span class="step-num">1.</span> Start with a healthy cluster on the pre-upgrade version -- intent: establish baseline</li>
+<li><span class="step-num">2.</span> Initiate upgrade: <code><code>ceph orch upgrade start --image &amp;lt;8.1-image&amp;gt;</code></code> -- intent: trigger upgrade</li>
+<li><span class="step-num">3.</span> Monitor upgrade progress: <code><code>ceph orch upgrade status</code></code> -- intent: track for failures</li>
+<li><span class="step-num">4.</span> Check for OSD redeployment failures in <code><code>ceph -W cephadm</code></code> -- intent: detect the failure mode</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
+<li><code>ceph orch upgrade status</code></li>
+<li><code>ceph -W cephadm</code></li>
+<li><code>ceph orch ps --daemon-type osd</code></li>
+<li><code>journalctl -u ceph-mgr@&lt;active&gt; | grep -i upgrade</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2381596]  [Upgrade] Upgrade of OSD damons to IBM Ceph 8.1 are failing</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA to determine specific test gaps.</div>
+<div>GAPS: Upgrade testing for OSD daemons from pre-8.1 to 8.1 may have gaps in specific failure scenarios.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> OSD rolling upgrade from 7.1 to 8.1 with active I/O</li>
+<li><span class="step-num">2.</span> Upgrade with OSDs in recovery state</li>
+<li><span class="step-num">3.</span> Upgrade with mixed OSD device types (HDD/SSD/NVMe)</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16150: CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW daemons are removed from the cluster during upgrade from IBM Ceph 8.1z3 to 9.0z2, caused by incompatible changes in RGW deployment spec handling and SSL certificate configuration mechanism.
 
 ROOT CAUSE:
-- Affected version(s): 9.0z2
-- Component: cephadm
+During the major version upgrade from 8.1z3 (Squid/19.x) to 9.0z2 (Tentacle/20.x), changes in how cephadm handles RGW service specifications and SSL certificate configuration cause the upgrade orchestrator to interpret the existing RGW service spec as invalid. The cephadm upgrade process then removes the RGW daemons rather than upgrading them. This is specifically related to the new SSL certificate configuration mechanism introduced in Tentacle that is not backward-compatible with Squid-era specs.
+
+KEY EVIDENCE:
+- All RGW daemons removed during 8.1z3 -&gt; 9.0z2 upgrade
+- Related to spec file changes and SSL certificate config mechanism changes
+- Customer: Apple (TS022191113)
+- Clone of IBMCEPH-15746
+- Closed as &quot;won&#x27;t do&quot; for 9.0z (no more 9.0z releases); tracked in 9.2 and 9.1z
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (won&#x27;t do for 9.0z)
+- Tracked for fix in 9.2 and 9.1z branches.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2
-Environment: IBM Ceph 9.0z2, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW daemon removal during major version upgrade
+Environment: IBM Ceph 8.1z3 -&gt; 9.0z2 (or 9.1) upgrade path, RGW with SSL
 
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy IBM Ceph 8.1z3 with RGW service using SSL -- intent: create Squid-era RGW spec
+2. Initiate upgrade to 9.0z2/9.1 -- intent: trigger spec incompatibility
+3. Monitor `ceph orch ps --daemon-type rgw` during upgrade -- intent: detect daemon removal
+4. Check `ceph orch ls rgw` for service status -- intent: verify spec handling
+
+DIAGNOSTIC COMMANDS:
+- `ceph orch ps --daemon-type rgw`
+- `ceph orch ls rgw --export`
+- `ceph log last 100 cephadm`
+- `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Upgrade tests need to verify RGW daemon preservation during major upgrades.
 
 GAPS:
-- Existing cephadm tests may not cover: CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2
+- Upgrade test from 8.1z to 9.x must verify RGW daemons are NOT removed
+- No test for RGW spec migration during upgrade with SSL certificates
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Upgrade 8.1z3 -&gt; 9.1 with RGW+SSL: verify zero RGW daemon removal
+- Verify RGW service spec is properly migrated to new format
+- Verify SSL certificates are preserved across upgrade</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +243,48 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW daemons are removed from the cluster during upgrade from IBM Ceph 8.1z3 to 9.0z2, caused by incompatible changes in RGW deployment spec handling and SSL certificate configuration mechanism.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>During the major version upgrade from 8.1z3 (Squid/19.x) to 9.0z2 (Tentacle/20.x), changes in how cephadm handles RGW service specifications and SSL certificate configuration cause the upgrade orchestrator to interpret the existing RGW service spec as invalid. The cephadm upgrade process then removes the RGW daemons rather than upgrading them. This is specifically related to the new SSL certificate configuration mechanism introduced in Tentacle that is not backward-compatible with Squid-era specs.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: cephadm</li>
+<li>All RGW daemons removed during 8.1z3 -&gt; 9.0z2 upgrade</li>
+<li>Related to spec file changes and SSL certificate config mechanism changes</li>
+<li>Customer: Apple (TS022191113)</li>
+<li>Clone of IBMCEPH-15746</li>
+<li>Closed as &quot;won&#x27;t do&quot; for 9.0z (no more 9.0z releases); tracked in 9.2 and 9.1z</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (won&#x27;t do for 9.0z)</li>
+<li>Tracked for fix in 9.2 and 9.1z branches.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</div>
-<div>Environment: IBM Ceph 9.0z2, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW daemon removal during major version upgrade</div>
+<div>Environment: IBM Ceph 8.1z3 -&gt; 9.0z2 (or 9.1) upgrade path, RGW with SSL</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 with RGW service using SSL -- intent: create Squid-era RGW spec</li>
+<li><span class="step-num">2.</span> Initiate upgrade to 9.0z2/9.1 -- intent: trigger spec incompatibility</li>
+<li><span class="step-num">3.</span> Monitor <code><code>ceph orch ps --daemon-type rgw</code></code> during upgrade -- intent: detect daemon removal</li>
+<li><span class="step-num">4.</span> Check <code><code>ceph orch ls rgw</code></code> for service status -- intent: verify spec handling</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph orch ps --daemon-type rgw</code></code></li>
+<li><code><code>ceph orch ls rgw --export</code></code></li>
+<li><code><code>ceph log last 100 cephadm</code></code></li>
+<li><code><code>ceph health detail</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Upgrade tests need to verify RGW daemon preservation during major upgrades.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>cephadm tests may not cover: CLONE - RGW Daemons removed from cluster while upgrading from 8.1z3 to 9.0z2</code></li>
+<li>Upgrade test from 8.1z to 9.x must verify RGW daemons are NOT removed</li>
+<li>No test for RGW spec migration during upgrade with SSL certificates</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Upgrade 8.1z3 -&gt; 9.1 with RGW+SSL: verify zero RGW daemon removal</li>
+<li>Verify RGW service spec is properly migrated to new format</li>
+<li>Verify SSL certificates are preserved across upgrade</li>
 </ul></div>
 </div>
 

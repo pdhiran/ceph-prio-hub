@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16463: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,56 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SMB small-file sync is extremely slow (~100 files/min) because CephFS subvolume has case-sensitivity enabled, forcing Samba to issue massive readdir calls for case-insensitive lookups.
 
 ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 9.1
-- Component: smb
+SMB protocol operates with case-insensitive semantics, but the CephFS subvolume was created with `casesensitive: true` (default). When Samba needs to open/create a file on a case-insensitive share backed by a case-sensitive filesystem, it must enumerate the entire directory to check for case-colliding names. This caused ~95 readdir syscalls per smb2_create operation. With millions of files, the stat cache (which showed 0 hits) was ineffective, making each file creation trigger thousands of readdir operations. Setting `--casesensitive=0` on the subvolume reduced readdir calls from 8M to 362 in a 5-minute window and improved throughput from ~0.6 files/sec to ~120 files/sec.
 
-ENGINEERING FINDINGS:
-- [Ravinder Kumar] Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?
-- [Ashish Singh] Hi   can we avoid threaded replies? We’re trying to move away from threaded replies as they are difficult to find and ordering of comments doesn&#x27;t happen which can be problematic while debugging this issue.  cc:
-- [Sachin Prabhu] This is a customer issue which does not require a new fix. Setting target to 10.0 so that it doesn’t come up on 9.2 program manager reports.
+KEY EVIDENCE:
+- Samba profile: smb2_create: 85,031 / syscall_readdir: 8,094,073 = ~95 readdir per create (case-sensitive)
+- After fix: smb2_create: 190,320 / syscall_readdir: 362 = ~0.002 readdir per create (case-insensitive)
+- `ceph fs subvolume info` confirmed: `&quot;casesensitive&quot;: true`
+- Anoop C S: &quot;the CephFS subvolume must have case sensitivity disabled&quot;
+- Direct CephFS: 0.2s for 100 create/delete; SMB: 5.6s = 28x slower via SMB
+- Customer confirmed: performance improvement was &quot;very large&quot; after fix
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED
-- Workaround: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</textarea>
+- Status: Assigned (monitoring, fix is configuration)
+- Resolution: Create new subvolumes with `--casesensitive=0` and re-migrate data
+- No code fix needed -- this is expected behavior when misconfigured</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- SMB is extremely slow when trying to sync many small files but directly sync to mds working normal
-Environment: IBM Ceph 9.1, component: smb
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate that SMB performance is acceptable with casesensitive=0 subvolumes
+Environment: IBM Ceph 9.1 with SMB/AD shares, Windows Robocopy client
 
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
-4. Run baseline benchmark (fio/rados bench) -- record metrics
-5. Trigger the performance scenario described in JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Create subvolumegroup with case-sensitivity disabled -- intent: correct configuration
+   ```
+   ceph fs subvolumegroup create &lt;vol&gt; &lt;group&gt; --casesensitive=0
+   ceph fs subvolume create &lt;vol&gt; &lt;subvol&gt; --group_name &lt;group&gt; --casesensitive=0
+   ```
+2. Configure SMB share on this subvolume -- intent: expose via SMB
+3. Run Robocopy from Windows client with many small files -- intent: measure performance
+4. Profile with `smbstatus --profile` -- intent: verify low readdir count
+
+DIAGNOSTIC COMMANDS:
+- `ceph fs subvolume info &lt;vol&gt; &lt;subvol&gt; --group_name &lt;group&gt;` (check casesensitive field)
+- `smbstatus --profile` (Samba operation counters)
+- `ceph daemon mds.&lt;id&gt; perf dump` (MDS latency)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No QE test validates SMB performance with correct vs incorrect case-sensitivity settings.
 
 GAPS:
-- No performance baseline test for: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal
-- Scale test may not reach threshold that triggers this issue
+- No performance baseline test for SMB small-file operations
+- No validation that SMB subvolumes are created with casesensitive=0
+- No documentation-driven test verifying recommended configuration
 
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported smb scenario, verify correct behavior</textarea>
+- Create SMB share with casesensitive=0, copy 10K small files via Windows client, verify &gt;50 files/sec
+- Negative test: create share with casesensitive=true, verify documentation warns about performance
+- Verify subvolumegroup inheritance: create group with casesensitive=0, verify child subvolumes inherit</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,44 +249,56 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SMB small-file sync is extremely slow (~100 files/min) because CephFS subvolume has case-sensitivity enabled, forcing Samba to issue massive readdir calls for case-insensitive lookups.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>SMB protocol operates with case-insensitive semantics, but the CephFS subvolume was created with <code>casesensitive: true</code> (default). When Samba needs to open/create a file on a case-insensitive share backed by a case-sensitive filesystem, it must enumerate the entire directory to check for case-colliding names. This caused ~95 readdir syscalls per smb2_create operation. With millions of files, the stat cache (which showed 0 hits) was ineffective, making each file creation trigger thousands of readdir operations. Setting <code>--casesensitive=0</code> on the subvolume reduced readdir calls from 8M to 362 in a 5-minute window and improved throughput from ~0.6 files/sec to ~120 files/sec.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: smb</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Ravinder Kumar] Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</li>
-<li>[Ashish Singh] Hi   can we avoid threaded replies? We’re trying to move away from threaded replies as they are difficult to find and ordering of comments doesn&#x27;t happen which can be problematic while debugging this issue.  cc:</li>
-<li>[Sachin Prabhu] This is a customer issue which does not require a new fix. Setting target to 10.0 so that it doesn’t come up on 9.2 program manager reports.</li>
+<li>Samba profile: smb2_create: 85,031 / syscall_readdir: 8,094,073 = ~95 readdir per create (case-sensitive)</li>
+<li>After fix: smb2_create: 190,320 / syscall_readdir: 362 = ~0.002 readdir per create (case-insensitive)</li>
+<li><code><code>ceph fs subvolume info</code></code> confirmed: <code>&amp;quot;casesensitive&amp;quot;: true</code></li>
+<li>Anoop C S: &quot;the CephFS subvolume must have case sensitivity disabled&quot;</li>
+<li>Direct CephFS: 0.2s for 100 create/delete; SMB: 5.6s = 28x slower via SMB</li>
+<li>Customer confirmed: performance improvement was &quot;very large&quot; after fix</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
-<li>Workaround: Hi   , Is Their any workaround available for existing subvolumes or creating new subvolume with ( --casesensitive=0 ) is the only option?</li>
+<li>Status: Assigned (monitoring, fix is configuration)</li>
+<li>Resolution: Create new subvolumes with <code>--casesensitive=0</code> and re-migrate data</li>
+<li>No code fix needed -- this is expected behavior when misconfigured</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</div>
-<div>Environment: IBM Ceph 9.1, component: smb</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate that SMB performance is acceptable with casesensitive=0 subvolumes</div>
+<div>Environment: IBM Ceph 9.1 with SMB/AD shares, Windows Robocopy client</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
-<li><span class="step-num">4.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">5.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Create subvolumegroup with case-sensitivity disabled -- intent: correct configuration</li>
+</ul>
+<pre>
+   ceph fs subvolumegroup create &lt;vol&gt; &lt;group&gt; --casesensitive=0
+   ceph fs subvolume create &lt;vol&gt; &lt;subvol&gt; --group_name &lt;group&gt; --casesensitive=0
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Configure SMB share on this subvolume -- intent: expose via SMB</li>
+<li><span class="step-num">3.</span> Run Robocopy from Windows client with many small files -- intent: measure performance</li>
+<li><span class="step-num">4.</span> Profile with <code>smbstatus --profile</code> -- intent: verify low readdir count</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph fs subvolume info &amp;lt;vol&amp;gt; &amp;lt;subvol&amp;gt; --group_name &amp;lt;group&amp;gt;</code></code> (check casesensitive field)</li>
+<li><code>smbstatus --profile</code> (Samba operation counters)</li>
+<li><code><code>ceph daemon mds.&amp;lt;id&amp;gt; perf dump</code></code> (MDS latency)</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No QE test validates SMB performance with correct vs incorrect case-sensitivity settings.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance baseline test for: SMB is extremely slow when trying to sync many small files but directly sync to mds working normal</li>
-<li>Scale test may not reach threshold that triggers this issue</li>
+<li>No performance baseline test for SMB small-file operations</li>
+<li>No validation that SMB subvolumes are created with casesensitive=0</li>
+<li>No documentation-driven test verifying recommended configuration</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
+<li>Create SMB share with casesensitive=0, copy 10K small files via Windows client, verify &gt;50 files/sec</li>
+<li>Negative test: create share with casesensitive=true, verify documentation warns about performance</li>
+<li>Verify subvolumegroup inheritance: create group with casesensitive=0, verify child subvolumes inherit</li>
 </ul></div>
 </div>
 

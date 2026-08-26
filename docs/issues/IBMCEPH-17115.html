@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17115: CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,39 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Sayalee Raut] Hello    Do the below steps look good and van be used to validate this fix? Bootstrap a 3-node Ceph cluster using  cephadm bootstrap   Create and apply an OSD spec with  osds_per_device: 2  and  host_pattern: &#x27;*&#x27;  targeting all available disks Verify all OSDs on the 3 nodes are
-- [Guillaume ABRIOUX] Thanks for the thorough testing, this is exactly the right scenario and the results confirm both parts of the fix are working correctly
-- [Sayalee Raut] Hey    Thanks for reviewing! Based on the observations and discussions with Engg, the issue is fixed and bug validation is completed. Moving the bug to verified.
-
-FIX STATUS:
-- Current JIRA status: Verified</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm fails to create OSD daemon containers for some OSDs on newly added nodes despite OSDs being present in CRUSH map.
+ROOT CAUSE: Two bugs in cephadm OSD deployment: (1) get_osd_uuid_map(only_up=True) logic inversion caused newly-created-but-still-down OSDs to be incorrectly treated as already deployed, skipping daemon container creation. (2) Missing wait_for_latest_osdmap() before daemon deploy meant the MGR&#x27;s OSD map view was stale, not reflecting the just-created OSDs. Together, these caused a race condition where 2 of 8 OSDs on a new node would fail to get daemon containers, showing as &#x27;down&#x27; in CRUSH map with no running process.
+KEY EVIDENCE:
+- 6 of 8 OSDs come up, 2 remain down with no daemon container
+- OSDs visible in CRUSH map and ceph-volume lvm list
+- 80% hit rate on reproduction
+- Workaround: zap volumes, mgr fail, set managed
+- Version: 20.1.0-185.0.hotfix.IBMCloud55.el9cp
+- Clone of IBMCEPH-16079
+- Fix verified on 19.2.1-401.el9cp with osds_per_device: 2 test
+FIX STATUS: Verified. Two-part fix correcting get_osd_uuid_map logic and adding wait_for_latest_osdmap(). QA verified by Sayalee Raut on 19.2.1-401.el9cp -- all 6 OSDs on new node deployed successfully.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify all OSDs deploy correctly when adding a new node to cluster.
+Environment: IBM Ceph 8.1 (19.2.1-401+) with osds_per_device: 2
+1. Bootstrap 3-node cluster and apply OSD spec with osds_per_device: 2, host_pattern: &#x27;*&#x27; -- intent: establish baseline
+2. Verify all OSDs running on initial nodes -- intent: confirm baseline
+3. Add 4th node: ceph orch host add &lt;node4&gt; &lt;ip&gt; -- intent: trigger OSD deployment on new node
+4. Monitor &#x27;ceph orch ps --daemon-type osd&#x27; -- intent: verify all OSDs get daemon containers
+5. Check &#x27;ceph osd tree&#x27; for any &#x27;down&#x27; OSDs on new node -- intent: confirm no skipped deployments
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type osd -- check daemon creation
+- ceph osd tree -- check OSD status
+- ceph orch device ls -- check device availability
+- ceph-volume lvm list -- verify LVM setup on node</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QA verified with 4-node add test using osds_per_device: 2. All OSDs deployed correctly.
+GAPS: Need higher scale testing (8+ OSDs per node). Need test with concurrent node additions.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Add node with 8 OSDs and osds_per_device: 2 (16 OSD daemons)
+- Concurrent addition of multiple nodes simultaneously
+- Race condition test: add node while cluster is rebalancing</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,38 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm fails to create OSD daemon containers for some OSDs on newly added nodes despite OSDs being present in CRUSH map.</div>
+<div>ROOT CAUSE: Two bugs in cephadm OSD deployment: (1) get_osd_uuid_map(only_up=True) logic inversion caused newly-created-but-still-down OSDs to be incorrectly treated as already deployed, skipping daemon container creation. (2) Missing wait_for_latest_osdmap() before daemon deploy meant the MGR&#x27;s OSD map view was stale, not reflecting the just-created OSDs. Together, these caused a race condition where 2 of 8 OSDs on a new node would fail to get daemon containers, showing as &#x27;down&#x27; in CRUSH map with no running process.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephadm</li>
+<li>6 of 8 OSDs come up, 2 remain down with no daemon container</li>
+<li>OSDs visible in CRUSH map and ceph-volume lvm list</li>
+<li>80% hit rate on reproduction</li>
+<li>Workaround: zap volumes, mgr fail, set managed</li>
+<li>Version: 20.1.0-185.0.hotfix.IBMCloud55.el9cp</li>
+<li>Clone of IBMCEPH-16079</li>
+<li>Fix verified on 19.2.1-401.el9cp with osds_per_device: 2 test</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Verified. Two-part fix correcting get_osd_uuid_map logic and adding wait_for_latest_osdmap(). QA verified by Sayalee Raut on 19.2.1-401.el9cp -- all 6 OSDs on new node deployed successfully.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify all OSDs deploy correctly when adding a new node to cluster.</div>
+<div>Environment: IBM Ceph 8.1 (19.2.1-401+) with osds_per_device: 2</div>
 <ul>
-<li>[Sayalee Raut] Hello    Do the below steps look good and van be used to validate this fix? Bootstrap a 3-node Ceph cluster using  <code>cephadm bootstrap   Create and apply an OSD spec with  osds_per_device: 2  and  host_pattern: &#x27;*&#x27;  targeting all available disks Verify all OSDs on the 3 nodes are</code></li>
-<li>[Guillaume ABRIOUX] Thanks for the thorough testing, this is exactly the right scenario and the results confirm both parts of the fix are working correctly</li>
-<li>[Sayalee Raut] Hey    Thanks for reviewing! Based on the observations and discussions with Engg, the issue is fixed and bug validation is completed. Moving the bug to verified.</li>
+<li><span class="step-num">1.</span> Bootstrap 3-node cluster and apply OSD spec with osds_per_device: 2, host_pattern: &#x27;*&#x27; -- intent: establish baseline</li>
+<li><span class="step-num">2.</span> Verify all OSDs running on initial nodes -- intent: confirm baseline</li>
+<li><span class="step-num">3.</span> Add 4th node: <code>ceph orch host add &lt;node4&gt; &lt;ip&gt; -- intent: trigger OSD deployment on new node</code></li>
+<li><span class="step-num">4.</span> Monitor &#x27;<code>ceph orch ps --daemon-type osd&#x27; -- intent: verify all OSDs get daemon containers</code></li>
+<li><span class="step-num">5.</span> Check &#x27;<code>ceph osd tree&#x27; for any &#x27;down&#x27; OSDs on new node -- intent: confirm no skipped deployments</code></li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
+<li><code>ceph orch ps --daemon-type osd -- check daemon creation</code></li>
+<li><code>ceph osd tree -- check OSD status</code></li>
+<li><code>ceph orch device ls -- check device availability</code></li>
+<li>ceph-volume lvm list -- verify LVM setup on node</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: CLONE 8.1z - Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QA verified with 4-node add test using osds_per_device: 2. All OSDs deployed correctly.</div>
+<div>GAPS: Need higher scale testing (8+ OSDs per node). Need test with concurrent node additions.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Add node with 8 OSDs and osds_per_device: 2 (16 OSD daemons)</li>
+<li>Concurrent addition of multiple nodes simultaneously</li>
+<li>Race condition test: add node while cluster is rebalancing</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13462: CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,48 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
-
-ROOT CAUSE:
-- Daemon crash reported in nfs-ganesha/ceph.
-- Affected version(s): 8.0
-- Component: nfs-ganesha/ceph
-
-ENGINEERING FINDINGS:
-- [Yuva Teja Sree Gayam] tested on : ceph version 18.2.1-397.el9cp (7dd608065c53015102668e40a0be4ae46c2913af) reef (stable) , no crash seen
-
-FIX STATUS:
-- Fix available in build 19.2.1-336.</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: NFS-over-RGW daemon crashes during directory listing (readdir) due to assert failure in librgw
+ROOT CAUSE: The NFS Ganesha daemon using FSAL_RGW (NFS-over-RGW) crashes when listing files on a mounted RGW bucket export. The crash occurs in rgw::RGWFileHandle::readdir() -&gt; rgw::RGWLibProcess::process_request() path, hitting an assertion failure in librgw (librgw.so.2 offset 0x52b668). The exact root cause within the RGW readdir path is not detailed in JIRA comments, but the fix was delivered as part of a broader set of NFS-over-RGW stability fixes.
+KEY EVIDENCE:
+- Stack trace: abort() -&gt; librgw.so.2 -&gt; RGWLibProcess::process_request -&gt; RGWFileHandle::readdir -&gt; rgw_readdir2 -&gt; libfsalrgw.so -&gt; fsal_readdir
+- Version: 19.2.0-98.el9cp (IBM Ceph 8.0z2)
+- Crash on listing files in bucket &#x27;sdlc-stage&#x27; via NFS export
+- Verified not reproducing on 18.2.1-397.el9cp (Reef)
+FIX STATUS: Fixed. Verified on ceph 18.2.1-397.el9cp. Closed as part of 7.1z10 release. Clone of IBMCEPH-13287.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
-Environment: IBM Ceph 8.0, component: nfs-ganesha/ceph
-
-1. Deploy IBM Ceph 8.0 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Trigger the failure scenario (see engineering findings below)
-6. Check for daemon crash -- `ceph crash ls-new`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce NFS-over-RGW daemon crash during directory listing
+Environment: IBM Ceph 8.0z2 (19.2.0-98.el9cp), NFS-over-RGW configuration
+1. Create RGW bucket with multiple objects
+2. Create NFS export backed by RGW bucket: ceph nfs export create rgw &lt;cluster&gt; &lt;export-path&gt; &lt;bucket&gt;
+3. Mount the NFS export on a client node
+4. Run: ls -la &lt;mount-point&gt; -- intent: trigger readdir crash
+5. Check NFS daemon status and coredump
+DIAGNOSTIC COMMANDS:
+- ceph nfs cluster ls
+- mount -t nfs4 &lt;nfs-vip&gt;:&lt;export-path&gt; /mnt/rgw-nfs
+- ls -la /mnt/rgw-nfs/
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt;
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
-
-GAPS:
-- No crash regression test for: CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Verified not reproducing on 18.2.1-397. No dedicated test for this crash path.
+GAPS: No automated test exercises NFS-over-RGW readdir with various bucket sizes/object counts.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- NFS-over-RGW readdir with large bucket (10K+ objects)
+- NFS-over-RGW readdir with concurrent writes/deletes
+- NFS-over-RGW readdir with prefix-heavy object names
+- Ganesha daemon crash monitoring during sustained NFS-over-RGW I/O
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,43 +241,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Daemon crash reported in nfs-ganesha/ceph.</li>
-<li>Affected version(s): 8.0</li>
-<li>Component: nfs-ganesha/ceph</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Yuva Teja Sree Gayam] tested on : <code>ceph version 18.2.1-397.el9cp (7dd608065c53015102668e40a0be4ae46c2913af) reef (stable)</code>, no crash seen</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Fix available in build 19.2.1-336.</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the mount point</div>
-<div>Environment: IBM Ceph 8.0, component: nfs-ganesha/ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">6.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: CLONE - NFS daemon (nfs-over-rgw) crashing while listing the files on the <code>mount point</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: NFS-over-RGW daemon crashes during directory listing (readdir) due to assert failure in librgw
+ROOT CAUSE: The NFS Ganesha daemon using FSAL_RGW (NFS-over-RGW) crashes when listing files on a mounted RGW bucket export. The crash occurs in rgw::RGWFileHandle::readdir() -&gt; rgw::RGWLibProcess::process_request() path, hitting an assertion failure in librgw (librgw.so.2 offset 0x52b668). The exact root cause within the RGW readdir path is not detailed in JIRA comments, but the fix was delivered as part of a broader set of NFS-over-RGW stability fixes.
+KEY EVIDENCE:
+- Stack trace: abort() -&gt; librgw.so.2 -&gt; RGWLibProcess::process_request -&gt; RGWFileHandle::readdir -&gt; rgw_readdir2 -&gt; libfsalrgw.so -&gt; fsal_readdir
+- Version: 19.2.0-98.el9cp (IBM Ceph 8.0z2)
+- Crash on listing files in bucket &#x27;sdlc-stage&#x27; via NFS export
+- Verified not reproducing on 18.2.1-397.el9cp (Reef)
+FIX STATUS: Fixed. Verified on ceph 18.2.1-397.el9cp. Closed as part of 7.1z10 release. Clone of IBMCEPH-13287.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce NFS-over-RGW daemon crash during directory listing
+Environment: IBM Ceph 8.0z2 (19.2.0-98.el9cp), NFS-over-RGW configuration
+1. Create RGW bucket with multiple objects
+2. Create NFS export backed by RGW bucket: ceph nfs export create rgw &lt;cluster&gt; &lt;export-path&gt; &lt;bucket&gt;
+3. Mount the NFS export on a client node
+4. Run: ls -la &lt;mount-point&gt; -- intent: trigger readdir crash
+5. Check NFS daemon status and coredump
+DIAGNOSTIC COMMANDS:
+- ceph nfs cluster ls
+- mount -t nfs4 &lt;nfs-vip&gt;:&lt;export-path&gt; /mnt/rgw-nfs
+- ls -la /mnt/rgw-nfs/
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt;
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Verified not reproducing on 18.2.1-397. No dedicated test for this crash path.
+GAPS: No automated test exercises NFS-over-RGW readdir with various bucket sizes/object counts.
+SCENARIOS NEEDED:
+- NFS-over-RGW readdir with large bucket (10K+ objects)
+- NFS-over-RGW readdir with concurrent writes/deletes
+- NFS-over-RGW readdir with prefix-heavy object names
+- Ganesha daemon crash monitoring during sustained NFS-over-RGW I/O
+</pre></div>
 </div>
 
 

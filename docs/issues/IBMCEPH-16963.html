@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16963:  mgmt-gateway continuously cycling on 9.9.1.0 code</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,34 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY:  mgmt-gateway continuously cycling on 9.9.1.0 code
-
-ROOT CAUSE:
-- Affected version(s): 9.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Rigoberto Padilla Peña] Hello   , Is there any workaround we can share with the customer? Thanks
-- [Redouane Kachach] Hi   and   this is a regression which is fixed by the PR   . I’m afraid there’s no workaround in this case and we need the code to be fixed.
-- [Aarti Dhikale] , If we mark the daemon as  unmanaged , the flapping is no longer observed. Can we consider this a valid workaround for the issue?
-- [Rigoberto Padilla Peña] In addition  , regarding   question, can we advise the customer to set the  unmanaged  flag as a temporary workaround? Thanks
-- [Shweta Bhosale] Redo is out this week, and I missed   comment earlier. As a temporary workaround, we can mark the service as unmanaged. Since the reconciliation loop does not perform any operations on unmanaged services, the service will not be reconfigured repeatedly.
-
-FIX STATUS:
-- Fix available in build 20.2.2-150.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161
-- Workaround: Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the downstream releases (9.9.2.x and the 9.9.1.x backpor</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Parent ticket for mgmt-gateway infinite reconciliation loop. Same root cause and fix as IBMCEPH-17209.
+ROOT CAUSE: Same as IBMCEPH-17209 -- dual bug in mgmt-gateway: (1) Missing ssl_trusted_certificate directive causing NGINX OCSP stapling failure, (2) Dependency tracking mismatch in generate_config() causing infinite reconfig loop. Detailed RCA by Aarti Dhikale identified both bugs with proposed fixes. Workaround: set mgmt-gateway to unmanaged.
+KEY EVIDENCE:
+- Same as IBMCEPH-17209
+- Detailed RCA with code-level analysis in comments
+- Fix MR for 9.2: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161
+- Verified on 20.2.2-169.el10cp (9.9.2.0)
+- Marked as blocker for 9.2
+FIX STATUS: Verified. Fix available in 9.1z (20.2.1-351) and 9.2 (20.2.2-150). QA verified by Vinayak Papnoi on both branches.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- mgmt-gateway continuously cycling on 9.9.1.0 code
-Environment: IBM Ceph 9.1, component: cephadm
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hello   , I tried to reproduce this issue in my test environment, and I was able to reproduce it consistently. [root@aartisa-0 ~]# ceph orch ps --daemon-type mgmt-gateway
-NAME          HOST    PORTS STATUS    REFRESHED AGE MEM USE MEM LIM VERSION IMAGE ID   CONTAINER ID  
-mgmt-ga</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-17209.
+Environment: IBM Ceph 9.9.1.0 (20.2.1-294.el9cp) -- pre-fix version
+1. Deploy mgmt-gateway service with default spec -- intent: trigger cephadm-signed path
+2. Observe container cycling every 7-9 seconds -- intent: confirm bug
+3. ceph orch set-unmanaged mgmt-gateway -- intent: apply workaround
+4. Verify daemon stabilizes -- intent: confirm workaround
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type mgmt-gateway -- observe cycling
+- ceph log last 100 | grep -i mgmt-gateway -- check reconfig messages
+- podman logs &lt;container&gt; 2&gt;&amp;1 | grep ssl_stapling -- confirm NGINX warning</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
-
-GAPS:
-- Existing cephadm tests may not cover: mgmt-gateway continuously cycling on 9.9.1.0 code
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QA verified on 20.2.2-169.el10cp (9.9.2.0) and 20.2.1-364 (9.9.1.2).
+GAPS: Same as IBMCEPH-17209.
+SCENARIOS NEEDED: Same as IBMCEPH-17209.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,47 +227,34 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">mgmt-gateway continuously cycling on 9.9.1.0 code</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Parent ticket for mgmt-gateway infinite reconciliation loop. Same root cause and fix as IBMCEPH-17209.</div>
+<div>ROOT CAUSE: Same as IBMCEPH-17209 -- dual bug in mgmt-gateway: (1) Missing ssl_trusted_certificate directive causing NGINX OCSP stapling failure, (2) Dependency tracking mismatch in generate_config() causing infinite reconfig loop. Detailed RCA by Aarti Dhikale identified both bugs with proposed fixes. Workaround: set mgmt-gateway to unmanaged.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1</li>
-<li>Component: cephadm</li>
+<li>Same as IBMCEPH-17209</li>
+<li>Detailed RCA with code-level analysis in comments</li>
+<li>Fix MR for 9.2: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161</li>
+<li>Verified on 20.2.2-169.el10cp (9.9.2.0)</li>
+<li>Marked as blocker for 9.2</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Verified. Fix available in 9.1z (20.2.1-351) and 9.2 (20.2.2-150). QA verified by Vinayak Papnoi on both branches.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-17209.</div>
+<div>Environment: IBM Ceph 9.9.1.0 (20.2.1-294.el9cp) -- pre-fix version</div>
 <ul>
-<li>[Rigoberto Padilla Peña] Hello   , Is there any workaround we can share with the customer? Thanks</li>
-<li>[Redouane Kachach] Hi   and   this is a regression which is fixed by the PR   . I’m afraid there’s no workaround in this case and we need the code to be fixed.</li>
-<li>[Aarti Dhikale] , If we mark the daemon as  unmanaged , the flapping is no longer observed. Can we consider this a valid workaround for the issue?</li>
-<li>[Rigoberto Padilla Peña] In addition  , regarding   question, can we advise the customer to set the  unmanaged  flag as a temporary workaround? Thanks</li>
-<li>[Shweta Bhosale] Redo is out this week, and I missed   comment earlier. As a temporary workaround, we can mark the service as unmanaged. Since the reconciliation loop does not perform any operations on unmanaged services, the service will not be reconfigured repeatedly.</li>
+<li><span class="step-num">1.</span> Deploy mgmt-gateway service with default spec -- intent: trigger cephadm-signed path</li>
+<li><span class="step-num">2.</span> Observe container cycling every 7-9 seconds -- intent: confirm bug</li>
+<li><span class="step-num">3.</span> <code>ceph orch set-unmanaged mgmt-gateway -- intent: apply workaround</code></li>
+<li><span class="step-num">4.</span> Verify daemon stabilizes -- intent: confirm workaround</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available in build 20.2.2-150.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2161</li>
-<li>Workaround: Thank you. I will share the  unmanaged  flag workaround with the customer, explaning the temporary risks this carries. Do you have any ETA for the downstream releases (9.9.2.x and the 9.9.1.x backpor</li>
+<li><code>ceph orch ps --daemon-type mgmt-gateway -- observe cycling</code></li>
+<li><code>ceph log last 100 | grep -i mgmt-gateway -- check reconfig messages</code></li>
+<li><code>podman logs &lt;container&gt; 2&gt;&amp;1 | grep ssl_stapling -- confirm NGINX warning</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- mgmt-gateway continuously cycling on 9.9.1.0 code</div>
-<div>Environment: IBM Ceph 9.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hello   , I tried to reproduce this issue in my test environment, and I was able to reproduce it consistently. [root@aartisa-0 ~]# ceph orch ps --daemon-type mgmt-gateway</div>
-<div class="section-head">NAME          HOST    PORTS STATUS    REFRESHED AGE MEM USE MEM LIM VERSION IMAGE ID   CONTAINER ID</div>
-<div>mgmt-ga</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: mgmt-gateway continuously cycling on 9.9.1.0 code</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QA verified on 20.2.2-169.el10cp (9.9.2.0) and 20.2.1-364 (9.9.1.2).</div>
+<div>GAPS: Same as IBMCEPH-17209.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-17209.</div></div>
 </div>
 
 

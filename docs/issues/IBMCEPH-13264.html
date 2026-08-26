@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13264: [Dashboard] OSD deletion from dashboard does not give option to zap the disk</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,34 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Dashboard] OSD deletion from dashboard does not give option to zap the disk
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: ceph-dashboard
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE -- Dashboard OSD deletion workflow does not provide an option to zap the disk, requiring manual CLI intervention for OSD replacement procedures.
+ROOT CAUSE: Design gap in the Dashboard UI. When performing OSD replacement via the Dashboard, the delete operation does not offer a &#x27;zap disk&#x27; option. Users must manually run `ceph orch osd rm &lt;id&gt; --zap` from CLI or separately zap the disk after Dashboard deletion. This makes the OSD replacement workflow cumbersome for Dashboard-only users.
+KEY EVIDENCE:
+- No zap option in Dashboard OSD deletion dialog
+- Duplicate of IBMCEPH-10049 (same RFE filed earlier)
+- Potentially already fixed in 9.1 (per Ankush Behl comment, pending confirmation)
+FIX STATUS: Open (assigned). Possibly fixed in 9.1 -- awaiting confirmation. Duplicate of IBMCEPH-10049.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Dashboard] OSD deletion from dashboard does not give option to zap the disk
-Environment: IBM Ceph 9.0, component: ceph-dashboard
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Apply the configuration change described in the JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify Dashboard OSD deletion zap option
+Environment: IBM Ceph 9.0
+1. Open Dashboard, navigate to OSD management
+2. Select an OSD and choose Delete/Remove
+3. Observe: no option to zap the underlying disk
+4. After deletion, disk still shows as &#x27;used&#x27; in `ceph orch device ls`
+DIAGNOSTIC COMMANDS:
+- `ceph orch device ls` -- check disk availability after OSD deletion
+- `ceph orch osd rm &lt;id&gt; --zap` -- CLI workaround</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Open RFE. Possibly fixed in 9.1.
+GAPS: No automated Dashboard test for OSD replacement workflow end-to-end.
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</textarea>
+- Dashboard: delete OSD with zap option (once implemented)
+- Verify disk becomes available for new OSD after Dashboard-initiated zap
+- Compare Dashboard and CLI OSD replacement workflows</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,30 +227,35 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Dashboard] OSD deletion from dashboard does not give option to zap the disk</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE -- Dashboard OSD deletion workflow does not provide an option to zap the disk, requiring manual CLI intervention for OSD replacement procedures.</div>
+<div>ROOT CAUSE: Design gap in the Dashboard UI. When performing OSD replacement via the Dashboard, the delete operation does not offer a &#x27;zap disk&#x27; option. Users must manually run <code>ceph orch osd rm &lt;id&gt; --zap</code> from CLI or separately zap the disk after Dashboard deletion. This makes the OSD replacement workflow cumbersome for Dashboard-only users.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: ceph-dashboard</li>
+<li>No zap option in Dashboard OSD deletion dialog</li>
+<li>Duplicate of IBMCEPH-10049 (same RFE filed earlier)</li>
+<li>Potentially already fixed in 9.1 (per Ankush Behl comment, pending confirmation)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Open (assigned). Possibly fixed in 9.1 -- awaiting confirmation. Duplicate of IBMCEPH-10049.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify Dashboard OSD deletion zap option</div>
+<div>Environment: IBM Ceph 9.0</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Dashboard] OSD deletion from dashboard does not give option to zap the disk</div>
-<div>Environment: IBM Ceph 9.0, component: ceph-dashboard</div>
+<li><span class="step-num">1.</span> Open Dashboard, navigate to OSD management</li>
+<li><span class="step-num">2.</span> Select an OSD and choose Delete/Remove</li>
+<li><span class="step-num">3.</span> Observe: no option to zap the underlying disk</li>
+<li><span class="step-num">4.</span> After deletion, disk still shows as &#x27;used&#x27; in <code><code>ceph orch device ls</code></code></li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><code><code>ceph orch device ls</code></code> -- check disk availability after OSD deletion</li>
+<li><code><code>ceph orch osd rm &amp;lt;id&amp;gt; --zap</code></code> -- CLI workaround</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Open RFE. Possibly fixed in 9.1.</div>
+<div>GAPS: No automated Dashboard test for OSD replacement workflow end-to-end.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Dashboard: delete OSD with zap option (once implemented)</li>
+<li>Verify disk becomes available for new OSD after Dashboard-initiated zap</li>
+<li>Compare Dashboard and CLI OSD replacement workflows</li>
 </ul></div>
 </div>
 

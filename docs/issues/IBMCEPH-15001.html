@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15001: [Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,32 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory
-
-ROOT CAUSE:
-- Daemon crash reported in rados.
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.0
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA.
+ROOT CAUSE: The JIRA was filed as a backport request for daemon crash files not being generated in the expected directory. However, the description contains only the empty template with no actual technical details, no logs, no reproduction steps, and no comments. It was closed as &#x27;insufficient data&#x27; with zero comments.
+KEY EVIDENCE:
+- Empty description template with no technical content
+- Zero comments
+- Closed as &#x27;insufficient data&#x27;
+- Affected version: 9.0
+FIX STATUS: Closed without resolution. No engineering work performed.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory
-Environment: IBM Ceph 9.0, component: rados
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Trigger the failure scenario (see engineering findings below)
-7. Check for daemon crash -- `ceph crash ls-new`
-8. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Insufficient data to construct reproduction steps.
+Environment: IBM Ceph 9.0
+No reproduction steps available -- JIRA contains only empty template.
+DIAGNOSTIC COMMANDS:
+- ls /var/lib/ceph/crash/
+- ceph crash ls-new
+- coredumpctl list</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: [Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient data in JIRA to assess test coverage.
+GAPS: Cannot determine specific gaps without understanding the actual crash-file generation failure.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Verify that daemon crashes (OSD, MDS, MON) produce crash files in /var/lib/ceph/&lt;fsid&gt;/crash/
+- Verify &#x27;ceph crash ls-new&#x27; reports crashes correctly after daemon segfault</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,42 +225,31 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA.</div>
+<div>ROOT CAUSE: The JIRA was filed as a backport request for daemon crash files not being generated in the expected directory. However, the description contains only the empty template with no actual technical details, no logs, no reproduction steps, and no comments. It was closed as &#x27;insufficient data&#x27; with zero comments.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rados.</li>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.0</li>
-<li>Component: rados</li>
+<li>Empty description template with no technical content</li>
+<li>Zero comments</li>
+<li>Closed as &#x27;insufficient data&#x27;</li>
+<li>Affected version: 9.0</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Closed without resolution. No engineering work performed.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Insufficient data to construct reproduction steps.</div>
+<div>Environment: IBM Ceph 9.0</div>
+<div>No reproduction steps available -- JIRA contains only empty template.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>ls /var/lib/ceph/crash/</li>
+<li><code>ceph crash ls-new</code></li>
+<li>coredumpctl list</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory</div>
-<div>Environment: IBM Ceph 9.0, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">7.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">8.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [Backport 9.1z] Daemon crashes observed, but crash files are not generated in the expected directory</li>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient data in JIRA to assess test coverage.</div>
+<div>GAPS: Cannot determine specific gaps without understanding the actual crash-file generation failure.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Verify that daemon crashes (OSD, MDS, MON) produce crash files in /var/lib/ceph/&lt;fsid&gt;/crash/</li>
+<li>Verify &#x27;<code>ceph crash ls-new&#x27; reports crashes correctly after daemon segfault</code></li>
 </ul></div>
 </div>
 

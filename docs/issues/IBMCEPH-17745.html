@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17745: [9.1z Backport] Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 9.1z backport clone of IBMCEPH-16988 — RGW GET with Origin header returns empty body when no CORS configured.
 
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.1z1
-- Component: rgw
+ROOT CAUSE: Identical to IBMCEPH-16988. The RGW CORS handling code sets `op_ret = std::min(0, -22)` = -22 when neither global nor bucket CORS is configured, which causes the `send_data` path to skip `dump_body()` because `!op_ret` evaluates to false. The HTTP 200 headers are sent but the response body is never written, causing client hang/timeout with &#x27;0 bytes data&#x27;. This is a regression in 20.2.1-294 (not present in 20.1.0-221).
 
-FIX STATUS:
-- Current JIRA status: New</textarea>
+KEY EVIDENCE:
+- Cloned from IBMCEPH-16988
+- Same detailed reproduction and curl output as parent ticket
+- Fix already merged on parent: commit 2c2436c1775cfd834c530132499a70bd871b367a
+- Status: New (backport not yet applied to 9.1z branch)
+- Customer Inditex requires this for production deployment
+
+FIX STATUS: Parent fix merged (commit 2c2436c1775cfd834c530132499a70bd871b367a). This 9.1z backport ticket is still New — backport to 9.1z branch pending. Assigned to Ali Masarwe.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents
-Environment: IBM Ceph 9.1z1, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-16988 — verify GET+Origin returns empty body when no CORS configured.
+Environment: IBM Ceph 9.1z (20.2.1-294.el9cp).
 
-1. Deploy IBM Ceph 9.1z1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Apply the configuration change described in the JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+Steps identical to IBMCEPH-16988 — see that entry for full reproduction procedure with curl commands and expected output.
+
+DIAGNOSTIC COMMANDS:
+- Same as IBMCEPH-16988</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Same as IBMCEPH-16988. Fix includes a test. QE verification needed on 9.1z build.
 
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+GAPS: Same gaps as IBMCEPH-16988.
 
-SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+SCENARIOS NEEDED: Same scenarios as IBMCEPH-16988, executed on 9.1z build after backport is applied.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,37 +229,27 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">9.1z backport clone of IBMCEPH-16988 — RGW GET with Origin header returns empty body when no CORS configured.</div>
+<div>ROOT CAUSE: Identical to IBMCEPH-16988. The RGW CORS handling code sets <code>op_ret = std::min(0, -22)</code> = -22 when neither global nor bucket CORS is configured, which causes the <code>send_data</code> path to skip <code>dump_body()</code> because <code>!op_ret</code> evaluates to false. The HTTP 200 headers are sent but the response body is never written, causing client hang/timeout with &#x27;0 bytes data&#x27;. This is a regression in 20.2.1-294 (not present in 20.1.0-221).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.1z1</li>
-<li>Component: rgw</li>
+<li>Cloned from IBMCEPH-16988</li>
+<li>Same detailed reproduction and <code>curl output as parent ticket</code></li>
+<li>Fix already merged on parent: commit 2c2436c1775cfd834c530132499a70bd871b367a</li>
+<li>Status: New (backport not yet applied to 9.1z branch)</li>
+<li>Customer Inditex requires this for production deployment</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Parent fix merged (commit 2c2436c1775cfd834c530132499a70bd871b367a). This 9.1z backport ticket is still New — backport to 9.1z branch pending. Assigned to Ali Masarwe.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-16988 — verify GET+Origin returns empty body when no CORS configured.</div>
+<div>Environment: IBM Ceph 9.1z (20.2.1-294.el9cp).</div>
+<div>Steps identical to IBMCEPH-16988 — see that entry for full reproduction procedure with curl commands and expected output.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li>Same as IBMCEPH-16988</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents</div>
-<div>Environment: IBM Ceph 9.1z1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1z1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Same as IBMCEPH-16988. Fix includes a test. QE verification needed on 9.1z build.</div>
+<div>GAPS: Same gaps as IBMCEPH-16988.</div>
+<div>SCENARIOS NEEDED: Same scenarios as IBMCEPH-16988, executed on 9.1z build after backport is applied.</div></div>
 </div>
 
 

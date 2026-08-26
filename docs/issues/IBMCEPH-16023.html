@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16023: Change the osdspec_affinity for osd.10 and osd.24</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Change the osdspec_affinity for osd.10 and osd.24
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): not specified
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Guillaume ABRIOUX] I already reviewed this. The customer’s May 14 update confirms what we identified: they ran  ceph orch apply osd --all-available-devices . That is expected to create/update the  osd.all-available-devices  service and deploy available devices under it, it does not redeploy under
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Customer OSD spec affinity mismatch after disk replacement -- not a bug.
+ROOT CAUSE: Two OSDs (osd.10 and osd.24) were reassigned to the &#x27;osd.all-available-devices&#x27; spec instead of &#x27;osd.uaeplus&#x27; after disk replacement because the customer ran &#x27;ceph orch apply osd --all-available-devices&#x27; which created/updated the catch-all OSD spec. The osdspec_affinity is written at OSD deployment time by cephadm during mkfs, and ceph-volume only passes it through. When disks became available again while the &#x27;all-available-devices&#x27; spec was managed, cephadm declaratively created new OSDs under that spec. The &#x27;uaeplus&#x27; spec has restrictive filters (rotational:1 for data, rotational:0 for DB), so if the replacement disks didn&#x27;t match those criteria, only the &#x27;all-available-devices&#x27; spec (data_devices: all: true) would accept them. Cephadm documentation explicitly warns against running &#x27;--all-available-devices&#x27; alongside custom OSD specs.
+KEY EVIDENCE:
+- ceph orch ls shows 2 OSDs under osd.all-available-devices (5d old) vs 46 under osd.uaeplus (11w old)
+- ceph osd metadata osd.10/24 shows osdspec_affinity: &#x27;all-available-devices&#x27;
+- Customer confirmed they ran &#x27;ceph orch apply osd --all-available-devices&#x27; on May 14
+- Guillaume Abrioux (cephadm maintainer) confirmed expected behavior
+- Adam King confirmed &#x27;ceph orch osd set-spec-affinity&#x27; command exists for reassignment
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Resolution: use &#x27;ceph orch osd set-spec-affinity osd.uaeplus 10 24&#x27; to reassign, then remove or unmanage osd.all-available-devices.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Change the osdspec_affinity for osd.10 and osd.24
-Environment: IBM Ceph 9.x, component: cephadm
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate OSD spec affinity reassignment after disk replacement with competing OSD specs.
+Environment: Red Hat Ceph Storage 7 (or 8.x/9.x), 3-node cluster with mixed disk types.
+1. Create a custom OSD spec with restrictive filters -- intent: simulate production OSD placement
+   ceph orch apply osd --service-id=custom_spec -i custom_osd.yaml
+2. Deploy OSDs and verify affinity -- intent: establish baseline
+   ceph osd metadata osd.&lt;id&gt; | grep osdspec_affinity
+3. Run the catch-all OSD deployment -- intent: trigger the conflicting spec
+   ceph orch apply osd --all-available-devices
+4. Simulate disk replacement by zapping an OSD and letting it redeploy -- intent: reproduce affinity mismatch
+   ceph orch osd rm &lt;osd_id&gt; --zap
+5. Verify the redeployed OSD has wrong affinity -- intent: confirm the behavior
+   ceph osd metadata osd.&lt;id&gt; | grep osdspec_affinity
+6. Fix using set-spec-affinity -- intent: validate the resolution
+   ceph orch osd set-spec-affinity custom_spec &lt;osd_id&gt;
+DIAGNOSTIC COMMANDS:
+- ceph orch ls | grep osd
+- ceph osd metadata osd.&lt;id&gt; | grep osdspec_affinity
+- ceph orch ls --export osd
+- ceph orch host ls (verify labels)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test coverage for OSD spec affinity conflicts with competing specs.
 GAPS:
-- No performance baseline test for: Change the osdspec_affinity for osd.10 and osd.24
-
+- No test validates behavior when &#x27;all-available-devices&#x27; coexists with custom OSD specs
+- No test for &#x27;ceph orch osd set-spec-affinity&#x27; command functionality
+- No test verifies OSD affinity after disk replacement with multiple active specs
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test: Deploy two competing OSD specs (catch-all + filtered), replace a disk, verify which spec claims the redeployed OSD
+- Test: Verify &#x27;ceph orch osd set-spec-affinity&#x27; correctly reassigns OSD affinity
+- Test: Verify setting osd.all-available-devices to unmanaged prevents catch-all behavior
+- Test: Validate cephadm warning/documentation when conflicting specs are detected</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,40 +243,63 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Change the osdspec_affinity for osd.10 and osd.24</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Customer OSD spec affinity mismatch after disk replacement -- not a bug.</div>
+<div>ROOT CAUSE: Two OSDs (osd.10 and osd.24) were reassigned to the &#x27;osd.all-available-devices&#x27; spec instead of &#x27;osd.uaeplus&#x27; after disk replacement because the customer ran &#x27;ceph orch apply osd --all-available-devices&#x27; which created/updated the catch-all OSD spec. The osdspec_affinity is written at OSD deployment time by cephadm during mkfs, and ceph-volume only passes it through. When disks became available again while the &#x27;all-available-devices&#x27; spec was managed, cephadm declaratively created new OSDs under that spec. The &#x27;uaeplus&#x27; spec has restrictive filters (rotational:1 for data, rotational:0 for DB), so if the replacement disks didn&#x27;t match those criteria, only the &#x27;all-available-devices&#x27; spec (data_devices: all: true) would accept them. Cephadm documentation explicitly warns against running &#x27;--all-available-devices&#x27; alongside custom OSD specs.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): not specified</li>
-<li>Component: cephadm</li>
+<li><code>ceph orch ls shows 2 OSDs under osd.all-available-devices (5d old) vs 46 under osd.uaeplus (11w old)</code></li>
+<li><code>ceph osd metadata osd.10/24 shows osdspec_affinity: &#x27;all-available-devices&#x27;</code></li>
+<li>Customer confirmed they ran &#x27;<code>ceph orch apply osd --all-available-devices&#x27; on May 14</code></li>
+<li>Guillaume Abrioux (<code>cephadm maintainer) confirmed expected behavior</code></li>
+<li>Adam King confirmed &#x27;<code>ceph orch osd set-spec-affinity&#x27; command exists for reassignment</code></li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Resolution: use &#x27;ceph orch osd set-spec-affinity osd.uaeplus 10 24&#x27; to reassign, then remove or unmanage osd.all-available-devices.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate OSD spec affinity reassignment after disk replacement with competing OSD specs.</div>
+<div>Environment: Red Hat Ceph Storage 7 (or 8.x/9.x), 3-node cluster with mixed disk types.</div>
 <ul>
-<li>[Guillaume ABRIOUX] I already reviewed this. The customer’s May 14 update confirms what we identified: they ran  <code>ceph orch apply osd --all-available-devices . That is expected to create/update the  osd.all-available-devices  service and deploy available devices under it</code>, it does not redeploy under</li>
+<li><span class="step-num">1.</span> Create a custom OSD spec with restrictive filters -- intent: simulate production OSD placement</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph orch apply osd --service-id=custom_spec -i custom_osd.yaml</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Change the osdspec_affinity for osd.10 and osd.24</div>
-<div>Environment: IBM Ceph 9.x, component: cephadm</div>
+<li><span class="step-num">2.</span> Deploy OSDs and verify affinity -- intent: establish baseline</li>
+</ul>
+<div>ceph osd metadata osd.&lt;id&gt; | grep osdspec_affinity</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Run the catch-all OSD deployment -- intent: trigger the conflicting spec</li>
+</ul>
+<div>ceph orch apply osd --all-available-devices</div>
+<ul>
+<li><span class="step-num">4.</span> Simulate disk replacement by zapping an OSD and letting it redeploy -- intent: reproduce affinity mismatch</li>
+</ul>
+<div>ceph orch osd rm &lt;osd_id&gt; --zap</div>
+<ul>
+<li><span class="step-num">5.</span> Verify the redeployed OSD has wrong affinity -- intent: confirm the behavior</li>
+</ul>
+<div>ceph osd metadata osd.&lt;id&gt; | grep osdspec_affinity</div>
+<ul>
+<li><span class="step-num">6.</span> Fix using set-spec-affinity -- intent: validate the resolution</li>
+</ul>
+<div>ceph orch osd set-spec-affinity custom_spec &lt;osd_id&gt;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch ls | grep osd</code></li>
+<li><code>ceph osd metadata osd.&lt;id&gt; | grep osdspec_affinity</code></li>
+<li><code>ceph orch ls --export osd</code></li>
+<li><code>ceph orch host ls (verify labels)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test coverage for OSD spec affinity conflicts with competing specs.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance baseline test for: Change the osdspec_affinity for osd.10 and osd.24</li>
+<li>No test validates behavior when &#x27;all-available-devices&#x27; coexists with custom OSD specs</li>
+<li>No test for &#x27;<code>ceph orch osd set-spec-affinity&#x27; command functionality</code></li>
+<li>No test verifies OSD affinity after disk replacement with multiple active specs</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test: Deploy two competing OSD specs (catch-all + filtered), replace a disk, verify which spec claims the redeployed OSD</li>
+<li>Test: Verify &#x27;<code>ceph orch osd set-spec-affinity&#x27; correctly reassigns OSD affinity</code></li>
+<li>Test: Verify setting osd.all-available-devices to unmanaged prevents catch-all behavior</li>
+<li>Test: Validate <code>cephadm warning/documentation when conflicting specs are detected</code></li>
 </ul></div>
 </div>
 

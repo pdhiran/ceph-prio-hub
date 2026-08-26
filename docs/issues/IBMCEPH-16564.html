@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16564: Ceph Stretch Cluster Upgrade RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,58 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ceph Stretch Cluster Upgrade RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Customer guidance request for upgrading a stretch-mode Ceph cluster from RHCS 6.1z6 through multiple hops to IBM Ceph 8.1z6.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 6.1z6
-- Component: cephadm
+This is NOT a bug -- it is a support engagement for upgrade planning. The customer has a 5-MON stretch-mode cluster (RHCS 6.1z6) with a failed 6th MON on an unreachable node (rhlocp90). The upgrade path is: RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6. The only pre-existing issue is the CEPHADM_FAILED_DAEMON warning from the unreachable ceph-exporter on rhlocp90.
 
-ENGINEERING FINDINGS:
-- [Shantanu Bhardwaj] We are planning to follow below procedure for the upgrade. Kindly confirm if any changes need to be made. Upgrade all the managers
-Upgrade the tiebreaker monitor
-Upgrade the monitors at site-1
-Upgrade the monitors at site-2
-Upgrade all the crash
-Upgrade all the OSD at Site-1
-Upgr
+KEY EVIDENCE:
+- Cluster: 5 MONs in quorum across 3 datacenters (stretch mode with tiebreaker rhlocp24)
+- Failed daemon: ceph-exporter.rhlocp90 in error state (6th MON that couldn&#x27;t join quorum due to connectivity)
+- Prashant Dhange reviewed and approved the upgrade plan
+- Plan: remove rhlocp90, then upgrade: mgr -&gt; tiebreaker mon -&gt; site-1 mons -&gt; site-2 mons -&gt; crash -&gt; OSD site-1 -&gt; OSD site-2 -&gt; MDS -&gt; RGW -&gt; monitoring
 
 FIX STATUS:
-- Current JIRA status: New</textarea>
+- Status: New (guidance provided, awaiting execution)
+- No code fix needed; operational support engagement</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph Stretch Cluster Upgrade RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6
-Environment: IBM Ceph 6.1z6, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate stretch-mode cluster upgrade from RHCS 6.1 to IBM Ceph 8.1
+Environment: 5-node stretch cluster with MONs across 3 datacenters, election_strategy=3
 
-1. Deploy IBM Ceph 6.1z6 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Remove the failed/unreachable MON node from spec and cluster -- intent: clean pre-upgrade state
+   ```
+   ceph orch ls --service_name mon --export &gt; mon.yaml
+   # Edit mon.yaml to remove unreachable node
+   ceph orch apply -i mon.yaml
+   ceph orch host drain &lt;node&gt;
+   ceph orch host rm &lt;node&gt;
+   ```
+2. Upgrade MGRs first -- intent: ensure control plane is on target version
+3. Upgrade tiebreaker MON -- intent: preserve quorum arbitration
+4. Upgrade remaining MONs by site -- intent: maintain quorum throughout
+5. Upgrade OSDs by site -- intent: maintain data availability
+6. Upgrade remaining services (MDS, RGW, monitoring)
+
+DIAGNOSTIC COMMANDS:
+- `ceph mon dump` (verify stretch mode, tiebreaker)
+- `ceph versions` (track daemon versions during upgrade)
+- `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Stretch-mode multi-hop upgrades (6.1 -&gt; 8.1) with tiebreaker node removal lack dedicated QE test coverage.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- No automated test for stretch-mode upgrade with pre-existing failed node removal
+- No test for multi-hop upgrade path (6.1z6 -&gt; 6.1z9 -&gt; 8.1z6) on stretch clusters
+- No test for tiebreaker-first upgrade ordering
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Stretch cluster upgrade with node removal before upgrade starts
+- Validate tiebreaker MON upgrade ordering preserves quorum
+- Test stretch mode integrity after each upgrade hop</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,45 +251,58 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ceph Stretch Cluster Upgrade RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Customer guidance request for upgrading a stretch-mode Ceph cluster from RHCS 6.1z6 through multiple hops to IBM Ceph 8.1z6.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>This is NOT a bug -- it is a support engagement for upgrade planning. The customer has a 5-MON stretch-mode cluster (RHCS 6.1z6) with a failed 6th MON on an unreachable node (rhlocp90). The upgrade path is: RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6. The only pre-existing issue is the CEPHADM_FAILED_DAEMON warning from the unreachable ceph-exporter on rhlocp90.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 6.1z6</li>
-<li>Component: cephadm</li>
+<li>Cluster: 5 MONs in quorum across 3 datacenters (stretch mode with tiebreaker rhlocp24)</li>
+<li>Failed daemon: ceph-exporter.rhlocp90 in error state (6th MON that couldn&#x27;t join quorum due to connectivity)</li>
+<li>Prashant Dhange reviewed and approved the upgrade plan</li>
+<li>Plan: remove rhlocp90, then upgrade: mgr -&gt; tiebreaker mon -&gt; site-1 mons -&gt; site-2 mons -&gt; crash -&gt; OSD site-1 -&gt; OSD site-2 -&gt; MDS -&gt; RGW -&gt; monitoring</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Shantanu Bhardwaj] We are planning to follow below procedure for the upgrade. Kindly confirm if any changes need to be made. Upgrade all the managers</li>
-</ul>
-<div>Upgrade the tiebreaker monitor</div>
-<div>Upgrade the monitors at site-1</div>
-<div>Upgrade the monitors at site-2</div>
-<div>Upgrade all the crash</div>
-<div>Upgrade all the OSD at Site-1</div>
-<div>Upgr</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li>Status: New (guidance provided, awaiting execution)</li>
+<li>No code fix needed; operational support engagement</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph Stretch Cluster Upgrade RHCS 6.1z6 -&gt; RHCS 6.1z9 -&gt; IBM Ceph 6.1z9 -&gt; IBM Ceph 8.1z6</div>
-<div>Environment: IBM Ceph 6.1z6, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate stretch-mode cluster upgrade from RHCS 6.1 to IBM Ceph 8.1</div>
+<div>Environment: 5-node stretch cluster with MONs across 3 datacenters, election_strategy=3</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1z6 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Remove the failed/unreachable MON node from spec and cluster -- intent: clean pre-upgrade state</li>
+</ul>
+<pre>
+   ceph orch ls --service_name mon --export &gt; mon.yaml
+   # Edit mon.yaml to remove unreachable node
+   ceph orch apply -i mon.yaml
+   ceph orch host drain &lt;node&gt;
+   ceph orch host rm &lt;node&gt;
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Upgrade MGRs first -- intent: ensure control plane is on target version</li>
+<li><span class="step-num">3.</span> Upgrade tiebreaker MON -- intent: preserve quorum arbitration</li>
+<li><span class="step-num">4.</span> Upgrade remaining MONs by site -- intent: maintain quorum throughout</li>
+<li><span class="step-num">5.</span> Upgrade OSDs by site -- intent: maintain data availability</li>
+<li><span class="step-num">6.</span> Upgrade remaining services (MDS, RGW, monitoring)</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph mon dump</code></code> (verify stretch mode, tiebreaker)</li>
+<li><code><code>ceph versions</code></code> (track daemon versions during upgrade)</li>
+<li><code><code>ceph health detail</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Stretch-mode multi-hop upgrades (6.1 -&gt; 8.1) with tiebreaker node removal lack dedicated QE test coverage.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No automated test for stretch-mode upgrade with pre-existing failed node removal</li>
+<li>No test for multi-hop upgrade path (6.1z6 -&gt; 6.1z9 -&gt; 8.1z6) on stretch clusters</li>
+<li>No test for tiebreaker-first upgrade ordering</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Stretch cluster upgrade with node removal before upgrade starts</li>
+<li>Validate tiebreaker MON upgrade ordering preserves quorum</li>
+<li>Test stretch mode integrity after each upgrade hop</li>
 </ul></div>
 </div>
 

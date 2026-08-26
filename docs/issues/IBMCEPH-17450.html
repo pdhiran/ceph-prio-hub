@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17450: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 9.0z2
-- Component: cephadm
-
-FIX STATUS:
-- Current JIRA status: POST</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Race condition in cephadm daemon inventory causes RuntimeError during NFS deprovisioning.
+ROOT CAUSE: During NFS daemon deprovisioning, the cephadm module&#x27;s describe_service() method iterates over the daemon inventory dictionary via cache.get_daemons_with_volatile_status(). Concurrently, the NFS removal thread modifies the same dictionary (removing daemon entries as they are deprovisioned). The dict comprehension at inventory.py:1502 iterates dm.items() while another thread deletes entries from dm, triggering Python&#x27;s RuntimeError: dictionary changed size during iteration. This crashes the cephadm MGR module, requiring a manual MGR failover to recover. The race is intermittent because it depends on the timing of describe_service() calls overlapping with daemon removal operations.
+KEY EVIDENCE:
+- Traceback shows RuntimeError at inventory.py:1502 in get_daemons_with_volatile_status() during dict comprehension
+- Crash occurs in describe_service() -&gt; get_daemons_with_volatile_status() path
+- NFS deprovisioning logs show daemon key removal immediately preceding the crash (within same millisecond)
+- Affected version: IBM Ceph 9 (20.1.0-185.0.hotfix.IBMCloud55.el9cp) on IBM Cloud Acadia
+- Workaround confirmed: ceph mgr fail restores service temporarily
+- Related to IBMCEPH-16552
+FIX STATUS: PR submitted at https://github.com/ceph/ceph/pull/70897 (posted 2026-08-06). Fix likely involves making a copy of the dictionary before iteration or adding thread-safe locking around the inventory access.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning
-Environment: IBM Ceph 9.0z2, component: cephadm
-
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger RuntimeError in cephadm daemon inventory during concurrent NFS deprovisioning and service listing.
+Environment: IBM Ceph 9.x (20.x) cluster with multiple NFS services deployed across multiple hosts.
+1. Deploy a Ceph cluster with cephadm and create multiple NFS services on separate hosts -- intent: establish baseline NFS deployment
+   ceph nfs cluster create test-nfs &quot;host1 host2 host3&quot;
+2. Create NFS exports to make services active -- intent: ensure daemons are fully registered in inventory
+   ceph nfs export create cephfs test-nfs /test cephfs /
+3. In a loop, rapidly deprovision and recreate NFS services while simultaneously querying service status -- intent: create race condition between inventory modification and read
+   while true; do ceph orch rm nfs.test-nfs --force &amp; ceph orch ls --refresh &amp; wait; ceph nfs cluster create test-nfs &quot;host1 host2 host3&quot; &amp; done
+4. Monitor MGR logs for RuntimeError: dictionary changed size during iteration -- intent: detect the race condition
+   ceph log last 100 cephadm | grep &#x27;dictionary changed size&#x27;
+DIAGNOSTIC COMMANDS:
+- ceph health detail (check for HEALTH_WARN with cephadm module failure)
+- ceph mgr module ls (verify cephadm module status)
+- ceph log last 100 cephadm (check for RuntimeError tracebacks)
+- ceph orch ls (will fail when module is crashed)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing automated test coverage for concurrent daemon removal during service enumeration.
 GAPS:
-- No performance baseline test for: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning
-
+- No test exercises concurrent NFS deprovisioning while describe_service() iterates the inventory
+- No thread-safety tests for HostCache.get_daemons_with_volatile_status() under concurrent modification
+- No integration test for MGR module recovery after cephadm module crash
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Concurrent NFS service removal + ceph orch ls: deprovision NFS service while simultaneously listing services in a tight loop; verify no RuntimeError
+- Multi-service concurrent deprovisioning: remove multiple NFS services in parallel; verify inventory consistency
+- MGR failover recovery: after triggering the crash, verify ceph mgr fail restores cephadm module functionality
+- Stress test: rapid create/destroy cycles of NFS services with concurrent describe_service calls</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,35 +240,56 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Race condition in cephadm daemon inventory causes RuntimeError during NFS deprovisioning.</div>
+<div>ROOT CAUSE: During NFS daemon deprovisioning, the cephadm module&#x27;s describe_service() method iterates over the daemon inventory dictionary via cache.get_daemons_with_volatile_status(). Concurrently, the NFS removal thread modifies the same dictionary (removing daemon entries as they are deprovisioned). The dict comprehension at inventory.py:1502 iterates dm.items() while another thread deletes entries from dm, triggering Python&#x27;s RuntimeError: dictionary changed size during iteration. This crashes the cephadm MGR module, requiring a manual MGR failover to recover. The race is intermittent because it depends on the timing of describe_service() calls overlapping with daemon removal operations.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: cephadm</li>
+<li>Traceback shows RuntimeError at inventory.py:1502 in get_daemons_with_volatile_status() during dict comprehension</li>
+<li>Crash occurs in describe_service() -&gt; get_daemons_with_volatile_status() path</li>
+<li>NFS deprovisioning logs show daemon key removal immediately preceding the crash (within same millisecond)</li>
+<li>Affected version: IBM Ceph 9 (20.1.0-185.0.hotfix.IBMCloud55.el9cp) on IBM Cloud Acadia</li>
+<li>Workaround confirmed: <code>ceph mgr fail restores service temporarily</code></li>
+<li>Related to IBMCEPH-16552</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: PR submitted at https://github.com/ceph/ceph/pull/70897 (posted 2026-08-06). Fix likely involves making a copy of the dictionary before iteration or adding thread-safe locking around the inventory access.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger RuntimeError in cephadm daemon inventory during concurrent NFS deprovisioning and service listing.</div>
+<div>Environment: IBM Ceph 9.x (20.x) cluster with multiple NFS services deployed across multiple hosts.</div>
 <ul>
-<li>Current JIRA status: POST</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning</div>
-<div>Environment: IBM Ceph 9.0z2, component: cephadm</div>
+<li><span class="step-num">1.</span> Deploy a Ceph cluster with <code>cephadm and create multiple NFS services on separate hosts -- intent: establish baseline NFS deployment</code></li>
+</ul>
+<div>ceph nfs cluster create test-nfs &quot;host1 host2 host3&quot;</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Create NFS exports to make services active -- intent: ensure daemons are fully registered in inventory</li>
+</ul>
+<div>ceph nfs export create cephfs test-nfs /test cephfs /</div>
+<ul>
+<li><span class="step-num">3.</span> In a loop, rapidly deprovision and recreate NFS services while simultaneously querying service status -- intent: create race condition between inventory modification and read</li>
+</ul>
+<div>while true; do ceph orch rm nfs.test-nfs --force &amp; ceph orch ls --refresh &amp; wait; ceph nfs cluster create test-nfs &quot;host1 host2 host3&quot; &amp; done</div>
+<ul>
+<li><span class="step-num">4.</span> Monitor MGR logs for RuntimeError: dictionary changed size during iteration -- intent: detect the race condition</li>
+</ul>
+<div>ceph log last 100 cephadm | grep &#x27;dictionary changed size&#x27;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph health detail (check for HEALTH_WARN with cephadm module failure)</code></li>
+<li><code>ceph mgr module ls (verify cephadm module status)</code></li>
+<li><code>ceph log last 100 cephadm (check for RuntimeError tracebacks)</code></li>
+<li><code>ceph orch ls (will fail when module is crashed)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing automated test coverage for concurrent daemon removal during service enumeration.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance baseline test for: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration in NFS deprovisioning</li>
+<li>No test exercises concurrent NFS deprovisioning while describe_service() iterates the inventory</li>
+<li>No thread-safety tests for HostCache.get_daemons_with_volatile_status() under concurrent modification</li>
+<li>No integration test for MGR module recovery after <code>cephadm module crash</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Concurrent NFS service removal + <code>ceph orch ls: deprovision NFS service while simultaneously listing services in a tight loop; verify no RuntimeError</code></li>
+<li>Multi-service concurrent deprovisioning: remove multiple NFS services in parallel; verify inventory consistency</li>
+<li>MGR failover recovery: after triggering the crash, verify <code>ceph mgr fail restores cephadm module functionality</code></li>
+<li>Stress test: rapid create/destroy cycles of NFS services with concurrent describe_service calls</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14914: [IBM_Support] [RFE] Dynamically scalable rgw endpoints </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,32 +189,42 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] [RFE] Dynamically scalable rgw endpoints 
-
-ROOT CAUSE:
-- Affected version(s): Backlog
-- Component: rgw
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE for dynamically scalable RGW endpoints with auto-scaling between min/max counts during burst workloads.
+ROOT CAUSE: This is a feature request. A customer performs large monthly application backups to S3 buckets, overwhelming the fixed number of RGW endpoints and requiring restarts. The request is for the ability to dynamically scale RGW endpoints (and the ingress service) between predefined min/max counts, similar to NooBaa&#x27;s autoscaling endpoint feature in ODF. This would help during periodic burst ingestion without permanent over-provisioning.
+KEY EVIDENCE:
+- Customer scenario: monthly backup cripples RGW endpoints
+- Current workaround: manual ingress service setup + RGW scaling
+- Reference: RHODF 4.18 NooBaa endpoint autoscaling
+- Targeted to Backlog
+- Assigned to Matthew Benjamin (RGW lead)
+FIX STATUS: RFE status is &#x27;new&#x27;. Bipin Kunal asked L3 team to review (2026-08-06). No implementation or design work started.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE] Dynamically scalable rgw endpoints
-Environment: IBM Ceph Backlog, component: rgw
-
-1. Deploy IBM Ceph Backlog cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate RGW endpoint saturation during burst backup workload.
+Environment: Any IBM Ceph cluster with a small number of RGW daemons (e.g., 2).
+1. Deploy RGW with 2 daemons -- intent: limited capacity baseline
+   ceph orch apply rgw default --placement=&#x27;2 host1 host2&#x27;
+2. Generate sustained high-throughput S3 writes from multiple clients -- intent: saturate RGW endpoints
+   warp mixed --host=rgw1:80 --host=rgw2:80 --duration=10m --concurrent=100
+3. Monitor RGW latency and availability during saturation -- intent: demonstrate impact
+   ceph status; ceph orch ls rgw
+DIAGNOSTIC COMMANDS:
+- ceph orch ls rgw (current daemon count)
+- ceph daemon client.rgw.* perf dump (RGW performance counters)
+- ceph orch ps --daemon-type rgw (daemon status)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No implementation exists. This is an unimplemented RFE.
 GAPS:
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- No RGW autoscaling mechanism exists
+- No integration with ingress service scaling
+SCENARIOS NEEDED (once implemented):
+- Burst scaling: generate burst S3 load; verify RGW count scales up to max
+- Scale down: after burst subsides; verify scale down to min
+- Ingress co-scaling: verify ingress service scales alongside RGW
+- Threshold tuning: verify configurable CPU/connection-based thresholds</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -225,28 +235,49 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] [RFE] Dynamically scalable rgw endpoints</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE for dynamically scalable RGW endpoints with auto-scaling between min/max counts during burst workloads.</div>
+<div>ROOT CAUSE: This is a feature request. A customer performs large monthly application backups to S3 buckets, overwhelming the fixed number of RGW endpoints and requiring restarts. The request is for the ability to dynamically scale RGW endpoints (and the ingress service) between predefined min/max counts, similar to NooBaa&#x27;s autoscaling endpoint feature in ODF. This would help during periodic burst ingestion without permanent over-provisioning.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): Backlog</li>
-<li>Component: rgw</li>
+<li>Customer scenario: monthly backup cripples RGW endpoints</li>
+<li>Current workaround: manual ingress service setup + RGW scaling</li>
+<li>Reference: RHODF 4.18 NooBaa endpoint autoscaling</li>
+<li>Targeted to Backlog</li>
+<li>Assigned to Matthew Benjamin (RGW lead)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: RFE status is &#x27;new&#x27;. Bipin Kunal asked L3 team to review (2026-08-06). No implementation or design work started.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate RGW endpoint saturation during burst backup workload.</div>
+<div>Environment: Any IBM Ceph cluster with a small number of RGW daemons (e.g., 2).</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE] Dynamically scalable rgw endpoints</div>
-<div>Environment: IBM Ceph Backlog, component: rgw</div>
+<li><span class="step-num">1.</span> Deploy RGW with 2 daemons -- intent: limited capacity baseline</li>
+</ul>
+<div>ceph orch apply rgw default --placement=&#x27;2 host1 host2&#x27;</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph Backlog cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Generate sustained high-throughput S3 writes from multiple clients -- intent: saturate RGW endpoints</li>
+</ul>
+<div>warp mixed --host=rgw1:80 --host=rgw2:80 --duration=10m --concurrent=100</div>
+<ul>
+<li><span class="step-num">3.</span> Monitor RGW latency and availability during saturation -- intent: demonstrate impact</li>
+</ul>
+<div>ceph status; ceph orch ls rgw</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch ls rgw (current daemon count)</code></li>
+<li><code>ceph daemon client.rgw.* perf dump (RGW performance counters)</code></li>
+<li><code>ceph orch ps --daemon-type rgw (daemon status)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No implementation exists. This is an unimplemented RFE.</div>
 <div class="section-head">GAPS</div>
-<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>No RGW autoscaling mechanism exists</li>
+<li>No integration with ingress service scaling</li>
+</ul>
+<div>SCENARIOS NEEDED (once implemented):</div>
+<ul>
+<li>Burst scaling: generate burst S3 load; verify RGW count scales up to max</li>
+<li>Scale down: after burst subsides; verify scale down to min</li>
+<li>Ingress co-scaling: verify ingress service scales alongside RGW</li>
+<li>Threshold tuning: verify configurable CPU/connection-based thresholds</li>
 </ul></div>
 </div>
 

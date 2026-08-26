@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-8606: [BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Radosław Zarzyński] Talked about this during the RADOS Downstream Bug Scrub this Wednesday.   is going to dispatch preparing the fix.
-- [Aarti Dhikale] I tried reproducing this issue on Ceph 7, 8, and 9, and it is reproducible on all ceph version mentioned. I&#x27;m currently working on identifying the root cause and possible fix.
-- [Aarti Dhikale] Analysis : When  ceph pg 2.1a query  is executed, the CLI sends the request through  pg_command , which follows the path: librados → Objecter →   _calc_command_target() Inside  _calc_command_target() ,  _calc_target()  is invoked to determine the target OSD. During this process,
-- [Aarti Dhikale] Adding test results: Before Fix: root@aartivm-0 ~]# ceph osd pool set testpool eio true
-set pool 2 eio to true
-
-[root@aartivm-0 ~]# ceph pg 2.1c query
-Couldn&#x27;t parse JSON : Expecting value: line 1 column 1 (char 0)
-Traceback (most recent call last):
-  File &quot;/usr/bin/ceph&quot;, line 1
-
-FIX STATUS:
-- Current JIRA status: POST</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: ceph pg query returns JSONDecodeError when pool has EIO flag set due to unhandled RECALC_OP_TARGET_POOL_EIO in Objecter.
+ROOT CAUSE: When a pool has the EIO flag set (ceph osd pool set &lt;pool&gt; eio true), the Objecter&#x27;s _calc_target() returns RECALC_OP_TARGET_POOL_EIO without populating c-&gt;target.osd. However, _calc_command_target() only handles RECALC_OP_TARGET_POOL_DNE and RECALC_OP_TARGET_OSD_DOWN, ignoring the EIO case. Execution continues with c-&gt;target.osd=-1, which causes _get_session() to return the homeless session. The PG query is never sent to the acting primary OSD, the CLI receives an empty response, and json.loads() raises JSONDecodeError. The fix: (1) handle RECALC_OP_TARGET_POOL_EIO in _calc_command_target() by using pg_to_acting_osds() to find the acting primary, and (2) add pool_eio field to PG query JSON output.
+KEY EVIDENCE:
+- Root cause analysis by Aarti Dhikale identifying _calc_command_target() missing EIO handling
+- Fix in src/osdc/Objecter.cc and src/osd/PrimaryLogPG.cc
+- Reproducible 3/3 on RHCS 7.0, 7.1, 8.x, 9.x
+- Test results show fix works: PG query succeeds with pool_eio:true field in output
+- Steps: create pool, ceph pg X.Y query works, set eio flag, query fails
+FIX STATUS: In progress. Aarti Dhikale has working fix with test results (2026-07-23). PR creation noted as next step. Affects all versions from 7.0 onward.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set
-Environment: IBM Ceph 7.1, component: rados
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger JSONDecodeError on ceph pg query with EIO-flagged pool.
+Environment: Any IBM Ceph cluster (7.x, 8.x, or 9.x).
+1. Create a test pool -- intent: establish target pool
+   ceph osd pool create testpool 32
+2. Verify pg query works normally -- intent: baseline
+   ceph pg $(ceph pg ls-by-pool testpool | tail -1 | awk &#x27;{print $1}&#x27;) query
+3. Set EIO flag on the pool -- intent: trigger the bug
+   ceph osd pool set testpool eio true
+4. Re-run pg query -- intent: observe JSONDecodeError
+   ceph pg $(ceph pg ls-by-pool testpool | tail -1 | awk &#x27;{print $1}&#x27;) query
+DIAGNOSTIC COMMANDS:
+- ceph osd pool get testpool eio (check EIO flag state)
+- ceph pg ls-by-pool testpool (list PGs for pool)
+- ceph pg &lt;pgid&gt; query (the failing command)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix developed with test results but PR not yet created. Reproducible 3/3.
 GAPS:
-- Existing rados tests may not cover: [BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set
-
+- No automated test for ceph pg query with EIO-flagged pool
+- No test validates pool_eio field in PG query output
+- No test for other Objecter commands against EIO-flagged pools
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- PG query with EIO: set EIO flag; verify pg query returns valid JSON with pool_eio:true
+- PG query without EIO: verify normal pools don&#x27;t show pool_eio field
+- Other commands: verify ceph pg &lt;pgid&gt; map, ceph pg dump work with EIO pools
+- EIO flag toggle: set and unset EIO; verify pg query works in both states</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,44 +238,54 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">ceph pg query returns JSONDecodeError when pool has EIO flag set due to unhandled RECALC_OP_TARGET_POOL_EIO in Objecter.</div>
+<div>ROOT CAUSE: When a pool has the EIO flag set (ceph osd pool set &lt;pool&gt; eio true), the Objecter&#x27;s _calc_target() returns RECALC_OP_TARGET_POOL_EIO without populating c-&gt;target.osd. However, _calc_command_target() only handles RECALC_OP_TARGET_POOL_DNE and RECALC_OP_TARGET_OSD_DOWN, ignoring the EIO case. Execution continues with c-&gt;target.osd=-1, which causes _get_session() to return the homeless session. The PG query is never sent to the acting primary OSD, the CLI receives an empty response, and json.loads() raises JSONDecodeError. The fix: (1) handle RECALC_OP_TARGET_POOL_EIO in _calc_command_target() by using pg_to_acting_osds() to find the acting primary, and (2) add pool_eio field to PG query JSON output.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: rados</li>
+<li>Root cause analysis by Aarti Dhikale identifying _calc_command_target() missing EIO handling</li>
+<li>Fix in src/osdc/Objecter.cc and src/osd/PrimaryLogPG.cc</li>
+<li>Reproducible 3/3 on RHCS 7.0, 7.1, 8.x, 9.x</li>
+<li>Test results show fix works: PG query succeeds with pool_eio:true field in output</li>
+<li>Steps: create pool, <code>ceph pg X.Y query works</code>, set eio flag, query fails</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: In progress. Aarti Dhikale has working fix with test results (2026-07-23). PR creation noted as next step. Affects all versions from 7.0 onward.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger JSONDecodeError on ceph pg query with EIO-flagged pool.</div>
+<div>Environment: Any IBM Ceph cluster (7.x, 8.x, or 9.x).</div>
 <ul>
-<li>[Radosław Zarzyński] Talked about this during the RADOS Downstream Bug Scrub this Wednesday.   is going to dispatch preparing the fix.</li>
-<li>[Aarti Dhikale] I tried reproducing this issue on Ceph 7, 8, and 9, and it is reproducible on all <code>ceph version mentioned. I&#x27;m currently working on identifying the root cause and possible fix.</code></li>
-<li>[Aarti Dhikale] Analysis : When  <code>ceph pg 2.1a query  is executed</code>, the CLI sends the request through  pg_command , which follows the path: librados → Objecter →   _calc_command_target() Inside  _calc_command_target() ,  _calc_target()  is invoked to determine the target OSD. During this process,</li>
-<li>[Aarti Dhikale] Adding test results: Before Fix: root@aartivm-0 ~]# <code>ceph osd pool set testpool eio true</code></li>
+<li><span class="step-num">1.</span> Create a test pool -- intent: establish target pool</li>
 </ul>
-<div>set pool 2 eio to true</div>
-<div>[root@aartivm-0 ~]# ceph pg 2.1c query</div>
-<div>Couldn&#x27;t parse JSON : Expecting value: line 1 column 1 (char 0)</div>
-<div>Traceback (most recent call last):</div>
-<div>File &quot;/usr/bin/ceph&quot;, line 1</div>
-<div class="section-head">FIX STATUS</div>
+<div>ceph osd pool create testpool 32</div>
 <ul>
-<li>Current JIRA status: POST</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set</div>
-<div>Environment: IBM Ceph 7.1, component: rados</div>
+<li><span class="step-num">2.</span> Verify pg query works normally -- intent: baseline</li>
+</ul>
+<div>ceph pg $(ceph pg ls-by-pool testpool | tail -1 | awk &#x27;{print $1}&#x27;) query</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Set EIO flag on the pool -- intent: trigger the bug</li>
+</ul>
+<div>ceph osd pool set testpool eio true</div>
+<ul>
+<li><span class="step-num">4.</span> Re-run pg query -- intent: observe JSONDecodeError</li>
+</ul>
+<div>ceph pg $(ceph pg ls-by-pool testpool | tail -1 | awk &#x27;{print $1}&#x27;) query</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd pool get testpool eio (check EIO flag state)</code></li>
+<li><code>ceph pg ls-by-pool testpool (list PGs for pool)</code></li>
+<li><code>ceph pg &lt;pgid&gt; query (the failing command)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix developed with test results but PR not yet created. Reproducible 3/3.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rados tests may not cover: [BZ#2270897] ceph pg query returns JSONDecodeError when EIO flag is set</code></li>
+<li>No automated test for <code>ceph pg query with EIO-flagged pool</code></li>
+<li>No test validates pool_eio field in PG query output</li>
+<li>No test for other Objecter commands against EIO-flagged pools</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>PG query with EIO: set EIO flag; verify pg query returns valid JSON with pool_eio:true</li>
+<li>PG query without EIO: verify normal pools don&#x27;t show pool_eio field</li>
+<li>Other commands: verify <code>ceph pg &lt;pgid&gt; map</code>, <code>ceph pg dump work with EIO pools</code></li>
+<li>EIO flag toggle: set and unset EIO; verify pg query works in both states</li>
 </ul></div>
 </div>
 

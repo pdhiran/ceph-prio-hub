@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14448: MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,44 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.0
-- Component: cephfs
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS stuck in Replay state with 90GB uncommitted journal after upgrade to 8.1z5 due to client cap revoke delays during MDS scale-down causing internal heartbeat timeout.
+ROOT CAUSE: During ceph orch upgrade to 8.1z5, cephadm scales down the multi-MDS filesystem to 1 active MDS before upgrading MDS daemons. This triggers subtree export from rank 1 to rank 0. A Ganesha NFS client (client.72745998) was slow to respond to cap revoke requests, preventing subtree freeze from completing. The export operation retried repeatedly without converging, causing the MDSRank thread to time out its internal heartbeat (15s threshold), which led to skipped beacons, MON marking MDS as laggy, and replacement with standby. The replacement MDS then had to replay 90GB of journal entries. Greg Farnum identified batch getattr operations potentially bypassing freeze operations as a contributing factor. The issue occurred despite all PGs being active+clean at the time of scale-down.
+KEY EVIDENCE:
+- &#x27;heartbeat_map is_healthy MDSRank had timed out after 15s&#x27;
+- &#x27;Skipping beacon heartbeat to monitors; MDS internal heartbeat is not healthy&#x27;
+- &#x27;client.72745998 isn&#x27;t responding to mclientcaps(revoke)&#x27;
+- &#x27;client_request currently failed to authpin, subtree is being exported&#x27;
+- &#x27;export_dir Starting export to mds.0&#x27; retried repeatedly
+- Slow requests spiked to 111,927 during scale-down
+- 504 OSDs, 106,560 PGs (~630 PGs/OSD), all active+clean at scale-down time
+- Client 72745998 = Ganesha NFS on same node as MDS
+FIX STATUS: Still assigned/open. Under active investigation by Venky Shankar and Greg Farnum. Suspected client-side bug in cap revoke handling or batch operation interaction with freeze.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.
-Environment: IBM Ceph 8.0, component: cephfs
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Run baseline benchmark (fio/rados bench) -- record metrics
-5. Trigger the performance scenario described in JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce MDS stuck in Replay during upgrade scale-down with active NFS clients
+Environment: IBM Ceph 8.1z5, multi-MDS (3 active), NFS-Ganesha clients, 500+ OSDs
+1. Deploy multi-MDS CephFS with NFS-Ganesha exports and active client I/O -- intent: match topology
+2. Initiate rolling upgrade via ceph orch upgrade start -- intent: trigger MDS scale-down
+3. Monitor MDS logs for &#x27;Skipping beacon heartbeat&#x27; and &#x27;subtree is being exported&#x27; -- intent: detect stuck condition
+4. Monitor &#x27;ceph fs status&#x27; for MDS entering Replay -- intent: observe the failure
+DIAGNOSTIC COMMANDS:
+- ceph fs status
+- ceph daemon mds.&lt;name&gt; ops
+- ceph daemon mds.&lt;name&gt; session ls
+- ceph daemon mds.&lt;name&gt; dump_blocked_ops
+- grep &#x27;heartbeat_map is_healthy&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-mds.*.log
+- grep &#x27;isn.t responding to mclientcaps&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-mds.*.log</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Critical gap -- no test validates MDS scale-down behavior under heavy NFS client load during upgrade.
+GAPS: No test for MDS subtree export with unresponsive cap-revoke clients; no test for batch getattr interaction with freeze operations; no test for MDS heartbeat timeout during scale-down.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+- Rolling upgrade with active multi-MDS filesystem and concurrent NFS I/O, verify MDS scale-down completes without stuck Replay
+- Simulate slow cap revoke (delayed NFS client) during subtree export, measure convergence time
+- Test MDS beacon health during high slow-request counts from batch operations
+- Validate journal replay completes within reasonable time for 90GB+ journal sizes</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,36 +237,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS stuck in Replay state with 90GB uncommitted journal after upgrade to 8.1z5 due to client cap revoke delays during MDS scale-down causing internal heartbeat timeout.</div>
+<div>ROOT CAUSE: During ceph orch upgrade to 8.1z5, cephadm scales down the multi-MDS filesystem to 1 active MDS before upgrading MDS daemons. This triggers subtree export from rank 1 to rank 0. A Ganesha NFS client (client.72745998) was slow to respond to cap revoke requests, preventing subtree freeze from completing. The export operation retried repeatedly without converging, causing the MDSRank thread to time out its internal heartbeat (15s threshold), which led to skipped beacons, MON marking MDS as laggy, and replacement with standby. The replacement MDS then had to replay 90GB of journal entries. Greg Farnum identified batch getattr operations potentially bypassing freeze operations as a contributing factor. The issue occurred despite all PGs being active+clean at the time of scale-down.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.0</li>
-<li>Component: cephfs</li>
+<li>&#x27;heartbeat_map is_healthy MDSRank had timed out after 15s&#x27;</li>
+<li>&#x27;Skipping beacon heartbeat to monitors; MDS internal heartbeat is not healthy&#x27;</li>
+<li>&#x27;client.72745998 isn&#x27;t responding to mclientcaps(revoke)&#x27;</li>
+<li>&#x27;client_request currently failed to authpin, subtree is being exported&#x27;</li>
+<li>&#x27;export_dir Starting export to mds.0&#x27; retried repeatedly</li>
+<li>Slow requests spiked to 111,927 during scale-down</li>
+<li>504 OSDs, 106,560 PGs (~630 PGs/OSD), all active+clean at scale-down time</li>
+<li>Client 72745998 = Ganesha NFS on same node as MDS</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Still assigned/open. Under active investigation by Venky Shankar and Greg Farnum. Suspected client-side bug in cap revoke handling or batch operation interaction with freeze.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce MDS stuck in Replay during upgrade scale-down with active NFS clients</div>
+<div>Environment: IBM Ceph 8.1z5, multi-MDS (3 active), NFS-Ganesha clients, 500+ OSDs</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.</div>
-<div>Environment: IBM Ceph 8.0, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">5.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: MDS got stuck in the Replay state with the Journal having 90 GB of uncommitted metadata.</li>
+<li><span class="step-num">1.</span> Deploy multi-MDS CephFS with NFS-Ganesha exports and active client I/O -- intent: match topology</li>
+<li><span class="step-num">2.</span> Initiate rolling upgrade via <code>ceph orch upgrade start -- intent: trigger MDS scale-down</code></li>
+<li><span class="step-num">3.</span> Monitor MDS logs for &#x27;Skipping beacon heartbeat&#x27; and &#x27;subtree is being exported&#x27; -- intent: detect stuck condition</li>
+<li><span class="step-num">4.</span> Monitor &#x27;<code>ceph fs status&#x27; for MDS entering Replay -- intent: observe the failure</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph fs status</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; ops</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; session ls</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; dump_blocked_ops</code></li>
+<li>grep &#x27;heartbeat_map is_healthy&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-mds.*.log</li>
+<li>grep &#x27;isn.t responding to mclientcaps&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-mds.*.log</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Critical gap -- no test validates MDS scale-down behavior under heavy NFS client load during upgrade.</div>
+<div>GAPS: No test for MDS subtree export with unresponsive cap-revoke clients; no test for batch getattr interaction with freeze operations; no test for MDS heartbeat timeout during scale-down.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li>Rolling upgrade with active multi-MDS filesystem and concurrent NFS I/O, verify MDS scale-down completes without stuck Replay</li>
+<li>Simulate slow cap revoke (delayed NFS client) during subtree export, measure convergence time</li>
+<li>Test MDS beacon health during high slow-request counts from batch operations</li>
+<li>Validate journal replay completes within reasonable time for 90GB+ journal sizes</li>
 </ul></div>
 </div>
 

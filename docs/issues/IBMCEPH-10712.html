@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10712: [BZ#2349911] [IBM_Support] RFE: enable Ceph upgrades at failure domain granularity</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2349911] [IBM_Support] RFE: enable Ceph upgrades at failure domain granularity
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.2
-- Component: cephadm
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE for CRUSH failure domain granularity upgrades -- RESOLVED as implemented in 9.1.
+ROOT CAUSE: This was a feature request from Apple for enabling Ceph upgrades at CRUSH bucket granularity (e.g., rack-level parallelism). For 250+ node clusters with 2900+ OSDs, host-level serial upgrade takes ~5 days. The request was for --crush-bucket=rack option on ceph orch upgrade to parallelize upgrades within a CRUSH bucket type. This has been implemented via the crush bucket scoped OSD upgrade functionality delivered through a related ticket.
+KEY EVIDENCE:
+- Customer: Apple, 250+ node cluster with 2900+ OSDs
+- Resolved by crush bucket scoped OSD upgrade functionality in 9.1
+- Confirmed by Ashwin Joshi (2026-08-04)
+- Related/duplicate: IBMCEPH-11980
+FIX STATUS: CLOSED as &#x27;fixed upstream&#x27;. Implemented in IBM Ceph 9.1 via ceph orch upgrade start with --crush_bucket_type and --crush_bucket_name options.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2349911]  RFE: enable Ceph upgrades at failure domain granularity
-Environment: IBM Ceph 8.2, component: cephadm
-
-1. Deploy IBM Ceph 8.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify crush-bucket-scoped upgrade functionality.
+Environment: IBM Ceph 9.1+ cluster with multi-rack CRUSH topology.
+1. Verify CRUSH topology has multiple racks -- intent: confirm topology supports rack-level parallelism
+   ceph osd crush tree
+2. Start upgrade with crush bucket scope -- intent: verify rack-level parallel upgrade
+   ceph orch upgrade start --image &lt;new-image&gt; --daemon_types osd --crush_bucket_type rack
+3. Monitor upgrade progress -- intent: verify parallel OSD upgrades within each rack
+   ceph orch upgrade status
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade status
+- ceph osd crush tree
+- ceph versions (verify mixed versions during upgrade)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Feature implemented in 9.1. QE should have or create test coverage for crush-bucket-scoped upgrades.
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+- Verify existing QE coverage for ceph orch upgrade with --crush_bucket_type parameter
+- May need validation in large-scale (10+ rack) environments
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Rack-level parallel upgrade: upgrade OSDs with --crush_bucket_type=rack; verify parallelism within each bucket
+- Safety validation: verify data availability maintained during rack-scoped parallel upgrade
+- Mixed CRUSH rules: test with pools using different CRUSH rules selecting different failure domains</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,36 +233,47 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2349911] [IBM_Support] RFE: enable Ceph upgrades at failure domain granularity</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE for CRUSH failure domain granularity upgrades -- RESOLVED as implemented in 9.1.</div>
+<div>ROOT CAUSE: This was a feature request from Apple for enabling Ceph upgrades at CRUSH bucket granularity (e.g., rack-level parallelism). For 250+ node clusters with 2900+ OSDs, host-level serial upgrade takes ~5 days. The request was for --crush-bucket=rack option on ceph orch upgrade to parallelize upgrades within a CRUSH bucket type. This has been implemented via the crush bucket scoped OSD upgrade functionality delivered through a related ticket.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.2</li>
-<li>Component: cephadm</li>
+<li>Customer: Apple, 250+ node cluster with 2900+ OSDs</li>
+<li>Resolved by crush bucket scoped OSD upgrade functionality in 9.1</li>
+<li>Confirmed by Ashwin Joshi (2026-08-04)</li>
+<li>Related/duplicate: IBMCEPH-11980</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: CLOSED as &#x27;fixed upstream&#x27;. Implemented in IBM Ceph 9.1 via ceph orch upgrade start with --crush_bucket_type and --crush_bucket_name options.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify crush-bucket-scoped upgrade functionality.</div>
+<div>Environment: IBM Ceph 9.1+ cluster with multi-rack CRUSH topology.</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2349911]  RFE: enable Ceph upgrades at failure domain granularity</div>
-<div>Environment: IBM Ceph 8.2, component: cephadm</div>
+<li><span class="step-num">1.</span> Verify CRUSH topology has multiple racks -- intent: confirm topology supports rack-level parallelism</li>
+</ul>
+<div>ceph osd crush tree</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Start upgrade with crush bucket scope -- intent: verify rack-level parallel upgrade</li>
+</ul>
+<div>ceph orch upgrade start --image &lt;new-image&gt; --daemon_types osd --crush_bucket_type rack</div>
+<ul>
+<li><span class="step-num">3.</span> Monitor upgrade progress -- intent: verify parallel OSD upgrades within each rack</li>
+</ul>
+<div>ceph orch upgrade status</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch upgrade status</code></li>
+<li><code>ceph osd crush tree</code></li>
+<li><code>ceph versions (verify mixed versions during upgrade)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Feature implemented in 9.1. QE should have or create test coverage for crush-bucket-scoped upgrades.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>Verify existing QE coverage for <code>ceph orch upgrade with --crush_bucket_type parameter</code></li>
+<li>May need validation in large-scale (10+ rack) environments</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Rack-level parallel upgrade: upgrade OSDs with --crush_bucket_type=rack; verify parallelism within each bucket</li>
+<li>Safety validation: verify data availability maintained during rack-scoped parallel upgrade</li>
+<li>Mixed CRUSH rules: test with pools using different CRUSH rules selecting different failure domains</li>
 </ul></div>
 </div>
 

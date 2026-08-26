@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14151: Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,42 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Shantanu Bhardwaj] Problem Description by the Customer ~~~~~~~~~~ We are running a custom internal librados application (ceph_bucket_prefixes) that reads RGW bucket-index OMAP entries directly via librados (get_omap_vals) to compute per-prefix object/byte statistics. While debugging an apparent und
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Customer requests increasing osd_max_omap_entries_per_request from 1024 to 16384 for faster bucket-index OMAP scans.
+ROOT CAUSE: The default osd_max_omap_entries_per_request (1024) limits how many OMAP entries an OSD returns per librados get_omap_vals call. For a custom application scanning 725M bucket-index entries across 4999 shards, this requires ~140 sequential round trips per shard. Raising to 16384 would reduce to ~9 RTTs per shard. The original default (131072) was lowered to 1024 in commit 3ca46da937d (2019) to cap misbehaving clients, not because OSDs can&#x27;t handle larger responses. The trade-off is bandwidth vs latency: larger requests hold locks longer, potentially impacting p99 latency for concurrent small ops.
+KEY EVIDENCE:
+- Customer: Apple (IBM Case TS022020602)
+- Bucket: 725M entries, 4999 shards, full scan takes 7.6 hours with 64 workers
+- Engineering confirmed 16K is safe for NVMe-backed index pools
+- Upstream PR: https://github.com/ceph/ceph/pull/70529
+- Radosław confirmed: both osd_max_omap_entries_per_request and osd_max_omap_bytes_per_request are enforced at same places
+- Recommended rollout: 4096 → 8192 → 16384 with monitoring
+FIX STATUS: Upstream PR submitted (PR #70529). Target: Ceph 10.0 (was 11.0, moved back to 10.0 by Bipin Kunal).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations
-Environment: IBM Ceph 8.1z3, component: rados
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate performance improvement and safety of osd_max_omap_entries_per_request=16384
+Environment: IBM Ceph 8.1z3 (19.2.1-274.el9cp) with NVMe-backed index pool
+1. Create bucket with high object count (&gt;100K per shard) -- intent: simulate production scale
+2. Baseline: run OMAP scan with default 1024, measure total wall-clock time -- intent: establish baseline
+3. Set: ceph config set osd osd_max_omap_entries_per_request 4096 -- intent: first step increase
+4. Re-run scan, measure time and p99 latency for concurrent PUT/DELETE -- intent: measure improvement + impact
+5. Repeat at 8192 and 16384 -- intent: find optimal value
+6. Monitor: ceph tell osd.X perf dump (read latency), ceph tell osd.X dump_objectstore_kv_stats -- intent: check OSD health
+DIAGNOSTIC COMMANDS:
+- ceph config get osd osd_max_omap_entries_per_request
+- ceph tell osd.&lt;id&gt; perf dump
+- ceph tell osd.&lt;id&gt; dump_objectstore_kv_stats
+- ceph osd perf</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates performance or safety of non-default osd_max_omap_entries_per_request values.
+GAPS: No test measures OMAP scan throughput at various entry-per-request values. No test validates p99 latency impact on concurrent ops.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. OMAP scan benchmark at 1024, 4096, 8192, 16384 entries with concurrent PUT/DELETE workload
+2. OSD memory impact measurement at 16384 entries × concurrent ops
+3. Impact on bucket resharding, multisite sync, lifecycle processing at higher values
+4. Comparison on HDD vs NVMe-backed index pools</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +235,43 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Customer requests increasing osd_max_omap_entries_per_request from 1024 to 16384 for faster bucket-index OMAP scans.</div>
+<div>ROOT CAUSE: The default osd_max_omap_entries_per_request (1024) limits how many OMAP entries an OSD returns per librados get_omap_vals call. For a custom application scanning 725M bucket-index entries across 4999 shards, this requires ~140 sequential round trips per shard. Raising to 16384 would reduce to ~9 RTTs per shard. The original default (131072) was lowered to 1024 in commit 3ca46da937d (2019) to cap misbehaving clients, not because OSDs can&#x27;t handle larger responses. The trade-off is bandwidth vs latency: larger requests hold locks longer, potentially impacting p99 latency for concurrent small ops.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: rados</li>
+<li>Customer: Apple (IBM Case TS022020602)</li>
+<li>Bucket: 725M entries, 4999 shards, full scan takes 7.6 hours with 64 workers</li>
+<li>Engineering confirmed 16K is safe for NVMe-backed index pools</li>
+<li>Upstream PR: https://github.com/ceph/ceph/pull/70529</li>
+<li>Radosław confirmed: both osd_max_omap_entries_per_request and osd_max_omap_bytes_per_request are enforced at same places</li>
+<li>Recommended rollout: 4096 → 8192 → 16384 with monitoring</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Upstream PR submitted (PR #70529). Target: Ceph 10.0 (was 11.0, moved back to 10.0 by Bipin Kunal).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate performance improvement and safety of osd_max_omap_entries_per_request=16384</div>
+<div>Environment: IBM Ceph 8.1z3 (19.2.1-274.el9cp) with NVMe-backed index pool</div>
 <ul>
-<li>[Shantanu Bhardwaj] Problem Description by the Customer ~~~~~~~~~~ We are running a custom internal librados application (ceph_bucket_prefixes) that reads RGW bucket-index OMAP entries directly via librados (get_omap_vals) to compute per-prefix object/byte statistics. While debugging an apparent und</li>
+<li><span class="step-num">1.</span> Create bucket with high object count (&gt;100K per shard) -- intent: simulate production scale</li>
+<li><span class="step-num">2.</span> Baseline: run OMAP scan with default 1024, measure total wall-clock time -- intent: establish baseline</li>
+<li><span class="step-num">3.</span> Set: <code>ceph config set osd osd_max_omap_entries_per_request 4096 -- intent: first step increase</code></li>
+<li><span class="step-num">4.</span> Re-run scan, measure time and p99 latency for concurrent PUT/DELETE -- intent: measure improvement + impact</li>
+<li><span class="step-num">5.</span> Repeat at 8192 and 16384 -- intent: find optimal value</li>
+<li><span class="step-num">6.</span> Monitor: <code>ceph tell osd.X perf dump (read latency)</code>, <code>ceph tell osd.X dump_objectstore_kv_stats -- intent: check OSD health</code></li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph config get osd osd_max_omap_entries_per_request</code></li>
+<li><code>ceph tell osd.&lt;id&gt; perf dump</code></li>
+<li><code>ceph tell osd.&lt;id&gt; dump_objectstore_kv_stats</code></li>
+<li><code>ceph osd perf</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations</div>
-<div>Environment: IBM Ceph 8.1z3, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: Increasing value of &quot;osd_max_omap_entries_per_request&quot; for improving Bucket-Index Operations</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates performance or safety of non-default osd_max_omap_entries_per_request values.</div>
+<div>GAPS: No test measures OMAP scan throughput at various entry-per-request values. No test validates p99 latency impact on concurrent ops.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> OMAP scan benchmark at 1024, 4096, 8192, 16384 entries with concurrent PUT/DELETE workload</li>
+<li><span class="step-num">2.</span> OSD memory impact measurement at 16384 entries × concurrent ops</li>
+<li><span class="step-num">3.</span> Impact on bucket resharding, multisite sync, lifecycle processing at higher values</li>
+<li><span class="step-num">4.</span> Comparison on HDD vs NVMe-backed index pools</li>
 </ul></div>
 </div>
 

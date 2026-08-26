@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13197: Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Grafana RGW Sync dashboard shows empty values because the metric name construction regex fails when zone names contain hyphens that get converted to underscores by promethize().
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 7.1
-- Component: ceph-dashboard
+The ceph-exporter&#x27;s `promethize()` function converts hyphens to underscores in metric names. For RGW sync metrics like `data-sync-from-&lt;zone&gt;-&lt;counter&gt;`, if the zone name contains hyphens (e.g., &#x27;int-abc&#x27;), after promethize() the metric becomes `ceph_data_sync_from_int_abc_fetch_bytes_sum`. The regex that extracts the zone name only captures up to the first underscore, resulting in `source_zone=&quot;int&quot;` with the leftover `_abc` becoming part of the metric name suffix. Grafana queries `ceph_data_sync_from_zone_fetch_bytes_sum` but Prometheus has `ceph_data_sync_from_zone_abc_fetch_bytes_sum` -- mismatch causes empty graphs.
 
-ENGINEERING FINDINGS:
-- [Anmol Babu] Copying my analysis from chat thread: I see the earlier fix code intact and not replaced by my changes. The customer&#x27;s metric name is ceph_data_sync_from_zone_abc_fetch_bytes_sum with source_zone=&quot;int&quot;. This means their actual zone name is likely int-abc (or int_abc or int.abc).
-- [Sergii Mykhailushko] Hello team, Could you please share if there has been any progress on this recently? I’d need to set the customer expectations on ETA for the resolution, or at least they would appreciate any news on the work on their issue. Thank in advance!
-- [Afreen Misbah] Makes sense, I am raising a fix in a while
-- [Afreen Misbah] raides a fix for this, removed regex match completely as its fragile and have both perf group and counter passed instead to construc metric name, need to verify the fix now
-- [Afreen Misbah] I hope to fix this in any coming z streams and will try for 9.2 if possible as blocker phase is  . Will keep you updated
+KEY EVIDENCE:
+- Anmol Babu analysis: &quot;the fix is to process the zone name before promethize() runs, so the hyphen is preserved&quot;
+- Customer on 7.1z8 still hitting this despite earlier fix for IBMCEPH-861 being present
+- Afreen Misbah: raised PR #70801 &quot;removed regex match completely as its fragile and have both perf group and counter passed instead to construct metric name&quot;
+- Depends on IBMCEPH-14085 for complete resolution
 
 FIX STATUS:
-- Current JIRA status: POST</textarea>
+- Status: Post (fix in progress)
+- PR: https://github.com/ceph/ceph/pull/70801 (removes fragile regex, uses perf group+counter directly)
+- Target: z-stream or 9.2</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page
-Environment: IBM Ceph 7.1, component: ceph-dashboard
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate Grafana RGW Sync Overview shows correct metrics for zones with hyphens in names
+Environment: IBM Ceph 7.1+ multisite cluster with zone names containing hyphens
 
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Set up multisite with zone names containing hyphens (e.g., &#x27;site-east&#x27;, &#x27;zone-1-primary&#x27;) -- intent: create conditions for regex failure
+2. Enable sync between zones and generate data -- intent: produce sync metrics
+3. Query Prometheus for sync metrics -- intent: verify metric name format
+   ```
+   curl http://&lt;prometheus&gt;:9095/api/v1/query?query=ceph_data_sync_from_zone_fetch_bytes_sum
+   ```
+4. Check Grafana RGW Sync Overview dashboard -- intent: verify data appears
+
+DIAGNOSTIC COMMANDS:
+- `curl http://&lt;mgr-ip&gt;:9283/metrics | grep data_sync`
+- `curl http://&lt;prometheus&gt;:9095/api/v1/label/source_zone/values`
+- Check Grafana query inspector for actual vs expected metric names</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates Grafana sync metrics with hyphenated zone names. Regression from earlier fix.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- No automated test for RGW sync metric name construction with special characters in zone names
+- No test validating Grafana dashboard queries match actual Prometheus metric names
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</textarea>
+- Multisite setup with hyphenated zone names, verify Grafana Sync Overview shows data
+- Verify source_zone label matches actual zone name in Prometheus
+- Test with various zone name formats: hyphens, underscores, dots, numbers</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,44 +245,52 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Grafana RGW Sync dashboard shows empty values because the metric name construction regex fails when zone names contain hyphens that get converted to underscores by promethize().</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The ceph-exporter&#x27;s <code>promethize()</code> function converts hyphens to underscores in metric names. For RGW sync metrics like <code>data-sync-from-&lt;zone&gt;-&lt;counter&gt;</code>, if the zone name contains hyphens (e.g., &#x27;int-abc&#x27;), after promethize() the metric becomes <code>ceph_data_sync_from_int_abc_fetch_bytes_sum</code>. The regex that extracts the zone name only captures up to the first underscore, resulting in <code>source_zone=&quot;int&quot;</code> with the leftover <code>_abc</code> becoming part of the metric name suffix. Grafana queries <code>ceph_data_sync_from_zone_fetch_bytes_sum</code> but Prometheus has <code>ceph_data_sync_from_zone_abc_fetch_bytes_sum</code> -- mismatch causes empty graphs.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 7.1</li>
-<li>Component: ceph-dashboard</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Anmol Babu] Copying my analysis from chat thread: I see the earlier fix code intact and not replaced by my changes. The customer&#x27;s metric name is ceph_data_sync_from_zone_abc_fetch_bytes_sum with source_zone=&quot;int&quot;. This means their actual zone name is likely int-abc (or int_abc or int.abc).</li>
-<li>[Sergii Mykhailushko] Hello team, Could you please share if there has been any progress on this recently? I’d need to set the customer expectations on ETA for the resolution, or at least they would appreciate any news on the work on their issue. Thank in advance!</li>
-<li>[Afreen Misbah] Makes sense, I am raising a fix in a while</li>
-<li>[Afreen Misbah] raides a fix for this, removed regex match completely as its fragile and have both perf group and counter passed instead to construc metric name, need to verify the fix now</li>
-<li>[Afreen Misbah] I hope to fix this in any coming z streams and will try for 9.2 if possible as blocker phase is  . Will keep you updated</li>
+<li>Anmol Babu analysis: &quot;the fix is to process the zone name before promethize() runs, so the hyphen is preserved&quot;</li>
+<li>Customer on 7.1z8 still hitting this despite earlier fix for IBMCEPH-861 being present</li>
+<li>Afreen Misbah: raised PR #70801 &quot;removed regex match completely as its fragile and have both perf group and counter passed instead to construct metric name&quot;</li>
+<li>Depends on IBMCEPH-14085 for complete resolution</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: POST</li>
+<li>Status: Post (fix in progress)</li>
+<li>PR: https://github.com/ceph/ceph/pull/70801 (removes fragile regex, uses perf group+counter directly)</li>
+<li>Target: z-stream or 9.2</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Appears to be regression of IBMCEPH-861 Grafana Portal issue on RGW Graphs on Sync page</div>
-<div>Environment: IBM Ceph 7.1, component: ceph-dashboard</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate Grafana RGW Sync Overview shows correct metrics for zones with hyphens in names</div>
+<div>Environment: IBM Ceph 7.1+ multisite cluster with zone names containing hyphens</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Set up multisite with zone names containing hyphens (e.g., &#x27;site-east&#x27;, &#x27;zone-1-primary&#x27;) -- intent: create conditions for regex failure</li>
+<li><span class="step-num">2.</span> Enable sync between zones and generate data -- intent: produce sync metrics</li>
+<li><span class="step-num">3.</span> Query Prometheus for sync metrics -- intent: verify metric name format</li>
+</ul>
+<pre>
+   curl http://&lt;prometheus&gt;:9095/api/v1/query?query=ceph_data_sync_from_zone_fetch_bytes_sum
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Check Grafana RGW Sync Overview dashboard -- intent: verify data appears</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>curl http://&amp;lt;mgr-ip&amp;gt;:9283/metrics | grep data_sync</code></code></li>
+<li><code><code>curl http://&amp;lt;prometheus&amp;gt;:9095/api/v1/label/source_zone/values</code></code></li>
+<li>Check Grafana query inspector for actual vs expected metric names</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates Grafana sync metrics with hyphenated zone names. Regression from earlier fix.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No automated test for RGW sync metric name construction with special characters in zone names</li>
+<li>No test validating Grafana dashboard queries match actual Prometheus metric names</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Multisite setup with hyphenated zone names, verify Grafana Sync Overview shows data</li>
+<li>Verify source_zone label matches actual zone name in Prometheus</li>
+<li>Test with various zone name formats: hyphens, underscores, dots, numbers</li>
 </ul></div>
 </div>
 

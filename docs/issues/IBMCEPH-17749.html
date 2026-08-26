@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17749: Port Range for OSDs needs to be set as 6800-7568</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,32 +189,54 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Port Range for OSDs needs to be set as 6800-7568
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: IBM Ceph documentation states OSD port range as 6800-7300, but the actual default range is 6800-7568 (ms_bind_port_min=6800, ms_bind_port_max=7568).
 
-ROOT CAUSE:
-- Affected version(s): 8.1, 9.0
-- Component: documentation
+ROOT CAUSE: This is a documentation-only issue. The OSD messenger bind port range is controlled by config options ms_bind_port_min (default 6800) and ms_bind_port_max (default 7568). The IBM Ceph documentation for versions 8.1, 9.0, and 9.1 incorrectly states the range as 6800-7300. The actual values have been 6800-7568 since at least Ceph 6.x (confirmed in JIRA comments by Aarti Dhikale). Customers relying on the documented range for firewall rules would block OSD ports 7301-7568, potentially causing OSD messenger binding failures on clusters with many OSDs per host.
 
-FIX STATUS:
-- Current JIRA status: New</textarea>
+KEY EVIDENCE:
+- `ceph config show osd.0 ms_bind_port_min` returns 6800
+- `ceph config show osd.0 ms_bind_port_max` returns 7568
+- Documentation says 6800-7300 (incorrect)
+- Confirmed applicable to all 8.1 and 9.x versions per JIRA comment
+- This change has been present since Ceph 6 per Aarti Dhikale&#x27;s comment
+- Labels: Documentation, IBM_Customer_Issue
+
+FIX STATUS: Documentation bug assigned to Rivka Pollack. Status: New. No doc update merged yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Port Range for OSDs needs to be set as 6800-7568
-Environment: IBM Ceph 8.1, component: documentation
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify the actual OSD port range differs from documentation.
+Environment: IBM Ceph 8.1 or 9.x (any version).
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy a Ceph cluster with OSDs -- intent: get a running cluster to query config
+2. Query the OSD port range configuration:
+   ceph config show osd.0 ms_bind_port_min
+   ceph config show osd.0 ms_bind_port_max
+   -- intent: verify actual defaults (should return 6800 and 7568)
+3. Compare against documentation which states 6800-7300
+   -- intent: confirm the discrepancy
+4. On a host with many OSDs, verify that OSDs bind to ports above 7300:
+   ss -tlnp | grep ceph-osd | awk &#x27;{print $4}&#x27; | sort -t: -k2 -n
+   -- intent: demonstrate that ports above 7300 are in active use
+
+DIAGNOSTIC COMMANDS:
+- ceph config show osd.0 ms_bind_port_min
+- ceph config show osd.0 ms_bind_port_max
+- ceph config dump | grep ms_bind_port
+- ss -tlnp | grep ceph-osd</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: This is a documentation issue, not a code bug. No QE test coverage needed for the fix itself.
 
 GAPS:
-- Existing documentation tests may not cover: Port Range for OSDs needs to be set as 6800-7568
+- No automated test validates that documentation-stated port ranges match actual config defaults
+- No test checks OSD port binding against documented ranges for firewall rule validation
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported documentation scenario, verify correct behavior</textarea>
+1. Config validation test: Verify ms_bind_port_min=6800 and ms_bind_port_max=7568 are the actual defaults across all supported versions (8.1, 9.0, 9.1, 9.2)
+2. High-OSD-count port test: Deploy 50+ OSDs on a single host and verify all bind within the 6800-7568 range
+3. Firewall rule test: Apply firewall rules allowing only 6800-7568 and verify all OSDs start successfully</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -225,30 +247,54 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Port Range for OSDs needs to be set as 6800-7568</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">IBM Ceph documentation states OSD port range as 6800-7300, but the actual default range is 6800-7568 (ms_bind_port_min=6800, ms_bind_port_max=7568).</div>
+<div>ROOT CAUSE: This is a documentation-only issue. The OSD messenger bind port range is controlled by config options ms_bind_port_min (default 6800) and ms_bind_port_max (default 7568). The IBM Ceph documentation for versions 8.1, 9.0, and 9.1 incorrectly states the range as 6800-7300. The actual values have been 6800-7568 since at least Ceph 6.x (confirmed in JIRA comments by Aarti Dhikale). Customers relying on the documented range for firewall rules would block OSD ports 7301-7568, potentially causing OSD messenger binding failures on clusters with many OSDs per host.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1, 9.0</li>
-<li>Component: documentation</li>
+<li><code><code>ceph config show osd.0 ms_bind_port_min</code></code> returns 6800</li>
+<li><code><code>ceph config show osd.0 ms_bind_port_max</code></code> returns 7568</li>
+<li>Documentation says 6800-7300 (incorrect)</li>
+<li>Confirmed applicable to all 8.1 and 9.x versions per JIRA comment</li>
+<li>This change has been present since Ceph 6 per Aarti Dhikale&#x27;s comment</li>
+<li>Labels: Documentation, IBM_Customer_Issue</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Documentation bug assigned to Rivka Pollack. Status: New. No doc update merged yet.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify the actual OSD port range differs from documentation.</div>
+<div>Environment: IBM Ceph 8.1 or 9.x (any version).</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Port Range for OSDs needs to be set as 6800-7568</div>
-<div>Environment: IBM Ceph 8.1, component: documentation</div>
+<li><span class="step-num">1.</span> Deploy a Ceph cluster with OSDs -- intent: get a running cluster to query config</li>
+<li><span class="step-num">2.</span> Query the OSD port range configuration:</li>
+</ul>
+<div>ceph config show osd.0 ms_bind_port_min</div>
+<div>ceph config show osd.0 ms_bind_port_max</div>
+<div>-- intent: verify actual defaults (should return 6800 and 7568)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Compare against documentation which states 6800-7300</li>
+</ul>
+<div>-- intent: confirm the discrepancy</div>
+<ul>
+<li><span class="step-num">4.</span> On a host with many OSDs, verify that OSDs bind to ports above 7300:</li>
+</ul>
+<div>ss -tlnp | grep ceph-osd | awk &#x27;{print $4}&#x27; | sort -t: -k2 -n</div>
+<div>-- intent: demonstrate that ports above 7300 are in active use</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config show osd.0 ms_bind_port_min</code></li>
+<li><code>ceph config show osd.0 ms_bind_port_max</code></li>
+<li><code>ceph config dump | grep ms_bind_port</code></li>
+<li>ss -tlnp | grep ceph-osd</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">This is a documentation issue, not a code bug. No QE test coverage needed for the fix itself.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing documentation tests may not cover: Port Range for OSDs needs to be set as 6800-7568</li>
+<li>No automated test validates that documentation-stated port ranges match actual config defaults</li>
+<li>No test checks OSD port binding against documented ranges for firewall rule validation</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported documentation scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> Config validation test: Verify ms_bind_port_min=6800 and ms_bind_port_max=7568 are the actual defaults across all supported versions (8.1, 9.0, 9.1, 9.2)</li>
+<li><span class="step-num">2.</span> High-OSD-count port test: Deploy 50+ OSDs on a single host and verify all bind within the 6800-7568 range</li>
+<li><span class="step-num">3.</span> Firewall rule test: Apply firewall rules allowing only 6800-7568 and verify all OSDs start successfully</li>
 </ul></div>
 </div>
 

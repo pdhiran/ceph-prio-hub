@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13769: [Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload
-
-ROOT CAUSE:
-- Affected version(s): 9.0z2
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [K Amarnath Reddy] We are hitting this issue in our scale runs more frequently.  Crashed osds are not recovering. Logs   http://magna002.ceph.redhat.com/ceph-qe-logs/amk/ec_crash_bz_logs/ This is on ceph version :  [ceph: root@grim041 /]# ceph versions {     &quot;mon&quot;: {         &quot;ceph version 20.2.1-21
-- [Brad Hubbard] Looking at this. Could you make available several of the coredumps listed in  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/ec_crash_bz_logs/core_dumps/  please   ?
-- [K Amarnath Reddy] , Currently, the setup has been reimaged, so I no longer have access to collect the required logs from the previous state. Could you please help share a checklist of logs that need to be collected in case of a crash, so we can capture them properly if the issue is reproduced aga
-- [Brad Hubbard] In the logs provided I see three separate crashes. $ ag &quot;: In function&quot;|cut -f2 -d&quot;&#x27;&quot; |sort -u
-virtual void ClientReadCompleter::finish_single_request(const hobject_t&amp;, ECCommon::read_result_t&amp;&amp;, ECCommon::read_request_t&amp;)
-void BlueStore::_txc_add_transaction(TransContext*, Objec
-- [K Amarnath Reddy] , It is the same hardware as reported in 14368, but the Ceph version is different. We have also reported another MDS crash.Please let me know if this matches what you were looking for
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS restart under heavy EC workload causes OSD crash loop due to BlueStore clonerange2 error on EC pool objects.
+ROOT CAUSE: The initial failure is a BlueStore error during _txc_add_transaction: an EINVAL (error 22) on a &#x27;clonerange2&#x27; operation (op 30) for an EC-coded object. BlueStore does not support clonerange2 for EC pools -- this operation is being incorrectly submitted to BlueStore during heavy CephFS workload with EC data pool after MDS restart. The MDS restart triggers client reconnection storms and cap recovery, which creates a burst of write operations. The clonerange2 failure corrupts an object, and subsequent read attempts on that object trigger ECCommon::ReadPipeline::complete_read_op and ECCommon::RecoveryBackend::handle_recovery_read_complete assert failures, causing cascade OSD crashes.
+KEY EVIDENCE:
+- Three distinct crash types: BlueStore _txc_add_transaction abort, ECCommon ReadPipeline assert, ECCommon RecoveryBackend assert
+- Initial error: &#x27;bluestore _txc_add_transaction error (22) Invalid argument not handled on operation 30 (op 1, counting from 0)&#x27; -- clonerange2 on EC object
+- 8 OSDs in error state across 4 nodes (grim001-004)
+- Version: 20.1.0-178.el9cp (Tentacle 9.0z2) and also on 20.2.1-216.el9cp
+- Reproducible: Deploy EC 2+2 CephFS data pool, fill to 20%, run 300+ clients with heavy IO for 35+ hours, restart MDS
+- PG_DAMAGED, OBJECT_UNFOUND health warnings observed
+- Assigned to Brad Hubbard; related to IBMCEPH-14368
+FIX STATUS: Under investigation by Brad Hubbard. Core dumps requested but cluster was reimaged. Reproduces in QE scale runs &#x27;more frequently&#x27;. No fix available yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload
-Environment: IBM Ceph 9.0z2, component: cephfs
-
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce OSD crash loop triggered by MDS restart under heavy EC workload
+Environment: IBM Ceph 9.0z2 (20.1.0-178.el9cp) or 9.1 (20.2.1-216.el9cp)
+1. Deploy CephFS with EC 2+2 data pool (k=2, m=2) -- intent: create EC-backed CephFS
+2. Fill to ~20% capacity (~5.4 TiB, ~11M objects) using 300+ kernel clients -- intent: create substantial data
+3. Run sustained IO: mix of fio, mdtest, dbench, dd with conv=fsync across all mounts for 35+ hours -- intent: create heavy IO pressure
+4. Restart all MDS daemons: ceph orch restart mds.cephfs -- intent: trigger crash
+5. Within ~1 minute, observe OSDs entering error state -- intent: confirm reproduction
+6. Collect: sosreport --all-logs, dmesg, core dumps from crashed OSDs -- intent: gather debug data
+DIAGNOSTIC COMMANDS:
+- ceph health detail
+- ceph osd tree (look for &#x27;down&#x27; OSDs)
+- journalctl -u ceph-osd@&lt;id&gt; | grep -E &#x27;assert|abort|error&#x27;
+- ceph pg dump | grep -E &#x27;down|damaged|unfound&#x27;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Scale test may not reach threshold that triggers this issue
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue is reproducible in QE scale runs but no targeted regression test exists.
+GAPS: No test specifically validates EC pool stability during MDS restart under heavy load. No test for BlueStore clonerange2 handling on EC objects.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+1. CephFS EC 2+2 data pool + MDS restart during heavy IO (300+ clients, 35+ hours)
+2. Specifically test clonerange2/snapshot operations on EC pool objects during concurrent writes
+3. MDS failover (not just restart) under the same conditions
+4. Verify OSDs with debug_osd=20 to capture the exact code path leading to clonerange2 on EC</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,44 +236,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS restart under heavy EC workload causes OSD crash loop due to BlueStore clonerange2 error on EC pool objects.</div>
+<div>ROOT CAUSE: The initial failure is a BlueStore error during _txc_add_transaction: an EINVAL (error 22) on a &#x27;clonerange2&#x27; operation (op 30) for an EC-coded object. BlueStore does not support clonerange2 for EC pools -- this operation is being incorrectly submitted to BlueStore during heavy CephFS workload with EC data pool after MDS restart. The MDS restart triggers client reconnection storms and cap recovery, which creates a burst of write operations. The clonerange2 failure corrupts an object, and subsequent read attempts on that object trigger ECCommon::ReadPipeline::complete_read_op and ECCommon::RecoveryBackend::handle_recovery_read_complete assert failures, causing cascade OSD crashes.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: cephfs</li>
+<li>Three distinct crash types: BlueStore _txc_add_transaction abort, ECCommon ReadPipeline assert, ECCommon RecoveryBackend assert</li>
+<li>Initial error: &#x27;bluestore _txc_add_transaction error (22) Invalid argument not handled on operation 30 (op 1, counting from 0)&#x27; -- clonerange2 on EC object</li>
+<li>8 OSDs in error state across 4 nodes (grim001-004)</li>
+<li>Version: 20.1.0-178.el9cp (Tentacle 9.0z2) and also on 20.2.1-216.el9cp</li>
+<li>Reproducible: Deploy EC 2+2 CephFS data pool, fill to 20%, run 300+ clients with heavy IO for 35+ hours, restart MDS</li>
+<li>PG_DAMAGED, OBJECT_UNFOUND health warnings observed</li>
+<li>Assigned to Brad Hubbard; related to IBMCEPH-14368</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Under investigation by Brad Hubbard. Core dumps requested but cluster was reimaged. Reproduces in QE scale runs &#x27;more frequently&#x27;. No fix available yet.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce OSD crash loop triggered by MDS restart under heavy EC workload</div>
+<div>Environment: IBM Ceph 9.0z2 (20.1.0-178.el9cp) or 9.1 (20.2.1-216.el9cp)</div>
 <ul>
-<li>[K Amarnath Reddy] We are hitting this issue in our scale runs more frequently.  Crashed osds are not recovering. Logs   http://magna002.ceph.redhat.com/ceph-qe-logs/amk/ec_crash_bz_logs/ This is on <code>ceph version :  [ceph: root@grim041 /]# ceph versions {     &quot;mon&quot;: {         &quot;ceph version 20.2.1-21</code></li>
-<li>[Brad Hubbard] Looking at this. Could you make available several of the coredumps listed in  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/ec_crash_bz_logs/core_dumps/  please   ?</li>
-<li>[K Amarnath Reddy] , Currently, the setup has been reimaged, so I no longer have access to collect the required logs from the previous state. Could you please help share a checklist of logs that need to be collected in case of a crash, so we can capture them properly if the issue is reproduced aga</li>
-<li>[Brad Hubbard] In the logs provided I see three separate crashes. $ ag &quot;: In function&quot;|cut -f2 -d&quot;&#x27;&quot; |sort -u</li>
+<li><span class="step-num">1.</span> Deploy CephFS with EC 2+2 data pool (k=2, m=2) -- intent: create EC-backed CephFS</li>
+<li><span class="step-num">2.</span> Fill to ~20% capacity (~5.4 TiB, ~11M objects) using 300+ kernel clients -- intent: create substantial data</li>
+<li><span class="step-num">3.</span> Run sustained IO: mix of fio, mdtest, dbench, dd with conv=fsync across all mounts for 35+ hours -- intent: create heavy IO pressure</li>
+<li><span class="step-num">4.</span> Restart all MDS daemons: <code>ceph orch restart mds.cephfs -- intent: trigger crash</code></li>
+<li><span class="step-num">5.</span> Within ~1 minute, observe OSDs entering error state -- intent: confirm reproduction</li>
+<li><span class="step-num">6.</span> Collect: sosreport --all-logs, dmesg, core dumps from crashed OSDs -- intent: gather debug data</li>
 </ul>
-<div>virtual void ClientReadCompleter::finish_single_request(const hobject_t&amp;, ECCommon::read_result_t&amp;&amp;, ECCommon::read_request_t&amp;)</div>
-<div>void BlueStore::_txc_add_transaction(TransContext*, Objec</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[K Amarnath Reddy] , It is the same hardware as reported in 14368, but the Ceph version is different. We have also reported another MDS crash.Please let me know if this matches what you were looking for</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph health detail</code></li>
+<li><code>ceph osd tree (look for &#x27;down&#x27; OSDs)</code></li>
+<li><code>journalctl -u ceph-osd@&lt;id&gt; | grep -E &#x27;assert|abort|error&#x27;</code></li>
+<li><code>ceph pg dump | grep -E &#x27;down|damaged|unfound&#x27;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Scale] Restart of active MDS leads to OSDs entering an error state during heavy workload</div>
-<div>Environment: IBM Ceph 9.0z2, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Scale test may not reach threshold that triggers this issue</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue is reproducible in QE scale runs but no targeted regression test exists.</div>
+<div>GAPS: No test specifically validates EC pool stability during MDS restart under heavy load. No test for BlueStore clonerange2 handling on EC objects.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> CephFS EC 2+2 data pool + MDS restart during heavy IO (300+ clients, 35+ hours)</li>
+<li><span class="step-num">2.</span> Specifically test clonerange2/snapshot operations on EC pool objects during concurrent writes</li>
+<li><span class="step-num">3.</span> MDS failover (not just restart) under the same conditions</li>
+<li><span class="step-num">4.</span> Verify OSDs with debug_osd=20 to capture the exact code path leading to clonerange2 on EC</li>
 </ul></div>
 </div>
 

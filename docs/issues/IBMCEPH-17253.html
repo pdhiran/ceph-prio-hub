@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17253: why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,33 +189,33 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: build
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Investigation into large file count difference (~3700 files) between IBM and RH container images for the same Ceph version.
+ROOT CAUSE: The IBM-side and RH-side container images are built via completely separate build pipelines (IBM SPS vs RH OSBS). They are not expected to be identical. Justin Caratzas (build engineer) confirmed: &#x27;These are two different containers, built completely separately. I would expect the files to be different.&#x27; The concern was raised because the large delta might indicate missing components or explain functional issues encountered with IBM images.
+KEY EVIDENCE:
+- podman image diff between RH and IBM 9.x images: 3738 files different
+- podman image diff between RH and IBM 8.x images: 3076 files different
+- Build engineer confirms separate build systems produce expected differences
+- Resolved as &#x27;not a bug&#x27;
+FIX STATUS: Closed as &#x27;not a bug&#x27;. The images are built independently and differences are expected.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?
-Environment: IBM Ceph 8.1, component: build
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Quantify file differences between IBM and RH Ceph container images.
+Environment: Any system with podman and access to both registries
+1. podman pull registry.redhat.io/rhceph/rhceph-9-rhel9:&lt;tag&gt; -- intent: get RH image
+2. podman pull cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:&lt;tag&gt; -- intent: get IBM image
+3. podman image diff &lt;rh-image&gt; &lt;ibm-image&gt; | wc -l -- intent: count file differences
+DIAGNOSTIC COMMANDS:
+- podman image diff &lt;image1&gt; &lt;image2&gt; -- compare image layers
+- podman inspect &lt;image&gt; -- check image metadata and layers</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing build tests may not cover: why do we have such a massive difference between the image we ship on RH side and on IBM side for ce
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated comparison test between IBM and RH images.
+GAPS: No CI gate validates that critical Ceph binaries/libraries are present in IBM images. No functional parity check between build pipelines.
 SCENARIOS NEEDED:
-- Functional: reproduce reported build scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Automated check that all critical Ceph daemon binaries exist in IBM images
+- Functional smoke test of IBM images covering basic ceph operations</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -226,31 +226,34 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Investigation into large file count difference (~3700 files) between IBM and RH container images for the same Ceph version.</div>
+<div>ROOT CAUSE: The IBM-side and RH-side container images are built via completely separate build pipelines (IBM SPS vs RH OSBS). They are not expected to be identical. Justin Caratzas (build engineer) confirmed: &#x27;These are two different containers, built completely separately. I would expect the files to be different.&#x27; The concern was raised because the large delta might indicate missing components or explain functional issues encountered with IBM images.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: build</li>
+<li><code>podman image diff between RH and IBM 9.x images: 3738 files different</code></li>
+<li><code>podman image diff between RH and IBM 8.x images: 3076 files different</code></li>
+<li>Build engineer confirms separate build systems produce expected differences</li>
+<li>Resolved as &#x27;not a bug&#x27;</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. The images are built independently and differences are expected.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Quantify file differences between IBM and RH Ceph container images.</div>
+<div>Environment: Any system with podman and access to both registries</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- why do we have such a massive difference between the image we ship on RH side and on IBM side for ceph?</div>
-<div>Environment: IBM Ceph 8.1, component: build</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing build tests may not cover: why do we have such a massive difference between the image we ship on RH side and on IBM side for ce</li>
+<li><span class="step-num">1.</span> <code>podman pull registry.redhat.io/rhceph/rhceph-9-rhel9:&lt;tag&gt; -- intent: get RH image</code></li>
+<li><span class="step-num">2.</span> <code>podman pull cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:&lt;tag&gt; -- intent: get IBM image</code></li>
+<li><span class="step-num">3.</span> <code>podman image diff &lt;rh-image&gt; &lt;ibm-image&gt; | wc -l -- intent: count file differences</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>podman image diff &lt;image1&gt; &lt;image2&gt; -- compare image layers</code></li>
+<li><code>podman inspect &lt;image&gt; -- check image metadata and layers</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated comparison test between IBM and RH images.</div>
+<div>GAPS: No CI gate validates that critical Ceph binaries/libraries are present in IBM images. No functional parity check between build pipelines.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported build scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Automated check that all critical Ceph daemon binaries exist in IBM images</li>
+<li>Functional smoke test of IBM images covering basic <code>ceph operations</code></li>
 </ul></div>
 </div>
 

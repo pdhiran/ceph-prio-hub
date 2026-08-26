@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16468: The Ceph Grafana dashboard is not showing any data for RGW and RBD.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,47 +189,60 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: The Ceph Grafana dashboard is not showing any data for RGW and RBD.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Grafana dashboards for RGW and RBD show no data because firewall blocks port 9926 (ceph-exporter) on RGW nodes, preventing Prometheus from scraping metrics.
 
 ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: ceph-dashboard
+The Prometheus targets for ceph-exporter endpoints on the three RGW nodes were in &#x27;down&#x27; state with error &#x27;No route to host&#x27;. The ceph-exporter service was listening on port 9926, but firewalld was not configured to allow traffic on that port from the Prometheus node. This is a network/firewall configuration issue, not a software bug.
 
-ENGINEERING FINDINGS:
-- [Kritik Sachdeva] Hello team /  , I have tried to test this issue details in the lab environment, and sharing the details from the lab testing of what we observed. ## For RBD overview dashboard + In the lab environment, we have observed that when the pool doesn’t have the  application_metadata  se
-- [Aarti Dhikale] Hello   , Thanks for sharing output . To debug the issue further, please collect the following information: For the RBD Overview: Configure the RBD pools to be monitored by the Prometheus module: ceph config set mgr mgr/prometheus/rbd_stats_pools &quot;pool1,pool2,...,poolN&quot; Verify th
-- [Aarti Dhikale] Hello   , Sorry for the delayed response. We need some additional information from the customer&#x27;s environment to continue the investigation. Could you please collect and share the following information? From the active MGR node , run the following commands and share the output: c
-- [Aarti Dhikale] Hello   , As per the screenshots attached, the prometheus endpoint target for all of the 3 below IP is in down state because of &quot;No route to host&quot; and hence the reason why the metric from RGW are not available and hence not visible on the grafana dashboard. Kindly check the conne
-- [Aarti Dhikale] Hello   ,Thanks for the update. For further investigation, can we get the output of the command below from the customer? curl -s https://otn-ac-cph1mg01.aircloud.common.airbusds.corp:3000/api/dashboards/home
-
-curl -s https://otn-ac-cph1mg01.aircloud.common.airbusds.corp:3000/api/
+KEY EVIDENCE:
+- Aarti Dhikale: &quot;prometheus endpoint target for all of the 3 [RGW node IPs] is in down state because of &#x27;No route to host&#x27;&quot;
+- `curl: (7) Failed to connect to &lt;IP&gt; port 9926: No route to host`
+- Fix: `firewall-cmd --add-port=9926/tcp --permanent; firewall-cmd --reload`
+- Customer confirmed main dashboards working after fix
+- Version: 18.2.1-381.el9cp (IBM Ceph 7.1)
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (Done)
+- Resolution: Customer added port 9926/tcp to firewall rules on RGW nodes
+- Separate issue opened for Grafana S3 Analytics plugin loading problem</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- The Ceph Grafana dashboard is not showing any data for RGW and RBD.
-Environment: IBM Ceph 7.1, component: ceph-dashboard
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify Grafana RGW/RBD dashboards display data when firewall rules are correct
+Environment: IBM Ceph 7.1+ with Grafana, Prometheus, and ceph-exporter on RGW nodes
 
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Deploy cluster with RGW and monitoring stack -- intent: baseline
+2. Verify ceph-exporter is listening on port 9926 on RGW nodes -- intent: confirm service running
+   ```
+   ss -ntlp | grep 9926
+   ```
+3. Check if firewall allows port 9926 from Prometheus node -- intent: identify blockage
+   ```
+   firewall-cmd --list-ports
+   curl http://&lt;rgw-node-ip&gt;:9926/metrics | head
+   ```
+4. If blocked, add port and verify Grafana shows data -- intent: confirm fix
+   ```
+   firewall-cmd --add-port=9926/tcp --permanent &amp;&amp; firewall-cmd --reload
+   ```
 
-SCENARIO DETAIL (from engineering comments):
-Hello team /  , I have tried to test this issue details in the lab environment, and sharing the details from the lab testing of what we observed. ## For RBD overview dashboard + In the lab environment</textarea>
+DIAGNOSTIC COMMANDS:
+- `curl http://&lt;ceph-exporter-ip&gt;:9926/metrics | grep ceph_rgw`
+- Check Prometheus UI targets page for endpoint status
+- `firewall-cmd --list-ports` on all ceph-exporter nodes</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test validates that ceph-exporter ports are accessible through firewall from Prometheus.
 
 GAPS:
-- Existing ceph-dashboard tests may not cover: The Ceph Grafana dashboard is not showing any data for RGW and RBD.
+- No post-deployment connectivity check between Prometheus and ceph-exporter endpoints
+- No validation that firewall rules include port 9926 after service deployment
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- After monitoring stack deployment, verify all ceph-exporter targets are &#x27;up&#x27; in Prometheus
+- Validate RGW metrics appear in Grafana within 5 minutes of deployment
+- Negative test: with port blocked, verify clear error in Prometheus targets</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,44 +253,62 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">The Ceph Grafana dashboard is not showing any data for RGW and RBD.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Grafana dashboards for RGW and RBD show no data because firewall blocks port 9926 (ceph-exporter) on RGW nodes, preventing Prometheus from scraping metrics.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The Prometheus targets for ceph-exporter endpoints on the three RGW nodes were in &#x27;down&#x27; state with error &#x27;No route to host&#x27;. The ceph-exporter service was listening on port 9926, but firewalld was not configured to allow traffic on that port from the Prometheus node. This is a network/firewall configuration issue, not a software bug.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: ceph-dashboard</li>
+<li>Aarti Dhikale: &quot;prometheus endpoint target for all of the 3 [RGW node IPs] is in down state because of &#x27;No route to host&#x27;&quot;</li>
+<li><code>curl: (7) Failed to connect to &amp;lt;IP&amp;gt; port 9926: No route to host</code></li>
+<li>Fix: <code>firewall-cmd --add-port=9926/tcp --permanent; firewall-cmd --reload</code></li>
+<li>Customer confirmed main dashboards working after fix</li>
+<li>Version: 18.2.1-381.el9cp (IBM Ceph 7.1)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Kritik Sachdeva] Hello team /  , I have tried to test this issue details in the lab environment, and sharing the details from the lab testing of what we observed. ## For RBD overview dashboard + In the lab environment, we have observed that when the pool doesn’t have the  application_metadata  se</li>
-<li>[Aarti Dhikale] Hello   , Thanks for sharing output . To debug the issue further, please collect the following information: For the RBD Overview: Configure the RBD pools to be monitored by the Prometheus module: <code>ceph config set mgr mgr/prometheus/rbd_stats_pools &quot;pool1</code>,pool2,...,poolN&quot; Verify th</li>
-<li>[Aarti Dhikale] Hello   , Sorry for the delayed response. We need some additional information from the customer&#x27;s environment to continue the investigation. Could you please collect and share the following information? From the active MGR node , run the following commands and share the output: c</li>
-<li>[Aarti Dhikale] Hello   , As per the screenshots attached, the prometheus endpoint target for all of the 3 below IP is in down state because of &quot;No route to host&quot; and hence the reason why the metric from RGW are not available and hence not visible on the grafana dashboard. Kindly check the conne</li>
-<li>[Aarti Dhikale] Hello   ,Thanks for the update. For further investigation, can we get the output of the command below from the customer? <code>curl -s https://otn-ac-cph1mg01.aircloud.common.airbusds.corp:3000/api/dashboards/home</code></li>
-</ul>
-<div>curl -s https://otn-ac-cph1mg01.aircloud.common.airbusds.corp:3000/api/</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (Done)</li>
+<li>Resolution: Customer added port 9926/tcp to firewall rules on RGW nodes</li>
+<li>Separate issue opened for Grafana S3 Analytics plugin loading problem</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- The Ceph Grafana dashboard is not showing any data for RGW and RBD.</div>
-<div>Environment: IBM Ceph 7.1, component: ceph-dashboard</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify Grafana RGW/RBD dashboards display data when firewall rules are correct</div>
+<div>Environment: IBM Ceph 7.1+ with Grafana, Prometheus, and ceph-exporter on RGW nodes</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy cluster with RGW and monitoring stack -- intent: baseline</li>
+<li><span class="step-num">2.</span> Verify ceph-exporter is listening on port 9926 on RGW nodes -- intent: confirm service running</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hello team /  , I have tried to test this issue details in the lab environment, and sharing the details from the lab testing of what we observed. ## For RBD overview dashboard + In the lab environment</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<pre>
+   ss -ntlp | grep 9926
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Check if firewall allows port 9926 from Prometheus node -- intent: identify blockage</li>
+</ul>
+<pre>
+   firewall-cmd --list-ports
+   curl http://&lt;rgw-node-ip&gt;:9926/metrics | head
+</pre>
+<ul>
+<li><span class="step-num">4.</span> If blocked, add port and verify Grafana shows data -- intent: confirm fix</li>
+</ul>
+<pre>
+   firewall-cmd --add-port=9926/tcp --permanent &amp;&amp; firewall-cmd --reload
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>curl http://&amp;lt;ceph-exporter-ip&amp;gt;:9926/metrics | grep ceph_rgw</code></code></li>
+<li>Check Prometheus UI targets page for endpoint status</li>
+<li><code>firewall-cmd --list-ports</code> on all ceph-exporter nodes</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test validates that ceph-exporter ports are accessible through firewall from Prometheus.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing ceph-dashboard tests may not cover: The Ceph Grafana dashboard is not showing any data for RGW and RBD.</li>
+<li>No post-deployment connectivity check between Prometheus and ceph-exporter endpoints</li>
+<li>No validation that firewall rules include port 9926 after service deployment</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>After monitoring stack deployment, verify all ceph-exporter targets are &#x27;up&#x27; in Prometheus</li>
+<li>Validate RGW metrics appear in Grafana within 5 minutes of deployment</li>
+<li>Negative test: with port blocked, verify clear error in Prometheus targets</li>
 </ul></div>
 </div>
 

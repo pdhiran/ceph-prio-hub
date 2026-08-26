@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10996: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: monitoring
-
-ENGINEERING FINDINGS:
-- [Ankush Behl] Hi Bipin, Let us investigate and see what all is missing and what is the scope of work here.  I’m assigning it to   for investigation and update.
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE for device-class-granularity metrics in ceph osd df, Prometheus, and Grafana dashboards.
+ROOT CAUSE: Feature request. With CRUSH device classes (hdd, ssd), aggregate cluster metrics (min/max/stddev in ceph osd df, Prometheus metric labels, Grafana dashboards) conflate different device classes, making per-class analysis impractical. Requests: (1) ceph osd df should report per-device-class min/max/stddev, (2) add deviceclass label to OSD-granularity Prometheus metrics, (3) Grafana template variables for device class filtering.
+KEY EVIDENCE:
+- ceph osd df shows aggregate MIN/MAX VAR and STDDEV across all device classes
+- Customer has mixed hdd+ssd clusters where metrics are meaningless when aggregated
+- Reporter: Anthony D&#x27;Atri (IBM Support)
+- Under investigation by Aashish Sharma (monitoring team)
+FIX STATUS: New. Under investigation since 2026-05-27. No PR yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity
-Environment: IBM Ceph 9.0, component: monitoring
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate meaningless aggregated metrics on a mixed device-class cluster.
+Environment: IBM Ceph cluster with both HDD and SSD device classes.
+1. Deploy cluster with mixed HDD/SSD OSDs -- intent: create mixed device classes
+2. Run ceph osd df -- intent: show aggregate stats hide per-class variation
+3. Check Prometheus metrics -- intent: show missing deviceclass label
+   curl -s http://&lt;node&gt;:9926/metrics | grep ceph_bluestore
+DIAGNOSTIC COMMANDS:
+- ceph osd df (see aggregate STDDEV)
+- ceph osd crush class ls (list device classes)
+- ceph osd df tree (per-OSD breakdown)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing monitoring tests may not cover: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported monitoring scenario, verify correct behavior</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No implementation exists. This is an unimplemented RFE.
+GAPS: No per-device-class metric breakdowns in ceph osd df, Prometheus, or Grafana.
+SCENARIOS NEEDED (once implemented):
+- Per-class ceph osd df: verify separate min/max/stddev per device class
+- Prometheus deviceclass label: verify label present on OSD metrics
+- Grafana template variable: verify device class dropdown in dashboards</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,34 +229,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE for device-class-granularity metrics in ceph osd df, Prometheus, and Grafana dashboards.</div>
+<div>ROOT CAUSE: Feature request. With CRUSH device classes (hdd, ssd), aggregate cluster metrics (min/max/stddev in ceph osd df, Prometheus metric labels, Grafana dashboards) conflate different device classes, making per-class analysis impractical. Requests: (1) ceph osd df should report per-device-class min/max/stddev, (2) add deviceclass label to OSD-granularity Prometheus metrics, (3) Grafana template variables for device class filtering.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: monitoring</li>
+<li><code>ceph osd df shows aggregate MIN/MAX VAR and STDDEV across all device classes</code></li>
+<li>Customer has mixed hdd+ssd clusters where metrics are meaningless when aggregated</li>
+<li>Reporter: Anthony D&#x27;Atri (IBM Support)</li>
+<li>Under investigation by Aashish Sharma (monitoring team)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: New. Under investigation since 2026-05-27. No PR yet.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate meaningless aggregated metrics on a mixed device-class cluster.</div>
+<div>Environment: IBM Ceph cluster with both HDD and SSD device classes.</div>
 <ul>
-<li>[Ankush Behl] Hi Bipin, Let us investigate and see what all is missing and what is the scope of work here.  I’m assigning it to   for investigation and update.</li>
+<li><span class="step-num">1.</span> Deploy cluster with mixed HDD/SSD OSDs -- intent: create mixed device classes</li>
+<li><span class="step-num">2.</span> Run <code>ceph osd df -- intent: show aggregate stats hide per-class variation</code></li>
+<li><span class="step-num">3.</span> Check Prometheus metrics -- intent: show missing deviceclass label</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>curl -s http://&lt;node&gt;:9926/metrics | grep ceph_bluestore</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph osd df (see aggregate STDDEV)</code></li>
+<li><code>ceph osd crush class ls (list device classes)</code></li>
+<li><code>ceph osd df tree (per-OSD breakdown)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</div>
-<div>Environment: IBM Ceph 9.0, component: monitoring</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No implementation exists. This is an unimplemented RFE.</div>
+<div>GAPS: No per-device-class metric breakdowns in ceph osd df, Prometheus, or Grafana.</div>
+<div>SCENARIOS NEEDED (once implemented):</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing monitoring tests may not cover: [BZ#2355823] [ibm_support] RFE: Metrics at device class granularity</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported monitoring scenario, verify correct behavior</li>
+<li>Per-class <code>ceph osd df: verify separate min/max/stddev per device class</code></li>
+<li>Prometheus deviceclass label: verify label present on OSD metrics</li>
+<li>Grafana template variable: verify device class dropdown in dashboards</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16418: Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,39 +189,56 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: During large-scale OSD node expansion, cephadm fails to create daemon containers for some OSDs despite them being registered in the CRUSH map, leaving OSDs in a permanent down state.
 
 ROOT CAUSE:
-- Affected version(s): 8.1z5
-- Component: cephadm
+When many OSD nodes are added simultaneously (large expansion), cephadm&#x27;s OSD deployment pipeline creates the OSD entries in the CRUSH map and OSD map (via ceph-volume lvm prepare), but fails to complete the daemon container deployment for a subset of OSDs. The ceph-volume logs show successful keyring creation and object store initialization, but the `unit.run` file is never created for the affected OSDs, meaning cephadm never spawned the actual daemon container. The MGR logs show `Requested missing service osd.XXX` errors, confirming the daemon was never registered with cephadm&#x27;s cache. The failure appears to be a race condition or resource exhaustion during rapid parallel OSD deployment — with `osds_per_device: 2` on 12+ NVMe drives per host, cephadm attempts to deploy 24+ OSDs per host simultaneously. The 80% reproduction rate on large expansions supports a concurrency-related root cause. The workaround (zap volume, mgr fail, set managed) forces cephadm to rediscover and redeploy the affected OSDs.
 
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] The  unit.run  file was not created for the OSDs that are in the  down  state. This suggests that the issue differs from what we observed in my test cluster.    [ceph: root@dal1-qz1-sr2-rk132-s06 /]# ceph osd tree down
-ID    CLASS  WEIGHT      TYPE NAME
-- [Aarti Dhikale] Hello   , This is expected behavior.  cephadm  only removes daemons that it deployed. It validates the daemon&#x27;s presence by looking it up in its in-memory cache, which is populated by running  cephadm ls  on each host. Since OSD 63,55,41,33 were never deployed by  cephadm , there
+KEY EVIDENCE:
+- 16 OSDs down across 2 hosts in a 1152-OSD cluster after expansion
+- ceph-volume logs show keyring creation but no subsequent container deployment
+- No `unit.run` file created for affected OSDs; no osd.XXX directory under /var/lib/ceph/&lt;fsid&gt;/
+- MGR logs: `Requested missing service osd.690` for all affected OSDs
+- LVM volumes exist and are valid (confirmed via ceph-volume lvm list)
+- Reproduces at ~80% rate on large expansions
+- Workaround: zap + mgr fail + set-managed forces rediscovery
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (done)
+- Recovery procedure documented; root cause in cephadm&#x27;s parallel deployment pipeline under investigation</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map
-Environment: IBM Ceph 8.1z5, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm failing to deploy OSD daemons during large-scale node expansion
+Environment: IBM Ceph 8.1z5 (19.2.1-331) or 9.x, cluster with osds_per_device: 2
 
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy a baseline Ceph cluster with OSD drive group spec using `osds_per_device: 2` -- intent: match customer config
+2. Add multiple OSD hosts simultaneously (3+ hosts with 12+ NVMe each) -- intent: trigger parallel deployment
+3. Monitor `ceph orch ps` and `ceph osd tree` -- intent: detect mismatch between CRUSH entries and daemon containers
+4. Check for OSDs showing &#x27;down&#x27; in `ceph osd tree` but missing from `ceph orch ps` -- intent: identify affected OSDs
+5. On affected host, verify: `ls /var/lib/ceph/&lt;fsid&gt;/osd.&lt;id&gt;/unit.run` does not exist -- intent: confirm daemon was never deployed
+
+DIAGNOSTIC COMMANDS:
+- `ceph osd tree down`
+- `ceph orch ps --daemon-type osd | grep &lt;hostname&gt;`
+- `ls /var/lib/ceph/&lt;fsid&gt;/` (check for missing osd directories)
+- `ceph-volume lvm list` (verify LVM volumes exist)
+- `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for large-scale parallel OSD deployment. Critical gap.
 
 GAPS:
-- Existing cephadm tests may not cover: Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush m
+- No test for adding multiple OSD hosts simultaneously with osds_per_device &gt; 1
+- No validation that cephadm daemon count matches CRUSH map OSD count post-expansion
+- No test for cephadm deployment pipeline under concurrent load
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Add 3+ OSD hosts simultaneously with osds_per_device: 2 and verify all daemons deploy
+- After expansion, verify `ceph orch ps` OSD count matches `ceph osd tree` count per host
+- Stress test: rapid sequential host additions and verify no orphaned CRUSH entries
+- Verify `ceph orch daemon rm --force --zap` works for OSDs without daemon directories</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -232,40 +249,54 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">During large-scale OSD node expansion, cephadm fails to create daemon containers for some OSDs despite them being registered in the CRUSH map, leaving OSDs in a permanent down state.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>When many OSD nodes are added simultaneously (large expansion), cephadm&#x27;s OSD deployment pipeline creates the OSD entries in the CRUSH map and OSD map (via ceph-volume lvm prepare), but fails to complete the daemon container deployment for a subset of OSDs. The ceph-volume logs show successful keyring creation and object store initialization, but the <code>unit.run</code> file is never created for the affected OSDs, meaning cephadm never spawned the actual daemon container. The MGR logs show <code>Requested missing service osd.XXX</code> errors, confirming the daemon was never registered with cephadm&#x27;s cache. The failure appears to be a race condition or resource exhaustion during rapid parallel OSD deployment — with <code>osds_per_device: 2</code> on 12+ NVMe drives per host, cephadm attempts to deploy 24+ OSDs per host simultaneously. The 80% reproduction rate on large expansions supports a concurrency-related root cause. The workaround (zap volume, mgr fail, set managed) forces cephadm to rediscover and redeploy the affected OSDs.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Aarti Dhikale] The  unit.run  file was not created for the OSDs that are in the  down  state. This suggests that the issue differs from what we observed in my test cluster.    [ceph: root@dal1-qz1-sr2-rk132-s06 /]# <code>ceph osd tree down</code></li>
-</ul>
-<div class="section-head">ID    CLASS  WEIGHT      TYPE NAME</div>
-<ul>
-<li>[Aarti Dhikale] Hello   , This is expected behavior.  <code>cephadm  only removes daemons that it deployed. It validates the daemon&#x27;s presence by looking it up in its in-memory cache</code>, which is populated by running  <code>cephadm ls  on each host. Since OSD 63</code>,55,41,33 were never deployed by  cephadm , there</li>
+<li>16 OSDs down across 2 hosts in a 1152-OSD cluster after expansion</li>
+<li>ceph-volume logs show keyring creation but no subsequent container deployment</li>
+<li>No <code>unit.run</code> file created for affected OSDs; no osd.XXX directory under /var/lib/ceph/&lt;fsid&gt;/</li>
+<li>MGR logs: <code>Requested missing service osd.690</code> for all affected OSDs</li>
+<li>LVM volumes exist and are valid (confirmed via ceph-volume lvm list)</li>
+<li>Reproduces at ~80% rate on large expansions</li>
+<li>Workaround: zap + mgr fail + set-managed forces rediscovery</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (done)</li>
+<li>Recovery procedure documented; root cause in cephadm&#x27;s parallel deployment pipeline under investigation</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush map</div>
-<div>Environment: IBM Ceph 8.1z5, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm failing to deploy OSD daemons during large-scale node expansion</div>
+<div>Environment: IBM Ceph 8.1z5 (19.2.1-331) or 9.x, cluster with osds_per_device: 2</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy a baseline Ceph cluster with OSD drive group spec using <code>osds_per_device: 2</code> -- intent: match customer config</li>
+<li><span class="step-num">2.</span> Add multiple OSD hosts simultaneously (3+ hosts with 12+ NVMe each) -- intent: trigger parallel deployment</li>
+<li><span class="step-num">3.</span> Monitor <code><code>ceph orch ps</code></code> and <code><code>ceph osd tree</code></code> -- intent: detect mismatch between CRUSH entries and daemon containers</li>
+<li><span class="step-num">4.</span> Check for OSDs showing &#x27;down&#x27; in <code><code>ceph osd tree</code></code> but missing from <code><code>ceph orch ps</code></code> -- intent: identify affected OSDs</li>
+<li><span class="step-num">5.</span> On affected host, verify: <code>ls /var/lib/ceph/&amp;lt;fsid&amp;gt;/osd.&amp;lt;id&amp;gt;/unit.run</code> does not exist -- intent: confirm daemon was never deployed</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph osd tree down</code></code></li>
+<li><code><code>ceph orch ps --daemon-type osd | grep &amp;lt;hostname&amp;gt;</code></code></li>
+<li><code>ls /var/lib/ceph/&amp;lt;fsid&amp;gt;/</code> (check for missing osd directories)</li>
+<li><code>ceph-volume lvm list</code> (verify LVM volumes exist)</li>
+<li><code><code>ceph health detail</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for large-scale parallel OSD deployment. Critical gap.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>cephadm tests may not cover: Cephadm not creating osd daemons for some disks during expansion of Cluster but osd found in crush m</code></li>
+<li>No test for adding multiple OSD hosts simultaneously with osds_per_device &gt; 1</li>
+<li>No validation that <code>cephadm daemon count matches CRUSH map OSD count post-expansion</code></li>
+<li>No test for <code>cephadm deployment pipeline under concurrent load</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Add 3+ OSD hosts simultaneously with osds_per_device: 2 and verify all daemons deploy</li>
+<li>After expansion, verify <code><code>ceph orch ps</code></code> OSD count matches <code><code>ceph osd tree</code></code> count per host</li>
+<li>Stress test: rapid sequential host additions and verify no orphaned CRUSH entries</li>
+<li>Verify <code><code>ceph orch daemon rm --force --zap</code></code> works for OSDs without daemon directories</li>
 </ul></div>
 </div>
 

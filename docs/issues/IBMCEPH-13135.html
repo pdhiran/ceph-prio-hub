@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13135: MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;
-
-ROOT CAUSE:
-- Daemon crash reported in cephfs.
-- Affected version(s): 5.3
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Swati Thombe] Hi Team      We completed analysis of the crash dump and sosreport for the MDS crash observed on Nov 5 and Nov 6 in IBM Ceph 7.1 (16.2.10-266.el8cp). Crash Signature Both crashes are triggered by the following assert: FAILED ceph_assert(p-&gt;first &lt;= start)
-File: interval_set.h:568
-- [Swati Thombe] , Please note that the below changes have already been fixed in the upstream. Currently, we are planning to analyze the core dump and are in the process of preparing the debug environment. Do not take ino already used PR #51508 v16.2.14          Force replay sessionmap version P
-- [Swati Thombe] Hello    To further analyze the MDS crash observed on Nov 5, we require the  core dump generated at the time of the crash . The current crash report includes the stack trace. To investigate the inode allocation state ( InoTable  and  interval_set ) at the time of failure, we need
-- [Kritik Sachdeva] Hello    I have checked with the customer and unfortunately they do not have the core dump available on the system and it been 3-4 months ago when this crash happened so OS team might cleaned it up. We do not have the core dump file available for the review.  Regards, Kritik Sach
-- [Venky Shankar] Note that a workaround is to disable async dirops in the cephfs kernel driver. Please refer this document:    (search for wsync mount option).
-
-FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: Hi  ,  as mentioned by Venky Shankar, please refer to the documented workaround and proceed accordingly.</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crash in interval_set::erase() during inode allocation on IBM Ceph 5.3 (Pacific 16.2.10).
+ROOT CAUSE: The crash occurs in InoTable::project_alloc_id() when it invokes projected_free.erase(id) on a non-existent interval in the interval_set. This violates the container invariant (p-&gt;first &lt;= start) in interval_set.h:568. The condition arises from inode state inconsistency -- likely caused by replay mismatch or crash-before-flush scenarios where metadata desynchronization causes erase() to be called on an inode ID not present in the projected_free set. The fix was addressed upstream in Pacific v16.2.14 via PR #51508 (&quot;Do not take ino already used&quot;) and PR #50725 (&quot;Force replay sessionmap version&quot;).
+KEY EVIDENCE:
+- Assert: FAILED ceph_assert(p-&gt;first &lt;= start) at interval_set.h:568
+- Backtrace: interval_set::erase() -&gt; InoTable::project_alloc_id() -&gt; Server::prepare_new_inode() -&gt; MDSRank::_dispatch()
+- Version: ceph 16.2.10-266.el8cp (Pacific)
+- Upstream tracker #61009 shows same behavior, fixed in v16.2.14
+- Core dump unavailable (cleaned by customer&#x27;s OS team)
+FIX STATUS: Fixed upstream in Pacific v16.2.14 (PRs #51508, #50725). IBM Ceph 5.3 does not include the fix. Workaround: disable async dirops via wsync kernel mount option. Issue closed as &#x27;insufficient data&#x27; since core dump was unavailable.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;
-Environment: IBM Ceph 5.3, component: cephfs
-
-1. Deploy IBM Ceph 5.3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce MDS crash in interval_set::erase during inode allocation under metadata desynchronization.
+Environment: IBM Ceph 5.3 (16.2.10-266.el8cp) or equivalent Pacific build pre-16.2.14
+1. Deploy CephFS cluster with active MDS and kernel clients using async dirops (default) -- intent: establish baseline with async dir operations enabled
+2. Generate high metadata load with concurrent file creation across multiple clients -- intent: stress inode allocation path
+3. Induce MDS crash/restart during active metadata journaling -- intent: create conditions for replay mismatch
+4. Allow MDS to replay journal and resume -- intent: trigger inconsistent inode table state
+5. Continue file creation operations post-recovery -- intent: hit the project_alloc_id() path with stale projected_free state
+DIAGNOSTIC COMMANDS:
+- ceph daemon mds.&lt;id&gt; dump_mds -- check MDS state
+- ceph daemon mds.&lt;id&gt; perf dump -- monitor inode allocation counters
+- journalctl -u ceph-mds@&lt;id&gt; -- capture assert messages
+- coredumpctl list -- collect core dump if crash occurs</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test coverage exists for this specific inode allocation race condition.
+GAPS: No test simulates MDS crash-during-journal-flush followed by replay that creates interval_set inconsistency in InoTable. No test validates that project_alloc_id() handles missing intervals gracefully.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported cephfs scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- MDS crash injection during active inode allocation with immediate restart and journal replay
+- Concurrent file creation across multiple clients with periodic MDS failover
+- Validation that wsync mount option prevents the race (workaround verification)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,49 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crash in interval_set::erase() during inode allocation on IBM Ceph 5.3 (Pacific 16.2.10).</div>
+<div>ROOT CAUSE: The crash occurs in InoTable::project_alloc_id() when it invokes projected_free.erase(id) on a non-existent interval in the interval_set. This violates the container invariant (p-&gt;first &lt;= start) in interval_set.h:568. The condition arises from inode state inconsistency -- likely caused by replay mismatch or crash-before-flush scenarios where metadata desynchronization causes erase() to be called on an inode ID not present in the projected_free set. The fix was addressed upstream in Pacific v16.2.14 via PR #51508 (&quot;Do not take ino already used&quot;) and PR #50725 (&quot;Force replay sessionmap version&quot;).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in cephfs.</li>
-<li>Affected version(s): 5.3</li>
-<li>Component: cephfs</li>
+<li>Assert: FAILED ceph_assert(p-&gt;first &lt;= start) at interval_set.h:568</li>
+<li>Backtrace: interval_set::erase() -&gt; InoTable::project_alloc_id() -&gt; Server::prepare_new_inode() -&gt; MDSRank::_dispatch()</li>
+<li>Version: <code>ceph 16.2.10-266.el8cp (Pacific)</code></li>
+<li>Upstream tracker #61009 shows same behavior, fixed in v16.2.14</li>
+<li>Core dump unavailable (cleaned by customer&#x27;s OS team)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed upstream in Pacific v16.2.14 (PRs #51508, #50725). IBM Ceph 5.3 does not include the fix. Workaround: disable async dirops via wsync kernel mount option. Issue closed as &#x27;insufficient data&#x27; since core dump was unavailable.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce MDS crash in interval_set::erase during inode allocation under metadata desynchronization.</div>
+<div>Environment: IBM Ceph 5.3 (16.2.10-266.el8cp) or equivalent Pacific build pre-16.2.14</div>
 <ul>
-<li>[Swati Thombe] Hi Team      We completed analysis of the crash dump and sosreport for the MDS crash observed on Nov 5 and Nov 6 in IBM Ceph 7.1 (16.2.10-266.el8cp). Crash Signature Both crashes are triggered by the following assert: FAILED ceph_assert(p-&gt;first &lt;= start)</li>
+<li><span class="step-num">1.</span> Deploy CephFS cluster with active MDS and kernel clients using async dirops (default) -- intent: establish baseline with async dir operations enabled</li>
+<li><span class="step-num">2.</span> Generate high metadata load with concurrent file creation across multiple clients -- intent: stress inode allocation path</li>
+<li><span class="step-num">3.</span> Induce MDS crash/restart during active metadata journaling -- intent: create conditions for replay mismatch</li>
+<li><span class="step-num">4.</span> Allow MDS to replay journal and resume -- intent: trigger inconsistent inode table state</li>
+<li><span class="step-num">5.</span> Continue file creation operations post-recovery -- intent: hit the project_alloc_id() path with stale projected_free state</li>
 </ul>
-<div>File: interval_set.h:568</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Swati Thombe] , Please note that the below changes have already been fixed in the upstream. Currently, we are planning to analyze the core dump and are in the process of preparing the debug environment. Do not take ino already used PR #51508 v16.2.14          Force replay sessionmap version P</li>
-<li>[Swati Thombe] Hello    To further analyze the MDS crash observed on Nov 5, we require the  core dump generated at the time of the crash . The current crash report includes the stack trace. To investigate the inode allocation state ( InoTable  and  interval_set ) at the time of failure, we need</li>
-<li>[Kritik Sachdeva] Hello    I have checked with the customer and unfortunately they do not have the core dump available on the system and it been 3-4 months ago when this crash happened so OS team might cleaned it up. We do not have the core dump file available for the review.  Regards, Kritik Sach</li>
-<li>[Venky Shankar] Note that a workaround is to disable async dirops in the cephfs kernel driver. Please refer this document:    (search for wsync <code>mount option).</code></li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: Hi  ,  as mentioned by Venky Shankar, please refer to the documented workaround and proceed accordingly.</li>
+<li><code>ceph daemon mds.&lt;id&gt; dump_mds -- check MDS state</code></li>
+<li><code>ceph daemon mds.&lt;id&gt; perf dump -- monitor inode allocation counters</code></li>
+<li><code>journalctl -u ceph-mds@&lt;id&gt; -- capture assert messages</code></li>
+<li>coredumpctl list -- collect core dump if crash occurs</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;</div>
-<div>Environment: IBM Ceph 5.3, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: MDS crashed with assert &quot;ceph_assert(p-&gt;first &lt;= start)&quot;</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test coverage exists for this specific inode allocation race condition.</div>
+<div>GAPS: No test simulates MDS crash-during-journal-flush followed by replay that creates interval_set inconsistency in InoTable. No test validates that project_alloc_id() handles missing intervals gracefully.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>MDS crash injection during active inode allocation with immediate restart and journal replay</li>
+<li>Concurrent file creation across multiple clients with periodic MDS failover</li>
+<li>Validation that wsync <code>mount option prevents the race (workaround verification)</code></li>
 </ul></div>
 </div>
 

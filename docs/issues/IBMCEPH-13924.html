@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13924: NFS client caching causes getattr error in clustered ganesha</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS client caching causes getattr error in clustered ganesha
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: nfs-ganesha
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS client attribute caching causes stale directory listings (getattr errors with &#x27;Directory not empty&#x27;) in clustered NFS-Ganesha, breaking SAP installation workflows.
+ROOT CAUSE: Under investigation. SAP installation automation creates temporary directories, processes archives, then removes the temp directories. Files with &#x27;.nfs&#x27; prefix (NFS silly-rename artifacts from files deleted while still open) prevent temp directory removal. The NFS client&#x27;s attribute/dentry cache (default 30-60 seconds) returns stale metadata, causing &#x27;Directory not empty&#x27; errors. Disabling client caching (`lookupcache=none`) or reducing `actimeo` to 5-10 seconds mitigates the issue. However, this does not explain why the problem occurs with Ceph/Ganesha but not NetApp -- investigation is ongoing into potential caching differences at the Ganesha/MDS/CephFS layer.
+KEY EVIDENCE:
+- tcpdump: &#x27;NFS reply getattr ERROR: Directory not empty&#x27;
+- Workaround: mount with `lookupcache=none` or `actimeo=5`
+- Ganesha config has `Dir_Chunk = 0` and `Attr_Expiration_Time = 0` -- server-side caching disabled
+- NFS silly-rename (.nfs* files) from files deleted while open prevent rmdir
+- Engineering (Jeff Smith): investigating preserve_unlinked feature difference between Ganesha and NetApp
+FIX STATUS: Open (assigned to Sachin Punadikar). Investigation ongoing. Workaround: set `lookupcache=none` on NFS mount or reduce `actimeo`.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- NFS client caching causes getattr error in clustered ganesha
-Environment: IBM Ceph 8.0, component: nfs-ganesha
-
-1. Deploy IBM Ceph 8.0 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce NFS client caching causing stale directory errors
+Environment: IBM Ceph 8.1z5 (IBM Cloud), CephFS-backed NFS-Ganesha
+1. Set up NFS-Ganesha cluster with CephFS backend -- intent: deploy NFS service
+2. Mount NFS export on client with default caching: `mount -t nfs &lt;server&gt;:&lt;export&gt; /mnt` -- intent: use default client cache settings
+3. Run workload that rapidly creates/processes/deletes temp directories with open file handles -- intent: trigger silly-rename
+4. Observe getattr errors for directories containing .nfs* files -- intent: confirm caching issue
+DIAGNOSTIC COMMANDS:
+- `nfsstat -m` -- check mount options and cache settings
+- `tcpdump -i &lt;iface&gt; port 2049 -w capture.pcap` -- capture NFS traffic
+- `ls -la /mnt/&lt;dir&gt;` -- check for .nfs* files
+- `cat /proc/mounts | grep nfs` -- verify mount options</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Existing nfs-ganesha tests may not cover: NFS client caching causes getattr error in clustered ganesha
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Open issue. Workaround documented.
+GAPS: No test for NFS client caching behavior with rapid create/delete patterns on Ganesha/CephFS. No comparison test with kernel NFS server.
 SCENARIOS NEEDED:
-- Functional: reproduce reported nfs-ganesha scenario, verify correct behavior</textarea>
+- Rapid directory create/process/delete cycle with open file handles over NFS-Ganesha
+- Verify silly-rename behavior (.nfs* files) with different client cache settings
+- Test with actimeo=0, actimeo=5, lookupcache=none, default settings
+- Compare behavior between single-Ganesha and clustered-Ganesha deployments</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,33 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS client caching causes getattr error in clustered ganesha</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS client attribute caching causes stale directory listings (getattr errors with &#x27;Directory not empty&#x27;) in clustered NFS-Ganesha, breaking SAP installation workflows.</div>
+<div>ROOT CAUSE: Under investigation. SAP installation automation creates temporary directories, processes archives, then removes the temp directories. Files with &#x27;.nfs&#x27; prefix (NFS silly-rename artifacts from files deleted while still open) prevent temp directory removal. The NFS client&#x27;s attribute/dentry cache (default 30-60 seconds) returns stale metadata, causing &#x27;Directory not empty&#x27; errors. Disabling client caching (<code>lookupcache=none</code>) or reducing <code>actimeo</code> to 5-10 seconds mitigates the issue. However, this does not explain why the problem occurs with Ceph/Ganesha but not NetApp -- investigation is ongoing into potential caching differences at the Ganesha/MDS/CephFS layer.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: nfs-ganesha</li>
+<li>tcpdump: &#x27;NFS reply getattr ERROR: Directory not empty&#x27;</li>
+<li>Workaround: <code>mount with</code><code>lookupcache=none</code> or <code>actimeo=5</code></li>
+<li>Ganesha config has <code>Dir_Chunk = 0</code> and <code>Attr_Expiration_Time = 0</code> -- server-side caching disabled</li>
+<li>NFS silly-rename (.nfs* files) from files deleted while open prevent rmdir</li>
+<li>Engineering (Jeff Smith): investigating preserve_unlinked feature difference between Ganesha and NetApp</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Open (assigned to Sachin Punadikar). Investigation ongoing. Workaround: set <code>lookupcache=none</code> on NFS mount or reduce <code>actimeo</code>.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce NFS client caching causing stale directory errors</div>
+<div>Environment: IBM Ceph 8.1z5 (IBM Cloud), CephFS-backed NFS-Ganesha</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- NFS client caching causes getattr error in clustered ganesha</div>
-<div>Environment: IBM Ceph 8.0, component: nfs-ganesha</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing nfs-ganesha tests may not cover: NFS client caching causes getattr error in clustered ganesha</li>
+<li><span class="step-num">1.</span> Set up NFS-Ganesha cluster with CephFS backend -- intent: deploy NFS service</li>
+<li><span class="step-num">2.</span> Mount NFS export on client with default caching: <code><code>mount -t nfs &amp;lt;server&amp;gt;:&amp;lt;export&amp;gt; /mnt</code></code> -- intent: use default client cache settings</li>
+<li><span class="step-num">3.</span> Run workload that rapidly creates/processes/deletes temp directories with open file handles -- intent: trigger silly-rename</li>
+<li><span class="step-num">4.</span> Observe getattr errors for directories containing .nfs* files -- intent: confirm caching issue</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>nfsstat -m</code> -- check <code>mount options and cache settings</code></li>
+<li><code>tcpdump -i &amp;lt;iface&amp;gt; port 2049 -w capture.pcap</code> -- capture NFS traffic</li>
+<li><code>ls -la /mnt/&amp;lt;dir&amp;gt;</code> -- check for .nfs* files</li>
+<li><code>cat /proc/mounts | grep nfs</code> -- verify <code>mount options</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Open issue. Workaround documented.</div>
+<div>GAPS: No test for NFS client caching behavior with rapid create/delete patterns on Ganesha/CephFS. No comparison test with kernel NFS server.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported nfs-ganesha scenario, verify correct behavior</li>
+<li>Rapid directory create/process/delete cycle with open file handles over NFS-Ganesha</li>
+<li>Verify silly-rename behavior (.nfs* files) with different client cache settings</li>
+<li>Test with actimeo=0, actimeo=5, lookupcache=none, default settings</li>
+<li>Compare behavior between single-Ganesha and clustered-Ganesha deployments</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17696: Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,36 +189,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Abhishek Gupta] Hello, Are we going to support these configuration additions? What is the expected CPU, memory, and latency penalty on the RGW daemons when these caches and logs are enabled in a production environment with thousands of buckets and high ops/sec?
-- [Bipin Kunal] Please add the RH_Customer_Issue label while opening an issue for RH customer issue. Without label, it won’t appear in the right report.  I see that issue has been raised for 7.1 and we are very close to end of maintenance phase for 7.1. At this point, 7.1 won’t receive any fix
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW per-bucket Prometheus metrics missing due to truncated admin socket path and disabled telemetry caches in containerized deployments.
+ROOT CAUSE: Two default configuration issues prevent per-bucket RGW metrics from appearing in ceph-exporter: (1) The default admin_socket path is too long in containerized deployments and gets truncated at the Unix socket 108-character limit, preventing ceph-exporter from connecting to RGW&#x27;s admin socket. (2) RGW telemetry caches (rgw_bucket_counters_cache, rgw_user_counters_cache, rgw_enable_ops_log, rgw_enable_usage_log) are all disabled by default, so even if the socket works, no per-bucket metrics are collected. This is by design but undocumented, confusing customers who expect metrics to work out-of-the-box.
+KEY EVIDENCE:
+- Workaround confirmed: shortening admin_socket path + enabling telemetry caches resolves the issue
+- Commands: ceph config set global admin_socket &#x27;$run_dir/$name.$pid.asok&#x27; + enable rgw_bucket_counters_cache/rgw_user_counters_cache
+- Affects RHCS 7 (18.2.1-381.el9cp), reproduced on Squid and Tentacle
+- 100% reproducible on fresh deployments
+- By-design behavior confirmed by Aarti Dhikale per documentation
+FIX STATUS: In progress. Configuration issue is by-design, but the admin socket truncation may warrant a default path change. Aarti Dhikale confirmed behavior matches docs. Investigating whether defaults should change.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics
-Environment: IBM Ceph 7.1, component: rgw
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify per-bucket RGW metrics are missing by default and appear after configuration changes.
+Environment: Any containerized IBM Ceph cluster with RGW.
+1. Deploy RGW -- intent: fresh deployment with defaults
+   ceph orch apply rgw default
+2. Create S3 user and generate traffic -- intent: create per-bucket data
+   radosgw-admin user create --uid=test --display-name=test
+   s3cmd mb s3://test-bucket &amp;&amp; s3cmd put /tmp/testfile s3://test-bucket/
+3. Check for per-bucket metrics -- intent: observe they&#x27;re missing
+   curl -s http://&lt;rgw-node&gt;:9926/metrics | grep per_bucket
+4. Apply workaround configs -- intent: enable metrics
+   ceph config set global admin_socket &#x27;$run_dir/$name.$pid.asok&#x27;
+   ceph config set client.rgw rgw_bucket_counters_cache true
+   ceph config set client.rgw rgw_user_counters_cache true
+   ceph orch restart rgw &amp;&amp; ceph orch restart ceph-exporter
+5. Re-check metrics -- intent: verify they appear
+   curl -s http://&lt;rgw-node&gt;:9926/metrics | grep per_bucket
+DIAGNOSTIC COMMANDS:
+- ls -la /var/run/ceph/*/ceph-client.rgw*.asok (check socket path length)
+- ceph config get client.rgw rgw_bucket_counters_cache
+- curl -s http://&lt;node&gt;:9926/metrics | grep ceph_rgw_op_per_bucket</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates default per-bucket metrics availability or admin socket path truncation.
 GAPS:
-
+- No test checks admin_socket path length in containerized deployments
+- No test validates per-bucket metrics appear after enabling telemetry caches
+- No documentation test for required configuration steps
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- Default metrics check: fresh deploy; verify per-bucket metrics are absent (document behavior)
+- Enable telemetry: enable caches + shorten socket; verify per-bucket metrics appear
+- Admin socket path: verify socket path doesn&#x27;t exceed 108 chars in containerized deployments
+- High bucket count: verify metrics with 1000+ buckets don&#x27;t cause performance issues</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -229,33 +244,62 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW per-bucket Prometheus metrics missing due to truncated admin socket path and disabled telemetry caches in containerized deployments.</div>
+<div>ROOT CAUSE: Two default configuration issues prevent per-bucket RGW metrics from appearing in ceph-exporter: (1) The default admin_socket path is too long in containerized deployments and gets truncated at the Unix socket 108-character limit, preventing ceph-exporter from connecting to RGW&#x27;s admin socket. (2) RGW telemetry caches (rgw_bucket_counters_cache, rgw_user_counters_cache, rgw_enable_ops_log, rgw_enable_usage_log) are all disabled by default, so even if the socket works, no per-bucket metrics are collected. This is by design but undocumented, confusing customers who expect metrics to work out-of-the-box.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: rgw</li>
+<li>Workaround confirmed: shortening admin_socket path + enabling telemetry caches resolves the issue</li>
+<li>Commands: <code>ceph config set global admin_socket &#x27;$run_dir/$name.$pid.asok&#x27; + enable rgw_bucket_counters_cache/rgw_user_counters_cache</code></li>
+<li>Affects RHCS 7 (18.2.1-381.el9cp), reproduced on Squid and Tentacle</li>
+<li>100% reproducible on fresh deployments</li>
+<li>By-design behavior confirmed by Aarti Dhikale per documentation</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: In progress. Configuration issue is by-design, but the admin socket truncation may warrant a default path change. Aarti Dhikale confirmed behavior matches docs. Investigating whether defaults should change.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify per-bucket RGW metrics are missing by default and appear after configuration changes.</div>
+<div>Environment: Any containerized IBM Ceph cluster with RGW.</div>
 <ul>
-<li>[Abhishek Gupta] Hello, Are we going to support these configuration additions? What is the expected CPU, memory, and latency penalty on the RGW daemons when these caches and logs are enabled in a production environment with thousands of buckets and high ops/sec?</li>
-<li>[Bipin Kunal] Please add the RH_Customer_Issue label while opening an issue for RH customer issue. Without label, it won’t appear in the right report.  I see that issue has been raised for 7.1 and we are very close to end of maintenance phase for 7.1. At this point, 7.1 won’t receive any fix</li>
+<li><span class="step-num">1.</span> Deploy RGW -- intent: fresh deployment with defaults</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph orch apply rgw default</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Fix admin socket path and enable RGW telemetry caches to populate per-bucket metrics</div>
-<div>Environment: IBM Ceph 7.1, component: rgw</div>
+<li><span class="step-num">2.</span> Create S3 user and generate traffic -- intent: create per-bucket data</li>
+</ul>
+<div>radosgw-admin user create --uid=test --display-name=test</div>
+<div>s3cmd mb s3://test-bucket &amp;&amp; s3cmd put /tmp/testfile s3://test-bucket/</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Check for per-bucket metrics -- intent: observe they&#x27;re missing</li>
+</ul>
+<div>curl -s http://&lt;rgw-node&gt;:9926/metrics | grep per_bucket</div>
+<ul>
+<li><span class="step-num">4.</span> Apply workaround configs -- intent: enable metrics</li>
+</ul>
+<div>ceph config set global admin_socket &#x27;$run_dir/$name.$pid.asok&#x27;</div>
+<div>ceph config set client.rgw rgw_bucket_counters_cache true</div>
+<div>ceph config set client.rgw rgw_user_counters_cache true</div>
+<div>ceph orch restart rgw &amp;&amp; ceph orch restart ceph-exporter</div>
+<ul>
+<li><span class="step-num">5.</span> Re-check metrics -- intent: verify they appear</li>
+</ul>
+<div>curl -s http://&lt;rgw-node&gt;:9926/metrics | grep per_bucket</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li>ls -la /var/run/ceph/*/ceph-client.rgw*.asok (check socket path length)</li>
+<li><code>ceph config get client.rgw rgw_bucket_counters_cache</code></li>
+<li><code>curl -s http://&lt;node&gt;:9926/metrics | grep ceph_rgw_op_per_bucket</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates default per-bucket metrics availability or admin socket path truncation.</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>No test checks admin_socket path length in containerized deployments</li>
+<li>No test validates per-bucket metrics appear after enabling telemetry caches</li>
+<li>No documentation test for required configuration steps</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Default metrics check: fresh deploy; verify per-bucket metrics are absent (document behavior)</li>
+<li>Enable telemetry: enable caches + shorten socket; verify per-bucket metrics appear</li>
+<li>Admin socket path: verify socket path doesn&#x27;t exceed 108 chars in containerized deployments</li>
+<li>High bucket count: verify metrics with 1000+ buckets don&#x27;t cause performance issues</li>
 </ul></div>
 </div>
 

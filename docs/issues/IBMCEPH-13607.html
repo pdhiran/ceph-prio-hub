@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13607: [IBM_Support] - Extended OSD restart times 40+ minutes via ceph orch osd restart.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] - Extended OSD restart times 40+ minutes via ceph orch osd restart.
-
-ROOT CAUSE:
-- Affected version(s): 6.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Matthew McComas] Customer is seeing extended OSD restart times 40+ minutes via ceph orch.  &quot;ceph version 17.2.6-246.el9cp (0f65af2d95ce0936640f6ccd6a4825dce6237e4f) quincy (stable)&quot; This is taking place even with  osd_fast_shutdown = false  already in place on this environment. osd_compact_on_sta
-- [Aarti Dhikale] Yes, after the upgrade we can safely remove timeout changes from unit.run, since Ceph 7 already includes the fix from Merge pull request   , which introduces a timeout for the OSD daemon.
-- [Aarti Dhikale] Hello   , Analysis of latest logs for OSD 77: Logs of OSD shutdown prior to  2026-04-01T03:53:38.223  (first time when recovery was triggered): 2026-04-01T03:53:12.624+0000 7f2730b27640 -1 received signal: Terminated from /run/podman-init -- /usr/bin/ceph-osd -n osd.77 -f --setus
-- [Aarti Dhikale] Upgrading to the latest Ceph 7.x version resolves the issue, as this release includes a potential fix.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD restart takes 40+ minutes because BlueStore NCB allocator restore fails, triggering full ONode recovery which scans ~100M extents.
+ROOT CAUSE: During OSD restart, BlueStore&#x27;s Near-Commit-Based (NCB) allocator attempts to restore the free-space allocator state from a saved file on disk. When `osd_fast_shutdown=false` is set, the allocator state should be persisted on clean shutdown. However, the restore fails with &#x27;No Valid allocation info on disk (empty file)&#x27;, forcing a full recovery from ONodes. This full recovery scans all OSD objects to reconstruct the free-space map, taking ~2322 seconds (~39 minutes) for ~100M extents on this customer&#x27;s large RGW-heavy cluster with 3 OSDs per device and encrypted storage. The root cause is that the NCB allocator state file was empty despite `osd_fast_shutdown=false`, suggesting the state was not properly persisted on previous shutdown.
+KEY EVIDENCE:
+- Log: `bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)`
+- Log: `_init_alloc::NCB::restore_allocator() failed! Run Full Recovery from ONodes (might take a while)`
+- Recovery took 2321 seconds, processing 100,341,410 extents
+- Config: osd_fast_shutdown=false, osd_compact_on_start=false already set
+- Customer has 252 OSDs, upgrade would take ~8 days at 45 min/OSD
+- Resolution: upgrade to IBM 7.x (Reef) where NCB allocator is improved
+FIX STATUS: Fixed by upgrading to Reef (IBM 7.x). Customer was on IBM 6.x (Quincy 17.2.6-246.el9cp) with support exception. The NCB allocator improvements in Reef address this issue.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- - Extended OSD restart times 40+ minutes via ceph orch osd restart.
-Environment: IBM Ceph 6.1, component: rados
-
-1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-[ Internal Do not share with customer ] From the logs, it is observed that the OSD process ( ceph-osd -n osd.77 ) was terminated by Podman ( podman-init ) with a  Terminated  signal. The log entry cle</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce extended OSD restart time due to NCB allocator recovery
+Environment: IBM Ceph 6.x (Quincy 17.2.6), large RGW workload, 3 OSDs per device, encrypted OSDs
+1. Deploy cluster with large RGW workload generating significant omap data -- intent: create large free-space map
+2. Set `osd_fast_shutdown=false` and `osd_compact_on_start=false` -- intent: match customer config
+3. Restart an OSD via `ceph orch daemon restart osd.&lt;id&gt;` -- intent: trigger allocator restore
+4. Monitor OSD log for NCB restore failure and full recovery: `tail -f /var/log/ceph/&lt;fsid&gt;/ceph-osd.&lt;id&gt;.log` -- intent: measure recovery time
+DIAGNOSTIC COMMANDS:
+- `ceph daemon osd.&lt;id&gt; perf dump | grep bluestore` -- check BlueStore metrics
+- `ceph config get osd osd_fast_shutdown` -- verify shutdown mode
+- `ls -la /var/lib/ceph/osd/ceph-&lt;id&gt;/` -- check allocator state file</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: - Extended OSD restart times 40+ minutes via ceph orch osd restart.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Resolved by upgrade to Reef. No specific fix in Quincy.
+GAPS: No automated test for OSD restart time under large free-space maps. No test for NCB allocator persistence across restarts.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- OSD restart time benchmark with varying data sizes (1TB, 5TB, 10TB)
+- Verify NCB allocator state persists correctly with osd_fast_shutdown=false
+- Test upgrade impact on OSD restart times (Quincy-&gt;Reef-&gt;Squid)
+- Stress test: rapid OSD restart cycles on high-capacity OSDs</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,42 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] - Extended OSD restart times 40+ minutes via ceph orch osd restart.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD restart takes 40+ minutes because BlueStore NCB allocator restore fails, triggering full ONode recovery which scans ~100M extents.</div>
+<div>ROOT CAUSE: During OSD restart, BlueStore&#x27;s Near-Commit-Based (NCB) allocator attempts to restore the free-space allocator state from a saved file on disk. When <code>osd_fast_shutdown=false</code> is set, the allocator state should be persisted on clean shutdown. However, the restore fails with &#x27;No Valid allocation info on disk (empty file)&#x27;, forcing a full recovery from ONodes. This full recovery scans all OSD objects to reconstruct the free-space map, taking ~2322 seconds (~39 minutes) for ~100M extents on this customer&#x27;s large RGW-heavy cluster with 3 OSDs per device and encrypted storage. The root cause is that the NCB allocator state file was empty despite <code>osd_fast_shutdown=false</code>, suggesting the state was not properly persisted on previous shutdown.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 6.1</li>
-<li>Component: rados</li>
+<li>Log: <code>bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)</code></li>
+<li>Log: <code>_init_alloc::NCB::restore_allocator() failed! Run Full Recovery from ONodes (might take a while)</code></li>
+<li>Recovery took 2321 seconds, processing 100,341,410 extents</li>
+<li>Config: osd_fast_shutdown=false, osd_compact_on_start=false already set</li>
+<li>Customer has 252 OSDs, upgrade would take ~8 days at 45 min/OSD</li>
+<li>Resolution: upgrade to IBM 7.x (Reef) where NCB allocator is improved</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed by upgrading to Reef (IBM 7.x). Customer was on IBM 6.x (Quincy 17.2.6-246.el9cp) with support exception. The NCB allocator improvements in Reef address this issue.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce extended OSD restart time due to NCB allocator recovery</div>
+<div>Environment: IBM Ceph 6.x (Quincy 17.2.6), large RGW workload, 3 OSDs per device, encrypted OSDs</div>
 <ul>
-<li>[Matthew McComas] Customer is seeing extended OSD restart times 40+ minutes via <code>ceph orch.  &quot;ceph version 17.2.6-246.el9cp (0f65af2d95ce0936640f6ccd6a4825dce6237e4f) quincy (stable)&quot; This is taking place even with  osd_fast_shutdown = false  already in place on this environment. osd_compact_on_sta</code></li>
-<li>[Aarti Dhikale] Yes, after the upgrade we can safely remove timeout changes from unit.run, since Ceph 7 already includes the fix from Merge pull request   , which introduces a timeout for the OSD daemon.</li>
-<li>[Aarti Dhikale] Hello   , Analysis of latest logs for OSD 77: Logs of OSD shutdown prior to  2026-04-01T03:53:38.223  (first time when recovery was triggered): 2026-04-01T03:53:12.624+0000 7f2730b27640 -1 received signal: Terminated from /run/podman-init -- /usr/bin/ceph-osd -n osd.77 -f --setus</li>
-<li>[Aarti Dhikale] Upgrading to the latest Ceph 7.x version resolves the issue, as this release includes a potential fix.</li>
+<li><span class="step-num">1.</span> Deploy cluster with large RGW workload generating significant omap data -- intent: create large free-space map</li>
+<li><span class="step-num">2.</span> Set <code>osd_fast_shutdown=false</code> and <code>osd_compact_on_start=false</code> -- intent: match customer config</li>
+<li><span class="step-num">3.</span> Restart an OSD via <code><code>ceph orch daemon restart osd.&amp;lt;id&amp;gt;</code></code> -- intent: trigger allocator restore</li>
+<li><span class="step-num">4.</span> Monitor OSD log for NCB restore failure and full recovery: <code>tail -f /var/log/ceph/&amp;lt;fsid&amp;gt;/ceph-osd.&amp;lt;id&amp;gt;.log</code> -- intent: measure recovery time</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>ceph daemon osd.&amp;lt;id&amp;gt; perf dump | grep bluestore</code></code> -- check BlueStore metrics</li>
+<li><code><code>ceph config get osd osd_fast_shutdown</code></code> -- verify shutdown mode</li>
+<li><code>ls -la /var/lib/ceph/osd/ceph-&amp;lt;id&amp;gt;/</code> -- check allocator state file</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- - Extended OSD restart times 40+ minutes via ceph orch osd restart.</div>
-<div>Environment: IBM Ceph 6.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>[ Internal Do not share with customer ] From the logs, it is observed that the OSD process ( ceph-osd -n osd.77 ) was terminated by Podman ( podman-init ) with a  Terminated  signal. The log entry cle</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: - Extended OSD restart times 40+ minutes via ceph orch osd restart.</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Resolved by upgrade to Reef. No specific fix in Quincy.</div>
+<div>GAPS: No automated test for OSD restart time under large free-space maps. No test for NCB allocator persistence across restarts.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>OSD restart time benchmark with varying data sizes (1TB, 5TB, 10TB)</li>
+<li>Verify NCB allocator state persists correctly with osd_fast_shutdown=false</li>
+<li>Test upgrade impact on OSD restart times (Quincy-&gt;Reef-&gt;Squid)</li>
+<li>Stress test: rapid OSD restart cycles on high-capacity OSDs</li>
 </ul></div>
 </div>
 

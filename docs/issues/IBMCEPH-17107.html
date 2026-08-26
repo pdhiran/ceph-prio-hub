@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17107: [RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard 
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 10.0
-- Component: ceph-dashboard
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE for one-click Ceph upgrades via the Ceph Dashboard, similar to IBM Scale and Fusion.
+ROOT CAUSE: Not a bug -- feature request. Ceph currently requires CLI-based upgrade via &#x27;ceph orch upgrade&#x27; commands. Customers want dashboard-driven upgrade capability for parity with other IBM storage products.
+KEY EVIDENCE:
+- Reporter: Michael Hackett (customer-facing)
+- Target version: 10.0 (Vampire release)
+- Dashboard team already has upgrade improvements planned for Vampire (pad.ceph.com/p/dashboard-vampire)
+- Moved to Backlog -- not prioritized by PMs for 10.0 readout
+- Labels: FutureFeature, IBM_Customer_Issue
+FIX STATUS: Moved to Backlog. Not prioritized for 10.0. Dashboard team aware; improvements planned but not committed.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard
-Environment: IBM Ceph 10.0, component: ceph-dashboard
-
-1. Deploy IBM Ceph 10.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate dashboard-based upgrade workflow once implemented.
+Environment: IBM Ceph 10.0+ with Dashboard enabled
+1. Access Ceph Dashboard -- intent: navigate to upgrade UI
+2. Initiate upgrade via dashboard UI -- intent: trigger one-click upgrade
+3. Monitor upgrade progress via dashboard -- intent: verify real-time status
+4. Verify cluster health post-upgrade -- intent: confirm successful upgrade
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade status -- CLI equivalent for comparison
+- ceph -s -- verify cluster health post-upgrade</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Feature not yet implemented; no test coverage.
+GAPS: Once implemented, need end-to-end dashboard upgrade tests covering rolling upgrades, failure scenarios, and progress monitoring.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</textarea>
+- Dashboard-initiated upgrade with progress monitoring
+- Upgrade failure handling and rollback via dashboard
+- Concurrent dashboard access during upgrade</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,36 +229,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE for one-click Ceph upgrades via the Ceph Dashboard, similar to IBM Scale and Fusion.</div>
+<div>ROOT CAUSE: Not a bug -- feature request. Ceph currently requires CLI-based upgrade via &#x27;ceph orch upgrade&#x27; commands. Customers want dashboard-driven upgrade capability for parity with other IBM storage products.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 10.0</li>
-<li>Component: ceph-dashboard</li>
+<li>Reporter: Michael Hackett (customer-facing)</li>
+<li>Target version: 10.0 (Vampire release)</li>
+<li>Dashboard team already has upgrade improvements planned for Vampire (pad.ceph.com/p/dashboard-vampire)</li>
+<li>Moved to Backlog -- not prioritized by PMs for 10.0 readout</li>
+<li>Labels: FutureFeature, IBM_Customer_Issue</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Moved to Backlog. Not prioritized for 10.0. Dashboard team aware; improvements planned but not committed.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate dashboard-based upgrade workflow once implemented.</div>
+<div>Environment: IBM Ceph 10.0+ with Dashboard enabled</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE] Enable the ability for one click Ceph upgrades from the Ceph Dashboard</div>
-<div>Environment: IBM Ceph 10.0, component: ceph-dashboard</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 10.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li><span class="step-num">1.</span> Access Ceph Dashboard -- intent: navigate to upgrade UI</li>
+<li><span class="step-num">2.</span> Initiate upgrade via dashboard UI -- intent: trigger one-click upgrade</li>
+<li><span class="step-num">3.</span> Monitor upgrade progress via dashboard -- intent: verify real-time status</li>
+<li><span class="step-num">4.</span> Verify cluster health post-upgrade -- intent: confirm successful upgrade</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch upgrade status -- CLI equivalent for comparison</code></li>
+<li><code>ceph -s -- verify cluster health post-upgrade</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Feature not yet implemented; no test coverage.</div>
+<div>GAPS: Once implemented, need end-to-end dashboard upgrade tests covering rolling upgrades, failure scenarios, and progress monitoring.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Dashboard-initiated upgrade with progress monitoring</li>
+<li>Upgrade failure handling and rollback via dashboard</li>
+<li>Concurrent dashboard access during upgrade</li>
 </ul></div>
 </div>
 

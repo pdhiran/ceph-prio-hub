@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17786: Prometheus deployment fails in FIPS mode due to MD5 dependency hash</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Prometheus deployment fails in FIPS mode due to MD5 dependency hash
-
-ROOT CAUSE:
-- Affected version(s): not specified
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Kushal Deb] Reproduced the issue locally: Prometheus: [ceph: root@ceph-fips-test ~]# ceph orch ls
-NAME        PORTS   RUNNING  REFRESHED  AGE  PLACEMENT  
-crash                   1/1  2m ago     42m  *          
-mgr                     1/2  2m ago     42m  count:2    
-mon
-- [Kushal Deb] Fix:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2342 Awaiting approval!
-- [Kushal Deb] Patch merged DS  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d570dea0e7e70b0ee9271e43983e0c3be18a92db
-
-FIX STATUS:
-- Fix available in build 20.2.2-269.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d570dea0e7e70b0ee9271e43983e0c3be18a92db</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Prometheus/Alertmanager/NFS deployment fails in FIPS mode because cephadm uses hashlib.md5() which is blocked by FIPS OpenSSL policy.
+ROOT CAUSE: Cephadm&#x27;s utils.py:240 calls hashlib.md5(input_str) to generate dependency fingerprints for monitoring credentials (prometheus/alertmanager) and NFS KMIP certificates. In FIPS-enabled RHEL environments, OpenSSL rejects MD5 as an unsupported digest, raising UnsupportedDigestmodError: [digital envelope routines] unsupported. This blocks deployment of Prometheus, Alertmanager, and NFS services with KMIP when secure_monitoring_stack=true on FIPS clusters. The fix is to replace hashlib.md5() with hashlib.md5(usedforsecurity=False) or a FIPS-approved hash like SHA-256.
+KEY EVIDENCE:
+- UnsupportedDigestmodError at utils.py:240 in md5_hash()
+- Affects Prometheus (monitoring.py:657), Alertmanager (monitoring.py:308), and NFS KMIP (nfs.py:309)
+- Reproduced locally by Kushal Deb on FIPS-enabled host
+- Fix merged downstream: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d570dea0e7e70b0ee9271e43983e0c3be18a92db
+- Available for testing in build ceph-20.2.2-269
+- 9.1z backport: IBMCEPH-17891
+FIX STATUS: ON_QA. Fix merged downstream (2026-08-21). Available in build ceph-20.2.2-269 for testing (2026-08-24).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Prometheus deployment fails in FIPS mode due to MD5 dependency hash
-Environment: IBM Ceph 9.x, component: cephadm
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce Prometheus deployment failure on FIPS-enabled cluster.
+Environment: FIPS-enabled RHEL with IBM Ceph 9.x / cephadm.
+1. Bootstrap a Ceph cluster on a FIPS-enabled host -- intent: establish FIPS environment
+   fips-mode-setup --check (verify FIPS enabled)
+   cephadm bootstrap --mon-ip &lt;ip&gt;
+2. Enable secure monitoring stack -- intent: trigger MD5 credential hashing
+   ceph config set mgr mgr/cephadm/secure_monitoring_stack true
+3. Apply Prometheus spec -- intent: trigger deployment failure
+   ceph orch apply prometheus
+4. Check MGR logs for the error -- intent: confirm MD5 rejection
+   ceph log last 20 cephadm | grep &#x27;digital envelope&#x27;
+DIAGNOSTIC COMMANDS:
+- fips-mode-setup --check
+- ceph log last 50 cephadm | grep -i &#x27;unsupported\|md5\|envelope&#x27;
+- ceph orch ls prometheus (check deployment status)
+- ceph health detail (look for CEPHADM_APPLY_SPEC_FAIL)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix is ON_QA in build ceph-20.2.2-269. Needs QE validation on FIPS cluster.
 GAPS:
-- Existing cephadm tests may not cover: Prometheus deployment fails in FIPS mode due to MD5 dependency hash
-
+- No automated FIPS deployment test in QE CI
+- No test validates Prometheus/Alertmanager/NFS deployment on FIPS clusters
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- FIPS Prometheus deploy: deploy Prometheus with secure_monitoring_stack on FIPS host; verify success
+- FIPS Alertmanager deploy: deploy Alertmanager with secure_monitoring_stack on FIPS host; verify success
+- FIPS NFS KMIP deploy: deploy NFS with KMIP certificates on FIPS host; verify success
+- Non-FIPS regression: verify fix doesn&#x27;t break deployment on non-FIPS hosts</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,44 +240,56 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Prometheus deployment fails in FIPS mode due to MD5 dependency hash</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Prometheus/Alertmanager/NFS deployment fails in FIPS mode because cephadm uses hashlib.md5() which is blocked by FIPS OpenSSL policy.</div>
+<div>ROOT CAUSE: Cephadm&#x27;s utils.py:240 calls hashlib.md5(input_str) to generate dependency fingerprints for monitoring credentials (prometheus/alertmanager) and NFS KMIP certificates. In FIPS-enabled RHEL environments, OpenSSL rejects MD5 as an unsupported digest, raising UnsupportedDigestmodError: [digital envelope routines] unsupported. This blocks deployment of Prometheus, Alertmanager, and NFS services with KMIP when secure_monitoring_stack=true on FIPS clusters. The fix is to replace hashlib.md5() with hashlib.md5(usedforsecurity=False) or a FIPS-approved hash like SHA-256.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: cephadm</li>
+<li>UnsupportedDigestmodError at utils.py:240 in md5_hash()</li>
+<li>Affects Prometheus (monitoring.py:657), Alertmanager (monitoring.py:308), and NFS KMIP (nfs.py:309)</li>
+<li>Reproduced locally by Kushal Deb on FIPS-enabled host</li>
+<li>Fix merged downstream: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d570dea0e7e70b0ee9271e43983e0c3be18a92db</li>
+<li>Available for testing in build ceph-20.2.2-269</li>
+<li>9.1z backport: IBMCEPH-17891</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: ON_QA. Fix merged downstream (2026-08-21). Available in build ceph-20.2.2-269 for testing (2026-08-24).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce Prometheus deployment failure on FIPS-enabled cluster.</div>
+<div>Environment: FIPS-enabled RHEL with IBM Ceph 9.x / cephadm.</div>
 <ul>
-<li>[Kushal Deb] Reproduced the issue locally: Prometheus: [ceph: root@ceph-fips-test ~]# <code>ceph orch ls</code></li>
+<li><span class="step-num">1.</span> Bootstrap a Ceph cluster on a FIPS-enabled host -- intent: establish FIPS environment</li>
 </ul>
-<div class="section-head">NAME        PORTS   RUNNING  REFRESHED  AGE  PLACEMENT</div>
-<div>crash                   1/1  2m ago     42m  *</div>
-<div>mgr                     1/2  2m ago     42m  count:2</div>
-<div>mon</div>
+<div>fips-mode-setup --check (verify FIPS enabled)</div>
+<div>cephadm bootstrap --mon-ip &lt;ip&gt;</div>
 <ul>
-<li>[Kushal Deb] Fix:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2342 Awaiting approval!</li>
-<li>[Kushal Deb] Patch merged DS  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d570dea0e7e70b0ee9271e43983e0c3be18a92db</li>
+<li><span class="step-num">2.</span> Enable secure monitoring stack -- intent: trigger MD5 credential hashing</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph config set mgr mgr/cephadm/secure_monitoring_stack true</div>
 <ul>
-<li>Fix available in build 20.2.2-269.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/d570dea0e7e70b0ee9271e43983e0c3be18a92db</li>
+<li><span class="step-num">3.</span> Apply Prometheus spec -- intent: trigger deployment failure</li>
+</ul>
+<div>ceph orch apply prometheus</div>
+<ul>
+<li><span class="step-num">4.</span> Check MGR logs for the error -- intent: confirm MD5 rejection</li>
+</ul>
+<div>ceph log last 20 cephadm | grep &#x27;digital envelope&#x27;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li>fips-mode-setup --check</li>
+<li><code>ceph log last 50 cephadm | grep -i &#x27;unsupported\|md5\|envelope&#x27;</code></li>
+<li><code>ceph orch ls prometheus (check deployment status)</code></li>
+<li><code>ceph health detail (look for CEPHADM_APPLY_SPEC_FAIL)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Prometheus deployment fails in FIPS mode due to MD5 dependency hash</div>
-<div>Environment: IBM Ceph 9.x, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix is ON_QA in build ceph-20.2.2-269. Needs QE validation on FIPS cluster.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>cephadm tests may not cover: Prometheus deployment fails in FIPS mode due to MD5 dependency hash</code></li>
+<li>No automated FIPS deployment test in QE CI</li>
+<li>No test validates Prometheus/Alertmanager/NFS deployment on FIPS clusters</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>FIPS Prometheus deploy: deploy Prometheus with secure_monitoring_stack on FIPS host; verify success</li>
+<li>FIPS Alertmanager deploy: deploy Alertmanager with secure_monitoring_stack on FIPS host; verify success</li>
+<li>FIPS NFS KMIP deploy: deploy NFS with KMIP certificates on FIPS host; verify success</li>
+<li>Non-FIPS regression: verify fix doesn&#x27;t break deployment on non-FIPS hosts</li>
 </ul></div>
 </div>
 

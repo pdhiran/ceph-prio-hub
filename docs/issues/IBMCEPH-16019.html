@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16019: OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,57 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Monitor crashes with assertion `ceph_assert(num_down_in_osds &lt;= num_in_osds)` in OSDMap::check_health() when NEW OSD states cause inconsistent counting.
 
 ROOT CAUSE:
-- Daemon crash reported in rados.
-- Affected version(s): 8.1z5
-- Component: rados
+The `OSDMap::check_health()` function asserts that the count of down+in OSDs must not exceed total in OSDs. However, OSDs in the NEW state (just added but not yet fully initialized) were not consistently handled across the counting functions. When concurrent OSD operations (add/remove/replace) create NEW OSD entries, the health check assertion fires because NEW OSDs can appear as both &#x27;in&#x27; and &#x27;down&#x27; depending on which function counts them. This causes MON crash loops, preventing quorum formation. The upstream fix (PR #64009) ensures NEW OSDs are excluded from the health check counting.
 
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Do we have upstream tracker/PR of it? This crash issue would be considered blocker for 9.2. Please prioritize it.
-- [Prashant Dhange] Hi  , Sorry for the delay. I have successfully backported the changes to the  ceph-9.2-rhel-patches  branch.:  $ git log -n4 --pretty=oneline
-c9126c2eb75151ff99bbf55b44650e9623c70594 (HEAD -&gt; ceph-9.2-rhel-patches, patches/ceph-9.2-rhel-patches) osd: prevent OSDMap::check_health(
-- [Vipin M S] verified the fix in ceph version 20.2.2-220.el10cp. We did not observe monitor crashes and cluster was accessible.
-
-1) Reproduced the Monitor crash in ceph version 20.2.2-124.el10cp, by having down_in OSDs + new OSDs &gt; in_osds.
-Automation Logs:- http://takshashila.cephbt.tadn.ibm
+KEY EVIDENCE:
+- Assert: `/builddir/build/BUILD/ceph-19.2.1/src/osd/OSDMap.cc:7295: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)`
+- Upstream tracker: Bug #70869
+- Fix PR: #64009 (backported to ceph-9.2-rhel-patches as commit c9126c2eb751)
+- QE verified: reproduced on 20.2.2-124 (down_in OSDs + new OSDs &gt; in_osds), fixed on 20.2.2-220
+- Trigger: node replacement + concurrent OSD operations under degraded conditions
 
 FIX STATUS:
-- Current JIRA status: Verified</textarea>
+- Status: Verified
+- Fix: commit c9126c2eb75151ff99bbf55b44650e9623c70594 in ceph-9.2-rhel-patches
+- Verified in: 20.2.2-220.el10cp</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)
-Environment: IBM Ceph 8.1z5, component: rados
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify MON does not crash when NEW OSDs coexist with down+in OSDs
+Environment: IBM Ceph 9.x cluster with ability to add/remove OSDs
 
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Create cluster with multiple OSDs -- intent: baseline
+2. Mark some OSDs down but keep them in -- intent: create down_in state
+   ```
+   ceph osd down &lt;osd-id&gt;
+   ```
+3. Add new OSDs concurrently -- intent: create NEW OSD state
+4. Trigger OSDMap update/health check -- intent: trigger the assertion
+5. Verify no MON crashes -- intent: confirm fix
+   ```
+   ceph health detail
+   ceph crash ls-new
+   ```
+
+DIAGNOSTIC COMMANDS:
+- `ceph crash ls-new`
+- `ceph osd dump | grep -c &#x27;new\|down&#x27;`
+- `ceph mon stat`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE verified fix with automated test. Regression test exists.
 
 GAPS:
-- No crash regression test for: OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)
+- Need to ensure regression test is in CI for ongoing validation
 
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test with down_in OSDs + new OSDs &gt; total in_osds (the specific trigger)
+- Concurrent node replacement + OSD addition stress test
+- Verify MON stability during OSD state transitions</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,50 +250,57 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Monitor crashes with assertion `ceph_assert(num_down_in_osds &lt;= num_in_osds)` in OSDMap::check_health() when NEW OSD states cause inconsistent counting.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The <code>OSDMap::check_health()</code> function asserts that the count of down+in OSDs must not exceed total in OSDs. However, OSDs in the NEW state (just added but not yet fully initialized) were not consistently handled across the counting functions. When concurrent OSD operations (add/remove/replace) create NEW OSD entries, the health check assertion fires because NEW OSDs can appear as both &#x27;in&#x27; and &#x27;down&#x27; depending on which function counts them. This causes MON crash loops, preventing quorum formation. The upstream fix (PR #64009) ensures NEW OSDs are excluded from the health check counting.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rados.</li>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: rados</li>
+<li>Assert: <code>/builddir/build/BUILD/ceph-19.2.1/src/osd/OSDMap.cc:7295: FAILED ceph_assert(num_down_in_osds &amp;lt;= num_in_osds)</code></li>
+<li>Upstream tracker: Bug #70869</li>
+<li>Fix PR: #64009 (backported to ceph-9.2-rhel-patches as commit c9126c2eb751)</li>
+<li>QE verified: reproduced on 20.2.2-124 (down_in OSDs + new OSDs &gt; in_osds), fixed on 20.2.2-220</li>
+<li>Trigger: node replacement + concurrent OSD operations under degraded conditions</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Bipin Kunal] Do we have upstream tracker/PR of it? This crash issue would be considered blocker for 9.2. Please prioritize it.</li>
-<li>[Prashant Dhange] Hi  , Sorry for the delay. I have successfully backported the changes to the  ceph-9.2-rhel-patches  branch.:  $ git log -n4 --pretty=oneline</li>
-</ul>
-<div>c9126c2eb75151ff99bbf55b44650e9623c70594 (HEAD -&gt; ceph-9.2-rhel-patches, patches/ceph-9.2-rhel-patches) osd: prevent OSDMap::check_health(</div>
-<ul>
-<li>[Vipin M S] verified the fix in <code>ceph version 20.2.2-220.el10cp. We did not observe monitor crashes and cluster was accessible.</code></li>
-</ul>
-<ul>
-<li><span class="step-num">1.</span> Reproduced the Monitor crash in <code>ceph version 20.2.2-124.el10cp</code>, by having down_in OSDs + new OSDs &gt; in_osds.</li>
-</ul>
-<div>Automation Logs:- http://takshashila.cephbt.tadn.ibm</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
+<li>Status: Verified</li>
+<li>Fix: commit c9126c2eb75151ff99bbf55b44650e9623c70594 in ceph-9.2-rhel-patches</li>
+<li>Verified in: 20.2.2-220.el10cp</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</div>
-<div>Environment: IBM Ceph 8.1z5, component: rados</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify MON does not crash when NEW OSDs coexist with down+in OSDs</div>
+<div>Environment: IBM Ceph 9.x cluster with ability to add/remove OSDs</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Create cluster with multiple OSDs -- intent: baseline</li>
+<li><span class="step-num">2.</span> Mark some OSDs down but keep them in -- intent: create down_in state</li>
+</ul>
+<pre>
+   ceph osd down &lt;osd-id&gt;
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Add new OSDs concurrently -- intent: create NEW OSD state</li>
+<li><span class="step-num">4.</span> Trigger OSDMap update/health check -- intent: trigger the assertion</li>
+<li><span class="step-num">5.</span> Verify no MON crashes -- intent: confirm fix</li>
+</ul>
+<pre>
+   ceph health detail
+   ceph crash ls-new
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph crash ls-new</code></code></li>
+<li><code><code>ceph osd dump | grep -c &amp;#x27;new\|down&amp;#x27;</code></code></li>
+<li><code><code>ceph mon stat</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE verified fix with automated test. Regression test exists.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for: OSDMap: FAILED ceph_assert(num_down_in_osds &lt;= num_in_osds)</li>
+<li>Need to ensure regression test is in CI for ongoing validation</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test with down_in OSDs + new OSDs &gt; total in_osds (the specific trigger)</li>
+<li>Concurrent node replacement + OSD addition stress test</li>
+<li>Verify MON stability during OSD state transitions</li>
 </ul></div>
 </div>
 

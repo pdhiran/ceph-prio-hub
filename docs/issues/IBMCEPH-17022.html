@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17022: MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,49 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1z6
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Shantanu Bhardwaj] Initially customer reported below status and issue was resolved by restarting daemon mon.rhlocp24 $ hostname &amp;&amp; date
-rhlocp21
-Mon Jul 20 08:34:56 AM MDT 2026
-$ ceph -s
-  cluster:
-    id:     51a086e2-74e5-11ee-82fc-005056b49097
-    health: HEALTH_WARN
-            1 network partit
-- [Prashant Dhange] Hi  , Following the upgrade, the cluster started reporting intermittent  MON_NETSPLIT  warnings despite healthy quorum and successful network connectivity verification (ping/nc tests). After further investigation, monitor connection scores reporting  peer_score: 0  and  peer_aliv
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: False-positive MON_NETSPLIT health warning in stretch cluster after upgrade to 8.1z6, caused by known monitor connection scoring defect.
+ROOT CAUSE: Post-upgrade to IBM Ceph 8.1z6 (19.2.1-366.el9cp), the cluster reports MON_NETSPLIT warnings despite healthy quorum and verified network connectivity (ping/nc tests pass). The issue is a monitor connection scoring defect where peer_score reports 0 and peer_alive reports false between affected monitor pairs, even though actual network connectivity exists. This is the known false-positive MON_NETSPLIT defect tracked under IBMCEPH-13109 (DFBUGS-8015). The fix is not present in the 8.1z6 code stream. Restarting the affected monitor temporarily clears the warning but the issue recurs between multiple monitor pairs.
+KEY EVIDENCE:
+- Stretch cluster with election_strategy=3, 5 MONs across 3 datacenters (wldc, rdc, edc), tiebreaker on rhlocp24
+- Network connectivity verified via ping and nc tests between all monitor pairs
+- Restarting mon.rhlocp24 temporarily resolved the alert (HEALTH_OK), but recurred hours later with 3 partitions detected
+- All MONs on version 19.2.1-366.el9cp with healthy quorum throughout
+- Upstream tracker: https://tracker.ceph.com/issues/71344, Squid backport PR: https://github.com/ceph/ceph/pull/66922
+FIX STATUS: Upstream fix exists (tracker#71344). Squid backport PR #66922 is ready to merge but awaiting authority to merge. Workaround: ceph health mute MON_NETSPLIT --sticky. ODF has been using this workaround. No 8.1z fix stream commitment yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6
-Environment: IBM Ceph 8.1z6, component: rados
-
-1. Deploy IBM Ceph 8.1z6 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce false-positive MON_NETSPLIT warning in a stretch cluster after upgrade
+Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), stretch mode with election_strategy=3, 5 MONs across 3 sites, tiebreaker MON at third site
+1. Deploy a stretch cluster with 5 MONs across 3 datacenters and election_strategy=3 -- intent: match customer topology
+2. Upgrade cluster to 8.1z6 (19.2.1-366.el9cp) -- intent: trigger the version where defect manifests
+3. Wait 24-72 hours and monitor `ceph health detail` -- intent: allow time for connection scoring to accumulate stale data
+4. Check `ceph health detail` for MON_NETSPLIT warnings -- intent: verify false-positive detection
+5. Verify network connectivity with `ping` and `nc -zv &lt;mon_ip&gt; 3300` between reported pairs -- intent: confirm network is healthy (ruling out real netsplit)
+6. Restart affected monitor and observe recurrence -- intent: confirm temporary fix pattern
+DIAGNOSTIC COMMANDS:
+- ceph health detail
+- ceph quorum_status
+- ceph mon dump
+- ceph orch ps --daemon-type mon
+- ping between affected MON pairs
+- nc -zv &lt;mon_ip&gt; 3300 and 6789</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated QE test coverage for MON_NETSPLIT false-positive detection in stretch clusters post-upgrade.
+GAPS: No test validates that MON_NETSPLIT is not falsely raised when actual network connectivity exists between monitors in a stretch cluster. No long-running (24-72h) stretch cluster stability test post-upgrade that monitors for spurious health warnings.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. Stretch cluster upgrade test (8.1z5 -&gt; 8.1z6+) with 5 MONs across 3 sites, monitor health warnings for 48h post-upgrade
+2. Negative test: verify MON_NETSPLIT is NOT raised when all MON-to-MON connectivity is healthy in stretch mode
+3. Positive test: verify MON_NETSPLIT IS raised when actual netsplit exists (iptables DROP between sites)
+4. Verify `ceph health mute MON_NETSPLIT --sticky` workaround persists across MON restarts</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -242,50 +236,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">False-positive MON_NETSPLIT health warning in stretch cluster after upgrade to 8.1z6, caused by known monitor connection scoring defect.</div>
+<div>ROOT CAUSE: Post-upgrade to IBM Ceph 8.1z6 (19.2.1-366.el9cp), the cluster reports MON_NETSPLIT warnings despite healthy quorum and verified network connectivity (ping/nc tests pass). The issue is a monitor connection scoring defect where peer_score reports 0 and peer_alive reports false between affected monitor pairs, even though actual network connectivity exists. This is the known false-positive MON_NETSPLIT defect tracked under IBMCEPH-13109 (DFBUGS-8015). The fix is not present in the 8.1z6 code stream. Restarting the affected monitor temporarily clears the warning but the issue recurs between multiple monitor pairs.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1z6</li>
-<li>Component: rados</li>
+<li>Stretch cluster with election_strategy=3, 5 MONs across 3 datacenters (wldc, rdc, edc), tiebreaker on rhlocp24</li>
+<li>Network connectivity verified via ping and nc tests between all monitor pairs</li>
+<li>Restarting mon.rhlocp24 temporarily resolved the alert (HEALTH_OK), but recurred hours later with 3 partitions detected</li>
+<li>All MONs on version 19.2.1-366.el9cp with healthy quorum throughout</li>
+<li>Upstream tracker: https://tracker.ceph.com/issues/71344, Squid backport PR: https://github.com/ceph/ceph/pull/66922</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Upstream fix exists (tracker#71344). Squid backport PR #66922 is ready to merge but awaiting authority to merge. Workaround: ceph health mute MON_NETSPLIT --sticky. ODF has been using this workaround. No 8.1z fix stream commitment yet.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce false-positive MON_NETSPLIT warning in a stretch cluster after upgrade</div>
+<div>Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), stretch mode with election_strategy=3, 5 MONs across 3 sites, tiebreaker MON at third site</div>
 <ul>
-<li>[Shantanu Bhardwaj] Initially customer reported below status and issue was resolved by restarting daemon mon.rhlocp24 $ hostname &amp;&amp; date</li>
+<li><span class="step-num">1.</span> Deploy a stretch cluster with 5 MONs across 3 datacenters and election_strategy=3 -- intent: match customer topology</li>
+<li><span class="step-num">2.</span> Upgrade cluster to 8.1z6 (19.2.1-366.el9cp) -- intent: trigger the version where defect manifests</li>
+<li><span class="step-num">3.</span> Wait 24-72 hours and monitor <code><code>ceph health detail</code></code> -- intent: allow time for connection scoring to accumulate stale data</li>
+<li><span class="step-num">4.</span> Check <code><code>ceph health detail</code></code> for MON_NETSPLIT warnings -- intent: verify false-positive detection</li>
+<li><span class="step-num">5.</span> Verify network connectivity with <code>ping</code> and <code>nc -zv &amp;lt;mon_ip&amp;gt; 3300</code> between reported pairs -- intent: confirm network is healthy (ruling out real netsplit)</li>
+<li><span class="step-num">6.</span> Restart affected monitor and observe recurrence -- intent: confirm temporary fix pattern</li>
 </ul>
-<div>rhlocp21</div>
-<div>Mon Jul 20 08:34:56 AM MDT 2026</div>
-<div>$ ceph -s</div>
-<div>cluster:</div>
-<div>id:     51a086e2-74e5-11ee-82fc-005056b49097</div>
-<div>health: HEALTH_WARN</div>
-<div>1 network partit</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Prashant Dhange] Hi  , Following the upgrade, the cluster started reporting intermittent  MON_NETSPLIT  warnings despite healthy quorum and successful network connectivity verification (ping/nc tests). After further investigation, monitor connection scores reporting  peer_score: 0  and  peer_aliv</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph health detail</code></li>
+<li><code>ceph quorum_status</code></li>
+<li><code>ceph mon dump</code></li>
+<li><code>ceph orch ps --daemon-type mon</code></li>
+<li>ping between affected MON pairs</li>
+<li>nc -zv &lt;mon_ip&gt; 3300 and 6789</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MON_NETSPLIT alert in the Stretch Cluster post upgrade to IBM Ceph 8.1z6</div>
-<div>Environment: IBM Ceph 8.1z6, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z6 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated QE test coverage for MON_NETSPLIT false-positive detection in stretch clusters post-upgrade.</div>
+<div>GAPS: No test validates that MON_NETSPLIT is not falsely raised when actual network connectivity exists between monitors in a stretch cluster. No long-running (24-72h) stretch cluster stability test post-upgrade that monitors for spurious health warnings.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Stretch cluster upgrade test (8.1z5 -&gt; 8.1z6+) with 5 MONs across 3 sites, monitor health warnings for 48h post-upgrade</li>
+<li><span class="step-num">2.</span> Negative test: verify MON_NETSPLIT is NOT raised when all MON-to-MON connectivity is healthy in stretch mode</li>
+<li><span class="step-num">3.</span> Positive test: verify MON_NETSPLIT IS raised when actual netsplit exists (iptables DROP between sites)</li>
+<li><span class="step-num">4.</span> Verify <code><code>ceph health mute MON_NETSPLIT --sticky</code></code> workaround persists across MON restarts</li>
 </ul></div>
 </div>
 

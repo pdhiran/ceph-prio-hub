@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14428: [GSS] Slow heartbeat ping on back &amp; front interface from osd</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [GSS] Slow heartbeat ping on back &amp; front interface from osd
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 4.3z1
-- Component: ceph
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] I have done the quick analysis of the customer provided data. Based on the available data, observed over 100k OSD down events caused by network latency (over 21 seconds) exceeding the default OSD heartbeat grace. This resulted in false OSD downs and cluster instability. Observed
-- [Karun Josy] Can you add a brief summary of the network issue identified and the steps that customer took to rectify it? Is there something we can learn from this case to handle such issues?
-- [Tridibesh Chakraborty] the issue mostly identified by our Network team after analysis the packets captured via TCP dump where they were able to pin point the packet drops in physical interface layer and that allowed the customer network team to identify the faulty switch which was causing the issue. I
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD heartbeat ping times exceeding 226 seconds due to faulty network switch causing packet drops, resulting in false OSD-down events in HCI/DCN environment.
+ROOT CAUSE: A faulty physical network switch was dropping packets on the interconnect between Ceph nodes in a TripleO HCI/DCN (Distributed Compute Node) environment. This caused heartbeat ping times to spike to 200+ seconds (far exceeding default osd_heartbeat_grace of 20s), leading MONs to incorrectly mark OSDs as down while they were still running. The OSDs reported &#x27;Monitor daemon marked osd.X down, but it is still running&#x27; and &#x27;wrongly marked me down&#x27;. The issue persisted for ~21 hours until the faulty switches were rebooted. etcd healthchecks also failed concurrently, confirming network-wide packet loss.
+KEY EVIDENCE:
+- Heartbeat ping &gt;226s on both front and back interfaces
+- OSD logs: &#x27;Monitor daemon marked osd.268 down, but it is still running&#x27;
+- sub_op_commit_rec delay: 90 seconds between first and second sub-op acknowledgments
+- etcd healthcheck failures: &#x27;connection refused&#x27; at same timestamp
+- OVN agent ETIMEDOUT errors concurrent with OSD issues
+- Resolution: customer rebooted DC switches, OSDs stabilized
+- Ceph version: 14.2.22-128.el8cp (RHCS 4.3z1)
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Root cause was faulty network switch hardware. Mitigation for future: increase osd_heartbeat_grace to 60s and osd_heartbeat_interval to 10s.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [GSS] Slow heartbeat ping on back &amp; front interface from osd
-Environment: IBM Ceph 4.3z1, component: ceph
-
-1. Deploy IBM Ceph 4.3z1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Run baseline benchmark (fio/rados bench) -- record metrics
-3. Trigger the performance scenario described in JIRA
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi, During the call, we have set below on one of the cluster (OSP1) in AZ2. We didn’t see significant change after applying this. We noticed there was long heartbeat ping time of more than 2 minutes.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate Ceph resilience to transient network packet loss (informational -- network issue)
+Environment: HCI/DCN with RHCS 4.3z1 (14.2.22-128.el8cp)
+1. Deploy HCI cluster with shared network for storage + management -- intent: match topology
+2. Inject packet loss/delay on storage network (tc netem) -- intent: simulate switch failure
+3. Monitor OSD heartbeat warnings and false downs -- intent: observe behavior
+4. Apply osd_heartbeat_grace=60, osd_heartbeat_interval=10 -- intent: test mitigation
+DIAGNOSTIC COMMANDS:
+- ceph health detail
+- ceph osd dump | grep &#x27;down&#x27;
+- ceph config get osd osd_heartbeat_grace
+- ceph daemon osd.&lt;id&gt; dump_historic_slow_ops
+- tcpdump -i &lt;storage-if&gt; host &lt;peer-osd-ip&gt; -c 100</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: [GSS] Slow heartbeat ping on back &amp; front interface from osd
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Network-induced OSD flapping is a known operational issue; testing focuses on Ceph&#x27;s resilience parameters.
+GAPS: No QE test validates Ceph behavior under sustained packet loss on storage network; no test for optimal heartbeat tuning in HCI environments.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported ceph scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Inject 50% packet loss for 5 minutes on storage network, verify OSDs are not falsely marked down with grace=60
+- Validate that increased heartbeat grace prevents false downs without masking genuine failures
+- Test nodown flag effectiveness as emergency measure during network instability</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,43 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[GSS] Slow heartbeat ping on back &amp; front interface from osd</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD heartbeat ping times exceeding 226 seconds due to faulty network switch causing packet drops, resulting in false OSD-down events in HCI/DCN environment.</div>
+<div>ROOT CAUSE: A faulty physical network switch was dropping packets on the interconnect between Ceph nodes in a TripleO HCI/DCN (Distributed Compute Node) environment. This caused heartbeat ping times to spike to 200+ seconds (far exceeding default osd_heartbeat_grace of 20s), leading MONs to incorrectly mark OSDs as down while they were still running. The OSDs reported &#x27;Monitor daemon marked osd.X down, but it is still running&#x27; and &#x27;wrongly marked me down&#x27;. The issue persisted for ~21 hours until the faulty switches were rebooted. etcd healthchecks also failed concurrently, confirming network-wide packet loss.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 4.3z1</li>
-<li>Component: ceph</li>
+<li>Heartbeat ping &gt;226s on both front and back interfaces</li>
+<li>OSD logs: &#x27;Monitor daemon marked osd.268 down, but it is still running&#x27;</li>
+<li>sub_op_commit_rec delay: 90 seconds between first and second sub-op acknowledgments</li>
+<li>etcd healthcheck failures: &#x27;connection refused&#x27; at same timestamp</li>
+<li>OVN agent ETIMEDOUT errors concurrent with OSD issues</li>
+<li>Resolution: customer rebooted DC switches, OSDs stabilized</li>
+<li>Ceph version: 14.2.22-128.el8cp (RHCS 4.3z1)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Root cause was faulty network switch hardware. Mitigation for future: increase osd_heartbeat_grace to 60s and osd_heartbeat_interval to 10s.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate Ceph resilience to transient network packet loss (informational -- network issue)</div>
+<div>Environment: HCI/DCN with RHCS 4.3z1 (14.2.22-128.el8cp)</div>
 <ul>
-<li>[Prashant Dhange] I have done the quick analysis of the customer provided data. Based on the available data, observed over 100k OSD down events caused by network latency (over 21 seconds) exceeding the default OSD heartbeat grace. This resulted in false OSD downs and cluster instability. Observed</li>
-<li>[Karun Josy] Can you add a brief summary of the network issue identified and the steps that customer took to rectify it? Is there something we can learn from this case to handle such issues?</li>
-<li>[Tridibesh Chakraborty] the issue mostly identified by our Network team after analysis the packets captured via TCP dump where they were able to pin point the packet drops in physical interface layer and that allowed the customer network team to identify the faulty switch which was causing the issue. I</li>
+<li><span class="step-num">1.</span> Deploy HCI cluster with shared network for storage + management -- intent: match topology</li>
+<li><span class="step-num">2.</span> Inject packet loss/delay on storage network (tc netem) -- intent: simulate switch failure</li>
+<li><span class="step-num">3.</span> Monitor OSD heartbeat warnings and false downs -- intent: observe behavior</li>
+<li><span class="step-num">4.</span> Apply osd_heartbeat_grace=60, osd_heartbeat_interval=10 -- intent: test mitigation</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph health detail</code></li>
+<li><code>ceph osd dump | grep &#x27;down&#x27;</code></li>
+<li><code>ceph config get osd osd_heartbeat_grace</code></li>
+<li><code>ceph daemon osd.&lt;id&gt; dump_historic_slow_ops</code></li>
+<li>tcpdump -i &lt;storage-if&gt; host &lt;peer-osd-ip&gt; -c 100</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [GSS] Slow heartbeat ping on back &amp; front interface from osd</div>
-<div>Environment: IBM Ceph 4.3z1, component: ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 4.3z1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">3.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi, During the call, we have set below on one of the cluster (OSP1) in AZ2. We didn’t see significant change after applying this. We noticed there was long heartbeat ping time of more than 2 minutes.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: [GSS] Slow heartbeat ping on back &amp; front interface from osd</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Network-induced OSD flapping is a known operational issue; testing focuses on Ceph&#x27;s resilience parameters.</div>
+<div>GAPS: No QE test validates Ceph behavior under sustained packet loss on storage network; no test for optimal heartbeat tuning in HCI environments.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>ceph scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Inject 50% packet loss for 5 minutes on storage network, verify OSDs are not falsely marked down with grace=60</li>
+<li>Validate that increased heartbeat grace prevents false downs without masking genuine failures</li>
+<li>Test nodown flag effectiveness as emergency measure during network instability</li>
 </ul></div>
 </div>
 

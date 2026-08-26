@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12883: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,49 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)
-
-ROOT CAUSE:
-- Daemon crash reported in cephfs.
-- Affected version(s): 8.1
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1
-- [Bipin Kunal] Vivek, Please cross check if the fix already exists in 9.0 branch(as you mentioned on chat). -Bipin
-- [Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So moving it for QE test.
-- [Justin Caratzas] Can you link to the code change that fixed this issue?
-- [Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So created this  BZ#2431671  for QA verification. Fix : https://github.com/ceph/ceph/commit/a291280de697abbba07ba7d975b59f853204a83e
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crashes with FAILED ceph_assert(_raw) in buffer.cc:455 when executing admin socket &#x27;dump tree&#x27; command on inodes with empty xattr buffers.
+ROOT CAUSE: When MDCache::dump_tree() traverses the inode tree via InodeStoreBase::dump(), it calls val.c_str() on extended attribute (xattr) buffer pointers without checking if the buffer is initialized. If an inode has an empty xattr value where the internal _raw pointer is nullptr, calling c_str() triggers ceph_assert(_raw) at buffer.cc:455. The crash occurs in the admin_socket thread, independent of the MDS main thread. The fix (upstream commit a291280de697 &#x27;mds: do not dump empty bufptr&#x27;) adds a null check before accessing the buffer.
+KEY EVIDENCE:
+- Assert: FAILED ceph_assert(_raw) at buffer.cc:455 in ptr::c_str()
+- Backtrace: AdminSocket::entry() -&gt; MDSRank::command_dump_tree() -&gt; MDCache::dump_tree() -&gt; CInode::dump() -&gt; InodeStoreBase::dump() -&gt; buffer::ptr::c_str()
+- Thread: admin_socket (not main MDS dispatch thread)
+- Reproduced on 19.2.1-245.el9cp (Squid) and 20.1.0-144.el9cp (Tentacle pre-fix)
+- Fix commit: a291280de697abbba07ba7d975b59f853204a83e
+- Verified fixed on build 20.1.0-155.el9cp
+- Second customer hit same assert on 20.1.0-144 (pre-9.0z1 fix)
+FIX STATUS: Fixed in IBM Ceph 9.0z1 (included via tentacle rebase). Present in ceph-9.0-rhel-patches branch. Customers on pre-9.0z1 builds advised to upgrade. BZ#2431671 tracks QA verification.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)
-Environment: IBM Ceph 8.1, component: cephfs
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger MDS crash via admin socket dump_tree on an inode with empty xattr buffer.
+Environment: IBM Ceph 8.1 (19.2.1-245.el9cp) or IBM Ceph 9.0 pre-z1 (20.1.0-144.el9cp)
+1. Deploy CephFS with active MDS and mount clients -- intent: establish working filesystem
+2. Create files with extended attributes, then selectively clear/corrupt xattr values -- intent: create inodes with empty buffer pointers
+3. Execute &#x27;ceph daemon mds.&lt;id&gt; dump tree /&#x27; via admin socket -- intent: trigger InodeStoreBase::dump() traversal over inode with empty xattr
+DIAGNOSTIC COMMANDS:
+- ceph daemon mds.&lt;id&gt; dump tree / -- triggers the crash path
+- ceph crash ls -- check for crash records
+- ceph crash info &lt;crash_id&gt; -- get full backtrace
+- sosreport with ceph plugin -- collect full diagnostic data</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_as
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified on build 20.1.0-155.el9cp by QA (Suma R). No automated regression test in CI.
+GAPS: No automated test exercises dump_tree admin socket command against inodes with empty xattr buffers. No test validates that sosreport collection (which triggers dump_tree) doesn&#x27;t crash MDS.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported cephfs scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Admin socket dump_tree execution after creating files with empty/cleared xattrs
+- Concurrent dump_tree with active I/O and MDS cache pressure
+- sosreport collection on a cluster with large metadata trees (real-world trigger)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -242,47 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crashes with FAILED ceph_assert(_raw) in buffer.cc:455 when executing admin socket &#x27;dump tree&#x27; command on inodes with empty xattr buffers.</div>
+<div>ROOT CAUSE: When MDCache::dump_tree() traverses the inode tree via InodeStoreBase::dump(), it calls val.c_str() on extended attribute (xattr) buffer pointers without checking if the buffer is initialized. If an inode has an empty xattr value where the internal _raw pointer is nullptr, calling c_str() triggers ceph_assert(_raw) at buffer.cc:455. The crash occurs in the admin_socket thread, independent of the MDS main thread. The fix (upstream commit a291280de697 &#x27;mds: do not dump empty bufptr&#x27;) adds a null check before accessing the buffer.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in cephfs.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephfs</li>
+<li>Assert: FAILED ceph_assert(_raw) at buffer.cc:455 in ptr::c_str()</li>
+<li>Backtrace: AdminSocket::entry() -&gt; MDSRank::command_dump_tree() -&gt; MDCache::dump_tree() -&gt; CInode::dump() -&gt; InodeStoreBase::dump() -&gt; buffer::ptr::c_str()</li>
+<li>Thread: admin_socket (not main MDS dispatch thread)</li>
+<li>Reproduced on 19.2.1-245.el9cp (Squid) and 20.1.0-144.el9cp (Tentacle pre-fix)</li>
+<li>Fix commit: a291280de697abbba07ba7d975b59f853204a83e</li>
+<li>Verified fixed on build 20.1.0-155.el9cp</li>
+<li>Second customer hit same assert on 20.1.0-144 (pre-9.0z1 fix)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in IBM Ceph 9.0z1 (included via tentacle rebase). Present in ceph-9.0-rhel-patches branch. Customers on pre-9.0z1 builds advised to upgrade. BZ#2431671 tracks QA verification.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger MDS crash via admin socket dump_tree on an inode with empty xattr buffer.</div>
+<div>Environment: IBM Ceph 8.1 (19.2.1-245.el9cp) or IBM Ceph 9.0 pre-z1 (20.1.0-144.el9cp)</div>
 <ul>
-<li>[Bipin Kunal] Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1</li>
-<li>[Bipin Kunal] Vivek, Please cross check if the fix already exists in 9.0 branch(as you mentioned on chat). -Bipin</li>
-<li>[Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So moving it for QE test.</li>
-<li>[Justin Caratzas] Can you link to the code change that fixed this issue?</li>
-<li>[Vivek Maurya] Changes are already present in ceph-9.0-rhel-patches-z1-STAGING branch. So created this  BZ#2431671  for QA verification. Fix : https://github.com/ceph/ceph/commit/a291280de697abbba07ba7d975b59f853204a83e</li>
+<li><span class="step-num">1.</span> Deploy CephFS with active MDS and <code>mount clients -- intent: establish working filesystem</code></li>
+<li><span class="step-num">2.</span> Create files with extended attributes, then selectively clear/corrupt xattr values -- intent: create inodes with empty buffer pointers</li>
+<li><span class="step-num">3.</span> Execute &#x27;<code>ceph daemon mds.&lt;id&gt; dump tree /&#x27; via admin socket -- intent: trigger InodeStoreBase::dump() traversal over inode with empty xattr</code></li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph daemon mds.&lt;id&gt; dump tree / -- triggers the crash path</code></li>
+<li><code>ceph crash ls -- check for crash records</code></li>
+<li><code>ceph crash info &lt;crash_id&gt; -- get full backtrace</code></li>
+<li>sosreport with <code>ceph plugin -- collect full diagnostic data</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_assert_fail(char const*, char const*, int, char const*)</div>
-<div>Environment: IBM Ceph 8.1, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Description of problem: MDS daemon crashed while executing the dump tree asok call. Version-Release number of selected component (if applicable): Ceph version 19.2.1-245.el9cp. How reproducible: It seems that there is some inode metadata corruption or cache. Steps to Reproduce: 1</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [BZ#2431671] [GSS][CephFS] MDS crassed executing asok_command: dump tree with assert ceph::__ceph_as</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified on build 20.1.0-155.el9cp by QA (Suma R). No automated regression test in CI.</div>
+<div>GAPS: No automated test exercises dump_tree admin socket command against inodes with empty xattr buffers. No test validates that sosreport collection (which triggers dump_tree) doesn&#x27;t crash MDS.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Admin socket dump_tree execution after creating files with empty/cleared xattrs</li>
+<li>Concurrent dump_tree with active I/O and MDS cache pressure</li>
+<li>sosreport collection on a cluster with large metadata trees (real-world trigger)</li>
 </ul></div>
 </div>
 

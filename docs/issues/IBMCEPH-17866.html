@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17866: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool
-
-ROOT CAUSE:
-- Affected version(s): not specified
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to add warnings and confirmation prompt when applying 0-weight CRUSH rules to pools to prevent data unavailability.
+ROOT CAUSE: Feature request from Apple incident discussion. When new OSDs are added with default CRUSH weight of 0, and a pool is switched to a CRUSH rule that selects only those 0-weight OSDs, the pool has no eligible OSDs and data becomes unavailable. The scenario: (1) existing RGW index pools on HDD, (2) new SSD CRUSH rule created, (3) new SSD OSDs added with weight=0, (4) pool rule changed to SSD rule, (5) outage because all SSD OSDs have weight 0. The RFE requests warnings when a CRUSH rule yields 0 total weight and --yes-i-really-really-mean-it confirmation.
+KEY EVIDENCE:
+- Apple production outage from this exact scenario
+- IBM Ceph 9.9.0.1
+- Assigned to Prachi Lasurkar (L3 team)
+- Targeted for 10.0
+FIX STATUS: New. Assigned to L3 team, targeting 10.0. Bipin Kunal confirmed commitment (2026-08-24).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool
-Environment: IBM Ceph 9.x, component: rados
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate pool data unavailability from applying 0-weight CRUSH rule.
+Environment: IBM Ceph cluster with mixed device classes.
+1. Create a new device class CRUSH rule for SSD -- intent: target SSD OSDs
+   ceph osd crush rule create-replicated ssd-rule default host ssd
+2. Add new SSD OSDs but keep weight at 0 -- intent: simulate the Apple scenario
+   ceph osd crush reweight osd.&lt;id&gt; 0
+3. Change an existing pool to use the SSD rule -- intent: trigger data unavailability
+   ceph osd pool set &lt;pool&gt; crush_rule ssd-rule
+4. Observe pool becomes inactive -- intent: confirm the problem
+   ceph health detail
+DIAGNOSTIC COMMANDS:
+- ceph osd crush rule dump &lt;rule&gt;
+- ceph osd df tree (check OSD weights)
+- ceph osd pool get &lt;pool&gt; crush_rule
+- ceph pg dump stuck inactive</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No implementation exists. This is an unimplemented RFE.
 GAPS:
-- Existing rados tests may not cover: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- No guard against applying CRUSH rules with 0 effective weight to pools
+- No warning when all OSDs in a CRUSH rule have weight 0
+SCENARIOS NEEDED (once implemented):
+- Zero-weight rule warning: apply rule with all 0-weight OSDs to pool; verify warning/rejection
+- Force override: verify --yes-i-really-really-mean-it bypasses the guard
+- Partial weight: verify no warning when some OSDs have non-zero weight</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +236,52 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to add warnings and confirmation prompt when applying 0-weight CRUSH rules to pools to prevent data unavailability.</div>
+<div>ROOT CAUSE: Feature request from Apple incident discussion. When new OSDs are added with default CRUSH weight of 0, and a pool is switched to a CRUSH rule that selects only those 0-weight OSDs, the pool has no eligible OSDs and data becomes unavailable. The scenario: (1) existing RGW index pools on HDD, (2) new SSD CRUSH rule created, (3) new SSD OSDs added with weight=0, (4) pool rule changed to SSD rule, (5) outage because all SSD OSDs have weight 0. The RFE requests warnings when a CRUSH rule yields 0 total weight and --yes-i-really-really-mean-it confirmation.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: rados</li>
+<li>Apple production outage from this exact scenario</li>
+<li>IBM Ceph 9.9.0.1</li>
+<li>Assigned to Prachi Lasurkar (L3 team)</li>
+<li>Targeted for 10.0</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: New. Assigned to L3 team, targeting 10.0. Bipin Kunal confirmed commitment (2026-08-24).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate pool data unavailability from applying 0-weight CRUSH rule.</div>
+<div>Environment: IBM Ceph cluster with mixed device classes.</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</div>
-<div>Environment: IBM Ceph 9.x, component: rados</div>
+<li><span class="step-num">1.</span> Create a new device class CRUSH rule for SSD -- intent: target SSD OSDs</li>
+</ul>
+<div>ceph osd crush rule create-replicated ssd-rule default host ssd</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Add new SSD OSDs but keep weight at 0 -- intent: simulate the Apple scenario</li>
+</ul>
+<div>ceph osd crush reweight osd.&lt;id&gt; 0</div>
+<ul>
+<li><span class="step-num">3.</span> Change an existing pool to use the SSD rule -- intent: trigger data unavailability</li>
+</ul>
+<div>ceph osd pool set &lt;pool&gt; crush_rule ssd-rule</div>
+<ul>
+<li><span class="step-num">4.</span> Observe pool becomes inactive -- intent: confirm the problem</li>
+</ul>
+<div>ceph health detail</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd crush rule dump &lt;rule&gt;</code></li>
+<li><code>ceph osd df tree (check OSD weights)</code></li>
+<li><code>ceph osd pool get &lt;pool&gt; crush_rule</code></li>
+<li><code>ceph pg dump stuck inactive</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No implementation exists. This is an unimplemented RFE.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rados tests may not cover: [RFE] Add warnings and confirmation when apply 0-weight CRUSH rules to pool</code></li>
+<li>No guard against applying CRUSH rules with 0 effective weight to pools</li>
+<li>No warning when all OSDs in a CRUSH rule have weight 0</li>
 </ul>
-<div class="section-head">SCENARIOS NEEDED</div>
+<div>SCENARIOS NEEDED (once implemented):</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Zero-weight rule warning: apply rule with all 0-weight OSDs to pool; verify warning/rejection</li>
+<li>Force override: verify --yes-i-really-really-mean-it bypasses the guard</li>
+<li>Partial weight: verify no warning when some OSDs have non-zero weight</li>
 </ul></div>
 </div>
 

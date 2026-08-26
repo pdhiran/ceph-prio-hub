@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14388: Increased CPU Utilization and load average on RGW nodes post upgrade to Ceph 9.0z2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,53 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Increased CPU Utilization and load average on RGW nodes post upgrade to Ceph 9.0z2
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.0z2
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] Hi  , Based on the analysis and code comparison between RHCS 8.1z1 and 9.0, I donot see issue does not appear to be caused by any new RGW code change in 9.0 but suspecting a commit 37c1522bb39 might be causing this problem :  % git log -n1 37c1522bb39
-commit 37c1522bb395b2afbf9eb
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: Increased CPU utilization on RGW nodes after upgrade to 9.0z2, caused by active sync threads on single-site cluster
+ROOT CAUSE: The cluster had residual multisite sync configuration from a previous setup. After upgrading to 9.0z2, rgw_run_sync_thread (default: true) caused RGW to continuously process data_log entries, generating high RADOS operation rates and PG log churn. The commit 37c1522bb39 (&#x27;rgw/sync: track last_update timestamp per-shard instead of per-entry&#x27;) may have changed sync processing behavior, amplifying the CPU impact. Disabling sync threads resolved the issue: ceph config set client.rgw.${id} rgw_run_sync_thread false.
+KEY EVIDENCE:
+- CPU jumped from ~7% idle to 23-32% idle after upgrade
+- Significant data_log.* activity across multiple PGs
+- Multiple pg_update_log_missing errors (-61 ENODATA)
+- rgw_run_sync_thread=true on single-site cluster with residual multisite config
+- CPU normalized after disabling sync threads
+- Two customers reported same issue
+FIX STATUS: Closed (DONE). Not a regression — operational issue from residual multisite config. Workaround: disable sync threads on single-site clusters.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Increased CPU Utilization and load average on RGW nodes post upgrade to Ceph 9.0z2
-Environment: IBM Ceph 9.0z2, component: rgw
-
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce high RGW CPU from active sync threads on single-site
+Environment: IBM Ceph 9.0z2 (20.1.0-185) with residual multisite config
+1. Deploy single-site cluster with RGW
+2. Configure multisite (realm, zonegroup, zone) and then remove multisite but leave residual objects in .rgw.root
+3. Upgrade to 9.0z2
+4. Monitor CPU: sar -u 10 (observe high %user + %system)
+5. Check sync config: ceph config get client.rgw rgw_run_sync_thread
+6. Disable: ceph config set client.rgw.${id} rgw_run_sync_thread false
+7. Restart RGW and observe CPU drop
+DIAGNOSTIC COMMANDS:
+- sar -u 10 (CPU monitoring)
+- ceph config get client.rgw rgw_run_sync_thread
+- ceph --admin-daemon &lt;rgw-asok&gt; perf dump (RGW performance counters)
+- ceph --admin-daemon &lt;rgw-asok&gt; dump_ops_in_flight
+- perf record -F 99 -p &lt;rgw_pid&gt; -g sleep 900 (flame graph data)
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Resolved operationally. Not a code regression.
+GAPS: No validation that rgw_run_sync_thread should be false on single-site clusters
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- RGW CPU monitoring before and after upgrade on single-site
+- Verify rgw_run_sync_thread impact on single-site without multisite config
+- Detect residual multisite config on single-site clusters
+- rgw_enable_usage_perf_counters impact assessment
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,42 +246,47 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Increased CPU Utilization and load average on RGW nodes post upgrade to Ceph 9.0z2</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Prashant Dhange] Hi  , Based on the analysis and code comparison between RHCS 8.1z1 and 9.0, I donot see issue does not appear to be caused by any new RGW code change in 9.0 but suspecting a commit 37c1522bb39 might be causing this problem :  % git log -n1 37c1522bb39</li>
-</ul>
-<div>commit 37c1522bb395b2afbf9eb</div>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Increased CPU Utilization and load average on RGW nodes post upgrade to Ceph 9.0z2</div>
-<div>Environment: IBM Ceph 9.0z2, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: Increased CPU utilization on RGW nodes after upgrade to 9.0z2, caused by active sync threads on single-site cluster
+ROOT CAUSE: The cluster had residual multisite sync configuration from a previous setup. After upgrading to 9.0z2, rgw_run_sync_thread (default: true) caused RGW to continuously process data_log entries, generating high RADOS operation rates and PG log churn. The commit 37c1522bb39 (&#x27;rgw/sync: track last_update timestamp per-shard instead of per-entry&#x27;) may have changed sync processing behavior, amplifying the CPU impact. Disabling sync threads resolved the issue: ceph config set client.rgw.${id} rgw_run_sync_thread false.
+KEY EVIDENCE:
+- CPU jumped from ~7% idle to 23-32% idle after upgrade
+- Significant data_log.* activity across multiple PGs
+- Multiple pg_update_log_missing errors (-61 ENODATA)
+- rgw_run_sync_thread=true on single-site cluster with residual multisite config
+- CPU normalized after disabling sync threads
+- Two customers reported same issue
+FIX STATUS: Closed (DONE). Not a regression — operational issue from residual multisite config. Workaround: disable sync threads on single-site clusters.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce high RGW CPU from active sync threads on single-site
+Environment: IBM Ceph 9.0z2 (20.1.0-185) with residual multisite config
+1. Deploy single-site cluster with RGW
+2. Configure multisite (realm, zonegroup, zone) and then remove multisite but leave residual objects in .rgw.root
+3. Upgrade to 9.0z2
+4. Monitor CPU: sar -u 10 (observe high %user + %system)
+5. Check sync config: ceph config get client.rgw rgw_run_sync_thread
+6. Disable: ceph config set client.rgw.${id} rgw_run_sync_thread false
+7. Restart RGW and observe CPU drop
+DIAGNOSTIC COMMANDS:
+- sar -u 10 (CPU monitoring)
+- ceph config get client.rgw rgw_run_sync_thread
+- ceph --admin-daemon &lt;rgw-asok&gt; perf dump (RGW performance counters)
+- ceph --admin-daemon &lt;rgw-asok&gt; dump_ops_in_flight
+- perf record -F 99 -p &lt;rgw_pid&gt; -g sleep 900 (flame graph data)
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Resolved operationally. Not a code regression.
+GAPS: No validation that rgw_run_sync_thread should be false on single-site clusters
+SCENARIOS NEEDED:
+- RGW CPU monitoring before and after upgrade on single-site
+- Verify rgw_run_sync_thread impact on single-site without multisite config
+- Detect residual multisite config on single-site clusters
+- rgw_enable_usage_perf_counters impact assessment
+</pre></div>
 </div>
 
 

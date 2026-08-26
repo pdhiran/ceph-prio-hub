@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14098: RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z3
-- Component: rgw
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW PUT/LIST performance degradation caused by 276M failed multipart uploads inflating bucket-index OMAP.
+ROOT CAUSE: Failed/abandoned multipart uploads accumulate as OMAP entries in the bucket-index shards. With 725M total entries (508M regular + 217M orphaned multiparts) across 4999 shards (~145K entries/shard), the per-shard OMAP size far exceeds the recommended ~100K threshold. This causes RocksDB iterator depth increase, higher compaction frequency, more tombstone accumulation, and degraded read/write latency. A contributing BlueFS DB read stall (11 seconds on one host) was also observed. The application (Flink) abandons multipart uploads without aborting them.
+KEY EVIDENCE:
+- Customer: Apple (IBM Case TS022018591)
+- 276M aborted multipart entries in single bucket
+- Per-shard OMAP: ~145K entries/shard (target is ~100K)
+- Environment: IBM Ceph 8.1z3 with HDD-backed pools
+- Recommendation: LC cleanup with tuned workers + lifecycle policy to prevent recurrence
+- Matthew Benjamin confirmed LC tuning numbers are realistic
+- Performance collection script provided for before/after comparison
+FIX STATUS: Operational guidance provided. Customer needs to: 1) Apply AbortIncompleteMultipartUpload LC policy, 2) Tune rgw_lc_max_worker/rgw_lc_max_wp_worker, 3) Fix Flink application to abort multipart uploads. Estimated cleanup: 3-14 days depending on throughput.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts
-Environment: IBM Ceph 8.1z3, component: rgw
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW performance degradation from large abandoned multipart uploads
+Environment: IBM Ceph 8.1z3 with HDD-backed index pool
+1. Create bucket with 4999 shards -- intent: match customer topology
+2. Initiate 200K+ multipart uploads without completing/aborting them -- intent: simulate abandoned uploads
+3. Measure PUT/LIST latency baseline: time aws s3 ls s3://&lt;bucket&gt;/ -- intent: measure degradation
+4. Apply LC policy: AbortIncompleteMultipartUpload DaysAfterInitiation=1 -- intent: begin cleanup
+5. Tune LC: ceph config set client.rgw rgw_lc_max_worker 6, rgw_lc_max_wp_worker 6 -- intent: accelerate
+6. Monitor recovery: ceph tell osd.&lt;id&gt; dump_objectstore_kv_stats -- intent: measure improvement
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket stats --bucket=&lt;bucket&gt;
+- ceph tell osd.&lt;id&gt; dump_objectstore_kv_stats
+- ceph tell osd.&lt;id&gt; perf dump
+- radosgw-admin lc list</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts
-- Scale test may not reach threshold that triggers this issue
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test covers performance degradation from large-scale abandoned multipart uploads.
+GAPS: No test validates LC cleanup efficiency at 100M+ entry scale. No test measures the OMAP per-shard impact of abandoned multiparts.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. Create 100K+ abandoned multipart uploads, measure PUT/LIST degradation vs baseline
+2. Apply LC policy and measure cleanup rate with tuned workers (3,6,9)
+3. Verify per-shard OMAP reduction after cleanup (target: below 100K entries/shard)
+4. Test with separate LC-dedicated RGW service to avoid impacting client-facing RGWs</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,36 +236,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW PUT/LIST performance degradation caused by 276M failed multipart uploads inflating bucket-index OMAP.</div>
+<div>ROOT CAUSE: Failed/abandoned multipart uploads accumulate as OMAP entries in the bucket-index shards. With 725M total entries (508M regular + 217M orphaned multiparts) across 4999 shards (~145K entries/shard), the per-shard OMAP size far exceeds the recommended ~100K threshold. This causes RocksDB iterator depth increase, higher compaction frequency, more tombstone accumulation, and degraded read/write latency. A contributing BlueFS DB read stall (11 seconds on one host) was also observed. The application (Flink) abandons multipart uploads without aborting them.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: rgw</li>
+<li>Customer: Apple (IBM Case TS022018591)</li>
+<li>276M aborted multipart entries in single bucket</li>
+<li>Per-shard OMAP: ~145K entries/shard (target is ~100K)</li>
+<li>Environment: IBM Ceph 8.1z3 with HDD-backed pools</li>
+<li>Recommendation: LC cleanup with tuned workers + lifecycle policy to prevent recurrence</li>
+<li>Matthew Benjamin confirmed LC tuning numbers are realistic</li>
+<li>Performance collection script provided for before/after comparison</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Operational guidance provided. Customer needs to: 1) Apply AbortIncompleteMultipartUpload LC policy, 2) Tune rgw_lc_max_worker/rgw_lc_max_wp_worker, 3) Fix Flink application to abort multipart uploads. Estimated cleanup: 3-14 days depending on throughput.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW performance degradation from large abandoned multipart uploads</div>
+<div>Environment: IBM Ceph 8.1z3 with HDD-backed index pool</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts</div>
-<div>Environment: IBM Ceph 8.1z3, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: RGW Performance degradation for PUT/LIST in cluster with large OMAP and Failed Multiparts</li>
-<li>Scale test may not reach threshold that triggers this issue</li>
+<li><span class="step-num">1.</span> Create bucket with 4999 shards -- intent: match customer topology</li>
+<li><span class="step-num">2.</span> Initiate 200K+ multipart uploads without completing/aborting them -- intent: simulate abandoned uploads</li>
+<li><span class="step-num">3.</span> Measure PUT/LIST latency baseline: time aws s3 ls s3://&lt;bucket&gt;/ -- intent: measure degradation</li>
+<li><span class="step-num">4.</span> Apply LC policy: AbortIncompleteMultipartUpload DaysAfterInitiation=1 -- intent: begin cleanup</li>
+<li><span class="step-num">5.</span> Tune LC: <code>ceph config set client.rgw rgw_lc_max_worker 6</code>, rgw_lc_max_wp_worker 6 -- intent: accelerate</li>
+<li><span class="step-num">6.</span> Monitor recovery: <code>ceph tell osd.&lt;id&gt; dump_objectstore_kv_stats -- intent: measure improvement</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>radosgw-admin bucket stats --bucket=&lt;bucket&gt;</code></li>
+<li><code>ceph tell osd.&lt;id&gt; dump_objectstore_kv_stats</code></li>
+<li><code>ceph tell osd.&lt;id&gt; perf dump</code></li>
+<li><code>radosgw-admin lc list</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test covers performance degradation from large-scale abandoned multipart uploads.</div>
+<div>GAPS: No test validates LC cleanup efficiency at 100M+ entry scale. No test measures the OMAP per-shard impact of abandoned multiparts.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Create 100K+ abandoned multipart uploads, measure PUT/LIST degradation vs baseline</li>
+<li><span class="step-num">2.</span> Apply LC policy and measure cleanup rate with tuned workers (3,6,9)</li>
+<li><span class="step-num">3.</span> Verify per-shard OMAP reduction after cleanup (target: below 100K entries/shard)</li>
+<li><span class="step-num">4.</span> Test with separate LC-dedicated RGW service to avoid impacting client-facing RGWs</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15874: Both `fragmentation` and `score` have the same label</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Both `fragmentation` and `score` have the same label
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: BlueStore allocator commands `fragmentation` and `score` both return the same JSON key `fragmentation_rating`, making output ambiguous for monitoring scripts.
 
 ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: rados
+The `ceph tell osd.X bluestore allocator fragmentation block` and `ceph tell osd.X bluestore allocator score block` commands both emit their results under the key `fragmentation_rating`. This is a labeling inconsistency in the BlueStore allocator output code — the score calculation uses a different metric than fragmentation but reuses the same output key name. This confuses monitoring scripts and makes it impossible to distinguish between the two values without knowing which command produced the output.
 
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Ack on fixing it in 9.2 and backporting it to 9.1z and 8.1z, we can skip backporting it beyond that. Lets ensure that it is highlighted in the release notes as enhancement.
+KEY EVIDENCE:
+- `ceph tell osd.1 bluestore allocator fragmentation block` returns `{&quot;fragmentation_rating&quot;: 0.387...}`
+- `ceph tell osd.1 bluestore allocator score block` returns `{&quot;fragmentation_rating&quot;: 0.833...}`
+- Fix merged upstream; backport to 9.1z and 8.1z approved by Bipin Kunal but under debate about baking time
+- Upstream dev (Radosław Zarzyński) concerned about breaking existing scripts that depend on the field name
 
 FIX STATUS:
-- Current JIRA status: POST</textarea>
+- Status: Post (upstream merged)
+- Moved to 10.0 target. 9.1z backport moved out of 9.1z2; 8.1z backport moved to z9.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Both `fragmentation` and `score` have the same label
-Environment: IBM Ceph 7.1, component: rados
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify both allocator commands produce identical key names
+Environment: IBM Ceph 7.1+ (any version before fix)
 
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Identify a running OSD: `ceph osd ls` -- intent: pick a target OSD
+2. Run `ceph tell osd.0 bluestore allocator fragmentation block` -- intent: get fragmentation value
+3. Run `ceph tell osd.0 bluestore allocator score block` -- intent: get score value
+4. Compare JSON keys in both outputs -- intent: confirm both use `fragmentation_rating`
+
+DIAGNOSTIC COMMANDS:
+- `ceph tell osd.&lt;id&gt; bluestore allocator fragmentation block`
+- `ceph tell osd.&lt;id&gt; bluestore allocator score block`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates the JSON field names of allocator commands.
 
 GAPS:
-- Existing rados tests may not cover: Both `fragmentation` and `score` have the same label
+- No test checks that fragmentation and score commands produce distinguishable output
+- No test validates JSON schema of BlueStore allocator admin socket commands
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Verify `fragmentation` command returns `fragmentation_rating` key
+- Verify `score` command returns a distinct key (e.g., `fragmentation_score`) after fix
+- Regression test: parse both command outputs and confirm different keys</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +240,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Both `fragmentation` and `score` have the same label</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">BlueStore allocator commands `fragmentation` and `score` both return the same JSON key `fragmentation_rating`, making output ambiguous for monitoring scripts.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The <code>ceph tell osd.X bluestore allocator fragmentation block</code> and <code>ceph tell osd.X bluestore allocator score block</code> commands both emit their results under the key <code>fragmentation_rating</code>. This is a labeling inconsistency in the BlueStore allocator output code — the score calculation uses a different metric than fragmentation but reuses the same output key name. This confuses monitoring scripts and makes it impossible to distinguish between the two values without knowing which command produced the output.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: rados</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Bipin Kunal] Ack on fixing it in 9.2 and backporting it to 9.1z and 8.1z, we can skip backporting it beyond that. Lets ensure that it is highlighted in the release notes as enhancement.</li>
+<li><code><code>ceph tell osd.1 bluestore allocator fragmentation block</code></code> returns <code>{&amp;quot;fragmentation_rating&amp;quot;: 0.387...}</code></li>
+<li><code><code>ceph tell osd.1 bluestore allocator score block</code></code> returns <code>{&amp;quot;fragmentation_rating&amp;quot;: 0.833...}</code></li>
+<li>Fix merged upstream; backport to 9.1z and 8.1z approved by Bipin Kunal but under debate about baking time</li>
+<li>Upstream dev (Radosław Zarzyński) concerned about breaking existing scripts that depend on the field name</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: POST</li>
+<li>Status: Post (upstream merged)</li>
+<li>Moved to 10.0 target. 9.1z backport moved out of 9.1z2; 8.1z backport moved to z9.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Both <code>fragmentation</code> and <code>score</code> have the same label</div>
-<div>Environment: IBM Ceph 7.1, component: rados</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify both allocator commands produce identical key names</div>
+<div>Environment: IBM Ceph 7.1+ (any version before fix)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Identify a running OSD: <code><code>ceph osd ls</code></code> -- intent: pick a target OSD</li>
+<li><span class="step-num">2.</span> Run <code><code>ceph tell osd.0 bluestore allocator fragmentation block</code></code> -- intent: get fragmentation value</li>
+<li><span class="step-num">3.</span> Run <code><code>ceph tell osd.0 bluestore allocator score block</code></code> -- intent: get score value</li>
+<li><span class="step-num">4.</span> Compare JSON keys in both outputs -- intent: confirm both use <code>fragmentation_rating</code></li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph tell osd.&amp;lt;id&amp;gt; bluestore allocator fragmentation block</code></code></li>
+<li><code><code>ceph tell osd.&amp;lt;id&amp;gt; bluestore allocator score block</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates the JSON field names of allocator commands.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rados tests may not cover: Both</code><code>fragmentation</code> and <code>score</code> have the same label</li>
+<li>No test checks that fragmentation and score commands produce distinguishable output</li>
+<li>No test validates JSON schema of BlueStore allocator admin socket commands</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Verify <code>fragmentation</code> command returns <code>fragmentation_rating</code> key</li>
+<li>Verify <code>score</code> command returns a distinct key (e.g., <code>fragmentation_score</code>) after fix</li>
+<li>Regression test: parse both command outputs and confirm different keys</li>
 </ul></div>
 </div>
 

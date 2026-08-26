@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14166: High MON ms_dispatch CPU related to LogClient</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,54 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: High MON ms_dispatch CPU related to LogClient
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MON ms_dispatch thread consumes 100% CPU due to excessive LogClient::_get_mon_log_message() processing, likely caused by commit 22cd0d42a15 changing failed auth handling from silent ignore to explicit reset processing.
 
 ROOT CAUSE:
-- Affected version(s): 6.1, 8.1
-- Component: rados
+After upgrading from Ceph 6.1 (Quincy 17.2.6) to 8.1 (Squid 19.2.1), MON peon CPU increases dramatically. Commit 22cd0d42a15 changed failed authentication handling: in 6.1, a failed auth returned an ignored integer and the connection continued silently; in 8.1, the return type changed to bool -- a failure now returns false, causing handle_auth_request to return -EACCES and triggering ms_handle_reset on the dispatch path. In a cluster with ~1,300 connections/min, this additional per-connection reset processing (ms_handle_reset per connection increased +50%, _assign_global_id per connection +45%) accumulates on the dispatch thread, causing MON CPU to reach 100%.
 
-ENGINEERING FINDINGS:
-- [Yuka Ariyama] Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this could suggest that some proces
-- [Prashant Dhange] After analyzing the monitor debug logs and CPU utilization data on tb8-cephmon-p3i-a1s2-0002p, two potential contributors to the high CPU usage (ranging from 5.9% to 94.1%) were identified: route message flooding and excessive audit logging. Among these, the route message flood s
-- [Yuka Ariyama] thanks for looking into this. The customer has informed us that it would be difficult to enable debug logging on all three MONs because the MONs are already under high load and the cluster is currently in the middle of an upgrade. If debug logs from all three MONs are absolutely
-- [Aarti Dhikale] Hi   , Thanks for the update. In the meantime, I&#x27;ll go through the debug logs. If possible, could you set up this environment again? That would be helpful in identifying the root cause of the issue.
-- [Aarti Dhikale] Hello   , From the script output you shared, we observed the below. We do see an increase in CPU usage after the upgrade to 8.1. However, the MON logs are missing from the SOS report, so we could not correlate the CPU increase with the MON logs.  ps_auxwww  command output All thr
+KEY EVIDENCE:
+- perf top ms_dispatch: `LogClient::_get_mon_log_message()` = 75.9% of CPU
+- ms_handle_reset per connection: 12.1 (6.1) -&gt; 18.1 (8.1) = +50%
+- Commit identified: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/22cd0d42a15e19d9ca3b6bd99e108993d3fd2263
+- Workaround: `clog_to_monitors false` temporarily reduces load but impacts monitoring
+- Only MON peon CPUs affected (leader unchanged); correlated with memory increase
+- Aarti Dhikale: working on build with reverted changes for testing
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+- Status: Assigned (under active investigation)
+- Root cause commit identified; fix build with revert being prepared
+- Workaround: `ceph config set global clog_to_monitors false` (impacts monitoring)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- High MON ms_dispatch CPU related to LogClient
-Environment: IBM Ceph 6.1, component: rados
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce high MON CPU from LogClient processing in large clusters
+Environment: Large Ceph cluster (many hosts/OSDs, ~1300 connections/min), upgraded from 6.1 to 8.1
 
-1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Deploy Ceph 6.1 cluster with 15+ hosts and many OSDs -- intent: high connection count
+2. Monitor MON leader CPU over 1 week -- intent: establish baseline
+3. Upgrade to Ceph 8.1 -- intent: trigger the regression
+4. Monitor MON peon CPU over 1 week -- intent: observe CPU trend
+5. Use `perf top -p &lt;mon-pid&gt;` to confirm ms_dispatch bottleneck -- intent: identify function
 
-SCENARIO DETAIL (from engineering comments):
-Hi  , I re‑reviewed the logs provided earlier by the customer and observed that the route messages are part of cluster audit logs, specifically associated with the  ceph df  command  2026-06-11T08:40:</textarea>
+DIAGNOSTIC COMMANDS:
+- `perf top -p &lt;ceph-mon-pid&gt; -t` (identify hot threads/functions)
+- `top -H -p &lt;ceph-mon-pid&gt;` (per-thread CPU)
+- `ceph config set global clog_to_monitors false` (workaround)
+- `ceph daemon mon.&lt;id&gt; perf dump` (check connection rates)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No performance regression test for MON CPU after upgrade with high connection counts.
 
 GAPS:
-- Existing rados tests may not cover: High MON ms_dispatch CPU related to LogClient
+- No MON CPU baseline test before/after upgrade
+- No stress test for ms_dispatch with high connection rates
+- No test for LogClient processing overhead at scale
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Deploy large cluster, measure MON CPU before and after 6.1-&gt;8.1 upgrade
+- Stress test: 1000+ concurrent client connections with auth failures, measure MON CPU
+- Verify fix: same test with reverted commit shows no CPU regression</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,42 +247,52 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">High MON ms_dispatch CPU related to LogClient</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MON ms_dispatch thread consumes 100% CPU due to excessive LogClient::_get_mon_log_message() processing, likely caused by commit 22cd0d42a15 changing failed auth handling from silent ignore to explicit reset processing.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>After upgrading from Ceph 6.1 (Quincy 17.2.6) to 8.1 (Squid 19.2.1), MON peon CPU increases dramatically. Commit 22cd0d42a15 changed failed authentication handling: in 6.1, a failed auth returned an ignored integer and the connection continued silently; in 8.1, the return type changed to bool -- a failure now returns false, causing handle_auth_request to return -EACCES and triggering ms_handle_reset on the dispatch path. In a cluster with ~1,300 connections/min, this additional per-connection reset processing (ms_handle_reset per connection increased +50%, _assign_global_id per connection +45%) accumulates on the dispatch thread, causing MON CPU to reach 100%.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 6.1, 8.1</li>
-<li>Component: rados</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Yuka Ariyama] Thank you for the detailed analysis. I understand that the initial trigger was likely the upgrade process. However, even after the process was stopped and no further operations were being performed, the CPU usage increased to 100%. In general, this could suggest that some proces</li>
-<li>[Prashant Dhange] After analyzing the monitor debug logs and CPU utilization data on tb8-cephmon-p3i-a1s2-0002p, two potential contributors to the high CPU usage (ranging from 5.9% to 94.1%) were identified: route message flooding and excessive audit logging. Among these, the route message flood s</li>
-<li>[Yuka Ariyama] thanks for looking into this. The customer has informed us that it would be difficult to enable debug logging on all three MONs because the MONs are already under high load and the cluster is currently in the middle of an upgrade. If debug logs from all three MONs are absolutely</li>
-<li>[Aarti Dhikale] Hi   , Thanks for the update. In the meantime, I&#x27;ll go through the debug logs. If possible, could you set up this environment again? That would be helpful in identifying the root cause of the issue.</li>
-<li>[Aarti Dhikale] Hello   , From the script output you shared, we observed the below. We do see an increase in CPU usage after the upgrade to 8.1. However, the MON logs are missing from the SOS report, so we could not correlate the CPU increase with the MON logs.  ps_auxwww  command output All thr</li>
+<li>perf top ms_dispatch: <code>LogClient::_get_mon_log_message()</code> = 75.9% of CPU</li>
+<li>ms_handle_reset per connection: 12.1 (6.1) -&gt; 18.1 (8.1) = +50%</li>
+<li>Commit identified: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/22cd0d42a15e19d9ca3b6bd99e108993d3fd2263</li>
+<li>Workaround: <code>clog_to_monitors false</code> temporarily reduces load but impacts monitoring</li>
+<li>Only MON peon CPUs affected (leader unchanged); correlated with memory increase</li>
+<li>Aarti Dhikale: working on build with reverted changes for testing</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li>Status: Assigned (under active investigation)</li>
+<li>Root cause commit identified; fix build with revert being prepared</li>
+<li>Workaround: <code><code>ceph config set global clog_to_monitors false</code></code> (impacts monitoring)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- High MON ms_dispatch CPU related to LogClient</div>
-<div>Environment: IBM Ceph 6.1, component: rados</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce high MON CPU from LogClient processing in large clusters</div>
+<div>Environment: Large Ceph cluster (many hosts/OSDs, ~1300 connections/min), upgraded from 6.1 to 8.1</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy Ceph 6.1 cluster with 15+ hosts and many OSDs -- intent: high connection count</li>
+<li><span class="step-num">2.</span> Monitor MON leader CPU over 1 week -- intent: establish baseline</li>
+<li><span class="step-num">3.</span> Upgrade to Ceph 8.1 -- intent: trigger the regression</li>
+<li><span class="step-num">4.</span> Monitor MON peon CPU over 1 week -- intent: observe CPU trend</li>
+<li><span class="step-num">5.</span> Use <code>perf top -p &amp;lt;mon-pid&amp;gt;</code> to confirm ms_dispatch bottleneck -- intent: identify function</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi  , I re‑reviewed the logs provided earlier by the customer and observed that the route messages are part of cluster audit logs, specifically associated with the  ceph df  command  2026-06-11T08:40:</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>perf top -p &amp;lt;ceph-mon-pid&amp;gt; -t</code> (identify hot threads/functions)</li>
+<li><code>top -H -p &amp;lt;ceph-mon-pid&amp;gt;</code> (per-thread CPU)</li>
+<li><code><code>ceph config set global clog_to_monitors false</code></code> (workaround)</li>
+<li><code><code>ceph daemon mon.&amp;lt;id&amp;gt; perf dump</code></code> (check connection rates)</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No performance regression test for MON CPU after upgrade with high connection counts.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rados tests may not cover: High MON ms_dispatch CPU related to LogClient</code></li>
+<li>No MON CPU baseline test before/after upgrade</li>
+<li>No stress test for ms_dispatch with high connection rates</li>
+<li>No test for LogClient processing overhead at scale</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Deploy large cluster, measure MON CPU before and after 6.1-&gt;8.1 upgrade</li>
+<li>Stress test: 1000+ concurrent client connections with auth failures, measure MON CPU</li>
+<li>Verify fix: same test with reverted commit shows no CPU regression</li>
 </ul></div>
 </div>
 

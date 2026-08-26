@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10895: [BZ#2353275] [IBM_Support] nfs-ganesha container fails to start after its host is rebooted</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2353275] [IBM_Support] nfs-ganesha container fails to start after its host is rebooted
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Sergii Mykhailushko] (In reply to Sachin Punadikar from comment #27) &gt; Thanks Sergii, &gt; So here the issue is need of redeployment, is this correct understanding? &gt; May I know the NFS cluster creation command used ? Hello, The command was actually there in the description; we use ceph orchestrator, wh
-- [Sachin Punadikar] Assigning to cephadm team. The issue was due to unsuitable environment for running NFSv3. Workaround of disabling NFSv3 works correctly. What is required from cephadm team : Before deploying NFS Ganesha, when NFSv3 is enabled, then make sure that all required daemons (like rpcbin
-- [Justin Caratzas] Apologies, was running new automation for Jira and this was accidently moved back into ON_QA. I thought I fixed the affected tickets when it ran, but I missed this one, moved back to VERIFIED
-- [Sergii Mykhailushko] Hello team, Could you please let me know if there have been any updates on this recently? I see some status roaming but not sure how the things are moving towards the code fix. Thanks in advance, Sergii
-
-FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: Assigning to cephadm team. The issue was due to unsuitable environment for running NFSv3. Workaround of disabling NFSv3 works correctly. What is required from cephadm team : Before deploying NFS Ganes</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS-Ganesha container fails to start after host reboot because it starts before the Ceph cluster is fully available, causing RADOS connection failure.
+ROOT CAUSE: After a host reboot, the NFS-Ganesha container is started by systemd before the Ceph MON/OSD services are fully available. Ganesha attempts to connect to the RADOS cluster to fetch its configuration from `rados://.nfs/&lt;cluster&gt;/conf-nfs.&lt;cluster&gt;` and fails with error -107 (transport endpoint not connected). The container then hits a fatal error parsing the config and exits. Systemd&#x27;s restart logic gives up after rapid restart failures. A secondary issue (BZ#2348763) is that with NFSv3 enabled by default (Protocols = 3,4), ganesha also fails to register NFS V3 on TCP, compounding the startup failure.
+KEY EVIDENCE:
+- Error: &quot;rados_url_client_setup: Failed to connect to cluster&quot;
+- Error: &quot;Config File (ganesha.conf:36): new url (rados://.nfs/foo/conf-nfs.foo) open error (Unknown error -107)&quot;
+- Error: &quot;Fatal errors. Server exiting...&quot;
+- 100% reproducible: deploy NFS, reboot host, observe container crash loop
+- Fix involved adding retry logic for RADOS connection during ganesha startup
+FIX STATUS: Fixed in 8.1z5. Workaround: redeploy ganesha daemon via `ceph orch redeploy nfs.&lt;cluster&gt;` after reboot, but config reverts to defaults each time.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2353275]  nfs-ganesha container fails to start after its host is rebooted
-Environment: IBM Ceph 8.0, component: cephadm
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Trigger failover (stop daemon / power off node / network partition)
-4. Verify recovery -- `ceph -s`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce NFS-Ganesha container startup failure after host reboot
+Environment: IBM Ceph 8.0z2 (19.2.0-98.el9cp) or 8.1 pre-z5
+1. Deploy NFS-Ganesha service: `ceph orch apply nfs foo --placement=&#x27;1 &lt;hostname&gt;&#x27;` -- intent: create NFS service on a single host
+2. Wait for NFS daemon to be running: `ceph orch ps | grep nfs` -- intent: confirm service health
+3. Optionally edit ganesha.conf to set `Protocols = 4` (remove NFSv3) and restart: `ceph orch restart nfs.foo` -- intent: work around NFSv3 registration issue
+4. Reboot the host running the NFS daemon: `ssh root@&lt;host&gt; reboot` -- intent: trigger the race condition
+5. After reboot, check NFS service status: `ceph orch ps | grep nfs` -- intent: observe 0/1 running
+6. Check journal on the rebooted host: `journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt;.service --no-pager` -- intent: see RADOS connection failure
+DIAGNOSTIC COMMANDS:
+- `ceph orch ls | grep nfs` -- check service count
+- `systemctl list-units | grep nfs` on the rebooted host -- check restart state
+- `journalctl -u ceph-*@nfs*` -- get ganesha startup logs</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified fixed in 8.1z5. Basic reboot scenario was tested.
+GAPS: No automated test for NFS-Ganesha startup resilience after host reboot. No test for ganesha startup ordering relative to MON/OSD availability.
 SCENARIOS NEEDED:
-- HA: failover + recovery, verify data integrity
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Reboot NFS host and verify ganesha auto-recovers once cluster is available
+- Reboot all cluster nodes simultaneously and verify NFS service recovery
+- Test ganesha startup with delayed MON availability (network latency injection)
+- Verify NFS exports are re-mounted and accessible after host reboot recovery</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,40 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2353275] [IBM_Support] nfs-ganesha container fails to start after its host is rebooted</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS-Ganesha container fails to start after host reboot because it starts before the Ceph cluster is fully available, causing RADOS connection failure.</div>
+<div>ROOT CAUSE: After a host reboot, the NFS-Ganesha container is started by systemd before the Ceph MON/OSD services are fully available. Ganesha attempts to connect to the RADOS cluster to fetch its configuration from <code>rados://.nfs/&lt;cluster&gt;/conf-nfs.&lt;cluster&gt;</code> and fails with error -107 (transport endpoint not connected). The container then hits a fatal error parsing the config and exits. Systemd&#x27;s restart logic gives up after rapid restart failures. A secondary issue (BZ#2348763) is that with NFSv3 enabled by default (Protocols = 3,4), ganesha also fails to register NFS V3 on TCP, compounding the startup failure.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: cephadm</li>
+<li>Error: &quot;rados_url_client_setup: Failed to connect to cluster&quot;</li>
+<li>Error: &quot;Config File (ganesha.conf:36): new url (rados://.nfs/foo/conf-nfs.foo) open error (Unknown error -107)&quot;</li>
+<li>Error: &quot;Fatal errors. Server exiting...&quot;</li>
+<li>100% reproducible: deploy NFS, reboot host, observe container crash loop</li>
+<li>Fix involved adding retry logic for RADOS connection during ganesha startup</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 8.1z5. Workaround: redeploy ganesha daemon via <code>ceph orch redeploy nfs.&lt;cluster&gt;</code> after reboot, but config reverts to defaults each time.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce NFS-Ganesha container startup failure after host reboot</div>
+<div>Environment: IBM Ceph 8.0z2 (19.2.0-98.el9cp) or 8.1 pre-z5</div>
 <ul>
-<li>[Sergii Mykhailushko] (In reply to Sachin Punadikar from comment #27) &gt; Thanks Sergii, &gt; So here the issue is need of redeployment, is this correct understanding? &gt; May I know the NFS cluster creation command used ? Hello, The command was actually there in the description; we use <code>ceph orchestrator</code>, wh</li>
-<li>[Sachin Punadikar] Assigning to <code>cephadm team. The issue was due to unsuitable environment for running NFSv3. Workaround of disabling NFSv3 works correctly. What is required from cephadm team : Before deploying NFS Ganesha</code>, when NFSv3 is enabled, then make sure that all required daemons (like rpcbin</li>
-<li>[Justin Caratzas] Apologies, was running new automation for Jira and this was accidently moved back into ON_QA. I thought I fixed the affected tickets when it ran, but I missed this one, moved back to VERIFIED</li>
-<li>[Sergii Mykhailushko] Hello team, Could you please let me know if there have been any updates on this recently? I see some status roaming but not sure how the things are moving towards the code fix. Thanks in advance, Sergii</li>
+<li><span class="step-num">1.</span> Deploy NFS-Ganesha service: <code><code>ceph orch apply nfs foo --placement=&amp;#x27;1 &amp;lt;hostname&amp;gt;&amp;#x27;</code></code> -- intent: create NFS service on a single host</li>
+<li><span class="step-num">2.</span> Wait for NFS daemon to be running: <code><code>ceph orch ps | grep nfs</code></code> -- intent: confirm service health</li>
+<li><span class="step-num">3.</span> Optionally edit ganesha.conf to set <code>Protocols = 4</code> (remove NFSv3) and restart: <code><code>ceph orch restart nfs.foo</code></code> -- intent: work around NFSv3 registration issue</li>
+<li><span class="step-num">4.</span> Reboot the host running the NFS daemon: <code>ssh root@&amp;lt;host&amp;gt; reboot</code> -- intent: trigger the race condition</li>
+<li><span class="step-num">5.</span> After reboot, check NFS service status: <code><code>ceph orch ps | grep nfs</code></code> -- intent: observe 0/1 running</li>
+<li><span class="step-num">6.</span> Check journal on the rebooted host: <code><code>journalctl -u ceph-&amp;lt;fsid&amp;gt;@nfs.&amp;lt;cluster&amp;gt;.&amp;lt;id&amp;gt;.service --no-pager</code></code> -- intent: see RADOS connection failure</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: Assigning to <code>cephadm team. The issue was due to unsuitable environment for running NFSv3. Workaround of disabling NFSv3 works correctly. What is required from cephadm team : Before deploying NFS Ganes</code></li>
+<li><code><code>ceph orch ls | grep nfs</code></code> -- check service count</li>
+<li><code><code>systemctl list-units | grep nfs</code></code> on the rebooted host -- check restart state</li>
+<li><code><code>journalctl -u ceph-*@nfs*</code></code> -- get ganesha startup logs</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2353275]  nfs-ganesha container fails to start after its host is rebooted</div>
-<div>Environment: IBM Ceph 8.0, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Trigger failover (stop daemon / power off node / network partition)</li>
-<li><span class="step-num">4.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified fixed in 8.1z5. Basic reboot scenario was tested.</div>
+<div>GAPS: No automated test for NFS-Ganesha startup resilience after host reboot. No test for ganesha startup ordering relative to MON/OSD availability.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA: failover + recovery, verify data integrity</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Reboot NFS host and verify ganesha auto-recovers once cluster is available</li>
+<li>Reboot all cluster nodes simultaneously and verify NFS service recovery</li>
+<li>Test ganesha startup with delayed MON availability (network latency injection)</li>
+<li>Verify NFS exports are re-mounted and accessible after host reboot recovery</li>
 </ul></div>
 </div>
 

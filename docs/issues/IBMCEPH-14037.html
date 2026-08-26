@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14037: [IBM_Support] Latency observed on the RGW GET requests</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] Latency observed on the RGW GET requests
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z1
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Kritik Sachdeva] Hello      Customer responded back that they are not comfortable to make the specific tunings changes without any concrete proof introduces unnecessary risk. They are specifically requesting concrete findings from the existing logs or analysis that conclusively support the need f
-- [Prashant Dhange] Hi  , Thanks for your time on the quick call today. As discussed, this cluster is reporting large omap warnings for some buckets, which appear to be used by the Spark workload. As a first step, we should fix the shard count for the buckets reporting large omaps. After that, we ca
-- [Kritik Sachdeva] Hello team, As discussed over the slack here is this is the action plan we are going with moving forward: We will work on fixing the shard count for the buckets throwing the Large Omap. After fixing this, we evaluate the performance behaviour if still getting the latency, then we
-- [Kritik Sachdeva] Hello      Customer have uploaded the data from the last timestamp we asked during the end of the impacted window timeframe on the case as well. Here are the files: 1315_perf.tar_unpack  --&gt; with perf stats of NVMe OSDs. Started at 13:09:21 BST.
-1315_perf_rgw_debug_1.tar_unpack a
-- [Kritik Sachdeva] Hello    As discussed over the slack about turning off the RGW instance on node 0042. Customer did that and observed the latency today but unfortunately it didn’t helped. This is the response we get from the customer. We have disabled the RGW service on whds0042 and we could see
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: RGW GET request latency spikes (up to 6s) during peak Spark workload window, node-skewed to specific RGW instances
+ROOT CAUSE: Insufficient engineering analysis to determine definitive root cause. Investigation identified: (1) Large OMAP warnings on buckets used by Spark workload, suggesting insufficient bucket index sharding. (2) Latency is node-skewed -- worst latencies from whds0042 (6.1s), whds0046 (5.8s), whds0034 (4.3s) while other nodes show 1-2s. (3) The slowest requests are S3 LIST operations and HTTP 206 range GETs (parquet/CSV reads). Bucket resharding was performed but customer reported no improvement. Further investigation (OSD perf counters, flamegraphs) was blocked because customer&#x27;s disconnected environment couldn&#x27;t install perf tooling.
+KEY EVIDENCE:
+- Peak latency: 6.1s GET on whds0042, 5.8s on whds0046
+- Affected operations: S3 LIST (list-type=2) and HTTP 206 range GETs
+- rgw_max_concurrent_requests=2048, rgw_thread_pool_size=512
+- Large OMAP warnings on Spark-used buckets
+- 12 RGW instances for client workload, HAProxy+BGP
+- Multisite cluster with dedicated sync RGWs
+- Disconnected environment -- unable to collect flamegraph/perf data
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Bucket resharding did not resolve. OSD perf analysis blocked by disconnected environment. Action plan was: fix shard count -&gt; collect OSD perf counters -&gt; SAR data from RGW/OSD nodes -&gt; flamegraph from index OSDs.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Latency observed on the RGW GET requests
-Environment: IBM Ceph 8.1z1, component: rgw
-
-1. Deploy IBM Ceph 8.1z1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce RGW latency spikes under concurrent Spark workload
+Environment: IBM Ceph 8.1 (19.2.1-292.el9cp), 12 RGW instances, multisite, HAProxy+BGP
+1. Configure RGW with rgw_max_concurrent_requests=2048, rgw_thread_pool_size=512
+2. Create buckets with many objects (generating large OMAP)
+3. Run concurrent Spark jobs with S3 LIST and range GET operations during 6am-11:30am window
+4. Monitor RGW logs for latency= values: grep &#x27;latency=&#x27; ceph-client.rgw.*.log
+5. Correlate latency spikes with specific RGW nodes
+DIAGNOSTIC COMMANDS:
+- grep &#x27;latency=&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-client.rgw.*.log | awk for sorting
+- ceph osd pool ls detail (check OMAP warnings)
+- radosgw-admin bucket stats --bucket=&lt;name&gt;
+- ceph tell osd.&lt;id&gt; perf dump
+- ceph tell osd.&lt;id&gt; dump_historic_slow_ops
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: Latency observed on the RGW GET requests
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Insufficient data to determine root cause. No automated performance regression test.
+GAPS: No performance benchmark test for RGW under concurrent Spark-style workloads (LIST + range GET). No large OMAP detection/alerting test.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- RGW latency benchmark under concurrent LIST + range GET (Spark-like pattern)
+- Large OMAP bucket detection and auto-resharding validation
+- Node-level RGW performance comparison under uniform load distribution
+- RGW performance with rgw_max_concurrent_requests at 2048 vs default
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,48 +245,46 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] Latency observed on the RGW GET requests</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z1</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Kritik Sachdeva] Hello      Customer responded back that they are not comfortable to make the specific tunings changes without any concrete proof introduces unnecessary risk. They are specifically requesting concrete findings from the existing logs or analysis that conclusively support the need f</li>
-<li>[Prashant Dhange] Hi  , Thanks for your time on the quick call today. As discussed, this cluster is reporting large omap warnings for some buckets, which appear to be used by the Spark workload. As a first step, we should fix the shard count for the buckets reporting large omaps. After that, we ca</li>
-<li>[Kritik Sachdeva] Hello team, As discussed over the slack here is this is the action plan we are going with moving forward: We will work on fixing the shard count for the buckets throwing the Large Omap. After fixing this, we evaluate the performance behaviour if still getting the latency, then we</li>
-<li>[Kritik Sachdeva] Hello      Customer have uploaded the data from the last timestamp we asked during the end of the impacted window timeframe on the case as well. Here are the files: 1315_perf.tar_unpack  --&gt; with perf stats of NVMe OSDs. Started at 13:09:21 BST.</li>
-</ul>
-<div>1315_perf_rgw_debug_1.tar_unpack a</div>
-<ul>
-<li>[Kritik Sachdeva] Hello    As discussed over the slack about turning off the RGW instance on node 0042. Customer did that and observed the latency today but unfortunately it didn’t helped. This is the response we get from the customer. We have disabled the RGW service on whds0042 and we could see</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Latency observed on the RGW GET requests</div>
-<div>Environment: IBM Ceph 8.1z1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: Latency observed on the RGW GET requests</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: RGW GET request latency spikes (up to 6s) during peak Spark workload window, node-skewed to specific RGW instances
+ROOT CAUSE: Insufficient engineering analysis to determine definitive root cause. Investigation identified: (1) Large OMAP warnings on buckets used by Spark workload, suggesting insufficient bucket index sharding. (2) Latency is node-skewed -- worst latencies from whds0042 (6.1s), whds0046 (5.8s), whds0034 (4.3s) while other nodes show 1-2s. (3) The slowest requests are S3 LIST operations and HTTP 206 range GETs (parquet/CSV reads). Bucket resharding was performed but customer reported no improvement. Further investigation (OSD perf counters, flamegraphs) was blocked because customer&#x27;s disconnected environment couldn&#x27;t install perf tooling.
+KEY EVIDENCE:
+- Peak latency: 6.1s GET on whds0042, 5.8s on whds0046
+- Affected operations: S3 LIST (list-type=2) and HTTP 206 range GETs
+- rgw_max_concurrent_requests=2048, rgw_thread_pool_size=512
+- Large OMAP warnings on Spark-used buckets
+- 12 RGW instances for client workload, HAProxy+BGP
+- Multisite cluster with dedicated sync RGWs
+- Disconnected environment -- unable to collect flamegraph/perf data
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Bucket resharding did not resolve. OSD perf analysis blocked by disconnected environment. Action plan was: fix shard count -&gt; collect OSD perf counters -&gt; SAR data from RGW/OSD nodes -&gt; flamegraph from index OSDs.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce RGW latency spikes under concurrent Spark workload
+Environment: IBM Ceph 8.1 (19.2.1-292.el9cp), 12 RGW instances, multisite, HAProxy+BGP
+1. Configure RGW with rgw_max_concurrent_requests=2048, rgw_thread_pool_size=512
+2. Create buckets with many objects (generating large OMAP)
+3. Run concurrent Spark jobs with S3 LIST and range GET operations during 6am-11:30am window
+4. Monitor RGW logs for latency= values: grep &#x27;latency=&#x27; ceph-client.rgw.*.log
+5. Correlate latency spikes with specific RGW nodes
+DIAGNOSTIC COMMANDS:
+- grep &#x27;latency=&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-client.rgw.*.log | awk for sorting
+- ceph osd pool ls detail (check OMAP warnings)
+- radosgw-admin bucket stats --bucket=&lt;name&gt;
+- ceph tell osd.&lt;id&gt; perf dump
+- ceph tell osd.&lt;id&gt; dump_historic_slow_ops
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Insufficient data to determine root cause. No automated performance regression test.
+GAPS: No performance benchmark test for RGW under concurrent Spark-style workloads (LIST + range GET). No large OMAP detection/alerting test.
+SCENARIOS NEEDED:
+- RGW latency benchmark under concurrent LIST + range GET (Spark-like pattern)
+- Large OMAP bucket detection and auto-resharding validation
+- Node-level RGW performance comparison under uniform load distribution
+- RGW performance with rgw_max_concurrent_requests at 2048 vs default
+</pre></div>
 </div>
 
 

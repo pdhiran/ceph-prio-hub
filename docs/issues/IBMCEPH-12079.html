@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12079: [BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,28 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible
-
-ROOT CAUSE:
-- Affected version(s): 9.1
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to raise health warnings when BlueStore cache size and OSD memory options are incompatible.
+ROOT CAUSE: Feature request (companion to IBMCEPH-12213). Administrators can set bluestore_cache_size, osd_memory_target, and osd_memory_cache_min to values that are collectively nonsensical. The customer had bluestore_cache_size_ssd=8GB with osd_memory_target=4GB and bluestore_cache_autotune=false, causing &gt;11GB RSS and heartbeat failures. Requests: (1) new HEALTH_ERR/WARN similar to OSD_OUT_OF_ORDER_FULL when bluestore_cache_size &gt;= osd_memory_target * 0.95, and (2) when osd_memory_cache_min &gt; osd_memory_target - osd_memory_base.
+KEY EVIDENCE:
+- Customer config: osd_memory_target=4GB, bluestore_cache_size_ssd=8GB, osd_memory_cache_min=4GB, bluestore_cache_autotune=false
+- Result: &gt;11GB OSD memory, heartbeat failures
+- Proposed check location: BlueStore.cc around line 6040
+- 10 configs mentioned in the issue
+- Reporter: Anthony D&#x27;Atri
+FIX STATUS: New. Assigned to Radosław Zarzyński. No PR or implementation.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible
-Environment: IBM Ceph 9.1, component: rados
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Apply the configuration change described in the JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-12213 -- demonstrate OSD memory overconsumption from misconfigured options.
+Environment: Any IBM Ceph cluster with BlueStore.
+See IBMCEPH-12213 for identical steps.
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-12213.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No implementation exists. See IBMCEPH-12213 for identical gap analysis.
+GAPS: Same as IBMCEPH-12213.
+SCENARIOS NEEDED: Same as IBMCEPH-12213.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,31 +221,24 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to raise health warnings when BlueStore cache size and OSD memory options are incompatible.</div>
+<div>ROOT CAUSE: Feature request (companion to IBMCEPH-12213). Administrators can set bluestore_cache_size, osd_memory_target, and osd_memory_cache_min to values that are collectively nonsensical. The customer had bluestore_cache_size_ssd=8GB with osd_memory_target=4GB and bluestore_cache_autotune=false, causing &gt;11GB RSS and heartbeat failures. Requests: (1) new HEALTH_ERR/WARN similar to OSD_OUT_OF_ORDER_FULL when bluestore_cache_size &gt;= osd_memory_target * 0.95, and (2) when osd_memory_cache_min &gt; osd_memory_target - osd_memory_base.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1</li>
-<li>Component: rados</li>
+<li>Customer config: osd_memory_target=4GB, bluestore_cache_size_ssd=8GB, osd_memory_cache_min=4GB, bluestore_cache_autotune=false</li>
+<li>Result: &gt;11GB OSD memory, heartbeat failures</li>
+<li>Proposed check location: BlueStore.cc around line 6040</li>
+<li>10 configs mentioned in the issue</li>
+<li>Reporter: Anthony D&#x27;Atri</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2393402] RFE: [ibm_support] Raise health warning / error when BlueStore and OSD options are incompatible</div>
-<div>Environment: IBM Ceph 9.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-</ul></div>
+<div>FIX STATUS: New. Assigned to Radosław Zarzyński. No PR or implementation.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-12213 -- demonstrate OSD memory overconsumption from misconfigured options.</div>
+<div>Environment: Any IBM Ceph cluster with BlueStore.</div>
+<div>See IBMCEPH-12213 for identical steps.</div>
+<div>DIAGNOSTIC COMMANDS: Same as IBMCEPH-12213.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No implementation exists. See IBMCEPH-12213 for identical gap analysis.</div>
+<div>GAPS: Same as IBMCEPH-12213.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-12213.</div></div>
 </div>
 
 

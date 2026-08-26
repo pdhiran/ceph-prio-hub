@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12820: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,54 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW lifecycle processing for a 480M-object bucket with 60 LC rules appears stuck in PROCESSING state because per-object rule evaluation (~9000 checks/sec) takes longer than a full day to process the entire bucket.
 
 ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: rgw
+This is fundamentally a performance/scalability issue rather than a bug. The RGW lifecycle engine evaluates each object against all 60 lifecycle rules sequentially within each LC shard. With 480 million objects and 9000 tag-match checks per second, the full evaluation cycle takes approximately: 480M / 9000 ≈ 14.8 hours of pure evaluation time (assuming no deletions). During the first 4-5 hours, objects matching rules are deleted (visible in metrics), but after that the remaining objects are simply evaluated and skipped, giving the appearance of being stuck. The LC shard locking mechanism (one RGW per shard at a time) further limits parallelism. Key configuration insights: `rgw_lc_max_worker` controls per-RGW coroutine tasks (not global), `rgw_lc_max_wp_worker` controls threads per worker, and `rgw_lc_max_objs` controls LC shard count (not per-iteration batch size).
 
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] Hi   , The reason your deletion speed is roughly half of your ingress speed is that object creation is a single write operation, while lifecycle deletion is a read-evaluate-update workflow. When an object is created, RGW writes the data and updates the bucket index once. When lif
-- [Raimund Sacherer] I just found I had started writing this in a comment and left it unposted in a tab, this is regarding the production cluster issue:  , I was reviewing the CU case, unfortunately I did not write down exactly if we used debug_rgw only or dbug_rgw + debug_rgw_lifecycle, so I will as
-- [Raimund Sacherer] Hello  ,  So, CU came back with the question about debug_rgw_lifecycle: debug_rgw_lifecycle 20 is effective and I can now see active logging for the bucket in 
-question whilst the object count is NOT going down. You can see it trying each rule and skipping 
-&quot;as tags do not match
-- [Aarti Dhikale] Hi   , Yes, your observations are correct.  debug_rgw_lifecycle 20  shows RGW iterating over all objects and rules. Objects that do not match a rule are skipped, which is why the object count does not decrease. You can see logging for each rule and object, e.g., “tags do not matc
-- [Aarti Dhikale] Hi @Raimund Sacherer, Based on the discussion so far, we are focusing on two main aspects: Bucket stuck in the “processing” state Since  debug_rgw_lifecycle  is already enabled, we can analyze the RGW logs to verify whether the bucket exits the lifecycle  processing  state and to
+KEY EVIDENCE:
+- 480M objects, 60 LC rules, 54+12 RGW instances with LC enabled
+- debug_rgw_lifecycle 20 confirms active processing: `tags do not match in rule: week12-expire`
+- ~9000 tag checks per second observed
+- Customer config: rgw_lc_max_worker=9, rgw_lc_max_objs=1024
+- Fix planned: backport upstream LC optimization + double LC shard count + raise max_workers to 18
+- Commit 2513cf06f7 merged in 9.1 branch
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (done in 9.1)
+- LC optimization backported. Recommendation: increase rgw_lc_max_workers, double LC shard count.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.
-Environment: IBM Ceph 8.1, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate LC processing time for large bucket with many rules
+Environment: IBM Ceph 8.1z1+ (or 9.x), RGW with lifecycle configured
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Create a bucket with 1M+ objects and 10+ LC rules with tag filters -- intent: simulate large-bucket LC workload
+2. Set `debug_rgw_lifecycle = 20` on one RGW instance -- intent: observe per-object rule evaluation
+3. Trigger LC run and monitor `radosgw-admin lc list` -- intent: track PROCESSING state duration
+4. Measure tag-check rate from logs -- intent: quantify evaluation throughput
+5. Compare with adjusted settings (rgw_lc_max_worker=9, rgw_lc_max_wp_worker=6) -- intent: measure improvement
+
+DIAGNOSTIC COMMANDS:
+- `radosgw-admin lc list`
+- `ceph config set client.rgw debug_rgw_lifecycle 20`
+- `ceph config show-with-defaults client.rgw | grep rgw_lc`
+- `rados -p &lt;lc-pool&gt; ls | grep lc.`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No performance test for LC processing on large buckets with many rules.
 
 GAPS:
-- Existing rgw tests may not cover: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a coup
+- No benchmark for LC evaluation throughput (objects/sec) at scale
+- No test for LC completion time with tag-based rules on large buckets
+- No test for LC parallelism tuning (rgw_lc_max_worker, rgw_lc_max_wp_worker)
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- LC processing on 10M+ object bucket with 10+ tag-based rules — measure completion time
+- Verify LC exits PROCESSING state within expected timeframe
+- Benchmark: vary rgw_lc_max_worker (3,6,9,12) and measure throughput scaling
+- Verify LC correctness: all matching objects deleted, non-matching objects preserved</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,44 +247,52 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW lifecycle processing for a 480M-object bucket with 60 LC rules appears stuck in PROCESSING state because per-object rule evaluation (~9000 checks/sec) takes longer than a full day to process the entire bucket.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>This is fundamentally a performance/scalability issue rather than a bug. The RGW lifecycle engine evaluates each object against all 60 lifecycle rules sequentially within each LC shard. With 480 million objects and 9000 tag-match checks per second, the full evaluation cycle takes approximately: 480M / 9000 ≈ 14.8 hours of pure evaluation time (assuming no deletions). During the first 4-5 hours, objects matching rules are deleted (visible in metrics), but after that the remaining objects are simply evaluated and skipped, giving the appearance of being stuck. The LC shard locking mechanism (one RGW per shard at a time) further limits parallelism. Key configuration insights: <code>rgw_lc_max_worker</code> controls per-RGW coroutine tasks (not global), <code>rgw_lc_max_wp_worker</code> controls threads per worker, and <code>rgw_lc_max_objs</code> controls LC shard count (not per-iteration batch size).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Aarti Dhikale] Hi   , The reason your deletion speed is roughly half of your ingress speed is that object creation is a single write operation, while lifecycle deletion is a read-evaluate-update workflow. When an object is created, RGW writes the data and updates the bucket index once. When lif</li>
-<li>[Raimund Sacherer] I just found I had started writing this in a comment and left it unposted in a tab, this is regarding the production cluster issue:  , I was reviewing the CU case, unfortunately I did not write down exactly if we used debug_rgw only or dbug_rgw + debug_rgw_lifecycle, so I will as</li>
-<li>[Raimund Sacherer] Hello  ,  So, CU came back with the question about debug_rgw_lifecycle: debug_rgw_lifecycle 20 is effective and I can now see active logging for the bucket in</li>
-</ul>
-<div>question whilst the object count is NOT going down. You can see it trying each rule and skipping</div>
-<div>&quot;as tags do not match</div>
-<ul>
-<li>[Aarti Dhikale] Hi   , Yes, your observations are correct.  debug_rgw_lifecycle 20  shows RGW iterating over all objects and rules. Objects that do not match a rule are skipped, which is why the object count does not decrease. You can see logging for each rule and object, e.g., “tags do not matc</li>
-<li>[Aarti Dhikale] Hi @Raimund Sacherer, Based on the discussion so far, we are focusing on two main aspects: Bucket stuck in the “processing” state Since  debug_rgw_lifecycle  is already enabled, we can analyze the RGW logs to verify whether the bucket exits the lifecycle  processing  state and to</li>
+<li>480M objects, 60 LC rules, 54+12 RGW instances with LC enabled</li>
+<li>debug_rgw_lifecycle 20 confirms active processing: <code>tags do not match in rule: week12-expire</code></li>
+<li>~9000 tag checks per second observed</li>
+<li>Customer config: rgw_lc_max_worker=9, rgw_lc_max_objs=1024</li>
+<li>Fix planned: backport upstream LC optimization + double LC shard count + raise max_workers to 18</li>
+<li>Commit 2513cf06f7 merged in 9.1 branch</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (done in 9.1)</li>
+<li>LC optimization backported. Recommendation: increase rgw_lc_max_workers, double LC shard count.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a couple of hours then stays flat.</div>
-<div>Environment: IBM Ceph 8.1, component: rgw</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate LC processing time for large bucket with many rules</div>
+<div>Environment: IBM Ceph 8.1z1+ (or 9.x), RGW with lifecycle configured</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Create a bucket with 1M+ objects and 10+ LC rules with tag filters -- intent: simulate large-bucket LC workload</li>
+<li><span class="step-num">2.</span> Set <code>debug_rgw_lifecycle = 20</code> on one RGW instance -- intent: observe per-object rule evaluation</li>
+<li><span class="step-num">3.</span> Trigger LC run and monitor <code><code>radosgw-admin lc list</code></code> -- intent: track PROCESSING state duration</li>
+<li><span class="step-num">4.</span> Measure tag-check rate from logs -- intent: quantify evaluation throughput</li>
+<li><span class="step-num">5.</span> Compare with adjusted settings (rgw_lc_max_worker=9, rgw_lc_max_wp_worker=6) -- intent: measure improvement</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>radosgw-admin lc list</code></code></li>
+<li><code><code>ceph config set client.rgw debug_rgw_lifecycle 20</code></code></li>
+<li><code><code>ceph config show-with-defaults client.rgw | grep rgw_lc</code></code></li>
+<li><code><code>rados -p &amp;lt;lc-pool&amp;gt; ls | grep lc.</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No performance test for LC processing on large buckets with many rules.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rgw tests may not cover: [BZ#2430829] [GSS] Bucket never leaves PROCESSING state while object count only goes down for a coup</code></li>
+<li>No benchmark for LC evaluation throughput (objects/sec) at scale</li>
+<li>No test for LC completion time with tag-based rules on large buckets</li>
+<li>No test for LC parallelism tuning (rgw_lc_max_worker, rgw_lc_max_wp_worker)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>LC processing on 10M+ object bucket with 10+ tag-based rules — measure completion time</li>
+<li>Verify LC exits PROCESSING state within expected timeframe</li>
+<li>Benchmark: vary rgw_lc_max_worker (3,6,9,12) and measure throughput scaling</li>
+<li>Verify LC correctness: all matching objects deleted, non-matching objects preserved</li>
 </ul></div>
 </div>
 

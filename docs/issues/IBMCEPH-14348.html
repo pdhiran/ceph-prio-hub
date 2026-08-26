@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14348: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown
-
-ROOT CAUSE:
-- Affected version(s): 8.1z4
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to support online BlueStore fsck on a running OSD without requiring OSD shutdown.
+ROOT CAUSE: ceph-bluestore-tool fsck requires exclusive access to the BlueStore instance, meaning the OSD must be stopped. In production, stopping an OSD triggers PG remapping, backfill, temporary data unavailability, and performance degradation. This makes proactive or diagnostic fsck workflows expensive and disruptive. The customer experienced OSD failures on OCP 4.18.30 with Ceph 8.1z4 where PGs went undersized and impacted client IO, motivating the need for non-disruptive integrity checks.
+KEY EVIDENCE:
+- Customer environment: OCP 4.18.30, FDF 4.18.15, Ceph 19.2.1-292.el9cp (8.1z4)
+- OSD downtime causes PG remapping and backfill
+- Related clone: IBMCEPH-14349
+- No comments or engineering response yet
+FIX STATUS: Status &#x27;new&#x27;. No fix timeline. Assigned to Adam Kupczyk. This is a significant architectural change requiring safe concurrent access to BlueStore data structures.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown
-Environment: IBM Ceph 8.1z4, component: rados
-
-1. Deploy IBM Ceph 8.1z4 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate the operational impact of requiring OSD shutdown for fsck
+Environment: IBM Ceph 8.1z4 (19.2.1-292.el9cp)
+1. Deploy cluster with pool (size=3, min_size=2) under active IO workload -- intent: simulate production
+2. Stop one OSD: systemctl stop ceph-osd@&lt;id&gt; -- intent: simulate fsck requirement
+3. Observe PG state changes: ceph pg dump | grep -v active+clean -- intent: measure disruption
+4. Run: ceph-bluestore-tool fsck --path /var/lib/ceph/osd/ceph-&lt;id&gt; -- intent: perform integrity check
+5. Restart OSD and measure recovery time -- intent: quantify total disruption window
+DIAGNOSTIC COMMANDS:
+- ceph-bluestore-tool fsck --path /var/lib/ceph/osd/ceph-&lt;id&gt;
+- ceph osd tree
+- ceph pg dump
+- ceph health detail</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA. This is an RFE with no implementation yet.
+GAPS: No test framework for online fsck exists since the feature doesn&#x27;t exist. Current fsck tests only cover offline scenarios.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. When implemented: online fsck under active IO -- verify no data corruption or IO interruption
+2. Online fsck during recovery -- verify fsck doesn&#x27;t interfere with PG healing
+3. Concurrent online fsck on multiple OSDs -- verify no performance cliff</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to support online BlueStore fsck on a running OSD without requiring OSD shutdown.</div>
+<div>ROOT CAUSE: ceph-bluestore-tool fsck requires exclusive access to the BlueStore instance, meaning the OSD must be stopped. In production, stopping an OSD triggers PG remapping, backfill, temporary data unavailability, and performance degradation. This makes proactive or diagnostic fsck workflows expensive and disruptive. The customer experienced OSD failures on OCP 4.18.30 with Ceph 8.1z4 where PGs went undersized and impacted client IO, motivating the need for non-disruptive integrity checks.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z4</li>
-<li>Component: rados</li>
+<li>Customer environment: OCP 4.18.30, FDF 4.18.15, Ceph 19.2.1-292.el9cp (8.1z4)</li>
+<li>OSD downtime causes PG remapping and backfill</li>
+<li>Related clone: IBMCEPH-14349</li>
+<li>No comments or engineering response yet</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Status &#x27;new&#x27;. No fix timeline. Assigned to Adam Kupczyk. This is a significant architectural change requiring safe concurrent access to BlueStore data structures.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate the operational impact of requiring OSD shutdown for fsck</div>
+<div>Environment: IBM Ceph 8.1z4 (19.2.1-292.el9cp)</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</div>
-<div>Environment: IBM Ceph 8.1z4, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z4 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: [RFE] BlueStore: Support online fsck on a running OSD without requiring OSD shutdown</code></li>
+<li><span class="step-num">1.</span> Deploy cluster with pool (size=3, min_size=2) under active IO workload -- intent: simulate production</li>
+<li><span class="step-num">2.</span> Stop one OSD: <code>systemctl stop ceph-osd@&lt;id&gt; -- intent: simulate fsck requirement</code></li>
+<li><span class="step-num">3.</span> Observe PG state changes: <code>ceph pg dump | grep -v active+clean -- intent: measure disruption</code></li>
+<li><span class="step-num">4.</span> Run: ceph-bluestore-tool fsck --path /var/lib/ceph/osd/ceph-&lt;id&gt; -- intent: perform integrity check</li>
+<li><span class="step-num">5.</span> Restart OSD and measure recovery time -- intent: quantify total disruption window</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li>ceph-bluestore-tool fsck --path /var/lib/ceph/osd/ceph-&lt;id&gt;</li>
+<li><code>ceph osd tree</code></li>
+<li><code>ceph pg dump</code></li>
+<li><code>ceph health detail</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA. This is an RFE with no implementation yet.</div>
+<div>GAPS: No test framework for online fsck exists since the feature doesn&#x27;t exist. Current fsck tests only cover offline scenarios.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> When implemented: online fsck under active IO -- verify no data corruption or IO interruption</li>
+<li><span class="step-num">2.</span> Online fsck during recovery -- verify fsck doesn&#x27;t interfere with PG healing</li>
+<li><span class="step-num">3.</span> Concurrent online fsck on multiple OSDs -- verify no performance cliff</li>
 </ul></div>
 </div>
 

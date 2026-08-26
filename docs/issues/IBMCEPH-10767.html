@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10767: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: IBM Container Registry (cp.icr.io) returns WWW-Authenticate headers with spaces after commas, causing cephadm&#x27;s OAuth token request to fail with HTTP 400 when checking for upgrades.
 
 ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: cephadm
+The cephadm registry.py module parses WWW-Authenticate response headers by splitting on commas but does not strip leading/trailing whitespace from the resulting key-value pairs. IBM Container Registry (cp.icr.io) returns headers formatted as: `Bearer realm=&quot;...&quot;, service=&quot;registry&quot;, scope=&quot;repository:...&quot;` — note the space after each comma. The parser produces parameter keys like ` service` and ` scope` (with leading space), which get URL-encoded into the OAuth token request. The registry rejects the malformed URL with HTTP 400 Bad Request. This only affects the `ceph orch upgrade ls` command (and the GUI upgrade-check flow that calls it); CLI-based upgrades using `ceph orch upgrade start --image &lt;image&gt;` bypass this code path entirely.
 
-ENGINEERING FINDINGS:
-- [Sahina Bose] assigning to you as per comment from Nizam that it needs a fix in cephadm. Please reassign as needed
-- [Swati Thombe] Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim these spaces, causing authentication parameters to be incorrectly interpreted and re
+KEY EVIDENCE:
+- Stack trace: registry.py:20 get_token() -&gt; raise_for_status() -&gt; HTTPError 400 for cp.icr.io/oauth/token
+- Engineering analysis by Swati Thombe confirmed the whitespace-in-header-parsing root cause (comment 2026-06-23)
+- Customer confirmed `podman login` to the same registry works (different code path)
+- Upstream Ceph Tracker Bug #77780 filed; PR raised but still under review
+- Moved to 10.0 target; backport to 9.2 still under discussion
 
 FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+- Status: In Progress
+- PR raised upstream (Ceph Tracker #77780), under review. Target moved to 10.0; 9.2z backport possible after merge.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
-Environment: IBM Ceph 8.0, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate that cephadm upgrade-ls fails with HTTP 400 when registry returns spaces in WWW-Authenticate header
+Environment: IBM Ceph 8.0+ or 9.x, cluster with cp.icr.io registry configured
 
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Deploy a Ceph cluster with registry credentials configured for cp.icr.io -- intent: baseline setup
+2. Run `cephadm shell -- ceph orch upgrade ls` -- intent: trigger the upgrade check that parses WWW-Authenticate headers
+3. Observe the HTTP 400 error in the output -- intent: confirm the parsing bug
+4. Alternatively, access the Dashboard GUI and navigate to the upgrade check page -- intent: confirm GUI path also affected
 
-SCENARIO DETAIL (from engineering comments):
-Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim thes</textarea>
+DIAGNOSTIC COMMANDS:
+- `cephadm shell -- ceph orch upgrade ls`
+- `ceph log last 50 cephadm` (check for 400 Client Error traces)
+- `podman login cp.icr.io` (should succeed, proving registry credentials are valid)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test coverage exists for WWW-Authenticate header parsing with varied whitespace formats.
 
 GAPS:
-- Existing cephadm tests may not cover: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
+- No unit test for registry.py get_token() with whitespace-padded header values
+- No integration test for `ceph orch upgrade ls` against IBM Container Registry (cp.icr.io)
+- No test for GUI upgrade-check flow end-to-end
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Unit test: parse WWW-Authenticate headers with spaces after commas
+- Unit test: parse headers without spaces (standard format) — regression guard
+- Integration test: `ceph orch upgrade ls` with cp.icr.io registry credentials
+- Negative test: malformed WWW-Authenticate header (missing realm, empty values)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +244,49 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">IBM Container Registry (cp.icr.io) returns WWW-Authenticate headers with spaces after commas, causing cephadm&#x27;s OAuth token request to fail with HTTP 400 when checking for upgrades.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The cephadm registry.py module parses WWW-Authenticate response headers by splitting on commas but does not strip leading/trailing whitespace from the resulting key-value pairs. IBM Container Registry (cp.icr.io) returns headers formatted as: <code>Bearer realm=&quot;...&quot;, service=&quot;registry&quot;, scope=&quot;repository:...&quot;</code> — note the space after each comma. The parser produces parameter keys like <code> service</code> and <code> scope</code> (with leading space), which get URL-encoded into the OAuth token request. The registry rejects the malformed URL with HTTP 400 Bad Request. This only affects the <code>ceph orch upgrade ls</code> command (and the GUI upgrade-check flow that calls it); CLI-based upgrades using <code>ceph orch upgrade start --image &lt;image&gt;</code> bypass this code path entirely.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Sahina Bose] assigning to you as per comment from Nizam that it needs a fix in cephadm. Please reassign as needed</li>
-<li>[Swati Thombe] Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim these spaces, causing authentication parameters to be incorrectly interpreted and re</li>
+<li>Stack trace: registry.py:20 get_token() -&gt; raise_for_status() -&gt; HTTPError 400 for cp.icr.io/oauth/token</li>
+<li>Engineering analysis by Swati Thombe confirmed the whitespace-in-header-parsing root cause (comment 2026-06-23)</li>
+<li>Customer confirmed <code><code>podman login</code></code> to the same registry works (different code path)</li>
+<li>Upstream Ceph Tracker Bug #77780 filed; PR raised but still under review</li>
+<li>Moved to 10.0 target; backport to 9.2 still under discussion</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
+<li>Status: In Progress</li>
+<li>PR raised upstream (Ceph Tracker #77780), under review. Target moved to 10.0; 9.2z backport possible after merge.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</div>
-<div>Environment: IBM Ceph 8.0, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate that cephadm upgrade-ls fails with HTTP 400 when registry returns spaces in WWW-Authenticate header</div>
+<div>Environment: IBM Ceph 8.0+ or 9.x, cluster with cp.icr.io registry configured</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy a Ceph cluster with registry credentials configured for cp.icr.io -- intent: baseline setup</li>
+<li><span class="step-num">2.</span> Run <code><code>cephadm shell -- ceph orch upgrade ls</code></code> -- intent: trigger the upgrade check that parses WWW-Authenticate headers</li>
+<li><span class="step-num">3.</span> Observe the HTTP 400 error in the output -- intent: confirm the parsing bug</li>
+<li><span class="step-num">4.</span> Alternatively, access the Dashboard GUI and navigate to the upgrade check page -- intent: confirm GUI path also affected</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim thes</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>cephadm shell -- ceph orch upgrade ls</code></code></li>
+<li><code><code>ceph log last 50 cephadm</code></code> (check for 400 Client Error traces)</li>
+<li><code><code>podman login cp.icr.io</code></code> (should succeed, proving registry credentials are valid)</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test coverage exists for WWW-Authenticate header parsing with varied whitespace formats.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>cephadm tests may not cover: [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</code></li>
+<li>No unit test for registry.py get_token() with whitespace-padded header values</li>
+<li>No integration test for <code><code>ceph orch upgrade ls</code></code> against IBM Container Registry (cp.icr.io)</li>
+<li>No test for GUI upgrade-check flow end-to-end</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Unit test: parse WWW-Authenticate headers with spaces after commas</li>
+<li>Unit test: parse headers without spaces (standard format) — regression guard</li>
+<li>Integration test: <code><code>ceph orch upgrade ls</code></code> with cp.icr.io registry credentials</li>
+<li>Negative test: malformed WWW-Authenticate header (missing realm, empty values)</li>
 </ul></div>
 </div>
 

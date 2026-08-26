@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-9302: [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: cephfs
-
-FIX STATUS:
-- Current JIRA status: Verified</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CephFS snap-schedule retention accepts invalid time designators (arbitrary letters) -- fix verified in 9.2.
+ROOT CAUSE: The snap-schedule retention add command in CephFS lacked input validation for the time designator character. The valid designators are h(our), d(ay), w(eek), M(onth), y(ear), n, and m(inute), but the code accepted any single letter (e.g., &#x27;Y&#x27;, &#x27;c&#x27;, &#x27;a&#x27;, &#x27;b&#x27;) without error. The retention dictionary would store these invalid keys, which had no meaningful effect on retention pruning but created confusing state. The fix adds a validation check that rejects designators not in the allowed set {h, d, w, M, y, n, m}, returning &#x27;Error ENOENT: Retention spec &lt;X&gt; is invalid&#x27;.
+KEY EVIDENCE:
+- &#x27;ceph fs snap-schedule retention add / 5Y&#x27; succeeded (Y not valid, should be y)
+- &#x27;ceph fs snap-schedule retention add / 5c&#x27; succeeded (c is meaningless)
+- retention map showed: {y:5, a:6, b:5, Y:5, c:5} -- invalid entries
+- Fix verified on 20.2.2-124.el10cp (9.2): invalid designators now return ENOENT
+- Fix verified on 20.2.1-367.el9cp (9.1z): same behavior confirmed
+- Upstream PR: https://github.com/ceph/ceph/pull/66890 (squid backport)
+- Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2073 (8.1z)
+FIX STATUS: Verified in both 9.1z (ceph-20.2.1-367) and 8.1z (ceph-19.2.1-382). Upstream squid backport PR pending merge.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected
-Environment: IBM Ceph 7.1, component: cephfs
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify snap-schedule retention rejects invalid time designators.
+Environment: Ceph 8.x or 9.x with CephFS
+1. Create a subvolume and set up snap-schedule -- intent: establish test target
+   ceph fs subvolume create cephfs sv1
+   ceph mgr module enable snap_schedule
+   ceph fs snap-schedule add / 1h --fs cephfs --subvol sv1
+   ceph fs snap-schedule activate / --fs cephfs --subvol sv1
+2. Test valid designators (should succeed) -- intent: verify valid inputs work
+   ceph fs snap-schedule retention add / 1h --fs cephfs --subvol sv1
+   ceph fs snap-schedule retention add / 1d --fs cephfs --subvol sv1
+   ceph fs snap-schedule retention add / 1M --fs cephfs --subvol sv1
+3. Test invalid designators (should fail with fix) -- intent: verify rejection
+   ceph fs snap-schedule retention add / 1Y --fs cephfs --subvol sv1
+   ceph fs snap-schedule retention add / 1c --fs cephfs --subvol sv1
+   ceph fs snap-schedule retention add / 1Z --fs cephfs --subvol sv1
+4. Verify retention map only contains valid keys -- intent: confirm clean state
+   ceph fs snap-schedule status / --fs cephfs --subvol sv1 -f json
+DIAGNOSTIC COMMANDS:
+- ceph fs snap-schedule status / --fs cephfs --subvol sv1 -f json
+- ceph mgr module ls | grep snap_schedule</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified manually. CephCI automation needs update to include validation tests.
 GAPS:
-- Existing cephfs tests may not cover: [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention 
-
+- CephCI automation may not test invalid designator rejection
+- No boundary test for case sensitivity (M vs m)
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephfs scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test: All valid designators {h,d,w,M,y,n,m} are accepted
+- Test: Case-inverted invalid designators {H,D,W,Y,N} are rejected with ENOENT
+- Test: Random invalid characters {a,b,c,x,z,0,_,-} are rejected
+- Test: Verify retention map in snap-schedule status only contains valid keys after mixed input</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,33 +245,61 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CephFS snap-schedule retention accepts invalid time designators (arbitrary letters) -- fix verified in 9.2.</div>
+<div>ROOT CAUSE: The snap-schedule retention add command in CephFS lacked input validation for the time designator character. The valid designators are h(our), d(ay), w(eek), M(onth), y(ear), n, and m(inute), but the code accepted any single letter (e.g., &#x27;Y&#x27;, &#x27;c&#x27;, &#x27;a&#x27;, &#x27;b&#x27;) without error. The retention dictionary would store these invalid keys, which had no meaningful effect on retention pruning but created confusing state. The fix adds a validation check that rejects designators not in the allowed set {h, d, w, M, y, n, m}, returning &#x27;Error ENOENT: Retention spec &lt;X&gt; is invalid&#x27;.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: cephfs</li>
+<li>&#x27;<code>ceph fs snap-schedule retention add / 5Y&#x27; succeeded (Y not valid</code>, should be y)</li>
+<li>&#x27;<code>ceph fs snap-schedule retention add / 5c&#x27; succeeded (c is meaningless)</code></li>
+<li>retention map showed: {y:5, a:6, b:5, Y:5, c:5} -- invalid entries</li>
+<li>Fix verified on 20.2.2-124.el10cp (9.2): invalid designators now return ENOENT</li>
+<li>Fix verified on 20.2.1-367.el9cp (9.1z): same behavior confirmed</li>
+<li>Upstream PR: https://github.com/ceph/ceph/pull/66890 (squid backport)</li>
+<li>Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2073 (8.1z)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Verified in both 9.1z (ceph-20.2.1-367) and 8.1z (ceph-19.2.1-382). Upstream squid backport PR pending merge.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify snap-schedule retention rejects invalid time designators.</div>
+<div>Environment: Ceph 8.x or 9.x with CephFS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</div>
-<div>Environment: IBM Ceph 7.1, component: cephfs</div>
+<li><span class="step-num">1.</span> Create a subvolume and set up snap-schedule -- intent: establish test target</li>
+</ul>
+<div>ceph fs subvolume create cephfs sv1</div>
+<div>ceph mgr module enable snap_schedule</div>
+<div>ceph fs snap-schedule add / 1h --fs cephfs --subvol sv1</div>
+<div>ceph fs snap-schedule activate / --fs cephfs --subvol sv1</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Test valid designators (should succeed) -- intent: verify valid inputs work</li>
+</ul>
+<div>ceph fs snap-schedule retention add / 1h --fs cephfs --subvol sv1</div>
+<div>ceph fs snap-schedule retention add / 1d --fs cephfs --subvol sv1</div>
+<div>ceph fs snap-schedule retention add / 1M --fs cephfs --subvol sv1</div>
+<ul>
+<li><span class="step-num">3.</span> Test invalid designators (should fail with fix) -- intent: verify rejection</li>
+</ul>
+<div>ceph fs snap-schedule retention add / 1Y --fs cephfs --subvol sv1</div>
+<div>ceph fs snap-schedule retention add / 1c --fs cephfs --subvol sv1</div>
+<div>ceph fs snap-schedule retention add / 1Z --fs cephfs --subvol sv1</div>
+<ul>
+<li><span class="step-num">4.</span> Verify retention map only contains valid keys -- intent: confirm clean state</li>
+</ul>
+<div>ceph fs snap-schedule status / --fs cephfs --subvol sv1 -f json</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph fs snap-schedule status / --fs cephfs --subvol sv1 -f json</code></li>
+<li><code>ceph mgr module ls | grep snap_schedule</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified manually. CephCI automation needs update to include validation tests.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing cephfs tests may not cover: [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention</li>
+<li>CephCI automation may not test invalid designator rejection</li>
+<li>No boundary test for case sensitivity (M vs m)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test: All valid designators {h,d,w,M,y,n,m} are accepted</li>
+<li>Test: Case-inverted invalid designators {H,D,W,Y,N} are rejected with ENOENT</li>
+<li>Test: Random invalid characters {a,b,c,x,z,0,_,-} are rejected</li>
+<li>Test: Verify retention map in snap-schedule status only contains valid keys after mixed input</li>
 </ul></div>
 </div>
 

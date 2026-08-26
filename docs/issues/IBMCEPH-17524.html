@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17524: [RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,55 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule
-
-ROOT CAUSE:
-- Daemon crash reported in ceph.
-- Memory issue (leak, OOM, or excessive consumption).
-- Affected version(s): 8.1
-- Component: ceph
-
-ENGINEERING FINDINGS:
-- [Abhishek Gupta] Recent crashes logs: [root@cephhost2002 ~]# ceph -s
-  cluster:
-    id:     42f81f6c-99cd-11ee-ad52-2cea7f76433c
-    health: HEALTH_WARN
-            1 daemons have recently crashed
- 
-  services:
-    mon: 3 daemons, quorum cephhost2001.as.tullverket.se,cephhost2002,cephhost2008 (ag
-- [Aarti Dhikale] Hello   , Please share the coredump for the RGW crash for further investigation.
-- [Soumya Koduri] Could you please also confirm which release this issue is seen? Similar issue was reported and fixed in   . As mentioned in    , LC thread crashed with invalid memory access and the issue was in RGWRados::finalize().   Note: This fix is present in the current branch of ceph-8.1-r
-- [Soumya Koduri] After some more digging, I found    (Apologies for I haven’t identified this earlier). This issue matches exactly to this bz#2416700.    The crash is caused by a dangling const&amp; reference in the LCOpAction_Transition class as below - const transition_action&amp; transition; RCA:  LCO
-- [Soumya Koduri] The fix (for BZ#2416700) is merged into and available from ceph-9.0 release
-
-FIX STATUS:
-- Fix available in build 19.2.1-403.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/120d52586b6bfffbef72ee0d64f762fa1384ee94</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW daemon crash loop due to use-after-free in LCOpAction_Transition during lifecycle processing - dangling const&amp; reference to transition_action after orule destruction.
+ROOT CAUSE: LCOpAction_CurrentTransition objects hold a `const transition_action&amp; transition` reference into `orule.env.op.transitions` map elements. These objects are not deep-copied when picked by the LC workpool threads. When orule gets updated/destroyed during LC processing, the workpool threads still hold dangling references to freed memory, causing use-after-free. tcmalloc detects the invalid allocation attempt and aborts the process. This matches exactly BZ#2416700 fixed upstream by Casey Bodley (commit d1f31bcb3da) - changing `const transition_action&amp; transition` to `transition_action transition` (deep copy).
+KEY EVIDENCE:
+- Customer cluster: 19.2.1-366.el9cp (IBM Ceph 8.1z6), multisite master zone with lifecycle policies
+- GDB shows corrupted transition.storage_class: &#x27;Cannot access memory at address 0x2e312f5054544820&#x27;
+- Days field shows garbage: 1969368370 (freed memory pattern)
+- Fix: change const&amp; to value copy in rgw_lc.cc line 1330
+- Cherry-picked into ceph-8.1-rhel-patches as commits 120d52586b and af1f9c16d3
+FIX STATUS: Fixed. Available in build ceph-19.2.1-403 (ON_QA for 8.1z8). Fix already present in ceph-9.0+ releases.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule
-Environment: IBM Ceph 8.1, component: ceph
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Trigger the failure scenario (see engineering findings below)
-3. Check for daemon crash -- `ceph crash ls-new`
-4. Monitor daemon memory -- `ceph tell &lt;daemon&gt; heap stats`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW crash during lifecycle transition processing in multisite
+Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp) or earlier, multisite with lifecycle policies
+1. Configure multisite RGW with lifecycle policies that include object transitions (cloud tier) -- intent: exercise LCOpAction_Transition
+2. Configure multiple buckets with active LC rules -- intent: increase LC workpool concurrency
+3. Perform period commits / cloud tier region updates while LC is active -- intent: trigger orule invalidation during processing
+4. Monitor RGW daemon for crash: `ceph health detail` for HEALTH_WARN, `systemctl status ceph-radosgw@*` -- intent: detect crash loop
+DIAGNOSTIC COMMANDS:
+- ceph health detail (look for daemon down warnings)
+- ceph orch ps --daemon-type rgw (check for stopped/error daemons)
+- journalctl -u ceph-radosgw@* | grep -i &#x27;signal\|abort\|tcmalloc&#x27;
+- radosgw-admin lc list (check LC state)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
-
-GAPS:
-- No crash regression test for: [RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule
-- No memory leak detection test for ceph
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix is ON_QA in build 19.2.1-403. QE verification pending.
+GAPS: No automated test for LC processing under concurrent period commits/updates. No stress test for LC with multisite cloud tier transitions.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Memory: long-running workload, monitor for leaks
-- Functional: reproduce reported ceph scenario, verify correct behavior</textarea>
+1. LC transition processing with concurrent period commit - verify no crash
+2. Multiple buckets with active LC rules and high concurrency
+3. Daemon stability during extended LC processing (24h+)
+4. Verify fix present: check `const transition_action&amp; transition` changed to value copy</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -248,55 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW daemon crash loop due to use-after-free in LCOpAction_Transition during lifecycle processing - dangling const&amp; reference to transition_action after orule destruction.</div>
+<div>ROOT CAUSE: LCOpAction_CurrentTransition objects hold a <code>const transition_action&amp; transition</code> reference into <code>orule.env.op.transitions</code> map elements. These objects are not deep-copied when picked by the LC workpool threads. When orule gets updated/destroyed during LC processing, the workpool threads still hold dangling references to freed memory, causing use-after-free. tcmalloc detects the invalid allocation attempt and aborts the process. This matches exactly BZ#2416700 fixed upstream by Casey Bodley (commit d1f31bcb3da) - changing <code>const transition_action&amp; transition</code> to <code>transition_action transition</code> (deep copy).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in ceph.</li>
-<li>Memory issue (leak, OOM, or excessive consumption).</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph</li>
+<li>Customer cluster: 19.2.1-366.el9cp (IBM Ceph 8.1z6), multisite master zone with lifecycle policies</li>
+<li>GDB shows corrupted transition.storage_class: &#x27;Cannot access memory at address 0x2e312f5054544820&#x27;</li>
+<li>Days field shows garbage: 1969368370 (freed memory pattern)</li>
+<li>Fix: change const&amp; to value copy in rgw_lc.cc line 1330</li>
+<li>Cherry-picked into ceph-8.1-rhel-patches as commits 120d52586b and af1f9c16d3</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed. Available in build ceph-19.2.1-403 (ON_QA for 8.1z8). Fix already present in ceph-9.0+ releases.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW crash during lifecycle transition processing in multisite</div>
+<div>Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp) or earlier, multisite with lifecycle policies</div>
 <ul>
-<li>[Abhishek Gupta] Recent crashes logs: [root@cephhost2002 ~]# <code>ceph -s</code></li>
+<li><span class="step-num">1.</span> Configure multisite RGW with lifecycle policies that include object transitions (cloud tier) -- intent: exercise LCOpAction_Transition</li>
+<li><span class="step-num">2.</span> Configure multiple buckets with active LC rules -- intent: increase LC workpool concurrency</li>
+<li><span class="step-num">3.</span> Perform period commits / cloud tier region updates while LC is active -- intent: trigger orule invalidation during processing</li>
+<li><span class="step-num">4.</span> Monitor RGW daemon for crash: <code><code>ceph health detail</code></code> for HEALTH_WARN, <code><code>systemctl status ceph-radosgw@*</code></code> -- intent: detect crash loop</li>
 </ul>
-<div>cluster:</div>
-<div>id:     42f81f6c-99cd-11ee-ad52-2cea7f76433c</div>
-<div>health: HEALTH_WARN</div>
-<div>1 daemons have recently crashed</div>
-<div>services:</div>
-<div>mon: 3 daemons, quorum cephhost2001.as.tullverket.se,cephhost2002,cephhost2008 (ag</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Aarti Dhikale] Hello   , Please share the coredump for the RGW crash for further investigation.</li>
-<li>[Soumya Koduri] Could you please also confirm which release this issue is seen? Similar issue was reported and fixed in   . As mentioned in    , LC thread crashed with invalid memory access and the issue was in RGWRados::finalize().   Note: This fix is present in the current branch of ceph-8.1-r</li>
-<li>[Soumya Koduri] After some more digging, I found    (Apologies for I haven’t identified this earlier). This issue matches exactly to this bz#2416700.    The crash is caused by a dangling const&amp; reference in the LCOpAction_Transition class as below - const transition_action&amp; transition; RCA:  LCO</li>
-<li>[Soumya Koduri] The fix (for BZ#2416700) is merged into and available from ceph-9.0 release</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Fix available in build 19.2.1-403.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/120d52586b6bfffbef72ee0d64f762fa1384ee94</li>
+<li><code>ceph health detail (look for daemon down warnings)</code></li>
+<li><code>ceph orch ps --daemon-type rgw (check for stopped/error daemons)</code></li>
+<li><code>journalctl -u ceph-radosgw@* | grep -i &#x27;signal\|abort\|tcmalloc&#x27;</code></li>
+<li><code>radosgw-admin lc list (check LC state)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule</div>
-<div>Environment: IBM Ceph 8.1, component: ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">3.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">4.</span> Monitor daemon memory -- <code><code>ceph tell &amp;lt;daemon&amp;gt; heap stats</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [RGW] Daemon crash loop - tcmalloc::allocate_full_cpp_throw_oom in LCOpRule</li>
-<li>No memory leak detection test for ceph</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix is ON_QA in build 19.2.1-403. QE verification pending.</div>
+<div>GAPS: No automated test for LC processing under concurrent period commits/updates. No stress test for LC with multisite cloud tier transitions.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Memory: long-running workload, monitor for leaks</li>
-<li>Functional: reproduce reported <code>ceph scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> LC transition processing with concurrent period commit - verify no crash</li>
+<li><span class="step-num">2.</span> Multiple buckets with active LC rules and high concurrency</li>
+<li><span class="step-num">3.</span> Daemon stability during extended LC processing (24h+)</li>
+<li><span class="step-num">4.</span> Verify fix present: check <code>const transition_action&amp;amp; transition</code> changed to value copy</li>
 </ul></div>
 </div>
 

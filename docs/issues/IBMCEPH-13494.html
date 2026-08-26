@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13494: 403 response for HeadObject operation with s3:GetObject Action</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 403 response for HeadObject operation with s3:GetObject Action
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] Hi   , It seems to be we have a bug in  RGWGetObj::verify_permission() , where object version resolution occurring before IAM permission evaluation which is causing the authorization to be based on a mutated object state. Kindly provide your valuable inputs on this. Regards, Pras
-- [Pritha Srivastava] Upon examining the code, the reasoning is plausible.  rgw_iam_add_objtags  invokes  object-&gt;get_obj_attrs  which internally does the following: int RadosObject::get_obj_attrs(optional_yield y, const DoutPrefixProvider* dpp)
-{
-  RGWRados::Object op_target(store-&gt;getRados(), bucket
-- [Prashant Dhange] Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.
-- [Pritha Srivastava] : from one of the earlier comments: ”This seems to be leading to authorization failures when the user lacks version‑specific permissions. The issue is observed only when bucket versioning is enabled, the request does not explicitly specify a  versionId , and IAM policies inclu
-- [Pritha Srivastava] I did some debugging on the 8.1 branch - the version id gets populated even before the call reaches GetObj::verify_permission(). It gets populated in get_obj_policy_from_attr() called from read_obj_policy() as part of read permissions operation. get_obj_policy_from_attr() calls r
-
-FIX STATUS:
-- Fix available in build 20.2.1-167.</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: HeadObject/GetObject on versioned bucket with s3:GetObject permission returns 403 Forbidden
+ROOT CAUSE: In RGW&#x27;s verify_permission() code path, the object&#x27;s version instance is prematurely populated during the read_obj_policy() → get_obj_policy_from_attr() → RadosReadOp::prepare() call chain. The prepare() method calls source-&gt;set_instance(parent_op.state.obj.key.instance), which resolves the empty instance to the latest version&#x27;s actual instance ID. Later, in RGWGetObj::verify_permission(), the IAM action selection checks s-&gt;object-&gt;get_instance().empty() — since the instance is now non-empty, it selects s3:GetObjectVersion instead of s3:GetObject, causing permission denial when the policy only grants s3:GetObject.
+KEY EVIDENCE:
+- Apple customer reproduced with exact steps: create versioned bucket, PUT object, HEAD/GET without versionId using IAM role with only s3:GetObject
+- Pritha Srivastava confirmed code analysis: set_instance() in RadosReadOp::prepare() mutates object state before permission check
+- Casey Bodley provided alternative fix (PR linked)
+- Hotfix delivered: cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z5-1.hotfix.IBMCEPH13494
+- Verified on ceph 20.2.1-229.el9cp (9.1)
+FIX STATUS: Fixed in 8.1z6 and 9.1. Hotfix delivered to Apple on 8.1z5.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- 403 response for HeadObject operation with s3:GetObject Action
-Environment: IBM Ceph 8.1z3, component: rgw
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce 403 on HeadObject/GetObject with s3:GetObject permission on versioned bucket
+Environment: IBM Ceph 8.1z3 (affected), 8.1z6+ / 9.1+ (fixed)
+1. Create a bucket and enable versioning -- intent: set up versioned bucket
+2. Create IAM user with role policy granting only s3:GetObject (not s3:GetObjectVersion)
+3. Set rgw_sts_backward_compatibility_7_1 = true -- intent: match customer config
+4. Upload an object to the bucket (as bucket owner or via PutObject permission)
+5. As the restricted user, perform: aws s3api head-object --bucket &lt;bucket&gt; --key &lt;key&gt; --profile writer-role -- intent: trigger the bug
+6. Observe 403 Forbidden (expected: 200 OK)
+DIAGNOSTIC COMMANDS:
+- radosgw-admin user info --uid=&lt;user&gt; (verify permissions)
+- Check rgw_sts_backward_compatibility_7_1: ceph config get client.rgw rgw_sts_backward_compatibility_7_1
+- RGW debug logs: ceph config set client.rgw debug_rgw 20
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
-
-GAPS:
-- Existing rgw tests may not cover: 403 response for HeadObject operation with s3:GetObject Action
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Hotfix tested by QE with Apple&#x27;s exact IAM policy. Verified in 9.1 by Manisha Reddem.
+GAPS: Need permanent automated test for IAM permission evaluation on versioned buckets with STS roles
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- HeadObject on versioned bucket with only s3:GetObject (no versionId)
+- GetObject on versioned bucket with only s3:GetObject (no versionId)
+- Same with s3:GetObjectVersion only — should succeed with versionId, fail without
+- Test with and without rgw_sts_backward_compatibility_7_1
+- Cross-account vs same-account IAM role scenarios
+- GetObjectAttributes with s3:GetObject only (behavioral change noted in hotfix testing)
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,47 +244,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">403 response for HeadObject operation with s3:GetObject Action</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Prashant Dhange] Hi   , It seems to be we have a bug in  RGWGetObj::verify_permission() , where object version resolution occurring before IAM permission evaluation which is causing the authorization to be based on a mutated object state. Kindly provide your valuable inputs on this. Regards, Pras</li>
-<li>[Pritha Srivastava] Upon examining the code, the reasoning is plausible.  rgw_iam_add_objtags  invokes  object-&gt;get_obj_attrs  which internally does the following: int RadosObject::get_obj_attrs(optional_yield y, const DoutPrefixProvider* dpp)</li>
-</ul>
-<div>{</div>
-<div>RGWRados::Object op_target(store-&gt;getRados(), bucket</div>
-<ul>
-<li>[Prashant Dhange] Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.</li>
-<li>[Pritha Srivastava] : from one of the earlier comments: ”This seems to be leading to authorization failures when the user lacks version‑specific permissions. The issue is observed only when bucket versioning is enabled, the request does not explicitly specify a  versionId , and IAM policies inclu</li>
-<li>[Pritha Srivastava] I did some debugging on the 8.1 branch - the version id gets populated even before the call reaches GetObj::verify_permission(). It gets populated in get_obj_policy_from_attr() called from read_obj_policy() as part of read permissions operation. get_obj_policy_from_attr() calls r</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Fix available in build 20.2.1-167.</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- 403 response for HeadObject operation with s3:GetObject Action</div>
-<div>Environment: IBM Ceph 8.1z3, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Thank you!  Kindly request Apple to provide exact IAM policy configuration in use to reproduce this issue and validate the fix here.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: 403 response for HeadObject operation with s3:GetObject Action</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: HeadObject/GetObject on versioned bucket with s3:GetObject permission returns 403 Forbidden
+ROOT CAUSE: In RGW&#x27;s verify_permission() code path, the object&#x27;s version instance is prematurely populated during the read_obj_policy() → get_obj_policy_from_attr() → RadosReadOp::prepare() call chain. The prepare() method calls source-&gt;set_instance(parent_op.state.obj.key.instance), which resolves the empty instance to the latest version&#x27;s actual instance ID. Later, in RGWGetObj::verify_permission(), the IAM action selection checks s-&gt;object-&gt;get_instance().empty() — since the instance is now non-empty, it selects s3:GetObjectVersion instead of s3:GetObject, causing permission denial when the policy only grants s3:GetObject.
+KEY EVIDENCE:
+- Apple customer reproduced with exact steps: create versioned bucket, PUT object, HEAD/GET without versionId using IAM role with only s3:GetObject
+- Pritha Srivastava confirmed code analysis: set_instance() in RadosReadOp::prepare() mutates object state before permission check
+- Casey Bodley provided alternative fix (PR linked)
+- Hotfix delivered: cp.stg.icr.io/cp/ibm-ceph/ceph-8-rhel9:8.1z5-1.hotfix.IBMCEPH13494
+- Verified on ceph 20.2.1-229.el9cp (9.1)
+FIX STATUS: Fixed in 8.1z6 and 9.1. Hotfix delivered to Apple on 8.1z5.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce 403 on HeadObject/GetObject with s3:GetObject permission on versioned bucket
+Environment: IBM Ceph 8.1z3 (affected), 8.1z6+ / 9.1+ (fixed)
+1. Create a bucket and enable versioning -- intent: set up versioned bucket
+2. Create IAM user with role policy granting only s3:GetObject (not s3:GetObjectVersion)
+3. Set rgw_sts_backward_compatibility_7_1 = true -- intent: match customer config
+4. Upload an object to the bucket (as bucket owner or via PutObject permission)
+5. As the restricted user, perform: aws s3api head-object --bucket &lt;bucket&gt; --key &lt;key&gt; --profile writer-role -- intent: trigger the bug
+6. Observe 403 Forbidden (expected: 200 OK)
+DIAGNOSTIC COMMANDS:
+- radosgw-admin user info --uid=&lt;user&gt; (verify permissions)
+- Check rgw_sts_backward_compatibility_7_1: ceph config get client.rgw rgw_sts_backward_compatibility_7_1
+- RGW debug logs: ceph config set client.rgw debug_rgw 20
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Hotfix tested by QE with Apple&#x27;s exact IAM policy. Verified in 9.1 by Manisha Reddem.
+GAPS: Need permanent automated test for IAM permission evaluation on versioned buckets with STS roles
+SCENARIOS NEEDED:
+- HeadObject on versioned bucket with only s3:GetObject (no versionId)
+- GetObject on versioned bucket with only s3:GetObject (no versionId)
+- Same with s3:GetObjectVersion only — should succeed with versionId, fail without
+- Test with and without rgw_sts_backward_compatibility_7_1
+- Cross-account vs same-account IAM role scenarios
+- GetObjectAttributes with s3:GetObject only (behavioral change noted in hotfix testing)
+</pre></div>
 </div>
 
 

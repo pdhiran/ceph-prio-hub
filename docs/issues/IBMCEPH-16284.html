@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16284: Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,63 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm-preflight.yml unconditionally enables firewalld during RHCS 7-&gt;8.1 upgrade, causing cluster outage in environments where firewalld is intentionally disabled.
 
 ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: ceph-ansible
+The `cephadm-preflight.yml` playbook contains a task that unconditionally starts and enables firewalld on all nodes without checking whether the administrator intentionally disabled it. When firewalld starts with default rules, it blocks inter-node Ceph traffic (MON, OSD, MGR ports), causing a complete cluster network outage. This is a regression from RHCS 7 where the pre-check process did not modify the host firewall state. The fix requires adding a configurable variable (e.g., `cephadm_preflight_manage_firewall`) to allow skipping firewall management.
 
-ENGINEERING FINDINGS:
-- [KISHORE KUMAR S] HI   can i share the below workaround to customer ?  By setting setting  enabled: false  before running the  preflight  playbook. # cephadm-preflight.yml
-- name: Ensure firewalld is enabled and running
-  ansible.builtin.systemd:
-    name: firewalld
-    state: started
-    enabled:
-- [Swati Thombe] Hi    Yes, you can share it as a  temporary workaround . However, please make it clear that this is  not an ideal or permanent solution . You can mention that this workaround is intended only as an interim measure while we work on a proper fix to support environments where  firew
+KEY EVIDENCE:
+- Customer (Swisscom) experienced IPTV streaming disruption during pre-production upgrade
+- Reproduced in lab: nodes with firewalld disabled get it force-enabled by preflight playbook
+- Workaround confirmed by Swati Thombe: set `enabled: false` in the firewalld task as temporary measure
+- Fix being tracked under IBMCEPH-13852 PR (under review)
+- Reporter suggests: `when: cephadm_preflight_manage_firewall | default(true) | bool`
 
 FIX STATUS:
-- Current JIRA status: New
-- Workaround: Hi    Yes, you can share it as a  temporary workaround . However, please make it clear that this is  not an ideal or permanent solution . You can mention that this workaround is intended only as an in</textarea>
+- Status: New (PR under review)
+- Workaround: Manually edit cephadm-preflight.yml to add `when: false` to firewalld task
+- Related: IBMCEPH-13852 (configurable firewalld management)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments
-Environment: IBM Ceph 8.1, component: ceph-ansible
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify preflight playbook respects environments with firewalld disabled
+Environment: RHCS 8.x nodes with firewalld intentionally disabled/inactive
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Disable firewalld on all storage nodes -- intent: simulate customer environment
+   ```
+   systemctl stop firewalld &amp;&amp; systemctl disable firewalld
+   ```
+2. Run preflight playbook -- intent: trigger the issue
+   ```
+   ansible-playbook -i hosts cephadm-preflight.yml --extra-vars &quot;ceph_origin=rhcs upgrade_ceph_packages=true&quot;
+   ```
+3. Check firewalld status on all nodes -- intent: confirm forced enablement
+   ```
+   systemctl status firewalld
+   ```
+4. Verify Ceph inter-node connectivity is broken -- intent: confirm outage
+   ```
+   ceph health detail
+   ```
+
+DIAGNOSTIC COMMANDS:
+- `systemctl status firewalld` on all nodes
+- `firewall-cmd --list-ports`
+- `ceph health detail`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates that preflight playbook preserves existing firewall state when firewalld is disabled.
 
 GAPS:
-- Existing ceph-ansible tests may not cover: Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments
+- No test for preflight playbook with firewalld pre-disabled
+- No test for the new `cephadm_preflight_manage_firewall` variable
+- No negative test confirming Ceph traffic still flows after preflight
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-ansible scenario, verify correct behavior</textarea>
+- Run preflight with firewalld disabled, verify it remains disabled (with manage_firewall=false)
+- Run preflight with firewalld enabled, verify ports are correctly opened
+- Verify cluster health is not impacted by preflight execution in either scenario</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,44 +256,67 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm-preflight.yml unconditionally enables firewalld during RHCS 7-&gt;8.1 upgrade, causing cluster outage in environments where firewalld is intentionally disabled.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The <code>cephadm-preflight.yml</code> playbook contains a task that unconditionally starts and enables firewalld on all nodes without checking whether the administrator intentionally disabled it. When firewalld starts with default rules, it blocks inter-node Ceph traffic (MON, OSD, MGR ports), causing a complete cluster network outage. This is a regression from RHCS 7 where the pre-check process did not modify the host firewall state. The fix requires adding a configurable variable (e.g., <code>cephadm_preflight_manage_firewall</code>) to allow skipping firewall management.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-ansible</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[KISHORE KUMAR S] HI   can i share the below workaround to customer ?  By setting setting  enabled: false  before running the  preflight  playbook. # cephadm-preflight.yml</li>
-<li>name: Ensure firewalld is enabled and running</li>
-</ul>
-<div>ansible.builtin.systemd:</div>
-<div>name: firewalld</div>
-<div>state: started</div>
-<div>enabled:</div>
-<ul>
-<li>[Swati Thombe] Hi    Yes, you can share it as a  temporary workaround . However, please make it clear that this is  not an ideal or permanent solution . You can mention that this workaround is intended only as an interim measure while we work on a proper fix to support environments where  firew</li>
+<li>Customer (Swisscom) experienced IPTV streaming disruption during pre-production upgrade</li>
+<li>Reproduced in lab: nodes with firewalld disabled get it force-enabled by preflight playbook</li>
+<li>Workaround confirmed by Swati Thombe: set <code>enabled: false</code> in the firewalld task as temporary measure</li>
+<li>Fix being tracked under IBMCEPH-13852 PR (under review)</li>
+<li>Reporter suggests: <code>when: cephadm_preflight_manage_firewall | default(true) | bool</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: New</li>
-<li>Workaround: Hi    Yes, you can share it as a  temporary workaround . However, please make it clear that this is  not an ideal or permanent solution . You can mention that this workaround is intended only as an in</li>
+<li>Status: New (PR under review)</li>
+<li>Workaround: Manually edit cephadm-preflight.yml to add <code>when: false</code> to firewalld task</li>
+<li>Related: IBMCEPH-13852 (configurable firewalld management)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-ansible</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify preflight playbook respects environments with firewalld disabled</div>
+<div>Environment: RHCS 8.x nodes with firewalld intentionally disabled/inactive</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Disable firewalld on all storage nodes -- intent: simulate customer environment</li>
+</ul>
+<pre>
+   systemctl stop firewalld &amp;&amp; systemctl disable firewalld
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Run preflight playbook -- intent: trigger the issue</li>
+</ul>
+<pre>
+   ansible-playbook -i hosts cephadm-preflight.yml --extra-vars &quot;ceph_origin=rhcs upgrade_ceph_packages=true&quot;
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Check firewalld status on all nodes -- intent: confirm forced enablement</li>
+</ul>
+<pre>
+   systemctl status firewalld
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Verify Ceph inter-node connectivity is broken -- intent: confirm outage</li>
+</ul>
+<pre>
+   ceph health detail
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>systemctl status firewalld</code></code> on all nodes</li>
+<li><code>firewall-cmd --list-ports</code></li>
+<li><code><code>ceph health detail</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates that preflight playbook preserves existing firewall state when firewalld is disabled.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing ceph-ansible tests may not cover: Implement skip firewalld management in cephadm-preflight.yml for non-firewalld environments</li>
+<li>No test for preflight playbook with firewalld pre-disabled</li>
+<li>No test for the new <code>cephadm_preflight_manage_firewall</code> variable</li>
+<li>No negative test confirming Ceph traffic still flows after preflight</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-ansible scenario, verify correct behavior</li>
+<li>Run preflight with firewalld disabled, verify it remains disabled (with manage_firewall=false)</li>
+<li>Run preflight with firewalld enabled, verify ports are correctly opened</li>
+<li>Verify cluster health is not impacted by preflight execution in either scenario</li>
 </ul></div>
 </div>
 

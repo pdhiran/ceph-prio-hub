@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16490: [BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,62 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to keep history of Ceph cluster version upgrades in the configuration database, accessible via `ceph versions history` command.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): not specified
-- Component: cephadm
+This is a feature request (RFE), not a bug. Customers want to track cluster creation date, initial version, and all subsequent upgrade dates/versions for bookkeeping and troubleshooting. Currently no mechanism exists to query upgrade history from the Ceph configuration database.
+
+KEY EVIDENCE:
+- Implementation approach: Build on cephadm module using SQLite storage (same pattern as devicehealth module)
+- PR raised: https://github.com/ceph/ceph/pull/65592
+- Timothy Nguyen: Core logic completed -- bootstrap version/time tracked, upgrade versions/times tracked
+- New CLI commands: `get-cluster-version-history`, `remove-cluster-version-history`
+- Storage: SQLite DB in RADOS object, accessed via Ceph VFS
+- Version tracking inserted in `_mark_upgrade_complete()` in cephadm/upgrade.py
 
 FIX STATUS:
-- Current JIRA status: POST</textarea>
+- Status: Post (implementation in progress)
+- Target: 10.0
+- PR: https://github.com/ceph/ceph/pull/65592</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database
-Environment: IBM Ceph 9.x, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate upgrade history tracking in Ceph config database (once feature lands)
+Environment: IBM Ceph 10.0+ (when feature is available)
 
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Apply the configuration change described in the JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Bootstrap a new cluster -- intent: verify creation timestamp recorded
+   ```
+   ceph versions history  # Should show creation date and initial version
+   ```
+2. Perform an upgrade -- intent: verify upgrade event recorded
+   ```
+   ceph orch upgrade start --image &lt;new-image&gt;
+   # After completion:
+   ceph versions history  # Should show upgrade date and new version
+   ```
+3. Verify data persists across mgr failover -- intent: confirm RADOS storage
+   ```
+   ceph mgr fail
+   ceph versions history  # Should still show history
+   ```
+
+DIAGNOSTIC COMMANDS:
+- `ceph versions history` (proposed command)
+- `ceph get-cluster-version-history` (cephadm CLI)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Feature not yet released. Tests needed once it lands in 10.0.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- Feature not yet available for testing
+- No test plan exists for upgrade history tracking
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Verify bootstrap version/date recorded on new cluster creation
+- Verify each upgrade adds an entry with version and timestamp
+- Verify history persists across mgr failover
+- Verify `remove-cluster-version-history` prunes old entries correctly</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,36 +255,64 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to keep history of Ceph cluster version upgrades in the configuration database, accessible via `ceph versions history` command.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>This is a feature request (RFE), not a bug. Customers want to track cluster creation date, initial version, and all subsequent upgrade dates/versions for bookkeeping and troubleshooting. Currently no mechanism exists to query upgrade history from the Ceph configuration database.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): not specified</li>
-<li>Component: cephadm</li>
+<li>Implementation approach: Build on <code>cephadm module using SQLite storage (same pattern as devicehealth module)</code></li>
+<li>PR raised: https://github.com/ceph/ceph/pull/65592</li>
+<li>Timothy Nguyen: Core logic completed -- bootstrap version/time tracked, upgrade versions/times tracked</li>
+<li>New CLI commands: <code>get-cluster-version-history</code>, <code>remove-cluster-version-history</code></li>
+<li>Storage: SQLite DB in RADOS object, accessed via Ceph VFS</li>
+<li>Version tracking inserted in <code>_mark_upgrade_complete()</code> in cephadm/upgrade.py</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: POST</li>
+<li>Status: Post (implementation in progress)</li>
+<li>Target: 10.0</li>
+<li>PR: https://github.com/ceph/ceph/pull/65592</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2303639] [RFE] Keep history of version upgrades of the ceph cluster in configuration database</div>
-<div>Environment: IBM Ceph 9.x, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate upgrade history tracking in Ceph config database (once feature lands)</div>
+<div>Environment: IBM Ceph 10.0+ (when feature is available)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Bootstrap a new cluster -- intent: verify creation timestamp recorded</li>
+</ul>
+<pre>
+   ceph versions history  # Should show creation date and initial version
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Perform an upgrade -- intent: verify upgrade event recorded</li>
+</ul>
+<pre>
+   ceph orch upgrade start --image &lt;new-image&gt;
+   # After completion:
+   ceph versions history  # Should show upgrade date and new version
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Verify data persists across mgr failover -- intent: confirm RADOS storage</li>
+</ul>
+<pre>
+   ceph mgr fail
+   ceph versions history  # Should still show history
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph versions history</code></code> (proposed command)</li>
+<li><code><code>ceph get-cluster-version-history</code></code> (<code>cephadm CLI)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Feature not yet released. Tests needed once it lands in 10.0.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>Feature not yet available for testing</li>
+<li>No test plan exists for upgrade history tracking</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Verify bootstrap version/date recorded on new cluster creation</li>
+<li>Verify each upgrade adds an entry with version and timestamp</li>
+<li>Verify history persists across mgr failover</li>
+<li>Verify <code>remove-cluster-version-history</code> prunes old entries correctly</li>
 </ul></div>
 </div>
 

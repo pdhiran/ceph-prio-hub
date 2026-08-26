@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13320: Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Swati Thombe] Hi Team,  We currently do not have sufficient information to proceed with full analysis. The JIRA has been updated with the required logs and environment details, and we are awaiting inputs. From the snippet shared, the following looks suspicious:      ENGINE Client (&#x27;17.155.212.
-- [Adam King] Do we have the logs from the individual agents that aren’t reporting in (they have their own systemd units so their should be journal logs) or some analysis on the ceph-volume failure? The log lines about the server dropping a TLS connection I think are a red herring here
-- [Swati Thombe] Hi    We currently do not have sufficient logs to proceed with further investigation. Could you please confirm if we can close this case for now? If the issue reoccurs or you observe a similar instance, kindly reopen the case and share the complete sosreport. We need logs from th
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm agent reports TLS connection dropped errors (&#x27;peer dropped the TLS connection suddenly, during handshake&#x27;) after enabling `mgr/cephadm/use_agent`. Likely benign/cosmetic, not impactful.
+ROOT CAUSE: After enabling cephadm agent mode (`ceph config set mgr mgr/cephadm/use_agent true`), the CherryPy-based HTTPS endpoint on the MGR logs INFO-level messages about TLS connection drops during handshake. Engineering (Adam King) assessed these as &#x27;a red herring&#x27; -- the TLS drops appear during agent registration and do not indicate functional failure. The separate `cephadm ceph-volume` JSON decode error (also in the same log snippet) was split to IBMCEPH-13496 as a different issue. Customer ultimately removed the cephadm agent due to unstable behavior.
+KEY EVIDENCE:
+- Log (INFO level): &#x27;ENGINE Client (...) lost — peer dropped the TLS connection suddenly, during handshake&#x27;
+- Reproduced in lab by QE but confirmed as benign by Adam King
+- No functional impact demonstrated; logged at INFO level, not ERROR
+- Customer disabled cephadm agent; no further logs available
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. No logs from individual failing agents were collected. TLS drops deemed cosmetic/benign.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;
-Environment: IBM Ceph 8.1z3, component: cephadm
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi    I’m currently trying to reproduce the reported issue on our end. Could you please confirm if there are any specific steps or sequence being followed to trigger the problem? It would be helpful to know the exact actions performed before the issue started and whether it is co</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce TLS connection drop messages with cephadm agent
+Environment: IBM Ceph 8.1z3 (19.2.1-274.el9cp)
+1. Enable cephadm agent: `ceph config set mgr mgr/cephadm/use_agent true` -- intent: activate agent mode
+2. Monitor MGR logs for TLS messages: `ceph log last debug cephadm` -- intent: observe TLS drops
+3. Check cephadm agent health: `ceph orch ps | grep agent` -- intent: verify agent daemons are running
+DIAGNOSTIC COMMANDS:
+- `ceph config get mgr mgr/cephadm/use_agent` -- verify agent mode
+- `ceph log last debug cephadm` -- check for TLS errors
+- `journalctl -u ceph-*@agent*` on each host -- get individual agent logs
+- `ceph orch ps --service-name agent` -- check agent status</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed as insufficient data. TLS drops are cosmetic.
+GAPS: No automated test for cephadm agent TLS handshake reliability. No test for agent-mode daemon refresh functionality.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Enable cephadm agent, verify all agents report successfully
+- Verify `ceph orch ps` refresh timestamps update correctly in agent mode
+- Test agent mode with MGR failover
+- Test agent mode with large number of hosts (50+)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,38 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm agent reports TLS connection dropped errors (&#x27;peer dropped the TLS connection suddenly, during handshake&#x27;) after enabling `mgr/cephadm/use_agent`. Likely benign/cosmetic, not impactful.</div>
+<div>ROOT CAUSE: After enabling cephadm agent mode (<code>ceph config set mgr mgr/cephadm/use_agent true</code>), the CherryPy-based HTTPS endpoint on the MGR logs INFO-level messages about TLS connection drops during handshake. Engineering (Adam King) assessed these as &#x27;a red herring&#x27; -- the TLS drops appear during agent registration and do not indicate functional failure. The separate <code>cephadm ceph-volume</code> JSON decode error (also in the same log snippet) was split to IBMCEPH-13496 as a different issue. Customer ultimately removed the cephadm agent due to unstable behavior.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: cephadm</li>
+<li>Log (INFO level): &#x27;ENGINE Client (...) lost — peer dropped the TLS connection suddenly, during handshake&#x27;</li>
+<li>Reproduced in lab by QE but confirmed as benign by Adam King</li>
+<li>No functional impact demonstrated; logged at INFO level, not ERROR</li>
+<li>Customer disabled <code>cephadm agent; no further logs available</code></li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. No logs from individual failing agents were collected. TLS drops deemed cosmetic/benign.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce TLS connection drop messages with cephadm agent</div>
+<div>Environment: IBM Ceph 8.1z3 (19.2.1-274.el9cp)</div>
 <ul>
-<li>[Swati Thombe] Hi Team,  We currently do not have sufficient information to proceed with full analysis. The JIRA has been updated with the required logs and environment details, and we are awaiting inputs. From the snippet shared, the following looks suspicious:      ENGINE Client (&#x27;17.155.212.</li>
-<li>[Adam King] Do we have the logs from the individual agents that aren’t reporting in (they have their own systemd units so their should be journal logs) or some analysis on the ceph-volume failure? The log lines about the server dropping a TLS connection I think are a red herring here</li>
-<li>[Swati Thombe] Hi    We currently do not have sufficient logs to proceed with further investigation. Could you please confirm if we can close this case for now? If the issue reoccurs or you observe a similar instance, kindly reopen the case and share the complete sosreport. We need logs from th</li>
+<li><span class="step-num">1.</span> Enable <code>cephadm agent:</code><code><code>ceph config set mgr mgr/cephadm/use_agent true</code></code> -- intent: activate agent mode</li>
+<li><span class="step-num">2.</span> Monitor MGR logs for TLS messages: <code><code>ceph log last debug cephadm</code></code> -- intent: observe TLS drops</li>
+<li><span class="step-num">3.</span> Check <code>cephadm agent health:</code><code><code>ceph orch ps | grep agent</code></code> -- intent: verify agent daemons are running</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>ceph config get mgr mgr/cephadm/use_agent</code></code> -- verify agent mode</li>
+<li><code><code>ceph log last debug cephadm</code></code> -- check for TLS errors</li>
+<li><code><code>journalctl -u ceph-*@agent*</code></code> on each host -- get individual agent logs</li>
+<li><code><code>ceph orch ps --service-name agent</code></code> -- check agent status</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm Agent : TLS connection dropped &quot;peer dropped the TLS connection suddenly&quot;</div>
-<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi    I’m currently trying to reproduce the reported issue on our end. Could you please confirm if there are any specific steps or sequence being followed to trigger the problem? It would be helpful to know the exact actions performed before the issue started and whether it is co</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed as insufficient data. TLS drops are cosmetic.</div>
+<div>GAPS: No automated test for cephadm agent TLS handshake reliability. No test for agent-mode daemon refresh functionality.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Enable <code>cephadm agent</code>, verify all agents report successfully</li>
+<li>Verify <code><code>ceph orch ps</code></code> refresh timestamps update correctly in agent mode</li>
+<li>Test agent mode with MGR failover</li>
+<li>Test agent mode with large number of hosts (50+)</li>
 </ul></div>
 </div>
 

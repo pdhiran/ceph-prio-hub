@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13495: Ceph orchestrator restart commands not restarting the Daemons</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ceph orchestrator restart commands not restarting the Daemons
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] Running  ceph orch ps --refresh  resolved the issue. No cephadm commands were observed hanging on any nodes; however, the  REFRESHED  column for all services was showing  10d  prior to the refresh. We should also analyze the customer‑provided logs to investigate the issue further
-- [Timothy Nguyen] If the use_agent was in use and turned off around the time this bug occurred that could possibly be the root cause, some bug in use agent, though this is reach
-- [Timothy Nguyen] Summary of Analysis:  Could not conclude a root cause, without debug level logs there are too many possibilities. Any bug involving services not refreshing in “ceph orch ps” with “ refreshed [X]d ago&quot; will likely be related to the ``host_needs_daemon_refresh`` function which hand
-- [Prashant Dhange] Logs Needed if the Bug Is Reproduced Ceph Manager (MGR) logs with debug level enabled Ceph audit logs Ceph crash logs sosreport from at least one affected node Ceph logs (mon, mgr, and relevant daemon logs) Latest cephadm logs Cephadm debug logs Additionally, try ceph orch daemon
-- [Timothy Nguyen] Cannot determine root cause, insufficient log information
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: `ceph orch restart` commands have no effect and `ceph orch ps` shows &#x27;refreshed [X]d ago&#x27; for 9+ days, indicating cephadm serve loop is stuck.
+ROOT CAUSE: Could not determine root cause due to insufficient log level (INFO only, no DEBUG). The issue is related to the cephadm serve loop&#x27;s `host_needs_daemon_refresh` function or, if cephadm agent was enabled, the agent&#x27;s refresh mechanism. The customer was using cephadm agent which was subsequently disabled due to instability. Running `ceph orch ps --refresh` manually resolved the issue. Engineering analysis (Timothy Nguyen) identified that the bug likely involves the conditional logic in `host_needs_daemon_refresh` or agent-mode refresh handling.
+KEY EVIDENCE:
+- `ceph orch ps` showed &#x27;refreshed 10d ago&#x27; for all services
+- `ceph orch restart rgw/mon/mgr` had no visible effect
+- `ceph orch ps --refresh` resolved the issue immediately
+- Customer was using cephadm agent which was later removed
+- Info-level logs insufficient for root cause determination
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Not reproducible without debug-level logs. If recurs, collect: MGR debug logs, cephadm debug logs, sosreport, journalctl for cephadm/ceph services.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph orchestrator restart commands not restarting the Daemons
-Environment: IBM Ceph 8.1z3, component: cephadm
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Could you please try to reproduce it internally or involve QE Team for the reproducer?</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph orch ps refresh stall
+Environment: IBM Ceph 8.1z3 with cephadm agent enabled
+1. Enable cephadm agent: `ceph config set mgr mgr/cephadm/use_agent true` -- intent: enable agent mode
+2. Disable cephadm agent: `ceph config set mgr mgr/cephadm/use_agent false` -- intent: potentially trigger refresh stall during transition
+3. Monitor `ceph orch ps` refresh timestamps over days -- intent: observe stall
+4. If stall observed, collect debug logs before resolving: `ceph config set mgr mgr/cephadm/log_level debug &amp;&amp; ceph log last debug cephadm` -- intent: capture root cause
+DIAGNOSTIC COMMANDS:
+- `ceph orch ps` -- check refresh timestamps
+- `ceph orch ps --refresh` -- force refresh
+- `ceph log last debug cephadm` -- get cephadm debug logs
+- `ceph mgr fail` -- trigger MGR failover as potential workaround</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: Ceph orchestrator restart commands not restarting the Daemons
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed as insufficient data. Not reproducible.
+GAPS: No monitoring test for cephadm serve loop health. No test for agent enable/disable transitions.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Enable/disable cephadm agent and verify refresh continues working
+- Monitor ceph orch ps refresh timestamps over extended period (24h+)
+- Test ceph orch restart during various serve loop states
+- Verify refresh recovery after MGR failover</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,42 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ceph orchestrator restart commands not restarting the Daemons</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">`ceph orch restart` commands have no effect and `ceph orch ps` shows &#x27;refreshed [X]d ago&#x27; for 9+ days, indicating cephadm serve loop is stuck.</div>
+<div>ROOT CAUSE: Could not determine root cause due to insufficient log level (INFO only, no DEBUG). The issue is related to the cephadm serve loop&#x27;s <code>host_needs_daemon_refresh</code> function or, if cephadm agent was enabled, the agent&#x27;s refresh mechanism. The customer was using cephadm agent which was subsequently disabled due to instability. Running <code>ceph orch ps --refresh</code> manually resolved the issue. Engineering analysis (Timothy Nguyen) identified that the bug likely involves the conditional logic in <code>host_needs_daemon_refresh</code> or agent-mode refresh handling.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: cephadm</li>
+<li><code><code>ceph orch ps</code></code> showed &#x27;refreshed 10d ago&#x27; for all services</li>
+<li><code><code>ceph orch restart rgw/mon/mgr</code></code> had no visible effect</li>
+<li><code><code>ceph orch ps --refresh</code></code> resolved the issue immediately</li>
+<li>Customer was using <code>cephadm agent which was later removed</code></li>
+<li>Info-level logs insufficient for root cause determination</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. Not reproducible without debug-level logs. If recurs, collect: MGR debug logs, cephadm debug logs, sosreport, journalctl for cephadm/ceph services.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph orch ps refresh stall</div>
+<div>Environment: IBM Ceph 8.1z3 with cephadm agent enabled</div>
 <ul>
-<li>[Prashant Dhange] Running  <code>ceph orch ps --refresh  resolved the issue. No cephadm commands were observed hanging on any nodes; however</code>, the  REFRESHED  column for all services was showing  10d  prior to the refresh. We should also analyze the customer‑provided logs to investigate the issue further</li>
-<li>[Timothy Nguyen] If the use_agent was in use and turned off around the time this bug occurred that could possibly be the root cause, some bug in use agent, though this is reach</li>
-<li>[Timothy Nguyen] Summary of Analysis:  Could not conclude a root cause, without debug level logs there are too many possibilities. Any bug involving services not refreshing in “<code>ceph orch ps” with “ refreshed [X]d ago&quot; will likely be related to the `</code><code>host_needs_daemon_refresh</code>` function which hand</li>
-<li>[Prashant Dhange] Logs Needed if the Bug Is Reproduced Ceph Manager (MGR) logs with debug level enabled Ceph audit logs Ceph crash logs sosreport from at least one affected node Ceph logs (mon, mgr, and relevant daemon logs) Latest <code>cephadm logs Cephadm debug logs Additionally</code>, try <code>ceph orch daemon</code></li>
-<li>[Timothy Nguyen] Cannot determine root cause, insufficient log information</li>
+<li><span class="step-num">1.</span> Enable <code>cephadm agent:</code><code><code>ceph config set mgr mgr/cephadm/use_agent true</code></code> -- intent: enable agent mode</li>
+<li><span class="step-num">2.</span> Disable <code>cephadm agent:</code><code><code>ceph config set mgr mgr/cephadm/use_agent false</code></code> -- intent: potentially trigger refresh stall during transition</li>
+<li><span class="step-num">3.</span> Monitor <code><code>ceph orch ps</code></code> refresh timestamps over days -- intent: observe stall</li>
+<li><span class="step-num">4.</span> If stall observed, collect debug logs before resolving: <code><code>ceph config set mgr mgr/cephadm/log_level debug &amp;amp;&amp;amp; ceph log last debug cephadm</code></code> -- intent: capture root cause</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>ceph orch ps</code></code> -- check refresh timestamps</li>
+<li><code><code>ceph orch ps --refresh</code></code> -- force refresh</li>
+<li><code><code>ceph log last debug cephadm</code></code> -- get <code>cephadm debug logs</code></li>
+<li><code><code>ceph mgr fail</code></code> -- trigger MGR failover as potential workaround</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph orchestrator restart commands not restarting the Daemons</div>
-<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Could you please try to reproduce it internally or involve QE Team for the reproducer?</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: Ceph orchestrator restart commands not restarting the Daemons</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed as insufficient data. Not reproducible.</div>
+<div>GAPS: No monitoring test for cephadm serve loop health. No test for agent enable/disable transitions.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Enable/disable <code>cephadm agent and verify refresh continues working</code></li>
+<li>Monitor <code>ceph orch ps refresh timestamps over extended period (24h+)</code></li>
+<li>Test <code>ceph orch restart during various serve loop states</code></li>
+<li>Verify refresh recovery after MGR failover</li>
 </ul></div>
 </div>
 

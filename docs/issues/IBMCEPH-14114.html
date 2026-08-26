@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14114: CRC Errors seen in Ceph RHCS 6.1z5 cluster, seemingly following the PG even if we manually move it.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CRC Errors seen in Ceph RHCS 6.1z5 cluster, seemingly following the PG even if we manually move it.
-
-ROOT CAUSE:
-- Affected version(s): 6.1z5
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Raimund Sacherer] ,    After our discussion with Brad this (my, CEST) morning I tested the steps out in my lab and sent the CU the following procedure so we collect all objects, debug 20 logs, etc: 
-I tested the below procedure in a lab. Fortunately the corrupted object seems to be in CephFS, so
-- [Raimund Sacherer] FYI, we where on the CU call, and CU did not actually want to debug the issue. So we identified that we had an issue with one running Jira pod, they had three. We made sure that the corrupt file was local to the pods, we saw the same Q name on two nodes, but they where different
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Persistent CRC read errors on a single CephFS object (Jira queue file) that follow the PG across OSD moves. Not a Ceph bug -- the object data was genuinely corrupted.
+ROOT CAUSE: A single CephFS object (inode 0x10002205622, a Jira application queue file) had corrupted data with mismatched CRC checksums. When the PG was moved from OSD.13 to OSD.35 to OSD.12, the CRC errors followed because the corruption was in the object data itself, not in the OSD hardware. The primary OSD consistently failed CRC verification because all replicas contained the same corrupted data (the corruption predated replication). Resolution: customer moved the corrupted file (`mv` to another location) which stopped the CRC errors, then deleted it.
+KEY EVIDENCE:
+- CRC mismatch: `full-object read crc 0x9be580fa != expected 0x942f10f9 on 1:a59dca4b:::10002205622.00000000:head`
+- OSD_TOO_MANY_REPAIRS: osd.12 had 14993 reads repaired
+- CRC errors followed PG from OSD.13 -&gt; OSD.35 -&gt; OSD.12 (all replicas corrupted)
+- Object identified as CephFS inode for a Jira queue file
+- Resolution: `mv` the file away, CRC errors stopped immediately
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Object-level data corruption, not a Ceph defect. Customer will upgrade to latest 6.1z-stream.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- CRC Errors seen in Ceph RHCS 6.1z5 cluster, seemingly following the PG even if we manually move it.
-Environment: IBM Ceph 6.1z5, component: rados
-
-1. Deploy IBM Ceph 6.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Not reproducible as a general bug -- this was a specific data corruption incident
+Environment: RHCS 6.1z5, CephFS, 4-node cluster
+This issue is not a Ceph bug and does not have general reproduction steps. The debugging procedure is valuable:
+1. Identify the corrupted object from OSD logs: `grep &#x27;full-object read crc&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-osd.&lt;id&gt;.log`
+2. Map to CephFS inode: `ceph tell mds.&lt;active&gt; dump inode &lt;hex_inode&gt;`
+3. Extract object bytes from each replica OSD using ceph-objectstore-tool
+4. Compare bytes across replicas to determine if all copies are corrupt
+5. If all corrupt: delete/move the CephFS file; if only some: run `ceph pg repair &lt;pgid&gt;`
+DIAGNOSTIC COMMANDS:
+- `ceph pg dump | grep &lt;pgid&gt;` -- check PG state
+- `ceph tell mds.&lt;active&gt; dump inode &lt;hex_inode&gt;` -- find CephFS path
+- `ceph pg repair &lt;pgid&gt;` -- attempt auto-repair
+- `ceph pg deep-scrub &lt;pgid&gt;` -- verify repair</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: CRC Errors seen in Ceph RHCS 6.1z5 cluster, seemingly following the PG even if we manually move it.
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Not a bug. Debugging procedure documented.
+GAPS: N/A -- not a Ceph defect.
+SCENARIOS NEEDED: N/A -- data corruption debugging is an operational procedure, not a testable bug.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,42 +230,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CRC Errors seen in Ceph RHCS 6.1z5 cluster, seemingly following the PG even if we manually move it.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Persistent CRC read errors on a single CephFS object (Jira queue file) that follow the PG across OSD moves. Not a Ceph bug -- the object data was genuinely corrupted.</div>
+<div>ROOT CAUSE: A single CephFS object (inode 0x10002205622, a Jira application queue file) had corrupted data with mismatched CRC checksums. When the PG was moved from OSD.13 to OSD.35 to OSD.12, the CRC errors followed because the corruption was in the object data itself, not in the OSD hardware. The primary OSD consistently failed CRC verification because all replicas contained the same corrupted data (the corruption predated replication). Resolution: customer moved the corrupted file (<code>mv</code> to another location) which stopped the CRC errors, then deleted it.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 6.1z5</li>
-<li>Component: rados</li>
+<li>CRC mismatch: <code>full-object read crc 0x9be580fa != expected 0x942f10f9 on 1:a59dca4b:::10002205622.00000000:head</code></li>
+<li>OSD_TOO_MANY_REPAIRS: osd.12 had 14993 reads repaired</li>
+<li>CRC errors followed PG from OSD.13 -&gt; OSD.35 -&gt; OSD.12 (all replicas corrupted)</li>
+<li>Object identified as CephFS inode for a Jira queue file</li>
+<li>Resolution: <code>mv</code> the file away, CRC errors stopped immediately</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Object-level data corruption, not a Ceph defect. Customer will upgrade to latest 6.1z-stream.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Not reproducible as a general bug -- this was a specific data corruption incident</div>
+<div>Environment: RHCS 6.1z5, CephFS, 4-node cluster</div>
+<div>This issue is not a Ceph bug and does not have general reproduction steps. The debugging procedure is valuable:</div>
 <ul>
-<li>[Raimund Sacherer] ,    After our discussion with Brad this (my, CEST) morning I tested the steps out in my lab and sent the CU the following procedure so we collect all objects, debug 20 logs, etc:</li>
+<li><span class="step-num">1.</span> Identify the corrupted object from OSD logs: <code>grep &amp;#x27;full-object read crc&amp;#x27; /var/log/ceph/&amp;lt;fsid&amp;gt;/ceph-osd.&amp;lt;id&amp;gt;.log</code></li>
+<li><span class="step-num">2.</span> Map to CephFS inode: <code><code>ceph tell mds.&amp;lt;active&amp;gt; dump inode &amp;lt;hex_inode&amp;gt;</code></code></li>
+<li><span class="step-num">3.</span> Extract object bytes from each replica OSD using ceph-objectstore-tool</li>
+<li><span class="step-num">4.</span> Compare bytes across replicas to determine if all copies are corrupt</li>
+<li><span class="step-num">5.</span> If all corrupt: delete/move the CephFS file; if only some: run <code><code>ceph pg repair &amp;lt;pgid&amp;gt;</code></code></li>
 </ul>
-<div>I tested the below procedure in a lab. Fortunately the corrupted object seems to be in CephFS, so</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Raimund Sacherer] FYI, we where on the CU call, and CU did not actually want to debug the issue. So we identified that we had an issue with one running Jira pod, they had three. We made sure that the corrupt file was local to the pods, we saw the same Q name on two nodes, but they where different</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>ceph pg dump | grep &amp;lt;pgid&amp;gt;</code></code> -- check PG state</li>
+<li><code><code>ceph tell mds.&amp;lt;active&amp;gt; dump inode &amp;lt;hex_inode&amp;gt;</code></code> -- find CephFS path</li>
+<li><code><code>ceph pg repair &amp;lt;pgid&amp;gt;</code></code> -- attempt auto-repair</li>
+<li><code><code>ceph pg deep-scrub &amp;lt;pgid&amp;gt;</code></code> -- verify repair</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- CRC Errors seen in Ceph RHCS 6.1z5 cluster, seemingly following the PG even if we manually move it.</div>
-<div>Environment: IBM Ceph 6.1z5, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: CRC Errors seen in Ceph RHCS 6.1z5 cluster</code>, seemingly following the PG even if we manually move it.</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Not a bug. Debugging procedure documented.</div>
+<div>GAPS: N/A -- not a Ceph defect.</div>
+<div>SCENARIOS NEEDED: N/A -- data corruption debugging is an operational procedure, not a testable bug.</div></div>
 </div>
 
 

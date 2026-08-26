@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-10122: [BZ#2321531] CBT Help output refers to a command which does not exist.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2321531] CBT Help output refers to a command which does not exist.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: ceph-bluestore-tool help lists `free-fragmentation` as a valid command, but the actual command name is `fragmentation`, causing user confusion.
 
 ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: rados
+The help text in ceph-bluestore-tool&#x27;s positional options list includes `free-fragmentation` as a valid command name, but the actual implementation only recognizes `fragmentation`. The `free-` prefix was incorrectly added to the help string, likely a copy-paste error from the `free-dump` and `free-score` commands listed nearby. Running `ceph-bluestore-tool --path &lt;osd-path&gt; --allocator block free-fragmentation` returns &quot;unrecognized action&quot; while `fragmentation` works correctly.
 
-ENGINEERING FINDINGS:
-- [Prachi Lasurkar] The  free-fragmentation  issue has been fixed in the latest Ceph version ( 20.1.0 / tentacle ). I have also confirmed that the fix is present in the 9.1 downstream version. However, the fix is  not present in 8.1 . Could you please advise whether this needs to be cherry-picked to
+KEY EVIDENCE:
+- Help output lists: `free-dump, free-score, free-fragmentation` but only `free-fragmentation` is wrong
+- Fix confirmed present in 9.1 downstream (20.1.0 tentacle) but NOT in 8.1
+- Customer (Raimund Sacherer) requests 8.1 backport for MOD customers who won&#x27;t upgrade to 9.1 soon
+- Related issue: IBMCEPH-15874 (fragmentation_rating label duplication) was split into a separate JIRA
 
 FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+- Status: In Progress
+- Fixed in 9.1 (tentacle). Cherry-pick to 8.1 under discussion.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2321531] CBT Help output refers to a command which does not exist.
-Environment: IBM Ceph 7.1, component: rados
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Confirm help text mismatch with actual command names
+Environment: IBM Ceph 7.1 or 8.1 (pre-fix)
 
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Enter cephadm shell or access ceph-bluestore-tool -- intent: access the tool
+2. Run `ceph-bluestore-tool --help` -- intent: observe help text listing `free-fragmentation`
+3. Run `ceph-bluestore-tool --path /var/lib/ceph/osd/ceph-0/ --allocator block free-fragmentation` -- intent: confirm command fails
+4. Run `ceph-bluestore-tool --path /var/lib/ceph/osd/ceph-0/ --allocator block fragmentation` -- intent: confirm correct command works
 
-SCENARIO DETAIL (from engineering comments):
-I’ve observed that the updates has been made to related to free-fragmentation command in latest downstream 9.1 version. I need to cherry pick it to 8.1 version.</textarea>
+DIAGNOSTIC COMMANDS:
+- `ceph-bluestore-tool --help`
+- `ceph-bluestore-tool --path &lt;osd-path&gt; --allocator block fragmentation`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates consistency between help text and actual command names.
 
 GAPS:
-- Existing rados tests may not cover: [BZ#2321531] CBT Help output refers to a command which does not exist.
+- No test parses ceph-bluestore-tool help output and validates each listed command works
+- No test for `free-fragmentation` vs `fragmentation` command name
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Parse --help output and verify each listed command is executable
+- Specifically test `fragmentation` command succeeds
+- Negative test: `free-fragmentation` should either work or not appear in help</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +240,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2321531] CBT Help output refers to a command which does not exist.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">ceph-bluestore-tool help lists `free-fragmentation` as a valid command, but the actual command name is `fragmentation`, causing user confusion.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The help text in ceph-bluestore-tool&#x27;s positional options list includes <code>free-fragmentation</code> as a valid command name, but the actual implementation only recognizes <code>fragmentation</code>. The <code>free-</code> prefix was incorrectly added to the help string, likely a copy-paste error from the <code>free-dump</code> and <code>free-score</code> commands listed nearby. Running <code>ceph-bluestore-tool --path &lt;osd-path&gt; --allocator block free-fragmentation</code> returns &quot;unrecognized action&quot; while <code>fragmentation</code> works correctly.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: rados</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Prachi Lasurkar] The  free-fragmentation  issue has been fixed in the latest Ceph version ( 20.1.0 / tentacle ). I have also confirmed that the fix is present in the 9.1 downstream version. However, the fix is  not present in 8.1 . Could you please advise whether this needs to be cherry-picked to</li>
+<li>Help output lists: <code>free-dump, free-score, free-fragmentation</code> but only <code>free-fragmentation</code> is wrong</li>
+<li>Fix confirmed present in 9.1 downstream (20.1.0 tentacle) but NOT in 8.1</li>
+<li>Customer (Raimund Sacherer) requests 8.1 backport for MOD customers who won&#x27;t upgrade to 9.1 soon</li>
+<li>Related issue: IBMCEPH-15874 (fragmentation_rating label duplication) was split into a separate JIRA</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
+<li>Status: In Progress</li>
+<li>Fixed in 9.1 (tentacle). Cherry-pick to 8.1 under discussion.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2321531] CBT Help output refers to a command which does not exist.</div>
-<div>Environment: IBM Ceph 7.1, component: rados</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Confirm help text mismatch with actual command names</div>
+<div>Environment: IBM Ceph 7.1 or 8.1 (pre-fix)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Enter <code>cephadm shell or access ceph-bluestore-tool -- intent: access the tool</code></li>
+<li><span class="step-num">2.</span> Run <code>ceph-bluestore-tool --help</code> -- intent: observe help text listing <code>free-fragmentation</code></li>
+<li><span class="step-num">3.</span> Run <code>ceph-bluestore-tool --path /var/lib/ceph/osd/ceph-0/ --allocator block free-fragmentation</code> -- intent: confirm command fails</li>
+<li><span class="step-num">4.</span> Run <code>ceph-bluestore-tool --path /var/lib/ceph/osd/ceph-0/ --allocator block fragmentation</code> -- intent: confirm correct command works</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>I’ve observed that the updates has been made to related to free-fragmentation command in latest downstream 9.1 version. I need to cherry pick it to 8.1 version.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph-bluestore-tool --help</code></li>
+<li><code>ceph-bluestore-tool --path &amp;lt;osd-path&amp;gt; --allocator block fragmentation</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates consistency between help text and actual command names.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rados tests may not cover: [BZ#2321531] CBT Help output refers to a command which does not exist.</code></li>
+<li>No test parses ceph-bluestore-tool help output and validates each listed command works</li>
+<li>No test for <code>free-fragmentation</code> vs <code>fragmentation</code> command name</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Parse --help output and verify each listed command is executable</li>
+<li>Specifically test <code>fragmentation</code> command succeeds</li>
+<li>Negative test: <code>free-fragmentation</code> should either work or not appear in help</li>
 </ul></div>
 </div>
 

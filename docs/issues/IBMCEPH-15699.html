@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15699: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,56 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW SSL certificate upload via Dashboard fails with 500 Internal Server Error on IBM Ceph 9.0z2 due to field naming mismatch introduced by certmgr changes.
 
 ROOT CAUSE:
-- Affected version(s): 9.0z2
-- Component: ceph-dashboard
+In Ceph 9.0, the cephadm certmgr feature changed the internal key name from `ssl_cert` to `rgw_frontend_ssl_certificate`. The Dashboard&#x27;s service edit flow on 9.0 passes the certificate through `ServiceSpec.from_json()` which calls `validate()`. During validation, when `ssl=true` and `ssl_cert` is empty (because the Dashboard used the old field name), the code attempts to parse `rgw_frontend_ssl_certificate` as a combined PEM. If only a certificate OR only a key is provided (not both), `parse_combined_pem_file()` returns incomplete data, causing `SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)`. This is a 9.0-only regression; versions 9.1+ include the CertMgr UI which handles the new field correctly.
 
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] [Internal Do not share with customer] Hello, From the initial analysis, it looks like changes from  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a59cb5b5e2be3956705fe0176ecdedd7511bebd7  are present in 9.1 and missing in 8.1, which is likely causing this issue. Currently debu
-- [Abhishek Desai] Thanks for the detailed explaination, i will raise a needed fix for the same
-- [Sachin Yeshwanth] - Please share the corresponding commit ID or MR link that got merged into the DS ceph-9.2-rhel-patches branch ?
-- [Abhishek Desai] The issue only persist on 9.0.  9.1 and beyond does not need any fix
-- [Sachin Yeshwanth] So can we move this bug to ON_QA without a fix ?
+KEY EVIDENCE:
+- Stack trace: `service_spec.py:1764 validate() -&gt; raise SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)`
+- Aarti Dhikale confirmed: `ssl_cert` is not populated correctly at runtime due to the field name change (commit a59cb5b5e2be)
+- Abhishek Desai: &quot;The issue is specific to 9.0 cause the certmgr cephadm changed the key for ssl_cert to rgw_frontend_ssl_cert&quot;
+- Velmurugan R confirmed the issue is resolved in 9.9.1.0
+- PR raised: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1893 (for 9.0)
 
 FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues? The Dashboard does not display the SSL certifica</textarea>
+- Status: Closed (Done)
+- Fix: Not needed for 9.1+; CertMgr feature in Dashboard handles this correctly from 9.1 onwards
+- Secondary issue: CA trust store not mounted in ceph-mgr container (workaround: mount host CA trust store)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error
-Environment: IBM Ceph 9.0z2, component: ceph-dashboard
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate RGW SSL certificate upload through Dashboard on IBM Ceph 9.0
+Environment: IBM Ceph 9.0z2, RGW service with SSL configured via spec file
 
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Deploy an RGW service with SSL using a spec file containing `ssl_cert` and `ssl_key` fields -- intent: establish baseline SSL config
+   ```
+   ceph orch apply -i rgw-spec-ssl.yaml
+   ```
+2. Log into Dashboard, navigate to Administration -&gt; Services -&gt; rgw.service -&gt; Edit -- intent: verify certificate visibility
+3. Observe that configured SSL certificate is NOT displayed -- intent: confirm display bug
+4. Attempt to upload an SSL certificate (PEM format with cert only, no key) through the Dashboard -- intent: trigger the validation error
+5. Observe HTTP 500 Internal Server Error -- intent: confirm the bug
 
-SCENARIO DETAIL (from engineering comments):
-Hello   , For reproduction of the above issue, we need to upload only the certificate and skip the key. Then we will be able to recreate the issue. I am able to reproduce on 9.1. Also if we skip certificate and provided only key in that case also will see same behaviour. Jun 05 0</textarea>
+DIAGNOSTIC COMMANDS:
+- `journalctl -u ceph-mgr* | grep &#x27;SpecValidationError&#x27;`
+- `ceph orch ls --service-type rgw --export`
+- `ceph mgr module ls | grep dashboard`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No specific QE test exists for SSL certificate upload via Dashboard on version transitions (8.1 -&gt; 9.0 -&gt; 9.1).
 
 GAPS:
+- No test validates that `ssl_cert` field naming is consistent between Dashboard UI and ServiceSpec across versions
+- No test for uploading cert-only or key-only through the Dashboard
+- No regression test for certmgr field name migration
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Upload SSL cert+key PEM via Dashboard on 9.1+ and verify RGW starts with SSL
+- Verify SSL cert visibility in Dashboard after applying RGW spec with ssl_cert field
+- Test upgrade from 8.1 to 9.x preserves SSL cert display in Dashboard
+- Negative test: upload cert-only (no key) and verify clear error message (not 500)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,42 +249,56 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW SSL certificate upload via Dashboard fails with 500 Internal Server Error on IBM Ceph 9.0z2 due to field naming mismatch introduced by certmgr changes.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>In Ceph 9.0, the cephadm certmgr feature changed the internal key name from <code>ssl_cert</code> to <code>rgw_frontend_ssl_certificate</code>. The Dashboard&#x27;s service edit flow on 9.0 passes the certificate through <code>ServiceSpec.from_json()</code> which calls <code>validate()</code>. During validation, when <code>ssl=true</code> and <code>ssl_cert</code> is empty (because the Dashboard used the old field name), the code attempts to parse <code>rgw_frontend_ssl_certificate</code> as a combined PEM. If only a certificate OR only a key is provided (not both), <code>parse_combined_pem_file()</code> returns incomplete data, causing <code>SpecValidationError(&quot;Failed to parse rgw_frontend_ssl_certificate field.&quot;)</code>. This is a 9.0-only regression; versions 9.1+ include the CertMgr UI which handles the new field correctly.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: ceph-dashboard</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Aarti Dhikale] [Internal Do not share with customer] Hello, From the initial analysis, it looks like changes from  https://gitlab.cee.redhat.com/ceph/ceph/-/commit/a59cb5b5e2be3956705fe0176ecdedd7511bebd7  are present in 9.1 and missing in 8.1, which is likely causing this issue. Currently debu</li>
-<li>[Abhishek Desai] Thanks for the detailed explaination, i will raise a needed fix for the same</li>
-<li>[Sachin Yeshwanth] - Please share the corresponding commit ID or MR link that got merged into the DS ceph-9.2-rhel-patches branch ?</li>
-<li>[Abhishek Desai] The issue only persist on 9.0.  9.1 and beyond does not need any fix</li>
-<li>[Sachin Yeshwanth] So can we move this bug to ON_QA without a fix ?</li>
+<li>Stack trace: <code>service_spec.py:1764 validate() -&amp;gt; raise SpecValidationError(&amp;quot;Failed to parse rgw_frontend_ssl_certificate field.&amp;quot;)</code></li>
+<li>Aarti Dhikale confirmed: <code>ssl_cert</code> is not populated correctly at runtime due to the field name change (commit a59cb5b5e2be)</li>
+<li>Abhishek Desai: &quot;The issue is specific to 9.0 cause the certmgr <code>cephadm changed the key for ssl_cert to rgw_frontend_ssl_cert&quot;</code></li>
+<li>Velmurugan R confirmed the issue is resolved in 9.9.1.0</li>
+<li>PR raised: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1893 (for 9.0)</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: Hello   ,  Thanks for sharing the details. I have one clarification regarding the workaround. Does the workaround resolve both of the following issues? The Dashboard does not display the SSL certifica</li>
+<li>Status: Closed (Done)</li>
+<li>Fix: Not needed for 9.1+; CertMgr feature in Dashboard handles this correctly from 9.1 onwards</li>
+<li>Secondary issue: CA trust store not mounted in ceph-mgr container (workaround: <code>mount host CA trust store)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</div>
-<div>Environment: IBM Ceph 9.0z2, component: ceph-dashboard</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate RGW SSL certificate upload through Dashboard on IBM Ceph 9.0</div>
+<div>Environment: IBM Ceph 9.0z2, RGW service with SSL configured via spec file</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy an RGW service with SSL using a spec file containing <code>ssl_cert</code> and <code>ssl_key</code> fields -- intent: establish baseline SSL config</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hello   , For reproduction of the above issue, we need to upload only the certificate and skip the key. Then we will be able to recreate the issue. I am able to reproduce on 9.1. Also if we skip certificate and provided only key in that case also will see same behaviour. Jun 05 0</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<pre>
+   ceph orch apply -i rgw-spec-ssl.yaml
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Log into Dashboard, navigate to Administration -&gt; Services -&gt; rgw.service -&gt; Edit -- intent: verify certificate visibility</li>
+<li><span class="step-num">3.</span> Observe that configured SSL certificate is NOT displayed -- intent: confirm display bug</li>
+<li><span class="step-num">4.</span> Attempt to upload an SSL certificate (PEM format with cert only, no key) through the Dashboard -- intent: trigger the validation error</li>
+<li><span class="step-num">5.</span> Observe HTTP 500 Internal Server Error -- intent: confirm the bug</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>journalctl -u ceph-mgr* | grep &amp;#x27;SpecValidationError&amp;#x27;</code></code></li>
+<li><code><code>ceph orch ls --service-type rgw --export</code></code></li>
+<li><code><code>ceph mgr module ls | grep dashboard</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No specific QE test exists for SSL certificate upload via Dashboard on version transitions (8.1 -&gt; 9.0 -&gt; 9.1).</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>No test validates that <code>ssl_cert</code> field naming is consistent between Dashboard UI and ServiceSpec across versions</li>
+<li>No test for uploading cert-only or key-only through the Dashboard</li>
+<li>No regression test for certmgr field name migration</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Upload SSL cert+key PEM via Dashboard on 9.1+ and verify RGW starts with SSL</li>
+<li>Verify SSL cert visibility in Dashboard after applying RGW spec with ssl_cert field</li>
+<li>Test upgrade from 8.1 to 9.x preserves SSL cert display in Dashboard</li>
+<li>Negative test: upload cert-only (no key) and verify clear error message (not 500)</li>
 </ul></div>
 </div>
 

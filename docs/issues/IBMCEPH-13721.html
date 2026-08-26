@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13721: Ceph-CSI RBD Volume Mount Failure After Update to 3.16 – &quot;rbd: sysfs write failed&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,32 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ceph-CSI RBD Volume Mount Failure After Update to 3.16 – &quot;rbd: sysfs write failed&quot;
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RBD volume mount failure after customer upgraded to upstream Ceph-CSI 3.16 (which uses Tentacle/v20) against IBM Ceph 8.0z5 (Squid/v19) -- version incompatibility, not a product bug.
 
 ROOT CAUSE:
-- Affected version(s): 8.0z5
-- Component: unknown
+The customer used community/upstream Ceph-CSI container images (docker.artifactory.css.ch/cephcsi/cephcsi:v3.16.2) which bundle upstream Ceph Tentacle (v20.2.0) librbd. This is incompatible with their IBM Ceph 8.0z5 cluster running Squid (19.2.0). The `rbd map` command fails with exit status 110 (ETIMEDOUT) because the protocol version mismatch prevents successful connection. Rollback to CSI 3.15 (which bundles matching Squid librbd) resolves the issue.
+
+KEY EVIDENCE:
+- Niels de Vos: &quot;upstream Ceph Tentacle (v20.2.0) which may not be compatible with IBM Ceph 8.0z5 [19.2.0-139.el9cp]&quot;
+- Error: `exit status 110` (ETIMEDOUT) during `rbd map`
+- Image used: `docker.artifactory.css.ch/cephcsi/cephcsi:v3.16.2` (unsupported upstream build)
+- Resolution: customer should use IBM-provided Ceph-CSI container image matching their Ceph version
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (Not a Bug)
+- Resolution: Customer advised to use IBM-supported Ceph-CSI images from IBM Container Registry</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph-CSI RBD Volume Mount Failure After Update to 3.16 – &quot;rbd: sysfs write failed&quot;
-Environment: IBM Ceph 8.0z5, component: unknown
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify IBM-supported Ceph-CSI image works with matching IBM Ceph version
+Environment: IBM Ceph 8.x with Kubernetes, IBM-provided Ceph-CSI image
 
-1. Deploy IBM Ceph 8.0z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy IBM Ceph 8.x cluster -- intent: baseline
+2. Install Ceph-CSI using IBM-provided container image (not upstream) -- intent: correct configuration
+3. Create RBD StorageClass and PVC -- intent: verify volume provisioning
+4. Mount PVC in a pod -- intent: verify volume mount works
+
+DIAGNOSTIC COMMANDS:
+- `kubectl describe pod &lt;pod-name&gt;` (check mount errors)
+- `kubectl logs &lt;csi-nodeplugin-pod&gt; -c csi-rbdplugin`
+- Check CSI image version: `kubectl get pods -n &lt;csi-ns&gt; -o jsonpath=&#x27;{.items[*].spec.containers[*].image}&#x27;`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates version compatibility between Ceph-CSI and the cluster. This is a documentation/support issue.
 
 GAPS:
+- No automated check for CSI/cluster version compatibility during deployment
+- Documentation could more clearly state version requirements
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported unknown scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Verify IBM-supported Ceph-CSI image successfully mounts RBD volumes
+- Negative test: document expected failure with mismatched CSI version (for KCS article)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -225,28 +240,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ceph-CSI RBD Volume Mount Failure After Update to 3.16 – &quot;rbd: sysfs write failed&quot;</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RBD volume mount failure after customer upgraded to upstream Ceph-CSI 3.16 (which uses Tentacle/v20) against IBM Ceph 8.0z5 (Squid/v19) -- version incompatibility, not a product bug.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The customer used community/upstream Ceph-CSI container images (docker.artifactory.css.ch/cephcsi/cephcsi:v3.16.2) which bundle upstream Ceph Tentacle (v20.2.0) librbd. This is incompatible with their IBM Ceph 8.0z5 cluster running Squid (19.2.0). The <code>rbd map</code> command fails with exit status 110 (ETIMEDOUT) because the protocol version mismatch prevents successful connection. Rollback to CSI 3.15 (which bundles matching Squid librbd) resolves the issue.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0z5</li>
-<li>Component: unknown</li>
+<li>Niels de Vos: &quot;upstream Ceph Tentacle (v20.2.0) which may not be compatible with IBM Ceph 8.0z5 [19.2.0-139.el9cp]&quot;</li>
+<li>Error: <code>exit status 110</code> (ETIMEDOUT) during <code><code>rbd map</code></code></li>
+<li>Image used: <code>docker.artifactory.css.ch/cephcsi/cephcsi:v3.16.2</code> (unsupported upstream build)</li>
+<li>Resolution: customer should use IBM-provided Ceph-CSI container image matching their Ceph version</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (Not a Bug)</li>
+<li>Resolution: Customer advised to use IBM-supported Ceph-CSI images from IBM Container Registry</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph-CSI RBD Volume Mount Failure After Update to 3.16 – &quot;rbd: sysfs write failed&quot;</div>
-<div>Environment: IBM Ceph 8.0z5, component: unknown</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify IBM-supported Ceph-CSI image works with matching IBM Ceph version</div>
+<div>Environment: IBM Ceph 8.x with Kubernetes, IBM-provided Ceph-CSI image</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8.x cluster -- intent: baseline</li>
+<li><span class="step-num">2.</span> Install Ceph-CSI using IBM-provided container image (not upstream) -- intent: correct configuration</li>
+<li><span class="step-num">3.</span> Create RBD StorageClass and PVC -- intent: verify volume provisioning</li>
+<li><span class="step-num">4.</span> Mount PVC in a pod -- intent: verify volume <code>mount works</code></li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>kubectl describe pod &amp;lt;pod-name&amp;gt;</code> (check <code>mount errors)</code></li>
+<li><code>kubectl logs &amp;lt;csi-nodeplugin-pod&amp;gt; -c csi-rbdplugin</code></li>
+<li>Check CSI image version: <code>kubectl get pods -n &amp;lt;csi-ns&amp;gt; -o jsonpath=&amp;#x27;{.items[*].spec.containers[*].image}&amp;#x27;</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates version compatibility between Ceph-CSI and the cluster. This is a documentation/support issue.</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>No automated check for CSI/cluster version compatibility during deployment</li>
+<li>Documentation could more clearly state version requirements</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported unknown scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Verify IBM-supported Ceph-CSI image successfully mounts RBD volumes</li>
+<li>Negative test: document expected failure with mismatched CSI version (for KCS article)</li>
 </ul></div>
 </div>
 

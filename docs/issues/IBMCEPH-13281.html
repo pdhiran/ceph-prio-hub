@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13281: CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: ceph-monitoring
-
-ENGINEERING FINDINGS:
-- [Craig Sharpe] As a workaround, cu created a new prometheus alert rule to replace CephPGImbalance:       - alert: &quot;CephPGImbalanceCrushWeight&quot;
-
-        annotations:
-
-          description: &quot;OSD {{ $labels.ceph_daemon }} on {{ $labels.hostname }} deviates by more than 30% from average PG count,
-- [Karun Josy] Looks like this is already fixed in upstream Tentacle:    Also pending backport to Squid:    Can this be pulled to downstream?
-- [Craig Sharpe] Hi   , great to hear it’s been fixed in Tentacle and will be backported to Squid.  As it’s been fixed in v20.3.0-4750-g0a5a6195a0, will this be merged into RHCS 9 soon?
-- [Pawan Vinayak Dhiran] Verified the fix. The alert expression now computes the average PG count  per device class  instead of globally. Each OSD is compared only against peers of the same class. Test Environment 4-node cephadm cluster, 24 OSDs (15 GiB each). Steps Performed Assigned device classes to s
-
-FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: As a workaround, cu created a new prometheus alert rule to replace CephPGImbalance:       - alert: &quot;CephPGImbalanceCrushWeight&quot;
-
-        annotations:
-
-          description: &quot;OSD {{ $labels.ceph_daemo</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: CephPGImbalance Prometheus alert fires false positives on heterogeneous clusters with multiple CRUSH rules and device classes
+ROOT CAUSE: The CephPGImbalance alert expression computed a global average PG count across ALL OSDs regardless of device class (HDD vs SSD). In heterogeneous clusters with different CRUSH rules per device class, SSD OSDs (with fewer PGs from smaller pools) would deviate &gt;30% from the global average dominated by HDD OSDs, triggering false alerts. The fix changes the expression to compute per-device-class averages, so each OSD is compared only against peers of the same class.
+KEY EVIDENCE:
+- Customer (RHCS 7.1z8) reported constant CephPGImbalance alerts with heterogeneous hardware
+- Customer workaround: custom CephPGImbalanceCrushWeight alert using per-device_class grouping
+- Upstream fix in Tentacle merged; Squid backport pending
+- QE verified: old expression returned 16 OSDs (all false positives), new expression returned 0
+FIX STATUS: Fixed in 9.0z3. Alert expression now uses per-device-class average. Duplicate of IBMCEPH-6654.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks
-Environment: IBM Ceph 7.1, component: ceph-monitoring
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Verify CephPGImbalance alert correctly handles heterogeneous device classes
+Environment: Any Ceph cluster with mixed HDD/SSD device classes
+1. Deploy cluster with mixed device classes: ceph osd crush set-device-class hdd osd.0-17; ceph osd crush set-device-class ssd osd.18-23
+2. Create class-specific CRUSH rules and pools:
+   ceph osd crush rule create-replicated rule-hdd default host hdd
+   ceph osd crush rule create-replicated rule-ssd default host ssd
+   ceph osd pool create pool-hdd 64 64 replicated rule-hdd
+   ceph osd pool create pool-ssd 16 16 replicated rule-ssd
+3. Write data: rados bench -p pool-hdd 10 write --no-cleanup; rados bench -p pool-ssd 10 write --no-cleanup
+4. Check PG distribution: ceph osd df
+5. Query old alert expression against Prometheus — expect false positives from SSD OSDs
+6. Query new per-device-class expression — expect no false positives
+DIAGNOSTIC COMMANDS:
+- ceph osd df (PG distribution per OSD)
+- curl Prometheus API with alert expression
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing ceph-monitoring tests may not cover: CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule 
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Verified by QE (Pawan Dhiran) on 9.1 (20.2.1-280) with 24-OSD heterogeneous cluster. Old expression: 16 false positives. New expression: 0 results.
+GAPS: No automated CI test for Prometheus alert expression correctness with mixed device classes
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-monitoring scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Heterogeneous cluster with 2+ device classes and class-specific pools
+- Verify CephPGImbalance expression per-device-class averaging
+- Single device class cluster (no regression)
+- Cluster with heavily skewed PG distribution within one class (genuine alert should still fire)
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,46 +244,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: ceph-monitoring</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Craig Sharpe] As a workaround, cu created a new prometheus alert rule to replace CephPGImbalance:       - alert: &quot;CephPGImbalanceCrushWeight&quot;</li>
-</ul>
-<div>annotations:</div>
-<div>description: &quot;OSD {{ $labels.ceph_daemon }} on {{ $labels.hostname }} deviates by more than 30% from average PG count,</div>
-<ul>
-<li>[Karun Josy] Looks like this is already fixed in upstream Tentacle:    Also pending backport to Squid:    Can this be pulled to downstream?</li>
-<li>[Craig Sharpe] Hi   , great to hear it’s been fixed in Tentacle and will be backported to Squid.  As it’s been fixed in v20.3.0-4750-g0a5a6195a0, will this be merged into RHCS 9 soon?</li>
-<li>[Pawan Vinayak Dhiran] Verified the fix. The alert expression now computes the average PG count  per device class  instead of globally. Each OSD is compared only against peers of the same class. Test Environment 4-node <code>cephadm cluster</code>, 24 OSDs (15 GiB each). Steps Performed Assigned device classes to s</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: As a workaround, cu created a new prometheus alert rule to replace CephPGImbalance:       - alert: &quot;CephPGImbalanceCrushWeight&quot;</li>
-</ul>
-<div>annotations:</div>
-<div>description: &quot;OSD {{ $labels.ceph_daemo</div></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule has different specs and size disks</div>
-<div>Environment: IBM Ceph 7.1, component: ceph-monitoring</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing ceph-monitoring tests may not cover: CephPGImbalance alerts constantly with a cluster which has multiple crush rules and each crush rule</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported ceph-monitoring scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: CephPGImbalance Prometheus alert fires false positives on heterogeneous clusters with multiple CRUSH rules and device classes
+ROOT CAUSE: The CephPGImbalance alert expression computed a global average PG count across ALL OSDs regardless of device class (HDD vs SSD). In heterogeneous clusters with different CRUSH rules per device class, SSD OSDs (with fewer PGs from smaller pools) would deviate &gt;30% from the global average dominated by HDD OSDs, triggering false alerts. The fix changes the expression to compute per-device-class averages, so each OSD is compared only against peers of the same class.
+KEY EVIDENCE:
+- Customer (RHCS 7.1z8) reported constant CephPGImbalance alerts with heterogeneous hardware
+- Customer workaround: custom CephPGImbalanceCrushWeight alert using per-device_class grouping
+- Upstream fix in Tentacle merged; Squid backport pending
+- QE verified: old expression returned 16 OSDs (all false positives), new expression returned 0
+FIX STATUS: Fixed in 9.0z3. Alert expression now uses per-device-class average. Duplicate of IBMCEPH-6654.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Verify CephPGImbalance alert correctly handles heterogeneous device classes
+Environment: Any Ceph cluster with mixed HDD/SSD device classes
+1. Deploy cluster with mixed device classes: ceph osd crush set-device-class hdd osd.0-17; ceph osd crush set-device-class ssd osd.18-23
+2. Create class-specific CRUSH rules and pools:
+   ceph osd crush rule create-replicated rule-hdd default host hdd
+   ceph osd crush rule create-replicated rule-ssd default host ssd
+   ceph osd pool create pool-hdd 64 64 replicated rule-hdd
+   ceph osd pool create pool-ssd 16 16 replicated rule-ssd
+3. Write data: rados bench -p pool-hdd 10 write --no-cleanup; rados bench -p pool-ssd 10 write --no-cleanup
+4. Check PG distribution: ceph osd df
+5. Query old alert expression against Prometheus — expect false positives from SSD OSDs
+6. Query new per-device-class expression — expect no false positives
+DIAGNOSTIC COMMANDS:
+- ceph osd df (PG distribution per OSD)
+- curl Prometheus API with alert expression
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Verified by QE (Pawan Dhiran) on 9.1 (20.2.1-280) with 24-OSD heterogeneous cluster. Old expression: 16 false positives. New expression: 0 results.
+GAPS: No automated CI test for Prometheus alert expression correctness with mixed device classes
+SCENARIOS NEEDED:
+- Heterogeneous cluster with 2+ device classes and class-specific pools
+- Verify CephPGImbalance expression per-device-class averaging
+- Single device class cluster (no regression)
+- Cluster with heavily skewed PG distribution within one class (genuine alert should still fire)
+</pre></div>
 </div>
 
 

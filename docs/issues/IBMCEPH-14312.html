@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14312: virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing 
-
-ROOT CAUSE:
-- Daemon crash reported in rados.
-- Affected version(s): 7.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Michael Kadmiel] so the issue will be to determine with the customer if they want a hotfix on the current 7.1.z3 or go with a 7.1.z9 and a hotfix.  I will of course push for the 7.1.z9 with hotfix since it introduces other fixes as well.
-- [Michael Kadmiel] HF request sent directly to    for 7.1.z9 with hotfix.  PLease provide approx timeframe in order to set expectations. thanks!
-- [Bipin Kunal] Please ack it for 7.1z10. I have proposed it as blocker for 7.1z10 as hotfix is being asked for it.  -Bipin Kunal
-- [Bipin Kunal] Fix already exists in 8.1z4 and above versions.
-- [Neha Gangadhar] sure    we can take in 7.1z10 release. Kindly update the component of the Jira and other releases Jira or PR links for QE to evaluate the issue &amp; fix details. Thanks
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: OSD crashes with MOSDRepOp::encode_payload assertion failure due to messenger feature negotiation race
+ROOT CAUSE: A known regression in Ceph Reef (18.2.1) where the msg/async layer encodes messages before connection features are fully negotiated. The assertion &#x27;HAVE_FEATURE(features, SERVER_OCTOPUS)&#x27; fails in MOSDRepOp::encode_payload() when the message is encoded before the peer connection has advertised its feature set. This is a race condition in the messenger v2 protocol during connection establishment under high I/O load. The fix (upstream Reef PR #59286) ensures messages are encoded only after features are fully set. Fix already existed in 8.1z4+ but customer on 7.1z3 with OpenStack 17.1.4 couldn&#x27;t upgrade to 8.x.
+KEY EVIDENCE:
+- Assertion: &#x27;HAVE_FEATURE(features, SERVER_OCTOPUS)&#x27; in MOSDRepOp.h:127
+- Stack: encode_payload -&gt; send_message -&gt; ReplicatedBackend::issue_op
+- Version: 18.2.1-298.1.hotfix.bz2359773.el9cp
+- Daily crashes, extreme IO load (172k IOPS, 6.5 GiB/s)
+- Pool &#x27;volumes&#x27; at 87% full, size=2/min_size=1
+- BZ#2359773 tracking upstream
+FIX STATUS: Fixed. Hotfix cherry-picked to 7.1z10 (18.2.1-381.0.hotfix.IBMCEPH14312). Testing complete, no regressions. Customer confirmed fix resolved the issue. Closed as part of 7.1z10.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing
-Environment: IBM Ceph 7.1, component: rados
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Trigger MOSDRepOp encode_payload assertion via messenger feature race
+Environment: IBM Ceph 7.1z3 (18.2.1-298), OpenStack 17.1 integration, high IOPS
+1. Deploy Ceph cluster with size=2/min_size=1 pools
+2. Generate extreme I/O load (170k+ IOPS) targeting multiple OSDs
+3. Optionally fill pools near nearfull threshold (87%+) to increase slow ops
+4. Monitor for OSD crashes via &#x27;ceph crash ls-new&#x27;
+5. Check crash signatures for stack_sig: 4d38cd5b133dcd0ba61ee6125c96df71e79df6222b0428eafccfe3c3ddf66eb7
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph health detail | grep OSD
+- ceph osd pool ls detail (check size/min_size)
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Hotfix tested and verified. Fix exists in 8.1z4+ natively.
+GAPS: No stress test specifically targeting messenger feature negotiation under extreme IOPS. The race is timing-dependent and hard to reproduce deterministically.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- High-IOPS stress test with OSD connection churn (restart OSDs during load)
+- Pool nearfull + high IOPS combined scenario
+- OSD crash monitoring during sustained 100k+ IOPS workloads
+- Verify no assertion failures after applying fix under same load conditions
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,46 +243,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Daemon crash reported in rados.</li>
-<li>Affected version(s): 7.1</li>
-<li>Component: rados</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Michael Kadmiel] so the issue will be to determine with the customer if they want a hotfix on the current 7.1.z3 or go with a 7.1.z9 and a hotfix.  I will of course push for the 7.1.z9 with hotfix since it introduces other fixes as well.</li>
-<li>[Michael Kadmiel] HF request sent directly to    for 7.1.z9 with hotfix.  PLease provide approx timeframe in order to set expectations. thanks!</li>
-<li>[Bipin Kunal] Please ack it for 7.1z10. I have proposed it as blocker for 7.1z10 as hotfix is being asked for it.  -Bipin Kunal</li>
-<li>[Bipin Kunal] Fix already exists in 8.1z4 and above versions.</li>
-<li>[Neha Gangadhar] sure    we can take in 7.1z10 release. Kindly update the component of the Jira and other releases Jira or PR links for QE to evaluate the issue &amp; fix details. Thanks</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing</div>
-<div>Environment: IBM Ceph 7.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: virtual void MOSDRepOp::encode_payload(uint64_t): Assertion   OSDs crashing</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: OSD crashes with MOSDRepOp::encode_payload assertion failure due to messenger feature negotiation race
+ROOT CAUSE: A known regression in Ceph Reef (18.2.1) where the msg/async layer encodes messages before connection features are fully negotiated. The assertion &#x27;HAVE_FEATURE(features, SERVER_OCTOPUS)&#x27; fails in MOSDRepOp::encode_payload() when the message is encoded before the peer connection has advertised its feature set. This is a race condition in the messenger v2 protocol during connection establishment under high I/O load. The fix (upstream Reef PR #59286) ensures messages are encoded only after features are fully set. Fix already existed in 8.1z4+ but customer on 7.1z3 with OpenStack 17.1.4 couldn&#x27;t upgrade to 8.x.
+KEY EVIDENCE:
+- Assertion: &#x27;HAVE_FEATURE(features, SERVER_OCTOPUS)&#x27; in MOSDRepOp.h:127
+- Stack: encode_payload -&gt; send_message -&gt; ReplicatedBackend::issue_op
+- Version: 18.2.1-298.1.hotfix.bz2359773.el9cp
+- Daily crashes, extreme IO load (172k IOPS, 6.5 GiB/s)
+- Pool &#x27;volumes&#x27; at 87% full, size=2/min_size=1
+- BZ#2359773 tracking upstream
+FIX STATUS: Fixed. Hotfix cherry-picked to 7.1z10 (18.2.1-381.0.hotfix.IBMCEPH14312). Testing complete, no regressions. Customer confirmed fix resolved the issue. Closed as part of 7.1z10.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Trigger MOSDRepOp encode_payload assertion via messenger feature race
+Environment: IBM Ceph 7.1z3 (18.2.1-298), OpenStack 17.1 integration, high IOPS
+1. Deploy Ceph cluster with size=2/min_size=1 pools
+2. Generate extreme I/O load (170k+ IOPS) targeting multiple OSDs
+3. Optionally fill pools near nearfull threshold (87%+) to increase slow ops
+4. Monitor for OSD crashes via &#x27;ceph crash ls-new&#x27;
+5. Check crash signatures for stack_sig: 4d38cd5b133dcd0ba61ee6125c96df71e79df6222b0428eafccfe3c3ddf66eb7
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph health detail | grep OSD
+- ceph osd pool ls detail (check size/min_size)
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Hotfix tested and verified. Fix exists in 8.1z4+ natively.
+GAPS: No stress test specifically targeting messenger feature negotiation under extreme IOPS. The race is timing-dependent and hard to reproduce deterministically.
+SCENARIOS NEEDED:
+- High-IOPS stress test with OSD connection churn (restart OSDs during load)
+- Pool nearfull + high IOPS combined scenario
+- OSD crash monitoring during sustained 100k+ IOPS workloads
+- Verify no assertion failures after applying fix under same load conditions
+</pre></div>
 </div>
 
 

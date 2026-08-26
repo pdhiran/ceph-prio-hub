@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16988: Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,66 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW returns HTTP 200 with correct Content-Length but never sends the response body when a GET request includes an Origin header on a bucket without CORS configuration, causing client to hang until timeout.
 
-ROOT CAUSE:
-- Affected version(s): 9.1z1
-- Component: rgw
+ROOT CAUSE: The bug is in the RGW CORS handling during S3 GET object operations. When both global CORS and bucket CORS are unconfigured, the code path executes `op_ret = std::min(temp_op_ret, read_global_cors_ret)`. `read_global_cors()` returns -22 (EINVAL) when no global CORS exists, and `read_bucket_cors()` returns 0 when no bucket CORS exists. `std::min(0, -22)` yields -22, which is stored in `op_ret`. Later, in the `send_data` phase, the condition `if (get_data &amp;&amp; !op_ret)` evaluates `!(-22)` as `false` (since -22 is non-zero/truthy in C++), so `dump_body()` is never called. The HTTP headers (including a correct Content-Length) have already been sent, but the body is never written, causing the client to hang. This is a regression introduced between 20.1.0-221 and 20.2.1-294.
 
-ENGINEERING FINDINGS:
-- [Michael Hackett] We have a HF request for customer Inditex for the following Jira:    The customer was encountering an RGW crash documented and fixed in 9.9.1.0 in Jira:  https:/severelyph.atlassian.net/browse/IBMCEPH-14213environment  which severely impacted their production systems when issuing
-- [Ali Masarwe] I opened an  MR for downstream  contains the fix and a test Also  an upstream PR  contains the fix and a test
-- [Ali Masarwe] Fix is merged in commit 2c2436c1775cfd834c530132499a70bd871b367a
+KEY EVIDENCE:
+- Regression: works in 20.1.0-221, broken in 20.2.1-294
+- RGW log: &#x27;No global CORS or bucket CORS configuration set yet&#x27;
+- RGW log: &#x27;http status=200&#x27; with 0 bytes transferred
+- Source code analysis in JIRA comment identifies exact line: `op_ret = std::min(temp_op_ret, read_global_cors_ret)` setting op_ret to -22
+- Workaround confirmed: setting any CORS config on the bucket resolves the issue
+- Fix MR opened for downstream + upstream PR, merged at commit 2c2436c1775cfd834c530132499a70bd871b367a
+- Customer Inditex blocked: this bug prevents deployment of a prior critical hotfix (IBMCEPH-14213)
+- Labels: Hotfix_requested, IBM_Customer_Issue
+- Cloned to IBMCEPH-17745 for 9.1z backport
 
-FIX STATUS:
-- Current JIRA status: ON_QA</textarea>
+FIX STATUS: Fix merged. Commit 2c2436c1775cfd834c530132499a70bd871b367a. Downstream MR and upstream PR both merged per Ali Masarwe&#x27;s comment. Status: ON_QA.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents
-Environment: IBM Ceph 9.1z1, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW returning empty body on GET with Origin header when no CORS is configured.
+Environment: IBM Ceph 9.1z1 (20.2.1-294.el9cp) or later until fix is applied.
 
-1. Deploy IBM Ceph 9.1z1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Apply the configuration change described in the JIRA
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Create a test bucket without any CORS configuration:
+   s3cmd mb s3://testbucket
+   -- intent: ensure no bucket-level CORS exists
+2. Upload a test file:
+   dd if=/dev/random of=testfile bs=1M count=1
+   s3cmd put testfile s3://testbucket
+   -- intent: have a downloadable object
+3. GET the object without Origin header (should succeed):
+   curl -vsk --aws-sigv4 &#x27;aws:amz:us-east-1:s3&#x27; --user &#x27;&lt;access_key&gt;:&lt;secret_key&gt;&#x27; &#x27;http://&lt;rgw-endpoint&gt;/testbucket/testfile&#x27; -o /dev/null
+   -- intent: verify baseline works
+4. GET the object WITH Origin header (triggers the bug):
+   curl -vsk --aws-sigv4 &#x27;aws:amz:us-east-1:s3&#x27; --user &#x27;&lt;access_key&gt;:&lt;secret_key&gt;&#x27; &#x27;http://&lt;rgw-endpoint&gt;/testbucket/testfile&#x27; -H &#x27;Origin: http://example.com&#x27; -o /dev/null
+   -- intent: this should hang and return 0 bytes
+5. Verify: HTTP 200 is returned but &#x27;0 bytes data&#x27; and connection hangs/times out
+6. Verify workaround: apply CORS config to bucket, repeat step 4 — should now work
 
-SCENARIO DETAIL (from engineering comments):
-[Internal - do not share with customer] Hello   , I tried to reproduce above issue on latest ceph 9 and issue is reproducible when CORS configuration is not set. Reproducer result: Case 1: Curl without origin header  --- works fine [root@ceph9aru-0 ~]# curl -vsk \
-  --aws-sigv4 &quot;</textarea>
+DIAGNOSTIC COMMANDS:
+- journalctl -u ceph-radosgw@* --since &#x27;5 min ago&#x27; | grep &#x27;No global CORS&#x27;
+- radosgw-admin bucket stats --bucket=testbucket
+- s3cmd info s3://testbucket (check CORS section)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ON_QA. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix includes a test (per Ali Masarwe&#x27;s comment: &#x27;MR contains the fix and a test&#x27;). However, QE regression testing needed.
 
 GAPS:
+- Need to verify the included unit/integration test covers all permutations: no CORS, bucket-only CORS, global-only CORS, both CORS
+- No existing QE test for GET with Origin header on buckets without CORS config
+- No test for the regression path between 20.1.0 and 20.2.1
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. GET with Origin header, no CORS configured (any level) — must return full body
+2. GET with Origin header, bucket CORS only — must return full body + CORS headers
+3. GET with Origin header, global CORS only — must return full body + CORS headers
+4. GET without Origin header, no CORS — must return full body (baseline)
+5. PUT/DELETE/HEAD with Origin header, no CORS — verify no body truncation
+6. Multipart object GET with Origin header, no CORS — verify chunked transfer works
+7. Regression test: upgrade from 20.1.0 to patched version and verify GET+Origin works</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,38 +259,70 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW returns HTTP 200 with correct Content-Length but never sends the response body when a GET request includes an Origin header on a bucket without CORS configuration, causing client to hang until timeout.</div>
+<div>ROOT CAUSE: The bug is in the RGW CORS handling during S3 GET object operations. When both global CORS and bucket CORS are unconfigured, the code path executes <code>op_ret = std::min(temp_op_ret, read_global_cors_ret)</code>. <code>read_global_cors()</code> returns -22 (EINVAL) when no global CORS exists, and <code>read_bucket_cors()</code> returns 0 when no bucket CORS exists. <code>std::min(0, -22)</code> yields -22, which is stored in <code>op_ret</code>. Later, in the <code>send_data</code> phase, the condition <code>if (get_data &amp;&amp; !op_ret)</code> evaluates <code>!(-22)</code> as <code>false</code> (since -22 is non-zero/truthy in C++), so <code>dump_body()</code> is never called. The HTTP headers (including a correct Content-Length) have already been sent, but the body is never written, causing the client to hang. This is a regression introduced between 20.1.0-221 and 20.2.1-294.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.1z1</li>
-<li>Component: rgw</li>
+<li>Regression: works in 20.1.0-221, broken in 20.2.1-294</li>
+<li>RGW log: &#x27;No global CORS or bucket CORS configuration set yet&#x27;</li>
+<li>RGW log: &#x27;http status=200&#x27; with 0 bytes transferred</li>
+<li>Source code analysis in JIRA comment identifies exact line: <code>op_ret = std::min(temp_op_ret, read_global_cors_ret)</code> setting op_ret to -22</li>
+<li>Workaround confirmed: setting any CORS config on the bucket resolves the issue</li>
+<li>Fix MR opened for downstream + upstream PR, merged at commit 2c2436c1775cfd834c530132499a70bd871b367a</li>
+<li>Customer Inditex blocked: this bug prevents deployment of a prior critical hotfix (IBMCEPH-14213)</li>
+<li>Labels: Hotfix_requested, IBM_Customer_Issue</li>
+<li>Cloned to IBMCEPH-17745 for 9.1z backport</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fix merged. Commit 2c2436c1775cfd834c530132499a70bd871b367a. Downstream MR and upstream PR both merged per Ali Masarwe&#x27;s comment. Status: ON_QA.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW returning empty body on GET with Origin header when no CORS is configured.</div>
+<div>Environment: IBM Ceph 9.1z1 (20.2.1-294.el9cp) or later until fix is applied.</div>
 <ul>
-<li>[Michael Hackett] We have a HF request for customer Inditex for the following Jira:    The customer was encountering an RGW crash documented and fixed in 9.9.1.0 in Jira:  https:/severelyph.atlassian.net/browse/IBMCEPH-14213environment  which severely impacted their production systems when issuing</li>
-<li>[Ali Masarwe] I opened an  MR for downstream  contains the fix and a test Also  an upstream PR  contains the fix and a test</li>
-<li>[Ali Masarwe] Fix is merged in commit 2c2436c1775cfd834c530132499a70bd871b367a</li>
+<li><span class="step-num">1.</span> Create a test bucket without any CORS configuration:</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>s3cmd mb s3://testbucket</div>
+<div>-- intent: ensure no bucket-level CORS exists</div>
 <ul>
-<li>Current JIRA status: ON_QA</li>
+<li><span class="step-num">2.</span> Upload a test file:</li>
+</ul>
+<div>dd if=/dev/random of=testfile bs=1M count=1</div>
+<div>s3cmd put testfile s3://testbucket</div>
+<div>-- intent: have a downloadable object</div>
+<ul>
+<li><span class="step-num">3.</span> GET the object without Origin header (should succeed):</li>
+</ul>
+<div>curl -vsk --aws-sigv4 &#x27;aws:amz:us-east-1:s3&#x27; --user &#x27;&lt;access_key&gt;:&lt;secret_key&gt;&#x27; &#x27;http://&lt;rgw-endpoint&gt;/testbucket/testfile&#x27; -o /dev/null</div>
+<div>-- intent: verify baseline works</div>
+<ul>
+<li><span class="step-num">4.</span> GET the object WITH Origin header (triggers the bug):</li>
+</ul>
+<div>curl -vsk --aws-sigv4 &#x27;aws:amz:us-east-1:s3&#x27; --user &#x27;&lt;access_key&gt;:&lt;secret_key&gt;&#x27; &#x27;http://&lt;rgw-endpoint&gt;/testbucket/testfile&#x27; -H &#x27;Origin: http://example.com&#x27; -o /dev/null</div>
+<div>-- intent: this should hang and return 0 bytes</div>
+<ul>
+<li><span class="step-num">5.</span> Verify: HTTP 200 is returned but &#x27;0 bytes data&#x27; and connection hangs/times out</li>
+<li><span class="step-num">6.</span> Verify workaround: apply CORS config to bucket, repeat step 4 — should now work</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>journalctl -u ceph-radosgw@* --since &#x27;5 min ago&#x27; | grep &#x27;No global CORS&#x27;</code></li>
+<li><code>radosgw-admin bucket stats --bucket=testbucket</code></li>
+<li>s3cmd info s3://testbucket (check CORS section)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Running GET request with origin header on bucket contents with no CORS configuration returns empty file contents</div>
-<div>Environment: IBM Ceph 9.1z1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1z1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>[Internal - do not share with customer] Hello   , I tried to reproduce above issue on latest ceph 9 and issue is reproducible when CORS configuration is not set. Reproducer result: Case 1: Curl without origin header  --- works fine [root@ceph9aru-0 ~]# curl -vsk \</div>
-<div>--aws-sigv4 &quot;</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ON_QA. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix includes a test (per Ali Masarwe&#x27;s comment: &#x27;MR contains the fix and a test&#x27;). However, QE regression testing needed.</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>Need to verify the included unit/integration test covers all permutations: no CORS, bucket-only CORS, global-only CORS, both CORS</li>
+<li>No existing QE test for GET with Origin header on buckets without CORS config</li>
+<li>No test for the regression path between 20.1.0 and 20.2.1</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> GET with Origin header, no CORS configured (any level) — must return full body</li>
+<li><span class="step-num">2.</span> GET with Origin header, bucket CORS only — must return full body + CORS headers</li>
+<li><span class="step-num">3.</span> GET with Origin header, global CORS only — must return full body + CORS headers</li>
+<li><span class="step-num">4.</span> GET without Origin header, no CORS — must return full body (baseline)</li>
+<li><span class="step-num">5.</span> PUT/DELETE/HEAD with Origin header, no CORS — verify no body truncation</li>
+<li><span class="step-num">6.</span> Multipart object GET with Origin header, no CORS — verify chunked transfer works</li>
+<li><span class="step-num">7.</span> Regression test: upgrade from 20.1.0 to patched version and verify GET+Origin works</li>
 </ul></div>
 </div>
 

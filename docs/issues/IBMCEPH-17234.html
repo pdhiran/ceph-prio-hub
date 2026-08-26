@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17234: [RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,33 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket
-
-ROOT CAUSE:
-- Affected version(s): not specified
-- Component: rgw
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to raise Ceph health alert when dynamic bucket resharding reaches rgw_max_dynamic_shards limit.
+ROOT CAUSE: Not a bug -- feature request. When dynamic resharding calculates shards &gt; rgw_max_dynamic_shards (default 1999), the code silently caps to the maximum with only a debug-level-10 log message. No cluster health warning is raised. This causes performance degradation as objects-per-shard increases, eventually triggering LargeOmap warnings reactively rather than proactively alerting administrators.
+KEY EVIDENCE:
+- Code silently caps: new_num_shards = std::min(new_num_shards, get_max_bucket_shards())
+- Only debug level 10 WARNING logged (not visible without debug enabled)
+- Impact: performance degrades silently until LargeOmap warnings appear
+- Version: Ceph 9.1
+- Labels: FutureFeature, IBM_Customer_Issue
+- Config: rgw_max_dynamic_shards (default 1999)
+FIX STATUS: New (unresolved). Assigned to Matthew Benjamin. No PR yet. Engineering discussion ongoing.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket
-Environment: IBM Ceph 9.x, component: rgw
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate silent capping of dynamic resharding at rgw_max_dynamic_shards.
+Environment: IBM Ceph 9.1 or equivalent
+1. ceph config set client.rgw rgw_max_dynamic_shards 8 -- intent: set very low limit to trigger quickly
+2. Create bucket and add objects rapidly -- intent: trigger dynamic resharding
+3. Monitor &#x27;radosgw-admin bucket stats --bucket &lt;bucket&gt;&#x27; -- intent: observe shard count caps at 8
+4. ceph health detail -- intent: confirm no health warning about max shards reached
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket stats --bucket &lt;name&gt; -- check current shard count
+- ceph config get client.rgw rgw_max_dynamic_shards -- check limit
+- radosgw-admin reshard status --bucket &lt;name&gt; -- resharding state
+- ceph health detail -- check for any warnings</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: [RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for a
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Feature not yet implemented; no test coverage.
+GAPS: No test validates that a health warning is raised when max shards reached. No test validates the silent capping behavior itself.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- Trigger resharding to hit max_dynamic_shards and verify health alert raised
+- Verify alert clears after manual resharding or limit increase
+- Performance validation showing degradation when limit is reached without alert</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -226,31 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to raise Ceph health alert when dynamic bucket resharding reaches rgw_max_dynamic_shards limit.</div>
+<div>ROOT CAUSE: Not a bug -- feature request. When dynamic resharding calculates shards &gt; rgw_max_dynamic_shards (default 1999), the code silently caps to the maximum with only a debug-level-10 log message. No cluster health warning is raised. This causes performance degradation as objects-per-shard increases, eventually triggering LargeOmap warnings reactively rather than proactively alerting administrators.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: rgw</li>
+<li>Code silently caps: new_num_shards = std::min(new_num_shards, get_max_bucket_shards())</li>
+<li>Only debug level 10 WARNING logged (not visible without debug enabled)</li>
+<li>Impact: performance degrades silently until LargeOmap warnings appear</li>
+<li>Version: Ceph 9.1</li>
+<li>Labels: FutureFeature, IBM_Customer_Issue</li>
+<li>Config: rgw_max_dynamic_shards (default 1999)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: New (unresolved). Assigned to Matthew Benjamin. No PR yet. Engineering discussion ongoing.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate silent capping of dynamic resharding at rgw_max_dynamic_shards.</div>
+<div>Environment: IBM Ceph 9.1 or equivalent</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for any bucket</div>
-<div>Environment: IBM Ceph 9.x, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [RFE] Raise a Ceph health alert when the Dynamic resharding has reached rgw_max_dynamic_shards for a</code></li>
+<li><span class="step-num">1.</span> <code>ceph config set client.rgw rgw_max_dynamic_shards 8 -- intent: set very low limit to trigger quickly</code></li>
+<li><span class="step-num">2.</span> Create bucket and add objects rapidly -- intent: trigger dynamic resharding</li>
+<li><span class="step-num">3.</span> Monitor &#x27;<code>radosgw-admin bucket stats --bucket &lt;bucket&gt;&#x27; -- intent: observe shard count caps at 8</code></li>
+<li><span class="step-num">4.</span> <code>ceph health detail -- intent: confirm no health warning about max shards reached</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>radosgw-admin bucket stats --bucket &lt;name&gt; -- check current shard count</code></li>
+<li><code>ceph config get client.rgw rgw_max_dynamic_shards -- check limit</code></li>
+<li><code>radosgw-admin reshard status --bucket &lt;name&gt; -- resharding state</code></li>
+<li><code>ceph health detail -- check for any warnings</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Feature not yet implemented; no test coverage.</div>
+<div>GAPS: No test validates that a health warning is raised when max shards reached. No test validates the silent capping behavior itself.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Trigger resharding to hit max_dynamic_shards and verify health alert raised</li>
+<li>Verify alert clears after manual resharding or limit increase</li>
+<li>Performance validation showing degradation when limit is reached without alert</li>
 </ul></div>
 </div>
 

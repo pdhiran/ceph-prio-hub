@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13843: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,52 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW fails to start after upgrade from Ceph 7 (Reef) to Ceph 9 (Tentacle) because a downstream-only RGWPeriod encoding change removes realm_name, making period objects written by Reef undecodable by Tentacle.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Permission or access control issue.
-- Affected version(s): 9.0
-- Component: rgw
+A downstream-only cherry-pick (commit e79699e7) in ceph-7.1-rhel-patches removed `realm_name` from the RGWPeriod encoding to resolve rhbz#2196109. This change was cherry-picked from upstream commit 1c579f2, which caused a regression fixed in a follow-up. The regression fix was NOT cherry-picked downstream. As a result, period objects written in the old format (with realm_name) by Reef-era RGW become undecodable after upgrade to Tentacle. The period epoch .3 (latest_epoch) fails to decode, and since RGW requires loading the current period at startup, all radosgw-admin commands and RGW daemons fail with `failed to load current period: (5) Input/output error`.
 
-ENGINEERING FINDINGS:
-- [Swati Thombe] Hi    Could you please provide the following data for further analysis?  Kindly attach the support case Specifically, we need the  admin node’s sosreport , including the  config dump output . ceph --admin-daemon &lt;rgw.asok-file-path&gt; config show Thank you!
-- [Shantanu Bhardwaj] Hello    We have sosreport from the RGW nodes and output of below commands $ radosgw-admin period list --debug-rgw 20  --debug-ms 1 &gt; &quot;period-list.txt&quot; 2&gt;&amp;1 $ radosgw-admin period get --debug-rgw 20  --debug-ms 1 &gt; &quot;period-get.txt&quot; 2&gt;&amp;1 /ecurep/sf/TS021/923/TS021923264/0-all_data
-- [Casey Bodley] looking at ceph-7.1-rhel-patches, i see this commit that changes the RGWPeriod encoding: commit e79699e78454977ef8dabec46afc650004edc3ea
-Author: Jiffin Tony Thottan &lt;jthottan@redhat.com&gt;
-Date:   Tue Oct 31 12:50:52 2023 +0530
-
-    rgw/rgw_period : remove realm name from period co
-- [Varuni Sawant] Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepared for the customer?
-- [Sachin Yeshwanth] hello   - Could you please confirm whether the fix has been merged into the DS ceph-9.1-rhel-patches branch ? If yes, kindly share the corresponding commit ID or MR link.
+KEY EVIDENCE:
+- Error: `failed to decode obj from .rgw.root:periods.&lt;uuid&gt;.3`
+- Period epoch .2 is readable, epoch .3 is not (latest_epoch points to .3)
+- Root cause identified by Casey Bodley: missing regression fix for commit e79699e7
+- Workaround: use Reef-era container to run `radosgw-admin period update --commit`
+- Fix merged in build ceph-20.2.1-206, verified in 9.1
+- Customer confirmed workaround resolved the issue
 
 FIX STATUS:
-- Fix available in build 20.2.1-206.
-- Workaround: Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepar</textarea>
+- Status: Closed (done)
+- Fixed in IBM Storage Ceph 9.1 (build 20.2.1-206+). Verified with upgrade tests.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
-Environment: IBM Ceph 9.0, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW failure after upgrade from 7.1 to 9.x due to period decode error
+Environment: IBM Ceph 7.1 -&gt; 9.1 upgrade path, RGW with realm/zonegroup/zone configured
 
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy IBM Ceph 7.1 cluster with RGW realm, zonegroup, and zone -- intent: create period objects in old format
+2. Create multiple period commits to advance epoch -- intent: ensure latest_epoch &gt; 1
+3. Upgrade cluster to IBM Ceph 9.1 -- intent: trigger the decode failure
+4. Attempt to start RGW service -- intent: observe decode failure
+5. Run `radosgw-admin period get` -- intent: confirm decode error
+
+DIAGNOSTIC COMMANDS:
+- `radosgw-admin period get`
+- `radosgw-admin period list`
+- `rados -p .rgw.root ls | grep periods`
+- `rados -p .rgw.root get periods.&lt;uuid&gt;.&lt;epoch&gt; /tmp/period_data`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Upgrade test from 7.1 to 9.1 with RGW now exists. Gap was in period-encoding backward compatibility.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-- Permission test gap for: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3)
+- Need regression test for period object encoding/decoding across major version upgrades
+- Need test for RGW startup after upgrade with multi-epoch period history
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Upgrade from 7.1 to 9.1 with single-site single-zone RGW — verify RGW starts
+- Upgrade from 7.1 to 9.1 with multisite RGW — verify period decode succeeds
+- Verify `radosgw-admin period get` works after upgrade</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -245,52 +245,50 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW fails to start after upgrade from Ceph 7 (Reef) to Ceph 9 (Tentacle) because a downstream-only RGWPeriod encoding change removes realm_name, making period objects written by Reef undecodable by Tentacle.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>A downstream-only cherry-pick (commit e79699e7) in ceph-7.1-rhel-patches removed <code>realm_name</code> from the RGWPeriod encoding to resolve rhbz#2196109. This change was cherry-picked from upstream commit 1c579f2, which caused a regression fixed in a follow-up. The regression fix was NOT cherry-picked downstream. As a result, period objects written in the old format (with realm_name) by Reef-era RGW become undecodable after upgrade to Tentacle. The period epoch .3 (latest_epoch) fails to decode, and since RGW requires loading the current period at startup, all radosgw-admin commands and RGW daemons fail with <code>failed to load current period: (5) Input/output error</code>.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 9.0</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Swati Thombe] Hi    Could you please provide the following data for further analysis?  Kindly attach the support case Specifically, we need the  admin node’s sosreport , including the  config dump output . <code>ceph --admin-daemon &lt;rgw.asok-file-path&gt; config show Thank you!</code></li>
-<li>[Shantanu Bhardwaj] Hello    We have sosreport from the RGW nodes and output of below commands $ <code>radosgw-admin period list --debug-rgw 20  --debug-ms 1 &gt; &quot;period-list.txt&quot; 2&gt;&amp;1 $ radosgw-admin period get --debug-rgw 20  --debug-ms 1 &gt; &quot;period-get.txt&quot; 2&gt;&amp;1 /ecurep/sf/TS021/923/TS021923264/0-all_data</code></li>
-<li>[Casey Bodley] looking at ceph-7.1-rhel-patches, i see this commit that changes the RGWPeriod encoding: commit e79699e78454977ef8dabec46afc650004edc3ea</li>
-</ul>
-<div>Author: Jiffin Tony Thottan &lt;jthottan@redhat.com&gt;</div>
-<div>Date:   Tue Oct 31 12:50:52 2023 +0530</div>
-<div>rgw/rgw_period : remove realm name from period co</div>
-<ul>
-<li>[Varuni Sawant] Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepared for the customer?</li>
-<li>[Sachin Yeshwanth] hello   - Could you please confirm whether the fix has been merged into the DS ceph-9.1-rhel-patches branch ? If yes, kindly share the corresponding commit ID or MR link.</li>
+<li>Error: <code>failed to decode obj from .rgw.root:periods.&amp;lt;uuid&amp;gt;.3</code></li>
+<li>Period epoch .2 is readable, epoch .3 is not (latest_epoch points to .3)</li>
+<li>Root cause identified by Casey Bodley: missing regression fix for commit e79699e7</li>
+<li>Workaround: use Reef-era container to run <code><code>radosgw-admin period update --commit</code></code></li>
+<li>Fix merged in build ceph-20.2.1-206, verified in 9.1</li>
+<li>Customer confirmed workaround resolved the issue</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Fix available in build 20.2.1-206.</li>
-<li>Workaround: Hello      Is there a possible workaround to mitigate this issue as the CU is facing a production down situation. Since this issue has been fixed upstream, would it be possible to have a hotfix prepar</li>
+<li>Status: Closed (done)</li>
+<li>Fixed in IBM Storage Ceph 9.1 (build 20.2.1-206+). Verified with upgrade tests.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
-<div>Environment: IBM Ceph 9.0, component: rgw</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW failure after upgrade from 7.1 to 9.x due to period decode error</div>
+<div>Environment: IBM Ceph 7.1 -&gt; 9.1 upgrade path, RGW with realm/zonegroup/zone configured</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster with RGW realm, zonegroup, and zone -- intent: create period objects in old format</li>
+<li><span class="step-num">2.</span> Create multiple period commits to advance epoch -- intent: ensure latest_epoch &gt; 1</li>
+<li><span class="step-num">3.</span> Upgrade cluster to IBM Ceph 9.1 -- intent: trigger the decode failure</li>
+<li><span class="step-num">4.</span> Attempt to start RGW service -- intent: observe decode failure</li>
+<li><span class="step-num">5.</span> Run <code><code>radosgw-admin period get</code></code> -- intent: confirm decode error</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>radosgw-admin period get</code></code></li>
+<li><code><code>radosgw-admin period list</code></code></li>
+<li><code><code>rados -p .rgw.root ls | grep periods</code></code></li>
+<li><code><code>rados -p .rgw.root get periods.&amp;lt;uuid&amp;gt;.&amp;lt;epoch&amp;gt; /tmp/period_data</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Upgrade test from 7.1 to 9.1 with RGW now exists. Gap was in period-encoding backward compatibility.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-<li>Permission test gap for: [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3)</li>
+<li>Need regression test for period object encoding/decoding across major version upgrades</li>
+<li>Need test for RGW startup after upgrade with multi-epoch period history</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Upgrade from 7.1 to 9.1 with single-site single-zone RGW — verify RGW starts</li>
+<li>Upgrade from 7.1 to 9.1 with multisite RGW — verify period decode succeeds</li>
+<li>Verify <code><code>radosgw-admin period get</code></code> works after upgrade</li>
 </ul></div>
 </div>
 

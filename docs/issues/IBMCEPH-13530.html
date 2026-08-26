@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13530: [Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,47 +189,48 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: ceph-dashboard
-
-ENGINEERING FINDINGS:
-- [Afreen Misbah] Moving to cephfs as they have the expertise for investigation. Please assign back if anything needed from dashboard.
-- [Vivek Maurya] Hi    Able to reproduce the issue. Sharing analysis. Subvolume sv2 creation request: 2026-03-25T10:40:07.402+0000 7fdf5c161640 20 mgr dispatch_remote Calling volumes._cmd_fs_subvolume_create...
-2026-03-25T10:40:07.403+0000 7fdf5c161640  0 [volumes INFO volumes.module] Starting _c
-- [Vivek Maurya] rom code analysis it look like during smb share configuration using dashboad we are setting snaprealm on  group directory itself. ex: Line  90514: 2026-03-26T00:37:46.614+0000 7f9c316dc640 15 mds.0.cache.ino(0x10000000001) maybe_export_pin update=0 [inode 0x10000000001 [...2,head
-- [Sachin Yeshwanth] - Could you please confirm whether the fix has been merged into the DS ceph-9.1-rhel-patches branch ? If yes, kindly share the corresponding commit ID or MR link.
-- [Anushree Hallur] Hi Team, Verified the fix in IBM 9.1 build ceph version 20.2.1-144.el9cp. Creation of new sub volumes under the smb configured subvolume group is successful. All the created subvolumes can be seen in GUI and multiple sub volumes were created with the smb configured subvolume grou
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: Dashboard SMB share form corrupts subvolume group by calling subvol_info with empty subvolume name
+ROOT CAUSE: The Ceph dashboard&#x27;s SMB share creation form has a field that fetches the subvolume path via subvol_info API. Before the user selects a subvolume, the form sends a request with an empty subvolume name: &#x27;ceph fs subvolume info fs &quot;&quot; group&#x27;. This empty-name call inadvertently sets the SnapRealm on the subvolume GROUP directory instead of an individual subvolume directory. Once the group directory has SnapRealm set, the MDS rejects subsequent subvolume creation with EINVAL because it detects &#x27;trying to create a subvolume inside another subvolume&#x27; (subvol_ino mismatch in handle_client_setvxattr for ceph.dir.subvolume). Existing subvolumes also disappear from the GUI because the corrupted group metadata causes listing failures.
+KEY EVIDENCE:
+- MDS log: &#x27;subvol ino changed between rdlock release and xlock policylock; subvol_ino: 0x10000000001, cur-&gt;ino: 0x100000001fc&#x27;
+- Dashboard exception: &#x27;Failed to create subvolume testsv2: invalid value specified for ceph.dir.subvolume&#x27;
+- CLI-only creation works; only dashboard triggers the issue
+- Root cause: dashboard calls subvol_info with empty subvol name, corrupting group&#x27;s SnapRealm
+- Fix: UI validation (don&#x27;t call subvol_info with empty name) + backend validation
+FIX STATUS: Fixed. UI fix PR merged. Backend validation fix merged. Downstream MR !1614 for 9.1. Backports created for 9.0z3 and 8.1z6. Verified in 20.2.1-144 by QE (Anushree Hallur). Closed as part of 9.1 release.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup
-Environment: IBM Ceph 9.0, component: ceph-dashboard
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi    Able to reproduce the issue. Sharing analysis. Subvolume sv2 creation request: 2026-03-25T10:40:07.402+0000 7fdf5c161640 20 mgr dispatch_remote Calling volumes._cmd_fs_subvolume_create...
-2026-03-25T10:40:07.403+0000 7fdf5c161640  0 [volumes INFO volumes.module] Starting _c</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce subvolume creation failure via dashboard SMB share form
+Environment: IBM Ceph 9.0 (pre-fix)
+1. Deploy CephFS, subvolumegroup, subvolume via GUI
+2. Deploy SMB cluster using the available CephFS/SVG/subvolume
+3. In dashboard, navigate to create a NEW subvolume under the SMB-configured subvolume group
+4. Observe: &#x27;invalid value specified for ceph.dir.subvolume&#x27; error
+5. Existing subvolumes disappear from GUI (still visible via CLI)
+DIAGNOSTIC COMMANDS:
+- ceph fs subvolume ls &lt;vol&gt; --group-name=&lt;group&gt; (CLI works)
+- ceph mgr logs: grep &#x27;invalid value specified for ceph.dir.subvolume&#x27;
+- ceph tell mds.&lt;fs&gt;:0 dump_ops_in_flight
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing ceph-dashboard tests may not cover: [Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes u
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Verified in 9.1. Dashboard and backend fixes merged.
+GAPS: No automated test for dashboard SMB share form interaction with subvolume API. No test validates that empty subvolume names are rejected.
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Dashboard: create SMB share -&gt; create new subvolume in same group -&gt; verify no corruption
+- API: verify &#x27;ceph fs subvolume info &lt;vol&gt; &quot;&quot; &lt;group&gt;&#x27; returns error, not corrupts metadata
+- Post-SMB-setup: verify new subvolume creation works in both CLI and dashboard
+- Verify existing subvolumes remain visible after SMB share creation
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,48 +241,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: ceph-dashboard</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Afreen Misbah] Moving to cephfs as they have the expertise for investigation. Please assign back if anything needed from dashboard.</li>
-<li>[Vivek Maurya] Hi    Able to reproduce the issue. Sharing analysis. Subvolume sv2 creation request: 2026-03-25T10:40:07.402+0000 7fdf5c161640 20 mgr dispatch_remote Calling volumes._cmd_fs_subvolume_create...</li>
-</ul>
-<div>2026-03-25T10:40:07.403+0000 7fdf5c161640  0 [volumes INFO volumes.module] Starting _c</div>
-<ul>
-<li>[Vivek Maurya] rom code analysis it look like during smb share configuration using dashboad we are setting snaprealm on  group directory itself. ex: Line  90514: 2026-03-26T00:37:46.614+0000 7f9c316dc640 15 mds.0.cache.ino(0x10000000001) maybe_export_pin update=0 [inode 0x10000000001 [...2,head</li>
-<li>[Sachin Yeshwanth] - Could you please confirm whether the fix has been merged into the DS ceph-9.1-rhel-patches branch ? If yes, kindly share the corresponding commit ID or MR link.</li>
-<li>[Anushree Hallur] Hi Team, Verified the fix in IBM 9.1 build <code>ceph version 20.2.1-144.el9cp. Creation of new sub volumes under the smb configured subvolume group is successful. All the created subvolumes can be seen in GUI and multiple sub volumes were created with the smb configured subvolume grou</code></li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup</div>
-<div>Environment: IBM Ceph 9.0, component: ceph-dashboard</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi    Able to reproduce the issue. Sharing analysis. Subvolume sv2 creation request: 2026-03-25T10:40:07.402+0000 7fdf5c161640 20 mgr dispatch_remote Calling volumes._cmd_fs_subvolume_create...</div>
-<div>2026-03-25T10:40:07.403+0000 7fdf5c161640  0 [volumes INFO volumes.module] Starting _c</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing ceph-dashboard tests may not cover: [Dashboard][CephFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes u</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: Dashboard SMB share form corrupts subvolume group by calling subvol_info with empty subvolume name
+ROOT CAUSE: The Ceph dashboard&#x27;s SMB share creation form has a field that fetches the subvolume path via subvol_info API. Before the user selects a subvolume, the form sends a request with an empty subvolume name: &#x27;ceph fs subvolume info fs &quot;&quot; group&#x27;. This empty-name call inadvertently sets the SnapRealm on the subvolume GROUP directory instead of an individual subvolume directory. Once the group directory has SnapRealm set, the MDS rejects subsequent subvolume creation with EINVAL because it detects &#x27;trying to create a subvolume inside another subvolume&#x27; (subvol_ino mismatch in handle_client_setvxattr for ceph.dir.subvolume). Existing subvolumes also disappear from the GUI because the corrupted group metadata causes listing failures.
+KEY EVIDENCE:
+- MDS log: &#x27;subvol ino changed between rdlock release and xlock policylock; subvol_ino: 0x10000000001, cur-&gt;ino: 0x100000001fc&#x27;
+- Dashboard exception: &#x27;Failed to create subvolume testsv2: invalid value specified for ceph.dir.subvolume&#x27;
+- CLI-only creation works; only dashboard triggers the issue
+- Root cause: dashboard calls subvol_info with empty subvol name, corrupting group&#x27;s SnapRealm
+- Fix: UI validation (don&#x27;t call subvol_info with empty name) + backend validation
+FIX STATUS: Fixed. UI fix PR merged. Backend validation fix merged. Downstream MR !1614 for 9.1. Backports created for 9.0z3 and 8.1z6. Verified in 20.2.1-144 by QE (Anushree Hallur). Closed as part of 9.1 release.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce subvolume creation failure via dashboard SMB share form
+Environment: IBM Ceph 9.0 (pre-fix)
+1. Deploy CephFS, subvolumegroup, subvolume via GUI
+2. Deploy SMB cluster using the available CephFS/SVG/subvolume
+3. In dashboard, navigate to create a NEW subvolume under the SMB-configured subvolume group
+4. Observe: &#x27;invalid value specified for ceph.dir.subvolume&#x27; error
+5. Existing subvolumes disappear from GUI (still visible via CLI)
+DIAGNOSTIC COMMANDS:
+- ceph fs subvolume ls &lt;vol&gt; --group-name=&lt;group&gt; (CLI works)
+- ceph mgr logs: grep &#x27;invalid value specified for ceph.dir.subvolume&#x27;
+- ceph tell mds.&lt;fs&gt;:0 dump_ops_in_flight
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Verified in 9.1. Dashboard and backend fixes merged.
+GAPS: No automated test for dashboard SMB share form interaction with subvolume API. No test validates that empty subvolume names are rejected.
+SCENARIOS NEEDED:
+- Dashboard: create SMB share -&gt; create new subvolume in same group -&gt; verify no corruption
+- API: verify &#x27;ceph fs subvolume info &lt;vol&gt; &quot;&quot; &lt;group&gt;&#x27; returns error, not corrupts metadata
+- Post-SMB-setup: verify new subvolume creation works in both CLI and dashboard
+- Verify existing subvolumes remain visible after SMB share creation
+</pre></div>
 </div>
 
 

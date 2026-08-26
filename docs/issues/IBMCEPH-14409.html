@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14409: ceph orch ps shows the MGR port more than one time</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,36 +189,49 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: ceph orch ps shows the MGR port more than one time
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: ceph-mgr/orchestrator
-
-ENGINEERING FINDINGS:
-- [Raimund Sacherer] I think I have a fix ready, but I am off-shift already, I’ll create a tracker and push the PR tomorrow morning.
-- [Bipin Kunal] I see on the upstream PR that you mentioned it was already implemented via   .  Do we have the fix in 9.2 and 9.1 branches already?
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MGR port list in &#x27;ceph orch ps&#x27; grows with duplicate entries after repeated upgrades/downgrades.
+ROOT CAUSE: During repeated MGR upgrades and downgrades, the port list for each MGR daemon in the cephadm inventory accumulates duplicate port entries (e.g., port 8765 repeated 30+ times). The root cause is that the port reconciliation logic in cephadm doesn&#x27;t deduplicate when updating the daemon inventory after a redeploy. Each upgrade/redeploy cycle appends the daemon&#x27;s ports to the existing list instead of replacing it. The ports are stored in config-key (mgr/cephadm/host.&lt;hostname&gt;) and accumulate across reconfigurations. Additionally, Raimund Sacherer identified that port state changes (enabling/disabling services) don&#x27;t trigger port updates in the inventory -- only a full &#x27;ceph orch redeploy&#x27; refreshes them.
+KEY EVIDENCE:
+- mgr.ceph-1 shows: *:9283,8765,8765,8765,...(34 times)
+- config-key dump shows accumulated ports array in host inventory JSON
+- Restarting services doesn&#x27;t help
+- Reporter (Raimund Sacherer) has a fix PR ready
+- Related tracker filed for port state not reflecting service enable/disable
+- Fix may already exist upstream (Bipin asked if it&#x27;s in 9.2/9.1 branches)
+FIX STATUS: PR submitted by Raimund Sacherer. The fix was reportedly already implemented via a separate upstream commit. Clarification pending on whether it&#x27;s in 9.2 and 9.1 branches.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- ceph orch ps shows the MGR port more than one time
-Environment: IBM Ceph 8.1, component: ceph-mgr/orchestrator
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce duplicate MGR port accumulation after repeated upgrades.
+Environment: IBM Storage Ceph 8.1 (19.2.1-366.el9cp)
+1. Deploy a 2-node MGR cluster -- intent: establish baseline
+2. Note initial port display -- intent: record clean state
+   ceph orch ps --daemon-type mgr
+3. Perform multiple upgrade/downgrade cycles -- intent: trigger port accumulation
+   ceph orch upgrade start &lt;image-A&gt;
+   # wait for completion
+   ceph orch upgrade start &lt;image-B&gt;
+   # repeat 3-5 times
+4. Check port display -- intent: observe duplication
+   ceph orch ps --daemon-type mgr
+5. Inspect config-key -- intent: see accumulated ports in inventory
+   ceph config-key dump | python3 -c &#x27;import sys,json; d=json.load(sys.stdin); [print(k,len(json.loads(v).get(&quot;daemons&quot;,{}).get(next(iter(json.loads(v).get(&quot;daemons&quot;,{})),&quot;&quot;),{}).get(&quot;ports&quot;,[]))) for k,v in d.items() if &quot;host.&quot; in k]&#x27;
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type mgr
+- ceph config-key dump | grep ports
+- ceph config-key get mgr/cephadm/host.&lt;hostname&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test validates port list integrity across upgrade cycles.
 GAPS:
-- Existing ceph-mgr/orchestrator tests may not cover: ceph orch ps shows the MGR port more than one time
-
+- No test for port deduplication in cephadm inventory after upgrades
+- No test validates port state changes when services are enabled/disabled
+- No test for config-key inventory corruption detection
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior</textarea>
+- Test: Perform 3+ upgrade/downgrade cycles, verify port list has no duplicates
+- Test: Enable/disable a MGR module with a port, verify orch ps reflects the change
+- Test: Validate cephadm inventory JSON structure integrity after repeated reconfigurations</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -229,35 +242,58 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">ceph orch ps shows the MGR port more than one time</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MGR port list in &#x27;ceph orch ps&#x27; grows with duplicate entries after repeated upgrades/downgrades.</div>
+<div>ROOT CAUSE: During repeated MGR upgrades and downgrades, the port list for each MGR daemon in the cephadm inventory accumulates duplicate port entries (e.g., port 8765 repeated 30+ times). The root cause is that the port reconciliation logic in cephadm doesn&#x27;t deduplicate when updating the daemon inventory after a redeploy. Each upgrade/redeploy cycle appends the daemon&#x27;s ports to the existing list instead of replacing it. The ports are stored in config-key (mgr/cephadm/host.&lt;hostname&gt;) and accumulate across reconfigurations. Additionally, Raimund Sacherer identified that port state changes (enabling/disabling services) don&#x27;t trigger port updates in the inventory -- only a full &#x27;ceph orch redeploy&#x27; refreshes them.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-mgr/orchestrator</li>
+<li>mgr.ceph-1 shows: *:9283,8765,8765,8765,...(34 times)</li>
+<li>config-key dump shows accumulated ports array in host inventory JSON</li>
+<li>Restarting services doesn&#x27;t help</li>
+<li>Reporter (Raimund Sacherer) has a fix PR ready</li>
+<li>Related tracker filed for port state not reflecting service enable/disable</li>
+<li>Fix may already exist upstream (Bipin asked if it&#x27;s in 9.2/9.1 branches)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: PR submitted by Raimund Sacherer. The fix was reportedly already implemented via a separate upstream commit. Clarification pending on whether it&#x27;s in 9.2 and 9.1 branches.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce duplicate MGR port accumulation after repeated upgrades.</div>
+<div>Environment: IBM Storage Ceph 8.1 (19.2.1-366.el9cp)</div>
 <ul>
-<li>[Raimund Sacherer] I think I have a fix ready, but I am off-shift already, I’ll create a tracker and push the PR tomorrow morning.</li>
-<li>[Bipin Kunal] I see on the upstream PR that you mentioned it was already implemented via   .  Do we have the fix in 9.2 and 9.1 branches already?</li>
+<li><span class="step-num">1.</span> Deploy a 2-node MGR cluster -- intent: establish baseline</li>
+<li><span class="step-num">2.</span> Note initial port display -- intent: record clean state</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph orch ps --daemon-type mgr</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- ceph orch ps shows the MGR port more than one time</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-mgr/orchestrator</div>
+<li><span class="step-num">3.</span> Perform multiple upgrade/downgrade cycles -- intent: trigger port accumulation</li>
+</ul>
+<div>ceph orch upgrade start &lt;image-A&gt;</div>
+<div># wait for completion</div>
+<div>ceph orch upgrade start &lt;image-B&gt;</div>
+<div># repeat 3-5 times</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">4.</span> Check port display -- intent: observe duplication</li>
+</ul>
+<div>ceph orch ps --daemon-type mgr</div>
+<ul>
+<li><span class="step-num">5.</span> Inspect config-key -- intent: see accumulated ports in inventory</li>
+</ul>
+<div>ceph config-key dump | python3 -c &#x27;import sys,json; d=json.load(sys.stdin); [print(k,len(json.loads(v).get(&quot;daemons&quot;,{}).get(next(iter(json.loads(v).get(&quot;daemons&quot;,{})),&quot;&quot;),{}).get(&quot;ports&quot;,[]))) for k,v in d.items() if &quot;host.&quot; in k]&#x27;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch ps --daemon-type mgr</code></li>
+<li><code>ceph config-key dump | grep ports</code></li>
+<li><code>ceph config-key get mgr/cephadm/host.&lt;hostname&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test validates port list integrity across upgrade cycles.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing ceph-mgr/orchestrator tests may not cover: <code>ceph orch ps shows the MGR port more than one time</code></li>
+<li>No test for port deduplication in <code>cephadm inventory after upgrades</code></li>
+<li>No test validates port state changes when services are enabled/disabled</li>
+<li>No test for config-key inventory corruption detection</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior</li>
+<li>Test: Perform 3+ upgrade/downgrade cycles, verify port list has no duplicates</li>
+<li>Test: Enable/disable a MGR module with a port, verify orch ps reflects the change</li>
+<li>Test: Validate <code>cephadm inventory JSON structure integrity after repeated reconfigurations</code></li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13129: User cannot execute a file without read permission</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: User cannot execute a file without read permission
-
-ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): not specified
-- Component: nfs-ganesha/ceph
-
-ENGINEERING FINDINGS:
-- [Sachin Punadikar] This got fixed by latest commit  (8.1z5) https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/7d7e70f8914f4a53ff6849a8426882c3b1bf6d8f
-
-FIX STATUS:
-- Fix available
-- PR/MR: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/7d7e70f8914f4a53ff6849a8426882c3b1bf6d8f
-- Verified by: Harish Acharya</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Non-root users in file&#x27;s group cannot execute SUID binaries (mode 4510) on NFS-Ganesha/CephFS exports because libcephfs enforces read permission on ceph_ll_open() even for execute-only access.
+ROOT CAUSE: libcephfs performs access enforcement on ceph_ll_open() using only O_READ/O_WRITE/O_RDWR flags. The NFS protocol does not communicate the reason for file open (execute vs read), so Ganesha cannot pass an O_EXEC flag. For files with permissions like `-r-s--x---` (SUID, group execute only, no group read), the kernel exec() call works directly (it uses the exec path, not open-for-read), but NFS must open the file for reading to transfer content. Shell scripts additionally fail because the shell interpreter must read the script content. The fix modifies Ganesha to allow readers with execute permissions to still open files via the CEPH FSAL.
+KEY EVIDENCE:
+- File permissions: `-r-s--x--- root sdba` (mode 4510)
+- Binary execution succeeds after fix, shell scripts still fail (expected: shell needs read permission)
+- Fix commit: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/7d7e70f8914f4a53ff6849a8426882c3b1bf6d8f
+- Verified on nfs-ganesha-7.0-0.6.16.el9cp: binary works, shell script fails (intended behavior confirmed by Greg Farnum)
+FIX STATUS: Fixed in 8.1z5 and 9.0z1. Part of nfs-ganesha-7.0-0.6.16 tag. Closed as part of 9.0z1 release.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- User cannot execute a file without read permission
-Environment: IBM Ceph 9.x, component: nfs-ganesha/ceph
-
-1. Deploy IBM Ceph 9.x cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify SUID binary execution by group member on NFS-Ganesha/CephFS
+Environment: IBM Ceph 9.0z1 or later
+1. Create NFS export with no_root_squash: `ceph nfs export create cephfs &lt;cluster&gt; &lt;pseudo&gt; &lt;fs&gt; &lt;path&gt; --squash no_root_squash` -- intent: allow SUID operations
+2. Mount NFS export on client -- intent: set up test mount
+3. Create group and user: `groupadd sdba &amp;&amp; useradd -g sdba sdbuser` -- intent: set up group member
+4. Compile a simple C binary, set SUID with group execute: `gcc -o /mnt/sdb_binary sdb_binary.c &amp;&amp; chown root:sdba /mnt/sdb_binary &amp;&amp; chmod 4510 /mnt/sdb_binary` -- intent: create SUID binary with execute-only group permission
+5. As sdbuser, execute the binary: `su - sdbuser -c &#x27;/mnt/sdb_binary&#x27;` -- intent: verify execution succeeds
+6. Verify shell script with same permissions fails (expected): `chmod 4510 /mnt/script.sh &amp;&amp; su - sdbuser -c &#x27;/mnt/script.sh&#x27;` -- intent: confirm shell scripts need read permission
+DIAGNOSTIC COMMANDS:
+- `ls -la /mnt/&lt;file&gt;` -- verify permissions
+- `id sdbuser` -- verify group membership
+- `stat /mnt/&lt;file&gt;` -- check inode details</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
-
-GAPS:
-- Permission test gap for: User cannot execute a file without read permission
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE verified on 20.1.0-155.el9cp. Binary execution succeeds, shell script fails as expected.
+GAPS: No automated test for SUID binary execution semantics over NFS-Ganesha.
 SCENARIOS NEEDED:
-- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- SUID binary execution by group member with execute-only permission (mode 4510) over NFS
+- SUID binary execution with various permission combos: 4510, 4550, 4500
+- Verify shell scripts correctly fail without read permission
+- Test with setgid (2510) and sticky bit combinations</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,41 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">User cannot execute a file without read permission</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Non-root users in file&#x27;s group cannot execute SUID binaries (mode 4510) on NFS-Ganesha/CephFS exports because libcephfs enforces read permission on ceph_ll_open() even for execute-only access.</div>
+<div>ROOT CAUSE: libcephfs performs access enforcement on ceph_ll_open() using only O_READ/O_WRITE/O_RDWR flags. The NFS protocol does not communicate the reason for file open (execute vs read), so Ganesha cannot pass an O_EXEC flag. For files with permissions like <code>-r-s--x---</code> (SUID, group execute only, no group read), the kernel exec() call works directly (it uses the exec path, not open-for-read), but NFS must open the file for reading to transfer content. Shell scripts additionally fail because the shell interpreter must read the script content. The fix modifies Ganesha to allow readers with execute permissions to still open files via the CEPH FSAL.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): not specified</li>
-<li>Component: nfs-ganesha/ceph</li>
+<li>File permissions: <code>-r-s--x--- root sdba</code> (mode 4510)</li>
+<li>Binary execution succeeds after fix, shell scripts still fail (expected: shell needs read permission)</li>
+<li>Fix commit: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/7d7e70f8914f4a53ff6849a8426882c3b1bf6d8f</li>
+<li>Verified on nfs-ganesha-7.0-0.6.16.el9cp: binary works, shell script fails (intended behavior confirmed by Greg Farnum)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 8.1z5 and 9.0z1. Part of nfs-ganesha-7.0-0.6.16 tag. Closed as part of 9.0z1 release.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify SUID binary execution by group member on NFS-Ganesha/CephFS</div>
+<div>Environment: IBM Ceph 9.0z1 or later</div>
 <ul>
-<li>[Sachin Punadikar] This got fixed by latest commit  (8.1z5) https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/7d7e70f8914f4a53ff6849a8426882c3b1bf6d8f</li>
+<li><span class="step-num">1.</span> Create NFS export with no_root_squash: <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; &amp;lt;pseudo&amp;gt; &amp;lt;fs&amp;gt; &amp;lt;path&amp;gt; --squash no_root_squash</code></code> -- intent: allow SUID operations</li>
+<li><span class="step-num">2.</span> Mount NFS export on client -- intent: set up test mount</li>
+<li><span class="step-num">3.</span> Create group and user: <code>groupadd sdba &amp;amp;&amp;amp; useradd -g sdba sdbuser</code> -- intent: set up group member</li>
+<li><span class="step-num">4.</span> Compile a simple C binary, set SUID with group execute: <code>gcc -o /mnt/sdb_binary sdb_binary.c &amp;amp;&amp;amp; chown root:sdba /mnt/sdb_binary &amp;amp;&amp;amp; chmod 4510 /mnt/sdb_binary</code> -- intent: create SUID binary with execute-only group permission</li>
+<li><span class="step-num">5.</span> As sdbuser, execute the binary: <code>su - sdbuser -c &amp;#x27;/mnt/sdb_binary&amp;#x27;</code> -- intent: verify execution succeeds</li>
+<li><span class="step-num">6.</span> Verify shell script with same permissions fails (expected): <code>chmod 4510 /mnt/script.sh &amp;amp;&amp;amp; su - sdbuser -c &amp;#x27;/mnt/script.sh&amp;#x27;</code> -- intent: confirm shell scripts need read permission</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/7d7e70f8914f4a53ff6849a8426882c3b1bf6d8f</li>
-<li>Verified by: Harish Acharya</li>
+<li><code>ls -la /mnt/&amp;lt;file&amp;gt;</code> -- verify permissions</li>
+<li><code>id sdbuser</code> -- verify group membership</li>
+<li><code>stat /mnt/&amp;lt;file&amp;gt;</code> -- check inode details</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- User cannot execute a file without read permission</div>
-<div>Environment: IBM Ceph 9.x, component: nfs-ganesha/ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Permission test gap for: User cannot execute a file without read permission</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE verified on 20.1.0-155.el9cp. Binary execution succeeds, shell script fails as expected.</div>
+<div>GAPS: No automated test for SUID binary execution semantics over NFS-Ganesha.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>SUID binary execution by group member with execute-only permission (mode 4510) over NFS</li>
+<li>SUID binary execution with various permission combos: 4510, 4550, 4500</li>
+<li>Verify shell scripts correctly fail without read permission</li>
+<li>Test with setgid (2510) and sticky bit combinations</li>
 </ul></div>
 </div>
 

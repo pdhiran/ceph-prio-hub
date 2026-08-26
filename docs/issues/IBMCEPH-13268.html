@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13268: [Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON 
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Yuval Lifshitz] this is not an issue with the RGW. please run the aws command with --debug flag. in both cases we reply the same (correct) XML response. but the in the deprecated version the client expect a different XML, and hence fails to convert that to JSON. e.g. 2026-03-04 16:21:26,390 - Ma
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW returns malformed JSON for deprecated &#x27;get-bucket-notification&#x27; S3 API call; not an RGW bug.
+ROOT CAUSE: The &#x27;aws s3api get-bucket-notification&#x27; command is deprecated in favor of &#x27;get-bucket-notification-configuration&#x27;. RGW returns a valid XML response in both cases, but the AWS CLI client expects a different XML schema for the deprecated version and fails to convert it to JSON, producing &#x27;Encountered unrecognized type in JSON encoder&#x27;. The issue is in the client-side XML-to-JSON parsing, not in RGW&#x27;s response. RGW engineer Yuval Lifshitz confirmed via --debug flag that identical correct XML is returned for both API calls.
+KEY EVIDENCE:
+- Both APIs return same correct XML: &lt;NotificationConfiguration&gt;&lt;TopicConfiguration&gt;...&lt;/TopicConfiguration&gt;&lt;/NotificationConfiguration&gt;
+- get-bucket-notification-configuration parses correctly to JSON
+- get-bucket-notification fails JSON conversion due to deprecated client schema expectations
+- Version: ceph 19.2.1-331.el9cp (IBM Ceph 8.0)
+- Confirmed by Yuval Lifshitz: &#x27;this is not an issue with the RGW&#x27;
+FIX STATUS: Closed as &#x27;not a bug&#x27;. The deprecated API produces correct XML; the issue is AWS CLI client-side parsing of the deprecated response format.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON
-Environment: IBM Ceph 8.0, component: rgw
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate that get-bucket-notification malformed JSON is a client-side parsing issue.
+Environment: IBM Ceph 8.0+ with bucket notifications configured
+1. Create SNS topic and configure bucket notification -- intent: set up notification config
+2. Run &#x27;aws s3api get-bucket-notification --bucket &lt;bucket&gt; --endpoint-url &lt;rgw&gt;&#x27; -- intent: trigger deprecated API path
+3. Run same command with --debug flag -- intent: observe raw XML response is valid
+4. Run &#x27;aws s3api get-bucket-notification-configuration --bucket &lt;bucket&gt; --endpoint-url &lt;rgw&gt;&#x27; -- intent: show correct API works
+DIAGNOSTIC COMMANDS:
+- aws s3api get-bucket-notification --debug -- shows raw XML response
+- aws s3api get-bucket-notification-configuration -- correct API
+- radosgw-admin topic list -- verify topic configuration</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: [Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Not applicable -- closed as &#x27;not a bug&#x27;. RGW behavior is correct.
+GAPS: No QE test validates that deprecated S3 APIs return well-formed XML (even if client can&#x27;t parse it). Could add a regression test verifying XML schema correctness for deprecated notification API.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Validation that deprecated get-bucket-notification returns parseable XML
+- Document deprecation notice for customers using older API calls</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +229,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW returns malformed JSON for deprecated &#x27;get-bucket-notification&#x27; S3 API call; not an RGW bug.</div>
+<div>ROOT CAUSE: The &#x27;aws s3api get-bucket-notification&#x27; command is deprecated in favor of &#x27;get-bucket-notification-configuration&#x27;. RGW returns a valid XML response in both cases, but the AWS CLI client expects a different XML schema for the deprecated version and fails to convert it to JSON, producing &#x27;Encountered unrecognized type in JSON encoder&#x27;. The issue is in the client-side XML-to-JSON parsing, not in RGW&#x27;s response. RGW engineer Yuval Lifshitz confirmed via --debug flag that identical correct XML is returned for both API calls.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: rgw</li>
+<li>Both APIs return same correct XML: &lt;NotificationConfiguration&gt;&lt;TopicConfiguration&gt;...&lt;/TopicConfiguration&gt;&lt;/NotificationConfiguration&gt;</li>
+<li>get-bucket-notification-configuration parses correctly to JSON</li>
+<li>get-bucket-notification fails JSON conversion due to deprecated client schema expectations</li>
+<li>Version: <code>ceph 19.2.1-331.el9cp (IBM Ceph 8.0)</code></li>
+<li>Confirmed by Yuval Lifshitz: &#x27;this is not an issue with the RGW&#x27;</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. The deprecated API produces correct XML; the issue is AWS CLI client-side parsing of the deprecated response format.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate that get-bucket-notification malformed JSON is a client-side parsing issue.</div>
+<div>Environment: IBM Ceph 8.0+ with bucket notifications configured</div>
 <ul>
-<li>[Yuval Lifshitz] this is not an issue with the RGW. please run the aws command with --debug flag. in both cases we reply the same (correct) XML response. but the in the deprecated version the client expect a different XML, and hence fails to convert that to JSON. e.g. 2026-03-04 16:21:26,390 - Ma</li>
+<li><span class="step-num">1.</span> Create SNS topic and configure bucket notification -- intent: set up notification config</li>
+<li><span class="step-num">2.</span> Run &#x27;aws s3api get-bucket-notification --bucket &lt;bucket&gt; --endpoint-url &lt;rgw&gt;&#x27; -- intent: trigger deprecated API path</li>
+<li><span class="step-num">3.</span> Run same command with --debug flag -- intent: observe raw XML response is valid</li>
+<li><span class="step-num">4.</span> Run &#x27;aws s3api get-bucket-notification-configuration --bucket &lt;bucket&gt; --endpoint-url &lt;rgw&gt;&#x27; -- intent: show correct API works</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>aws s3api get-bucket-notification --debug -- shows raw XML response</li>
+<li>aws s3api get-bucket-notification-configuration -- correct API</li>
+<li><code>radosgw-admin topic list -- verify topic configuration</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON</div>
-<div>Environment: IBM Ceph 8.0, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [Aws_get_bucket_notification]  RGW get-bucket-notification returns malformed JSON</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Not applicable -- closed as &#x27;not a bug&#x27;. RGW behavior is correct.</div>
+<div>GAPS: No QE test validates that deprecated S3 APIs return well-formed XML (even if client can&#x27;t parse it). Could add a regression test verifying XML schema correctness for deprecated notification API.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Validation that deprecated get-bucket-notification returns parseable XML</li>
+<li>Document deprecation notice for customers using older API calls</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17252: Package installation fails inside container due to Codeready Builder repository 403 error.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Package installation fails inside container due to Codeready Builder repository 403 error.
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: build
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Looks like the issue is not with all the IBM images. It works on some of the IBM ceph images and it doesn’t work for some. I feel this is something to do with how ceph images have been created.   Successful run :   Image used - Ceph 8.1z1 [root@localhost workdir]# podman pull cp.
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Package installation via microdnf fails with 403 error inside IBM Ceph 9.x container images built via IBM SPS pipeline.
+ROOT CAUSE: IBM Ceph container images built via IBM SPS (Software Pipeline System) do not include proper RHEL entitlement/subscription configuration, causing dnf/microdnf to receive HTTP 403 when accessing cdn.redhat.com repos (appstream, codeready-builder). Images built via RH OSBS (older 8.1 images) work because they inherit RHEL entitlements. The subscription-manager is also absent from IBM-built containers (&#x27;command not found&#x27;). Justin Caratzas confirmed: &#x27;The working example (8.1) was built via RH OSBS, while the latter was built via IBM SPS...We&#x27;ll make changes to make the containers built via SPS be able to install packages via microdnf.&#x27;
+KEY EVIDENCE:
+- Error: &#x27;Status code: 403 for https://cdn.redhat.com/content/dist/rhel9/9/x86_64/codeready-builder/os/repodata/repomd.xml&#x27;
+- IBM 8.1 image (cp.icr.io/cp/ibm-ceph/ceph-8-rhel9:8-175) built via OSBS -- works
+- IBM 9.0z2 image (cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:v9.0-13392) built via SPS -- fails
+- subscription-manager: command not found inside container
+- Fix PRs: ceph-pipeline-configs/pull/311, ibm-ceph-container/pull/40
+- Test image available: cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:v9.1-IBMCEPH-17252
+FIX STATUS: In progress. CI and container changes submitted (PRs linked). Test image available for validation. Expected to fix all release streams going forward.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Package installation fails inside container due to Codeready Builder repository 403 error.
-Environment: IBM Ceph 8.1, component: build
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify package installation works inside IBM Ceph container images.
+Environment: IBM Ceph 9.x container image built via SPS
+1. podman pull cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:&lt;tag&gt; -- intent: get SPS-built image
+2. podman run -it --rm &lt;image&gt; bash -- intent: start interactive container
+3. microdnf -y install vim gdb wget -- intent: trigger package installation from RHEL repos
+4. Observe 403 error -- intent: confirm failure
+DIAGNOSTIC COMMANDS:
+- microdnf repolist -- check available repos
+- cat /etc/yum.repos.d/*.repo -- inspect repo configuration
+- rpm -qa | grep subscription-manager -- check if subscription-manager exists</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
-GAPS:
-- Existing build tests may not cover: Package installation fails inside container due to Codeready Builder repository 403 error.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test validates package installation capability inside shipped container images.
+GAPS: No CI gate runs microdnf install inside built images before shipping. No test validates repo accessibility across all build pipelines.
 SCENARIOS NEEDED:
-- Functional: reproduce reported build scenario, verify correct behavior</textarea>
+- Post-build smoke test: microdnf install basic packages inside each shipped image
+- Validate repo configuration parity between OSBS and SPS-built images
+- Regression test after fix: verify all release stream images support microdnf install</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,34 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Package installation fails inside container due to Codeready Builder repository 403 error.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Package installation via microdnf fails with 403 error inside IBM Ceph 9.x container images built via IBM SPS pipeline.</div>
+<div>ROOT CAUSE: IBM Ceph container images built via IBM SPS (Software Pipeline System) do not include proper RHEL entitlement/subscription configuration, causing dnf/microdnf to receive HTTP 403 when accessing cdn.redhat.com repos (appstream, codeready-builder). Images built via RH OSBS (older 8.1 images) work because they inherit RHEL entitlements. The subscription-manager is also absent from IBM-built containers (&#x27;command not found&#x27;). Justin Caratzas confirmed: &#x27;The working example (8.1) was built via RH OSBS, while the latter was built via IBM SPS...We&#x27;ll make changes to make the containers built via SPS be able to install packages via microdnf.&#x27;</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: build</li>
+<li>Error: &#x27;Status code: 403 for https://cdn.redhat.com/content/dist/rhel9/9/x86_64/codeready-builder/os/repodata/repomd.xml&#x27;</li>
+<li>IBM 8.1 image (cp.icr.io/cp/ibm-ceph/ceph-8-rhel9:8-175) built via OSBS -- works</li>
+<li>IBM 9.0z2 image (cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:v9.0-13392) built via SPS -- fails</li>
+<li>subscription-manager: command not found inside container</li>
+<li>Fix PRs: ceph-pipeline-configs/pull/311, ibm-ceph-container/pull/40</li>
+<li>Test image available: cp.stg.icr.io/cp/ibm-ceph/ceph-9-rhel9:v9.1-IBMCEPH-17252</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: In progress. CI and container changes submitted (PRs linked). Test image available for validation. Expected to fix all release streams going forward.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify package installation works inside IBM Ceph container images.</div>
+<div>Environment: IBM Ceph 9.x container image built via SPS</div>
 <ul>
-<li>[Bipin Kunal] Looks like the issue is not with all the IBM images. It works on some of the IBM <code>ceph images and it doesn’t work for some. I feel this is something to do with how ceph images have been created.   Successful run :   Image used - Ceph 8.1z1 [root@localhost workdir]# podman pull cp.</code></li>
+<li><span class="step-num">1.</span> <code>podman pull cp.icr.io/cp/ibm-ceph/ceph-9-rhel9:&lt;tag&gt; -- intent: get SPS-built image</code></li>
+<li><span class="step-num">2.</span> <code>podman run -it --rm &lt;image&gt; bash -- intent: start interactive container</code></li>
+<li><span class="step-num">3.</span> microdnf -y install vim gdb wget -- intent: trigger package installation from RHEL repos</li>
+<li><span class="step-num">4.</span> Observe 403 error -- intent: confirm failure</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
+<li>microdnf repolist -- check available repos</li>
+<li>cat /etc/yum.repos.d/*.repo -- inspect repo configuration</li>
+<li>rpm -qa | grep subscription-manager -- check if subscription-manager exists</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Package installation fails inside container due to Codeready Builder repository 403 error.</div>
-<div>Environment: IBM Ceph 8.1, component: build</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing build tests may not cover: Package installation fails inside container due to Codeready Builder repository 403 error.</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test validates package installation capability inside shipped container images.</div>
+<div>GAPS: No CI gate runs microdnf install inside built images before shipping. No test validates repo accessibility across all build pipelines.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported build scenario, verify correct behavior</li>
+<li>Post-build smoke test: microdnf install basic packages inside each shipped image</li>
+<li>Validate repo configuration parity between OSBS and SPS-built images</li>
+<li>Regression test after fix: verify all release stream images support microdnf install</li>
 </ul></div>
 </div>
 

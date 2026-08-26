@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15015: [Security] Private keys in the Ceph images</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Security] Private keys in the Ceph images
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: security
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Slack thread discussion:    Marcus Watts  [1:36 PM] Wow.  That is interesting.  I believe this is only (supposed) to be used by &quot;ceph-post-file&quot; which was intended to allow sites to upload crash dumps and logs to    back in the day.   @dmick  will be able to talk more about its h
-- [Sage McTaggart] I’m not sure. There are a lot more severe CVEs that we need to fix. This is embarrassing for Ceph but has very minimal impact on our actual severity. If not 9.2, we should fix it in 10.0.
-- [Sage McTaggart] am in discussion with David though because he will likely know who can fix it and when it will fit into their work schedule. The priority for 9.2 from security is upgrading as many dependencies as possible to get rid of as many critical CVEs as possible, since that’s been a litt
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ceph container images contain private SSH key (id_rsa_drop.ceph.com) triggering compliance scan failures.
+ROOT CAUSE: The file /usr/share/ceph/id_rsa_drop.ceph.com is a legacy SSH private key originally used by the &#x27;ceph-post-file&#x27; utility, which allowed users to upload crash dumps and logs to drop.ceph.com via SFTP. The host was configured to only allow sftp file uploads (no shell access). David Galloway confirmed the service the key connects to is no longer in active use. The key is packaged into all Ceph container images (rook-ceph-operator, cephcsi-rhel9, ceph, ocs-metrics-exporter-rhel9) and triggers Twistlock compliance scan failures for private key presence. While not an actual security vulnerability (the key only provides write-only sftp access to a defunct service), it causes compliance failures for customers with strict image scanning policies.
+KEY EVIDENCE:
+- Twistlock scan report flagging /usr/share/ceph/id_rsa_drop.ceph.com in 5 container images
+- David Galloway confirmed: key is for ceph-post-file SFTP upload to drop.ceph.com (now defunct)
+- Marcus Watts: &#x27;It&#x27;s certainly not a security exposure for a random ceph install&#x27;
+- Sage McTaggart: &#x27;This is embarrassing for Ceph but has very minimal impact on our actual severity&#x27;
+- The service is being replaced with HTTPS POST by EOY
+FIX STATUS: New/Open. Low priority per security team. Sage McTaggart plans to submit upstream PR to remove the key. Target: 9.2 or 10.0. No upstream tracker created yet. Marcus Watts provided downstream PR instructions in latest comment.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Security] Private keys in the Ceph images
-Environment: IBM Ceph 8.1, component: security
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Confirm presence of legacy SSH private key in Ceph container images.
+Environment: Any IBM Storage Ceph 8.x/9.x container image
+1. Pull and inspect the Ceph container image -- intent: access the filesystem
+   podman run --rm -it &lt;ceph-image&gt; /bin/bash
+2. Verify the private key file exists -- intent: confirm the compliance finding
+   ls -la /usr/share/ceph/id_rsa_drop.ceph.com
+   file /usr/share/ceph/id_rsa_drop.ceph.com
+3. Verify ceph-post-file binary exists -- intent: check if the utility is still packaged
+   which ceph-post-file || echo &#x27;binary not found&#x27;
+4. Run a compliance scanner if available -- intent: reproduce the Twistlock finding
+   # Use Twistlock/Prisma Cloud or similar tool to scan for private keys in image
+DIAGNOSTIC COMMANDS:
+- podman inspect &lt;image&gt; | grep -i ceph
+- find / -name &#x27;*.pem&#x27; -o -name &#x27;id_rsa*&#x27; -o -name &#x27;*.key&#x27; 2&gt;/dev/null (inside container)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated compliance scanning or private key detection tests exist for Ceph container images.
 GAPS:
-- Existing security tests may not cover: [Security] Private keys in the Ceph images
-
+- No CI/CD pipeline check for private keys in shipped container images
+- No test validates that sensitive files are excluded from release images
+- No regression test after the key is removed to prevent re-introduction
 SCENARIOS NEEDED:
-- Functional: reproduce reported security scenario, verify correct behavior</textarea>
+- Test: Scan all Ceph container images for private key files (id_rsa*, *.pem private keys)
+- Test: Verify /usr/share/ceph/id_rsa_drop.ceph.com is absent after fix
+- Test: Validate ceph-post-file functionality is removed or replaced with HTTPS
+- Test: Run Twistlock/compliance scan on release images as part of CI</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +238,54 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Security] Private keys in the Ceph images</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ceph container images contain private SSH key (id_rsa_drop.ceph.com) triggering compliance scan failures.</div>
+<div>ROOT CAUSE: The file /usr/share/ceph/id_rsa_drop.ceph.com is a legacy SSH private key originally used by the &#x27;ceph-post-file&#x27; utility, which allowed users to upload crash dumps and logs to drop.ceph.com via SFTP. The host was configured to only allow sftp file uploads (no shell access). David Galloway confirmed the service the key connects to is no longer in active use. The key is packaged into all Ceph container images (rook-ceph-operator, cephcsi-rhel9, ceph, ocs-metrics-exporter-rhel9) and triggers Twistlock compliance scan failures for private key presence. While not an actual security vulnerability (the key only provides write-only sftp access to a defunct service), it causes compliance failures for customers with strict image scanning policies.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: security</li>
+<li>Twistlock scan report flagging /usr/share/ceph/id_rsa_drop.ceph.com in 5 container images</li>
+<li>David Galloway confirmed: key is for ceph-post-file SFTP upload to drop.ceph.com (now defunct)</li>
+<li>Marcus Watts: &#x27;It&#x27;s certainly not a security exposure for a random <code>ceph install&#x27;</code></li>
+<li>Sage McTaggart: &#x27;This is embarrassing for Ceph but has very minimal impact on our actual severity&#x27;</li>
+<li>The service is being replaced with HTTPS POST by EOY</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: New/Open. Low priority per security team. Sage McTaggart plans to submit upstream PR to remove the key. Target: 9.2 or 10.0. No upstream tracker created yet. Marcus Watts provided downstream PR instructions in latest comment.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Confirm presence of legacy SSH private key in Ceph container images.</div>
+<div>Environment: Any IBM Storage Ceph 8.x/9.x container image</div>
 <ul>
-<li>[Bipin Kunal] Slack thread discussion:    Marcus Watts  [1:36 PM] Wow.  That is interesting.  I believe this is only (supposed) to be used by &quot;ceph-post-file&quot; which was intended to allow sites to upload crash dumps and logs to    back in the day.   @dmick  will be able to talk more about its h</li>
-<li>[Sage McTaggart] I’m not sure. There are a lot more severe CVEs that we need to fix. This is embarrassing for Ceph but has very minimal impact on our actual severity. If not 9.2, we should fix it in 10.0.</li>
-<li>[Sage McTaggart] am in discussion with David though because he will likely know who can fix it and when it will fit into their work schedule. The priority for 9.2 from security is upgrading as many dependencies as possible to get rid of as many critical CVEs as possible, since that’s been a litt</li>
+<li><span class="step-num">1.</span> Pull and inspect the Ceph container image -- intent: access the filesystem</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>podman run --rm -it &lt;ceph-image&gt; /bin/bash</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Security] Private keys in the Ceph images</div>
-<div>Environment: IBM Ceph 8.1, component: security</div>
+<li><span class="step-num">2.</span> Verify the private key file exists -- intent: confirm the compliance finding</li>
+</ul>
+<div>ls -la /usr/share/ceph/id_rsa_drop.ceph.com</div>
+<div>file /usr/share/ceph/id_rsa_drop.ceph.com</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Verify ceph-post-file binary exists -- intent: check if the utility is still packaged</li>
+</ul>
+<div>which ceph-post-file || echo &#x27;binary not found&#x27;</div>
+<ul>
+<li><span class="step-num">4.</span> Run a compliance scanner if available -- intent: reproduce the Twistlock finding</li>
+</ul>
+<div># Use Twistlock/Prisma Cloud or similar tool to scan for private keys in image</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>podman inspect &lt;image&gt; | grep -i ceph</code></li>
+<li>find / -name &#x27;*.pem&#x27; -o -name &#x27;id_rsa*&#x27; -o -name &#x27;*.key&#x27; 2&gt;/dev/null (inside container)</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated compliance scanning or private key detection tests exist for Ceph container images.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing security tests may not cover: [Security] Private keys in the Ceph images</li>
+<li>No CI/CD pipeline check for private keys in shipped container images</li>
+<li>No test validates that sensitive files are excluded from release images</li>
+<li>No regression test after the key is removed to prevent re-introduction</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported security scenario, verify correct behavior</li>
+<li>Test: Scan all Ceph container images for private key files (id_rsa*, *.pem private keys)</li>
+<li>Test: Verify /usr/share/ceph/id_rsa_drop.ceph.com is absent after fix</li>
+<li>Test: Validate ceph-post-file functionality is removed or replaced with HTTPS</li>
+<li>Test: Run Twistlock/compliance scan on release images as part of CI</li>
 </ul></div>
 </div>
 

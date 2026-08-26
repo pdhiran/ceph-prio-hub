@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16458: [9.1z backport]- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z backport]- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 9.1z backport of IBMCEPH-16457 -- same registry token parsing issue with IBM Container Registry WWW-Authenticate header whitespace.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.0
-- Component: cephadm
+Identical to IBMCEPH-16457. The cephadm registry.py token parser doesn&#x27;t strip whitespace from comma-separated WWW-Authenticate header values, causing malformed OAuth requests to cp.icr.io that return HTTP 400.
 
-ENGINEERING FINDINGS:
-- [Sahina Bose] assigning to you as per comment from Nizam that it needs a fix in cephadm. Please reassign as needed
-- [Swati Thombe] Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim these spaces, causing authentication parameters to be incorrectly interpreted and re
+KEY EVIDENCE:
+- Same as IBMCEPH-16457
+- This is the 9.1z stream backport tracker
+- Moved to 9.1z3 as PR review not complete for 9.1z2 deadline
 
 FIX STATUS:
-- Current JIRA status: New</textarea>
+- Status: New (PR under review)
+- Target: 9.1z3
+- Same fix as IBMCEPH-16457</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z backport]- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0
-Environment: IBM Ceph 8.0, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-16457
+Environment: IBM Ceph 9.x with access to cp.icr.io registry
 
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
+(Same steps as IBMCEPH-16457)
 
-SCENARIO DETAIL (from engineering comments):
-Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim thes</textarea>
+DIAGNOSTIC COMMANDS:
+- Same as IBMCEPH-16457</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Same as IBMCEPH-16457. Backport needs same test validation.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- Same as IBMCEPH-16457
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Same as IBMCEPH-16457, validated on 9.1z stream</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,42 +233,36 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z backport]- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">9.1z backport of IBMCEPH-16457 -- same registry token parsing issue with IBM Container Registry WWW-Authenticate header whitespace.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>Identical to IBMCEPH-16457. The cephadm registry.py token parser doesn&#x27;t strip whitespace from comma-separated WWW-Authenticate header values, causing malformed OAuth requests to cp.icr.io that return HTTP 400.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.0</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Sahina Bose] assigning to you as per comment from Nizam that it needs a fix in cephadm. Please reassign as needed</li>
-<li>[Swati Thombe] Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim these spaces, causing authentication parameters to be incorrectly interpreted and re</li>
+<li>Same as IBMCEPH-16457</li>
+<li>This is the 9.1z stream backport tracker</li>
+<li>Moved to 9.1z3 as PR review not complete for 9.1z2 deadline</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li>Status: New (PR under review)</li>
+<li>Target: 9.1z3</li>
+<li>Same fix as IBMCEPH-16457</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z backport]- [BZ#2350610] [ibm_support] 400 Client Error: Bad Request for url when attempting to update ISC 8.0</div>
-<div>Environment: IBM Ceph 8.0, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-16457</div>
+<div>Environment: IBM Ceph 9.x with access to cp.icr.io registry</div>
+<div>(Same steps as IBMCEPH-16457)</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi Team, We have investigated the issue and observed that IBM Container Registry ( cp.icr.io ) returns  WWW-Authenticate  headers with spaces after commas. The current parsing logic does not trim thes</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<li>Same as IBMCEPH-16457</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Same as IBMCEPH-16457. Backport needs same test validation.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>Same as IBMCEPH-16457</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Same as IBMCEPH-16457, validated on 9.1z stream</li>
 </ul></div>
 </div>
 

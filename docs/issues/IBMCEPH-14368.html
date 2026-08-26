@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14368: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,50 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat
-
-ROOT CAUSE:
-- Daemon crash reported in rados.
-- Affected version(s): 9.2
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Brad Hubbard] Looking at the logs you suggested. osd40_crash_logs$ grep timestamp crash_info.json
-    &quot;timestamp&quot;: &quot;2026-05-08T14:36:33.817416Z&quot;,
-osd40_crash_logs$  ls -l ceph-osd.40.log*
--rw-r--r--. 1 brad brad      0 May 11 16:23 ceph-osd.40.log
--rw-r--r--. 1 brad brad 676986 May 11 16:23 c
-- [K Amarnath Reddy] Hi   , This crash was observed during scale testing, but there were no specific reproduction steps. After creating the cluster, we did not perform any operations. We are not sure whether this issue is consistently reproducible. Since it resulted in a crash, I reported it for furt
-- [K Amarnath Reddy] , Let me check if  I can get the actual crash log and update here
-- [K Amarnath Reddy] Hi    I have collected a crash_dump_log  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/osd40_crash_logs/crash_dump_log.txt Could you please review if this helps?
-- [Brad Hubbard] I was looking at this frame and I loaded a binary compatible debugging environment to get a better idea where we are. /usr/bin/ceph-osd(+0x3b0271) [0x558c1eebf271] Searching for that offset in the objdump output places us most likely here.       ceph_abort();
-  627fbb:»······48 8
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD.40 crashed with ceph_abort() in build_incremental_map_msg due to BlueStore CRC checksum errors indicating hardware-level data corruption.
+ROOT CAUSE: The OSD&#x27;s BlueStore data on NVMe was corrupted -- blocks that should contain inc_osdmap.306 and osdmap.306 were zeroed out (CRC=0x6706be76 = CRC of all-zeros block). When the OSD attempted to share map epoch 306 during heartbeat, it could not load the incremental or full OSD map from its local store, triggering the panic/abort fallback path at OSD.cc:1484. The abort is expected behavior when neither incremental nor full map can be loaded. Brad Hubbard&#x27;s analysis confirms this is a hardware issue -- the consistent 0x6706be76 checksum across multiple reads indicates the storage returned zeros where valid data should exist, pointing to NVMe write cache failure or firmware bug.
+KEY EVIDENCE:
+- 32 CRC errors in crash_dump_log.txt, all with calculated checksum 0x6706be76 (zeros)
+- Crash at OSD.cc:1484 in panic path of build_incremental_map_msg()
+- OSD was only 17 minutes old at crash time
+- No power loss or failure simulation was running
+- Hardware: Samsung MZ1L2960HCJR NVMe SSD on Intel Xeon 6710E
+- Syslog kernel messages showed I/O errors around crash time
+FIX STATUS: Not a software bug. Hardware issue on specific NVMe device. OSD marked down, priority lowered. Dev recommends HW investigation/replacement.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat
-Environment: IBM Ceph 9.2, component: rados
-
-1. Deploy IBM Ceph 9.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify OSD handles corrupt local OSDMap store gracefully (or validate HW)
+Environment: IBM Ceph 9.1 (20.2.1-232.el9cp), Samsung NVMe SSDs, 8 hosts / 64 OSDs
+1. Deploy fresh cluster with cephadm on NVMe-backed OSDs -- intent: match environment
+2. Create EC pools and start CephFS workloads to drive map epoch advancement -- intent: generate osdmap writes
+3. Monitor for BlueStore CRC errors in OSD logs -- intent: detect hardware issues early
+4. If CRC errors appear, check dmesg -T for NVMe errors -- intent: correlate with HW
+DIAGNOSTIC COMMANDS:
+- grep &#x27;_verify_csum bad crc32c&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-osd.*.log
+- dmesg -T | grep -i &#x27;nvme\|error\|fault&#x27;
+- smartctl -a /dev/nvme*
+- ceph device check-health</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: The abort path in build_incremental_map_msg is a last-resort safety mechanism; testing should focus on graceful degradation rather than preventing the abort.
+GAPS: No test validates that BlueStore CRC errors on OSD map objects are properly logged and reported before abort; no test for OSD behavior when local map store is corrupted.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Inject bitrot/zeros into BlueStore OSD map objects, verify OSD crash is properly captured and reported
+- Validate that bluestore_fsck_on_mount detects corruption before OSD serves traffic
+- Test cluster recovery when single OSD has corrupted map store</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -243,51 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD.40 crashed with ceph_abort() in build_incremental_map_msg due to BlueStore CRC checksum errors indicating hardware-level data corruption.</div>
+<div>ROOT CAUSE: The OSD&#x27;s BlueStore data on NVMe was corrupted -- blocks that should contain inc_osdmap.306 and osdmap.306 were zeroed out (CRC=0x6706be76 = CRC of all-zeros block). When the OSD attempted to share map epoch 306 during heartbeat, it could not load the incremental or full OSD map from its local store, triggering the panic/abort fallback path at OSD.cc:1484. The abort is expected behavior when neither incremental nor full map can be loaded. Brad Hubbard&#x27;s analysis confirms this is a hardware issue -- the consistent 0x6706be76 checksum across multiple reads indicates the storage returned zeros where valid data should exist, pointing to NVMe write cache failure or firmware bug.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rados.</li>
-<li>Affected version(s): 9.2</li>
-<li>Component: rados</li>
+<li>32 CRC errors in crash_dump_log.txt, all with calculated checksum 0x6706be76 (zeros)</li>
+<li>Crash at OSD.cc:1484 in panic path of build_incremental_map_msg()</li>
+<li>OSD was only 17 minutes old at crash time</li>
+<li>No power loss or failure simulation was running</li>
+<li>Hardware: Samsung MZ1L2960HCJR NVMe SSD on Intel Xeon 6710E</li>
+<li>Syslog kernel messages showed I/O errors around crash time</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Not a software bug. Hardware issue on specific NVMe device. OSD marked down, priority lowered. Dev recommends HW investigation/replacement.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify OSD handles corrupt local OSDMap store gracefully (or validate HW)</div>
+<div>Environment: IBM Ceph 9.1 (20.2.1-232.el9cp), Samsung NVMe SSDs, 8 hosts / 64 OSDs</div>
 <ul>
-<li>[Brad Hubbard] Looking at the logs you suggested. osd40_crash_logs$ grep timestamp crash_info.json</li>
+<li><span class="step-num">1.</span> Deploy fresh cluster with <code>cephadm on NVMe-backed OSDs -- intent: match environment</code></li>
+<li><span class="step-num">2.</span> Create EC pools and start CephFS workloads to drive map epoch advancement -- intent: generate osdmap writes</li>
+<li><span class="step-num">3.</span> Monitor for BlueStore CRC errors in OSD logs -- intent: detect hardware issues early</li>
+<li><span class="step-num">4.</span> If CRC errors appear, check dmesg -T for NVMe errors -- intent: correlate with HW</li>
 </ul>
-<div>&quot;timestamp&quot;: &quot;2026-05-08T14:36:33.817416Z&quot;,</div>
-<div>osd40_crash_logs$  ls -l ceph-osd.40.log*</div>
-<div>-rw-r--r--. 1 brad brad      0 May 11 16:23 ceph-osd.40.log</div>
-<div>-rw-r--r--. 1 brad brad 676986 May 11 16:23 c</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[K Amarnath Reddy] Hi   , This crash was observed during scale testing, but there were no specific reproduction steps. After creating the cluster, we did not perform any operations. We are not sure whether this issue is consistently reproducible. Since it resulted in a crash, I reported it for furt</li>
-<li>[K Amarnath Reddy] , Let me check if  I can get the actual crash log and update here</li>
-<li>[K Amarnath Reddy] Hi    I have collected a crash_dump_log  http://magna002.ceph.redhat.com/ceph-qe-logs/amk/osd40_crash_logs/crash_dump_log.txt Could you please review if this helps?</li>
-<li>[Brad Hubbard] I was looking at this frame and I loaded a binary compatible debugging environment to get a better idea where we are. /usr/bin/ceph-osd(+0x3b0271) [0x558c1eebf271] Searching for that offset in the objdump output places us most likely here.       ceph_abort();</li>
-</ul>
-<div>627fbb:»······48 8</div>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: In Progress</li>
+<li>grep &#x27;_verify_csum bad crc32c&#x27; /var/log/ceph/&lt;fsid&gt;/ceph-osd.*.log</li>
+<li>dmesg -T | grep -i &#x27;nvme\|error\|fault&#x27;</li>
+<li>smartctl -a /dev/nvme*</li>
+<li><code>ceph device check-health</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</div>
-<div>Environment: IBM Ceph 9.2, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: OSD Crash (ceph_abort) in build_incremental_map_msg During Heartbeat</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">The abort path in build_incremental_map_msg is a last-resort safety mechanism; testing should focus on graceful degradation rather than preventing the abort.</div>
+<div>GAPS: No test validates that BlueStore CRC errors on OSD map objects are properly logged and reported before abort; no test for OSD behavior when local map store is corrupted.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Inject bitrot/zeros into BlueStore OSD map objects, verify OSD crash is properly captured and reported</li>
+<li>Validate that bluestore_fsck_on_mount detects corruption before OSD serves traffic</li>
+<li>Test cluster recovery when single OSD has corrupted map store</li>
 </ul></div>
 </div>
 

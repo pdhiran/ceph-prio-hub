@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13200: [Bucket_Notification]Bucket Notification is failing with https push server</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,42 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Bucket_Notification]Bucket Notification is failing with https push server
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Yuval Lifshitz] did not manage to reproduce it on squid (that does not have the boost uri fix).i tried with “http” as well as dashes in the domain name, but did not see any issue. did not try with https, but if that does not work, it is probably a certificate issue. to verify that please set “ve
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW bucket notification fails with HTTPS push endpoint returning error -2200, due to a combination of DNS resolution failure inside the RGW container and TLS/certificate issues.
+ROOT CAUSE: Two separate issues: (1) The HTTPS push endpoint URL uses a long custom domain name with hyphens (e.g., fluentd-http-route-fluentd-listener.apps.dsp01-svc-q.data.bdp.belastingdienst.nl) that could not be resolved from within the RGW container. The curl error &#x27;Couldn&#x27;t resolve host name&#x27; confirms DNS resolution failure inside the container. (2) The push server uses a self-signed certificate, causing TLS verification failures (even with verify-ssl=false, the RGW may still fail on certain certificate chain issues). Lab reproduction showed the issue is specific to certain domain name patterns; simpler domain names work fine. The engineering team could not reproduce with the same long domain name and self-signed cert in all configurations.
+KEY EVIDENCE:
+- RGW log: &#x27;push entry marker failed. error: -2200 (will retry)&#x27;
+- curl error inside container: &#x27;Could not resolve host: fluentd-http-route-fluentd-listener.apps.dsp01-svc-q.data.bdp.belastingdienst.nl&#x27;
+- curl from container also shows: &#x27;SSL certificate problem: self-signed certificate in certificate chain&#x27;
+- Lab test with simple domain (mydomain.example.com) + self-signed cert works fine
+- Lab test with customer&#x27;s exact long domain name reproduces TLS issue
+- Workaround: use HTTP endpoint instead of HTTPS
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Customer environment specifics (DNS, certificate chain, network) could not be fully replicated. Workaround: use HTTP push endpoint or ensure DNS resolves inside RGW container.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Bucket_Notification]Bucket Notification is failing with https push server
-Environment: IBM Ceph 8.0, component: rgw
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi Team,  Please find below the steps to reproduce the RGW bucket notification behavior. 1). Create RGW topic using the aws sns utility, #aws sns create-topic   --name https-topic-det   --endpoint-url http://10.245.0.5:80   --attributes push-endpoint=https://mydomain.example.com:</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW bucket notification failure with HTTPS push endpoint
+Environment: IBM Ceph 8.0, multisite cluster
+1. Create RGW topic with HTTPS push endpoint and verify-ssl=false: `aws sns create-topic --attributes push-endpoint=https://&lt;long-domain&gt;:9001/notifyRGW,verify-ssl=false` -- intent: configure HTTPS notification
+2. Set up HTTPS push server with self-signed certificate: `openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -subj &#x27;/CN=&lt;domain&gt;&#x27;` -- intent: create test endpoint
+3. Configure bucket notification: `aws s3api put-bucket-notification-configuration --bucket &lt;bucket&gt; --notification-configuration file://notification.json` -- intent: bind notification
+4. Upload object: `s3cmd put file s3://&lt;bucket&gt;/test.log` -- intent: trigger notification
+5. Check push server for received notification -- intent: verify or observe failure
+6. Check RGW debug logs: grep for &#x27;error: -2200&#x27; -- intent: confirm failure
+DIAGNOSTIC COMMANDS:
+- `radosgw-admin topic get --topic-name &lt;name&gt;` -- check topic configuration
+- `radosgw-admin notification list --bucket=&lt;bucket&gt;` -- check notification config
+- RGW debug logs with level 20 -- capture notification processing details
+- `curl -vk https://&lt;endpoint&gt;` from inside cephadm shell -- test DNS and TLS from container</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: [Bucket_Notification]Bucket Notification is failing with https push server
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed as insufficient data. Lab tests show simple domains work; long domains with hyphens may have DNS issues.
+GAPS: No automated test for bucket notifications with HTTPS endpoints and self-signed certs. No test for DNS resolution from within RGW container.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Bucket notification with HTTPS push endpoint using self-signed certificate
+- Test DNS resolution of long domain names from within RGW container
+- Test with verify-ssl=false and verify-ssl=true
+- Test notification retry behavior on persistent endpoint failures</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +235,43 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Bucket_Notification]Bucket Notification is failing with https push server</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW bucket notification fails with HTTPS push endpoint returning error -2200, due to a combination of DNS resolution failure inside the RGW container and TLS/certificate issues.</div>
+<div>ROOT CAUSE: Two separate issues: (1) The HTTPS push endpoint URL uses a long custom domain name with hyphens (e.g., fluentd-http-route-fluentd-listener.apps.dsp01-svc-q.data.bdp.belastingdienst.nl) that could not be resolved from within the RGW container. The curl error &#x27;Couldn&#x27;t resolve host name&#x27; confirms DNS resolution failure inside the container. (2) The push server uses a self-signed certificate, causing TLS verification failures (even with verify-ssl=false, the RGW may still fail on certain certificate chain issues). Lab reproduction showed the issue is specific to certain domain name patterns; simpler domain names work fine. The engineering team could not reproduce with the same long domain name and self-signed cert in all configurations.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: rgw</li>
+<li>RGW log: &#x27;push entry marker failed. error: -2200 (will retry)&#x27;</li>
+<li><code>curl error inside container: &#x27;Could not resolve host: fluentd-http-route-fluentd-listener.apps.dsp01-svc-q.data.bdp.belastingdienst.nl&#x27;</code></li>
+<li><code>curl from container also shows: &#x27;SSL certificate problem: self-signed certificate in certificate chain&#x27;</code></li>
+<li>Lab test with simple domain (mydomain.example.com) + self-signed cert works fine</li>
+<li>Lab test with customer&#x27;s exact long domain name reproduces TLS issue</li>
+<li>Workaround: use HTTP endpoint instead of HTTPS</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. Customer environment specifics (DNS, certificate chain, network) could not be fully replicated. Workaround: use HTTP push endpoint or ensure DNS resolves inside RGW container.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW bucket notification failure with HTTPS push endpoint</div>
+<div>Environment: IBM Ceph 8.0, multisite cluster</div>
 <ul>
-<li>[Yuval Lifshitz] did not manage to reproduce it on squid (that does not have the boost uri fix).i tried with “http” as well as dashes in the domain name, but did not see any issue. did not try with https, but if that does not work, it is probably a certificate issue. to verify that please set “ve</li>
+<li><span class="step-num">1.</span> Create RGW topic with HTTPS push endpoint and verify-ssl=false: <code>aws sns create-topic --attributes push-endpoint=https://&amp;lt;long-domain&amp;gt;:9001/notifyRGW,verify-ssl=false</code> -- intent: configure HTTPS notification</li>
+<li><span class="step-num">2.</span> Set up HTTPS push server with self-signed certificate: <code>openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.crt -subj &amp;#x27;/CN=&amp;lt;domain&amp;gt;&amp;#x27;</code> -- intent: create test endpoint</li>
+<li><span class="step-num">3.</span> Configure bucket notification: <code>aws s3api put-bucket-notification-configuration --bucket &amp;lt;bucket&amp;gt; --notification-configuration file://notification.json</code> -- intent: bind notification</li>
+<li><span class="step-num">4.</span> Upload object: <code>s3cmd put file s3://&amp;lt;bucket&amp;gt;/test.log</code> -- intent: trigger notification</li>
+<li><span class="step-num">5.</span> Check push server for received notification -- intent: verify or observe failure</li>
+<li><span class="step-num">6.</span> Check RGW debug logs: grep for &#x27;error: -2200&#x27; -- intent: confirm failure</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>radosgw-admin topic get --topic-name &amp;lt;name&amp;gt;</code></code> -- check topic configuration</li>
+<li><code><code>radosgw-admin notification list --bucket=&amp;lt;bucket&amp;gt;</code></code> -- check notification config</li>
+<li>RGW debug logs with level 20 -- capture notification processing details</li>
+<li><code><code>curl -vk https://&amp;lt;endpoint&amp;gt;</code></code> from inside <code>cephadm shell -- test DNS and TLS from container</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Bucket_Notification]Bucket Notification is failing with https push server</div>
-<div>Environment: IBM Ceph 8.0, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi Team,  Please find below the steps to reproduce the RGW bucket notification behavior. 1). Create RGW topic using the aws sns utility, #aws sns create-topic   --name https-topic-det   --endpoint-url http://10.245.0.5:80   --attributes push-endpoint=https://mydomain.example.com:</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [Bucket_Notification]Bucket Notification is failing with https push server</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed as insufficient data. Lab tests show simple domains work; long domains with hyphens may have DNS issues.</div>
+<div>GAPS: No automated test for bucket notifications with HTTPS endpoints and self-signed certs. No test for DNS resolution from within RGW container.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Bucket notification with HTTPS push endpoint using self-signed certificate</li>
+<li>Test DNS resolution of long domain names from within RGW container</li>
+<li>Test with verify-ssl=false and verify-ssl=true</li>
+<li>Test notification retry behavior on persistent endpoint failures</li>
 </ul></div>
 </div>
 

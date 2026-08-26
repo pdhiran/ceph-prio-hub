@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11694: [BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to improve PG autoscaler behavior when pools use mixed CRUSH rules (some with device class, some without), and add health warning for overlapping CRUSH roots.
+ROOT CAUSE: When the .mgr pool uses the default replicated_rule (no device class constraint) while other pools specify device-class-specific rules (e.g., ssd_crush targeting default~ssd), the PG autoscaler cannot compute correct ratios because it sees overlapping CRUSH roots. The `ceph osd pool autoscale-status` command produces no output at all until the offending pool is moved to a device-class rule. This commonly occurs because .mgr pool is created automatically without device class specification.
+KEY EVIDENCE:
+- `ceph osd pool autoscale-status` produces zero output when any pool lacks device class constraint
+- Moving the offending pool to a device-class rule immediately restores autoscaler output
+- Documented in upstream admonition: https://docs.ceph.com/en/latest/rados/operations/placement-groups/
+- Two-part RFE: (1) OVERLAPPING_CRUSH_ROOTS health warning, (2) `ceph osd crush rule set-device-class` command
+FIX STATUS: Assigned to Kamoltat Sirivadhna (autoscaler maintainer). No target version set. Backlog RFE.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience
-Environment: IBM Ceph 9.0, component: rados
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate PG autoscaler failure with mixed device-class pools
+Environment: Any IBM Ceph version with device class-specific CRUSH rules
+1. Deploy cluster with default .mgr pool using replicated_rule (no device class) -- intent: create baseline
+2. Create additional pools with ssd_crush rule targeting default~ssd -- intent: introduce device class constraint
+3. Run `ceph osd pool autoscale-status` -- intent: observe empty/broken output
+4. Set .mgr pool to use device-class rule: `ceph osd pool set .mgr crush_rule ssd_crush` -- intent: fix the issue
+5. Run `ceph osd pool autoscale-status` again -- intent: verify output restored
+DIAGNOSTIC COMMANDS:
+- ceph osd pool autoscale-status
+- ceph osd dump | grep &#x27;rule 0&#x27;
+- ceph osd crush rule dump
+- ceph osd pool ls detail</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: [BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test coverage for autoscaler behavior with overlapping CRUSH roots.
+GAPS: No test verifies autoscaler produces correct output when pools mix device-class and non-device-class rules. No negative test for empty autoscaler output.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. Autoscaler output validation with mixed device-class pools (expect empty/broken)
+2. After fix: verify OVERLAPPING_CRUSH_ROOTS health warning raised
+3. Verify `ceph osd crush rule set-device-class` command (when implemented)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to improve PG autoscaler behavior when pools use mixed CRUSH rules (some with device class, some without), and add health warning for overlapping CRUSH roots.</div>
+<div>ROOT CAUSE: When the .mgr pool uses the default replicated_rule (no device class constraint) while other pools specify device-class-specific rules (e.g., ssd_crush targeting default~ssd), the PG autoscaler cannot compute correct ratios because it sees overlapping CRUSH roots. The <code>ceph osd pool autoscale-status</code> command produces no output at all until the offending pool is moved to a device-class rule. This commonly occurs because .mgr pool is created automatically without device class specification.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: rados</li>
+<li><code><code>ceph osd pool autoscale-status</code></code> produces zero output when any pool lacks device class constraint</li>
+<li>Moving the offending pool to a device-class rule immediately restores autoscaler output</li>
+<li>Documented in upstream admonition: https://docs.ceph.com/en/latest/rados/operations/placement-groups/</li>
+<li>Two-part RFE: (1) OVERLAPPING_CRUSH_ROOTS health warning, (2) <code><code>ceph osd crush rule set-device-class</code></code> command</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Assigned to Kamoltat Sirivadhna (autoscaler maintainer). No target version set. Backlog RFE.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate PG autoscaler failure with mixed device-class pools</div>
+<div>Environment: Any IBM Ceph version with device class-specific CRUSH rules</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience</div>
-<div>Environment: IBM Ceph 9.0, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: [BZ#2375470] RFE [IBM_SUPPORT] Improve device class / multiple CRUSH root experience</code></li>
+<li><span class="step-num">1.</span> Deploy cluster with default .mgr pool using replicated_rule (no device class) -- intent: create baseline</li>
+<li><span class="step-num">2.</span> Create additional pools with ssd_crush rule targeting default~ssd -- intent: introduce device class constraint</li>
+<li><span class="step-num">3.</span> Run <code><code>ceph osd pool autoscale-status</code></code> -- intent: observe empty/broken output</li>
+<li><span class="step-num">4.</span> Set .mgr pool to use device-class rule: <code><code>ceph osd pool set .mgr crush_rule ssd_crush</code></code> -- intent: fix the issue</li>
+<li><span class="step-num">5.</span> Run <code><code>ceph osd pool autoscale-status</code></code> again -- intent: verify output restored</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd pool autoscale-status</code></li>
+<li><code>ceph osd dump | grep &#x27;rule 0&#x27;</code></li>
+<li><code>ceph osd crush rule dump</code></li>
+<li><code>ceph osd pool ls detail</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test coverage for autoscaler behavior with overlapping CRUSH roots.</div>
+<div>GAPS: No test verifies autoscaler produces correct output when pools mix device-class and non-device-class rules. No negative test for empty autoscaler output.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Autoscaler output validation with mixed device-class pools (expect empty/broken)</li>
+<li><span class="step-num">2.</span> After fix: verify OVERLAPPING_CRUSH_ROOTS health warning raised</li>
+<li><span class="step-num">3.</span> Verify <code><code>ceph osd crush rule set-device-class</code></code> command (when implemented)</li>
 </ul></div>
 </div>
 

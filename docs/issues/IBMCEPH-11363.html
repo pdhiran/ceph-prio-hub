@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11363: [BZ#2365126] [IBM Support][RGW] Large Omap objects in Index Pool for all the sites of Multisite setup for versioned buckets</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2365126] [IBM Support][RGW] Large Omap objects in Index Pool for all the sites of Multisite setup for versioned buckets
-
-ROOT CAUSE:
-- Affected version(s): 5.3
-- Component: rgw-multisite
-
-ENGINEERING FINDINGS:
-- [mbenjamin@redhat.com] as noted in slack, for the cases in which large omap is arising from there being &quot;too many&quot; versions of a subset of objects (in a bucket with versioning enabled), we have a comprehensive fix in progress, but the timeframe to deliver is around 9.0 (there will be backports at least
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Large omap objects accumulate in RGW bucket index pool for versioned buckets in multisite, due to version entries not being properly managed/trimmed.
+ROOT CAUSE: In multisite deployments with versioned buckets, the bucket index shards accumulate excessive omap keys (200K+ per shard, 70+ MB) from version entries. Even though bucket sync is caught up and bilog list returns 0 entries, the omap keys continue to grow. The `radosgw-admin bilog trim` command fails with &#x27;No such file or directory&#x27; without specifying --gen=1 (matching the current index generation). The root issue is that versioned objects accumulate index entries that are not properly cleaned up, requiring a comprehensive &#x27;in-order sharding&#x27; fix being developed by Eric Ivancich.
+KEY EVIDENCE:
+- 272 large omap objects in index pool (key counts 243K-252K per shard, 73-78 MB each)
+- Buckets with 4M+ objects across 89 shards (fill_status shows OK)
+- bilog list returns 0 entries, bilog trim fails without --gen=1
+- Version 16.2.10-94.el8cp (IBM Ceph 5.3)
+- Engineering confirmed comprehensive fix timeline: originally 9.0, slipped to 9.2, in-order sharding still in progress
+FIX STATUS: Comprehensive fix (in-order sharding by Eric Ivancich) targeted for 10.0. Tracked via ISCE-1030. No backport available for current versions.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2365126] [RGW] Large Omap objects in Index Pool for all the sites of Multisite setup for versioned buckets
-Environment: IBM Ceph 5.3, component: rgw-multisite
-
-1. Deploy IBM Ceph 5.3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce large omap object growth in multisite versioned buckets
+Environment: IBM Ceph 5.3+ with multisite, versioned buckets
+1. Configure multisite with 3 zones, create versioned bucket with high object count (4M+) -- intent: simulate customer scale
+2. Enable versioning and write/overwrite objects to generate versions -- intent: accumulate version entries
+3. Monitor omap key counts: `rados -p &lt;index-pool&gt; listomapkeys &lt;shard-object&gt; | wc -l` -- intent: track growth
+4. Check bucket sync status: `radosgw-admin bucket sync status --bucket=&lt;bucket&gt;` -- intent: verify sync is caught up
+5. Check bilog: `radosgw-admin bilog list --bucket=&lt;bucket&gt; --bucket-id=&lt;id&gt; --max-entries=600000 | grep -c op_id` -- intent: verify bilog is empty
+6. Attempt trim: `radosgw-admin bilog trim --bucket=&lt;bucket&gt; --bucket-id=&lt;id&gt;` -- intent: verify ENOENT error
+DIAGNOSTIC COMMANDS:
+- rados -p &lt;index-pool&gt; listomapkeys &lt;object&gt; | wc -l
+- radosgw-admin bucket sync status --bucket=&lt;bucket&gt;
+- radosgw-admin bilog list --bucket=&lt;bucket&gt; --max-entries=600000
+- radosgw-admin bucket layout --bucket=&lt;bucket&gt;
+- ceph health detail (check for large omap warning)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Scale test may not reach threshold that triggers this issue
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for omap growth in versioned multisite buckets at scale.
+GAPS: No long-running test that monitors omap key growth over time with versioned objects. No test for bilog trim behavior with --gen parameter. No validation of the upcoming in-order sharding fix.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw-multisite scenario, verify correct behavior</textarea>
+1. Multi-day versioned bucket test with continuous overwrites, monitor omap growth
+2. Bilog trim with and without --gen parameter on resharded buckets
+3. Validation test for in-order sharding fix (when available in 10.0)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,34 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2365126] [IBM Support][RGW] Large Omap objects in Index Pool for all the sites of Multisite setup for versioned buckets</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Large omap objects accumulate in RGW bucket index pool for versioned buckets in multisite, due to version entries not being properly managed/trimmed.</div>
+<div>ROOT CAUSE: In multisite deployments with versioned buckets, the bucket index shards accumulate excessive omap keys (200K+ per shard, 70+ MB) from version entries. Even though bucket sync is caught up and bilog list returns 0 entries, the omap keys continue to grow. The <code>radosgw-admin bilog trim</code> command fails with &#x27;No such file or directory&#x27; without specifying --gen=1 (matching the current index generation). The root issue is that versioned objects accumulate index entries that are not properly cleaned up, requiring a comprehensive &#x27;in-order sharding&#x27; fix being developed by Eric Ivancich.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 5.3</li>
-<li>Component: rgw-multisite</li>
+<li>272 large omap objects in index pool (key counts 243K-252K per shard, 73-78 MB each)</li>
+<li>Buckets with 4M+ objects across 89 shards (fill_status shows OK)</li>
+<li>bilog list returns 0 entries, bilog trim fails without --gen=1</li>
+<li>Version 16.2.10-94.el8cp (IBM Ceph 5.3)</li>
+<li>Engineering confirmed comprehensive fix timeline: originally 9.0, slipped to 9.2, in-order sharding still in progress</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Comprehensive fix (in-order sharding by Eric Ivancich) targeted for 10.0. Tracked via ISCE-1030. No backport available for current versions.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce large omap object growth in multisite versioned buckets</div>
+<div>Environment: IBM Ceph 5.3+ with multisite, versioned buckets</div>
 <ul>
-<li>[mbenjamin@redhat.com] as noted in slack, for the cases in which large omap is arising from there being &quot;too many&quot; versions of a subset of objects (in a bucket with versioning enabled), we have a comprehensive fix in progress, but the timeframe to deliver is around 9.0 (there will be backports at least</li>
+<li><span class="step-num">1.</span> Configure multisite with 3 zones, create versioned bucket with high object count (4M+) -- intent: simulate customer scale</li>
+<li><span class="step-num">2.</span> Enable versioning and write/overwrite objects to generate versions -- intent: accumulate version entries</li>
+<li><span class="step-num">3.</span> Monitor omap key counts: <code><code>rados -p &amp;lt;index-pool&amp;gt; listomapkeys &amp;lt;shard-object&amp;gt; | wc -l</code></code> -- intent: track growth</li>
+<li><span class="step-num">4.</span> Check bucket sync status: <code><code>radosgw-admin bucket sync status --bucket=&amp;lt;bucket&amp;gt;</code></code> -- intent: verify sync is caught up</li>
+<li><span class="step-num">5.</span> Check bilog: <code><code>radosgw-admin bilog list --bucket=&amp;lt;bucket&amp;gt; --bucket-id=&amp;lt;id&amp;gt; --max-entries=600000 | grep -c op_id</code></code> -- intent: verify bilog is empty</li>
+<li><span class="step-num">6.</span> Attempt trim: <code><code>radosgw-admin bilog trim --bucket=&amp;lt;bucket&amp;gt; --bucket-id=&amp;lt;id&amp;gt;</code></code> -- intent: verify ENOENT error</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li><code>rados -p &lt;index-pool&gt; listomapkeys &lt;object&gt; | wc -l</code></li>
+<li><code>radosgw-admin bucket sync status --bucket=&lt;bucket&gt;</code></li>
+<li><code>radosgw-admin bilog list --bucket=&lt;bucket&gt; --max-entries=600000</code></li>
+<li><code>radosgw-admin bucket layout --bucket=&lt;bucket&gt;</code></li>
+<li><code>ceph health detail (check for large omap warning)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2365126] [RGW] Large Omap objects in Index Pool for all the sites of Multisite setup for versioned buckets</div>
-<div>Environment: IBM Ceph 5.3, component: rgw-multisite</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Scale test may not reach threshold that triggers this issue</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for omap growth in versioned multisite buckets at scale.</div>
+<div>GAPS: No long-running test that monitors omap key growth over time with versioned objects. No test for bilog trim behavior with --gen parameter. No validation of the upcoming in-order sharding fix.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> Multi-day versioned bucket test with continuous overwrites, monitor omap growth</li>
+<li><span class="step-num">2.</span> Bilog trim with and without --gen parameter on resharded buckets</li>
+<li><span class="step-num">3.</span> Validation test for in-order sharding fix (when available in 10.0)</li>
 </ul></div>
 </div>
 

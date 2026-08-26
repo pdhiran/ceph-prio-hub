@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13529: [CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: cephfs
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Duplicate of IBMCEPH-13646 (same issue: SMB subvolumes disappearing in Dashboard GUI when creating new subvolumes under SMB-configured subvolumegroup).
+ROOT CAUSE: Same as IBMCEPH-13646. Dashboard SMB share form corrupts subvolume group SnapRealm.
+KEY EVIDENCE:
+- Confirmed duplicate by reporter (Velmurugan R)
+- Same error: &#x27;invalid value specified for ceph.dir.subvolume&#x27;
+- Same 100% reproduction rate
+FIX STATUS: Duplicate. Fixed via IBMCEPH-13646 in 9.0z2.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup
-Environment: IBM Ceph 9.0, component: cephfs
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-13646
+Environment: Same as IBMCEPH-13646
+See IBMCEPH-13646 for reproduction steps.
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-13646.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephfs tests may not cover: [CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the sm
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported cephfs scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Duplicate of IBMCEPH-13646. See that issue for test coverage.
+GAPS: Same as IBMCEPH-13646.
+SCENARIOS NEEDED: Same as IBMCEPH-13646.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,34 +219,22 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Duplicate of IBMCEPH-13646 (same issue: SMB subvolumes disappearing in Dashboard GUI when creating new subvolumes under SMB-configured subvolumegroup).</div>
+<div>ROOT CAUSE: Same as IBMCEPH-13646. Dashboard SMB share form corrupts subvolume group SnapRealm.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: cephfs</li>
+<li>Confirmed duplicate by reporter (Velmurugan R)</li>
+<li>Same error: &#x27;invalid value specified for ceph.dir.subvolume&#x27;</li>
+<li>Same 100% reproduction rate</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the smb subvolumegroup</div>
-<div>Environment: IBM Ceph 9.0, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing cephfs tests may not cover: [CEPHFs][SMB] SMB subvolumes are disappearing in GUI, while creating the new subvolumes under the sm</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div>FIX STATUS: Duplicate. Fixed via IBMCEPH-13646 in 9.0z2.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-13646</div>
+<div>Environment: Same as IBMCEPH-13646</div>
+<div>See IBMCEPH-13646 for reproduction steps.</div>
+<div>DIAGNOSTIC COMMANDS: Same as IBMCEPH-13646.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Duplicate of IBMCEPH-13646. See that issue for test coverage.</div>
+<div>GAPS: Same as IBMCEPH-13646.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-13646.</div></div>
 </div>
 
 

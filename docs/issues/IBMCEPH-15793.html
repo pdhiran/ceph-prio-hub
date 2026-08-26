@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15793: MOD LC processes not finishing stuck in processing.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MOD LC processes not finishing stuck in processing.
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z6
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Michael Kadmiel] Perfect, they something 234 buckets stuck in processing state, so reshard fix may be the way clear this up, and get them back on track..  I had already suggested to them run 24x7.    since they have these daily delete routines,  maybe i can have them reshard a bucket, then lc re
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: RGW lifecycle (LC) processing stuck with 234 buckets in PROCESSING state, unable to complete
+ROOT CAUSE: The RGW lifecycle processing is unable to complete its workload within the configured processing window. With 234 LC operations stuck in PROCESSING state, the issue appears to be a combination of: (1) insufficient parallelism for the scale of delete operations (millions of objects daily, 1-day retention), (2) possible LC shard contention with current shard count, and (3) a known RGW segfault in RGWIndexCompletionManager::create_completion() during object delete in LC cleanup (IBMCEPH-12966/IBMCEPH-14805, targeted for 8.1z7). Engineering recommended: expand LC window to 24x7, reshard LC shards to reset partition structure, and potentially increase shard count.
+KEY EVIDENCE:
+- 234 LC operations stuck in PROCESSING (184 from yesterday, 38 from today, 12 from 2 days ago)
+- 7 threads per RGW instance, 8 RGW instances across 4 servers
+- Users delete millions of objects daily, 1-day retention policy
+- radosgw-admin lc process --bucket=&lt;name&gt; shows brief peak then stalls
+- Known segfault IBMCEPH-12966 in LC cleanup path on 8.1z6
+- Version: 8.1z6 (19.2.1-366)
+FIX STATUS: In progress. Recommendations: (1) Change LC schedule to 24x7 (00:01-23:59), (2) Run &#x27;radosgw-admin lc reshard fix&#x27; to clear stuck processing state, (3) Increase LC shard count, (4) Upgrade to 8.1z7 for segfault fix. Customer action pending -- site requires physical access.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MOD LC processes not finishing stuck in processing.
-Environment: IBM Ceph 8.1z6, component: rgw
-
-1. Deploy IBM Ceph 8.1z6 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce LC processing stuck state with high-volume delete workload
+Environment: IBM Ceph 8.1z6 (19.2.1-366), multisite, 8+ RGW instances
+1. Configure LC with restricted window (e.g., 03:00-09:00)
+2. Create buckets with millions of objects and 1-day expiration policy
+3. Wait for LC window to start processing
+4. Monitor: radosgw-admin lc list | grep PROCESSING
+5. If &gt;100 buckets stuck in PROCESSING, LC is overwhelmed
+DIAGNOSTIC COMMANDS:
+- radosgw-admin lc list | grep -c PROCESSING
+- radosgw-admin lc list | grep -c COMPLETE
+- ceph config get client.rgw rgw_lc_max_worker
+- ceph config get client.rgw rgw_lc_max_wp_worker
+- radosgw-admin lc reshard fix (to reset stuck state)
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: MOD LC processes not finishing stuck in processing.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Active investigation. No automated test for LC at scale.
+GAPS: No test for LC processing with &gt;100 buckets and millions of objects. No stress test for LC processing window overflow.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- LC processing with 200+ buckets, each with 100K+ objects, 1-day retention
+- LC window overflow: verify processing resumes correctly next window
+- &#x27;radosgw-admin lc reshard fix&#x27; effectiveness test
+- LC 24x7 schedule: verify continuous processing without stalls
+- LC + RGW segfault (IBMCEPH-12966) interaction test
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,40 +245,46 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MOD LC processes not finishing stuck in processing.</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z6</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Michael Kadmiel] Perfect, they something 234 buckets stuck in processing state, so reshard fix may be the way clear this up, and get them back on track..  I had already suggested to them run 24x7.    since they have these daily delete routines,  maybe i can have them reshard a bucket, then lc re</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: In Progress</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MOD LC processes not finishing stuck in processing.</div>
-<div>Environment: IBM Ceph 8.1z6, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z6 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: MOD LC processes not finishing stuck in processing.</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: RGW lifecycle (LC) processing stuck with 234 buckets in PROCESSING state, unable to complete
+ROOT CAUSE: The RGW lifecycle processing is unable to complete its workload within the configured processing window. With 234 LC operations stuck in PROCESSING state, the issue appears to be a combination of: (1) insufficient parallelism for the scale of delete operations (millions of objects daily, 1-day retention), (2) possible LC shard contention with current shard count, and (3) a known RGW segfault in RGWIndexCompletionManager::create_completion() during object delete in LC cleanup (IBMCEPH-12966/IBMCEPH-14805, targeted for 8.1z7). Engineering recommended: expand LC window to 24x7, reshard LC shards to reset partition structure, and potentially increase shard count.
+KEY EVIDENCE:
+- 234 LC operations stuck in PROCESSING (184 from yesterday, 38 from today, 12 from 2 days ago)
+- 7 threads per RGW instance, 8 RGW instances across 4 servers
+- Users delete millions of objects daily, 1-day retention policy
+- radosgw-admin lc process --bucket=&lt;name&gt; shows brief peak then stalls
+- Known segfault IBMCEPH-12966 in LC cleanup path on 8.1z6
+- Version: 8.1z6 (19.2.1-366)
+FIX STATUS: In progress. Recommendations: (1) Change LC schedule to 24x7 (00:01-23:59), (2) Run &#x27;radosgw-admin lc reshard fix&#x27; to clear stuck processing state, (3) Increase LC shard count, (4) Upgrade to 8.1z7 for segfault fix. Customer action pending -- site requires physical access.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce LC processing stuck state with high-volume delete workload
+Environment: IBM Ceph 8.1z6 (19.2.1-366), multisite, 8+ RGW instances
+1. Configure LC with restricted window (e.g., 03:00-09:00)
+2. Create buckets with millions of objects and 1-day expiration policy
+3. Wait for LC window to start processing
+4. Monitor: radosgw-admin lc list | grep PROCESSING
+5. If &gt;100 buckets stuck in PROCESSING, LC is overwhelmed
+DIAGNOSTIC COMMANDS:
+- radosgw-admin lc list | grep -c PROCESSING
+- radosgw-admin lc list | grep -c COMPLETE
+- ceph config get client.rgw rgw_lc_max_worker
+- ceph config get client.rgw rgw_lc_max_wp_worker
+- radosgw-admin lc reshard fix (to reset stuck state)
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Active investigation. No automated test for LC at scale.
+GAPS: No test for LC processing with &gt;100 buckets and millions of objects. No stress test for LC processing window overflow.
+SCENARIOS NEEDED:
+- LC processing with 200+ buckets, each with 100K+ objects, 1-day retention
+- LC window overflow: verify processing resumes correctly next window
+- &#x27;radosgw-admin lc reshard fix&#x27; effectiveness test
+- LC 24x7 schedule: verify continuous processing without stalls
+- LC + RGW segfault (IBMCEPH-12966) interaction test
+</pre></div>
 </div>
 
 

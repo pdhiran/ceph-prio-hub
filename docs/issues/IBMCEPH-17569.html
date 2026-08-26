@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17569: [9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,51 +189,70 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW crashes with segfault (SIGSEGV) in the async RADOS shard read completion path during lifecycle processing on versioned buckets with heavy OMAP shards.
 
-ROOT CAUSE:
-- Daemon crash reported in rgw.
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.0z2
-- Component: rgw
+ROOT CAUSE: Use-after-free bug in the RGW async shard I/O codepath. When multiple lifecycle (LC) worker threads and GC threads concurrently process versioned buckets, they issue async OMAP shard reads via the rgwrados::shard_io::detail::ReadHandler. The parent LC operation object can be freed (e.g., when a bucket processing completes or the coroutine runs co_return) while async read callbacks are still in-flight. When the callback fires on already-freed memory, it dereferences a dangling pointer (observed as `this=0x28` in frame 6 — an invalid object address). The fix (from IBMCEPH-17169) replaces the two-phase cancel logic with inline cancellation before `outstanding.erase(self)`, eliminating the window where callbacks can fire on freed coroutine state. Contributing factors: (a) OSD WAL full events widened the timing window between async request dispatch and callback completion, (b) 704 large OMAP objects with millions of keys per shard, (c) 2.4M+ delete markers in a single bucket.
 
-ENGINEERING FINDINGS:
-- [Ravinder Kumar] More details about the issue: -- #We also found &quot;out of memory&quot; log on node chds0064 [in0059wl@itclin83 log]$ pwd
-/ecurep/sf/TS022/567/TS022567489/2026-08-06/sosreport-chds0064-TS022567489-2026-08-06-olgahch.tar.xz_unpack/sosreport-chds0064-TS022567489-2026-08-06-olgahch/var/log
-- [Ravinder Kumar] Hi    Yesterday , We found  below “Segmentation fault” log on node chds0064 in /var/log/messages matching crash time. We requested CU about RGW log from crash time for chds0064 and chds0066. But CU said they do not found logs from crash time now may be rotated. Instead of this CU
-- [Vidushi Mishra] hi    Is this crash similar to the one we saw and you fixed in 9.2   ?  Both crash in the  async RADOS shard read completion  path
-- [Ravinder Kumar] Hi Team cc   ,    ,    CU did not find coredump in node  chds0056  currently. But he got coredump in another node chds0064. That he has uploaded on box. Core dump File Name:  core.radosgw.167.e9f86934a0d8431a96f0ac82b91873c1.1109110.1785721914000000.zst BOX link:    Regards Ravin
-- [Manya Dogra] [INTERNAL DO NOT SHARE WITH CUSTOMER] Some additonal findings from the log analysis 1. Multiple LC worker threads were processing different buckets concurrently while GC was also active. Each of these operations issues async OMAP shard reads. The parent LC operation object was fr
+KEY EVIDENCE:
+- Stack signature: bd1e0e9a9ebec79343a6392e0c3c3758c5690321c73ff4acde78cd577f6bc70c (identical across chds0064 and chds0066)
+- Coredump analysis: Frame 6 shows this=0x28 (freed object), Frame 19 shows cancellation_slot handler_=0x0 (already cleaned up), Frame 20 shows need_cancel optimized out (the variable the fix removes)
+- LC log shows interleaved deletion and crash: &#x27;lifecycle: DELETED::ukp-sales wp_thrd: 1, 0 *** Caught signal (Segmentation fault)&#x27;
+- Aug 5 crash-restart loop: 21 crashes in one day, GC queue grew from 15M to 52M items
+- Version: 20.1.0-185.el9cp (IBM Ceph 9.0z2)
+- HEALTH_WARN: RECENT_CRASH with 3 RGW daemons
+- Same stack signature as IBMCEPH-17169 (fix targeted for 9.2)
+- Backported to ceph-9.1-rhel-patches per Shilpa&#x27;s comment
+- Fix available in build ceph-20.2.1-391 (ON_QA)
 
-FIX STATUS:
-- Fix available in build 20.2.1-391.
-- Verified by: Shilpa Jagannath</textarea>
+FIX STATUS: Fix backported to 9.1z branch. Available in build ceph-20.2.1-391. Status: ON_QA. Original fix from IBMCEPH-17169 (targeted for 9.2). Note: original bug IBMCEPH-17169 is &#x27;not verified yet&#x27; per Shilpa&#x27;s comment.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets
-Environment: IBM Ceph 9.0z2, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger RGW crash during concurrent LC/GC processing on versioned buckets with large OMAP.
+Environment: IBM Ceph 9.0z2 (20.1.0-185.el9cp) or pre-fix 9.1z.
 
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Trigger the failure scenario (see engineering findings below)
-6. Check for daemon crash -- `ceph crash ls-new`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy cluster with multiple RGW daemons (15+ like customer) -- intent: increase concurrency
+2. Enable bucket versioning and object lock on buckets:
+   aws s3api put-bucket-versioning --bucket &lt;bucket&gt; --versioning-configuration Status=Enabled
+   aws s3api put-object-lock-configuration --bucket &lt;bucket&gt; --object-lock-configuration &#x27;{&quot;ObjectLockEnabled&quot;:&quot;Enabled&quot;,&quot;Rule&quot;:{&quot;DefaultRetention&quot;:{&quot;Mode&quot;:&quot;COMPLIANCE&quot;,&quot;Days&quot;:30}}}&#x27;
+   -- intent: generate noncurrent versions and delete markers
+3. Configure lifecycle policy with noncurrent expiration and delete marker cleanup:
+   aws s3api put-bucket-lifecycle-configuration --bucket &lt;bucket&gt; --lifecycle-configuration &#x27;{&quot;Rules&quot;:[{&quot;ID&quot;:&quot;cleanup&quot;,&quot;Status&quot;:&quot;Enabled&quot;,&quot;NoncurrentVersionExpiration&quot;:{&quot;NoncurrentDays&quot;:30},&quot;AbortIncompleteMultipartUpload&quot;:{&quot;DaysAfterInitiation&quot;:2},&quot;Expiration&quot;:{&quot;ExpiredObjectDeleteMarker&quot;:true}}]}&#x27;
+   -- intent: trigger LC processing that issues async shard reads
+4. Generate heavy write+delete workload to create millions of object versions and delete markers per shard
+   -- intent: create large OMAP conditions (&gt;200k keys/shard)
+5. Enable dynamic resharding:
+   ceph config set client.rgw rgw_dynamic_resharding true
+   -- intent: match customer configuration
+6. Monitor for RGW crashes:
+   ceph health detail | grep RECENT_CRASH
+   ceph crash ls-new
+   -- intent: detect the segfault
+
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph health detail
+- radosgw-admin gc list --include-all | wc -l
+- radosgw-admin lc list --include-all
+- radosgw-admin bucket stats --bucket=&lt;bucket&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available in build 391 (ON_QA). Original IBMCEPH-17169 not yet verified. QE verification needed for the backport.
 
 GAPS:
-- No crash regression test for: [9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets
-- Upgrade path may lack pre-condition coverage for this scenario
+- IBMCEPH-17169 (original fix) is &#x27;not verified yet&#x27; per Shilpa&#x27;s comment — QE verification of the fix is outstanding
+- No automated stress test for concurrent LC+GC with large OMAP on versioned buckets
+- No test for the specific race condition between coroutine cleanup and async read callbacks
+- No test validates behavior under OSD WAL-full conditions (which widens the race window)
 
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. Concurrent LC+GC stress test: 15+ RGW daemons, versioned buckets with 500k+ versions, concurrent LC and GC processing for 24h — verify no crashes
+2. Large OMAP shard stress: Buckets with &gt;200k keys per shard, dynamic resharding enabled, LC processing — verify no segfault
+3. Fix verification: Run the crash scenario on build 391 and verify no RECENT_CRASH warnings
+4. GC queue stability: Verify GC queue does not grow unbounded during LC processing with versioned objects
+5. LC error handling: Verify that LC correctly handles &#x27;-2 No such file or directory&#x27; errors without marking bucket as COMPLETE prematurely</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -244,52 +263,74 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW crashes with segfault (SIGSEGV) in the async RADOS shard read completion path during lifecycle processing on versioned buckets with heavy OMAP shards.</div>
+<div>ROOT CAUSE: Use-after-free bug in the RGW async shard I/O codepath. When multiple lifecycle (LC) worker threads and GC threads concurrently process versioned buckets, they issue async OMAP shard reads via the rgwrados::shard_io::detail::ReadHandler. The parent LC operation object can be freed (e.g., when a bucket processing completes or the coroutine runs co_return) while async read callbacks are still in-flight. When the callback fires on already-freed memory, it dereferences a dangling pointer (observed as <code>this=0x28</code> in frame 6 — an invalid object address). The fix (from IBMCEPH-17169) replaces the two-phase cancel logic with inline cancellation before <code>outstanding.erase(self)</code>, eliminating the window where callbacks can fire on freed coroutine state. Contributing factors: (a) OSD WAL full events widened the timing window between async request dispatch and callback completion, (b) 704 large OMAP objects with millions of keys per shard, (c) 2.4M+ delete markers in a single bucket.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rgw.</li>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: rgw</li>
+<li>Stack signature: bd1e0e9a9ebec79343a6392e0c3c3758c5690321c73ff4acde78cd577f6bc70c (identical across chds0064 and chds0066)</li>
+<li>Coredump analysis: Frame 6 shows this=0x28 (freed object), Frame 19 shows cancellation_slot handler_=0x0 (already cleaned up), Frame 20 shows need_cancel optimized out (the variable the fix removes)</li>
+<li>LC log shows interleaved deletion and crash: &#x27;lifecycle: DELETED::ukp-sales wp_thrd: 1, 0 *** Caught signal (Segmentation fault)&#x27;</li>
+<li>Aug 5 crash-restart loop: 21 crashes in one day, GC queue grew from 15M to 52M items</li>
+<li>Version: 20.1.0-185.el9cp (IBM Ceph 9.0z2)</li>
+<li>HEALTH_WARN: RECENT_CRASH with 3 RGW daemons</li>
+<li>Same stack signature as IBMCEPH-17169 (fix targeted for 9.2)</li>
+<li>Backported to ceph-9.1-rhel-patches per Shilpa&#x27;s comment</li>
+<li>Fix available in build ceph-20.2.1-391 (ON_QA)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fix backported to 9.1z branch. Available in build ceph-20.2.1-391. Status: ON_QA. Original fix from IBMCEPH-17169 (targeted for 9.2). Note: original bug IBMCEPH-17169 is &#x27;not verified yet&#x27; per Shilpa&#x27;s comment.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger RGW crash during concurrent LC/GC processing on versioned buckets with large OMAP.</div>
+<div>Environment: IBM Ceph 9.0z2 (20.1.0-185.el9cp) or pre-fix 9.1z.</div>
 <ul>
-<li>[Ravinder Kumar] More details about the issue: -- #We also found &quot;out of memory&quot; log on node chds0064 [in0059wl@itclin83 log]$ pwd</li>
+<li><span class="step-num">1.</span> Deploy cluster with multiple RGW daemons (15+ like customer) -- intent: increase concurrency</li>
+<li><span class="step-num">2.</span> Enable bucket versioning and object lock on buckets:</li>
 </ul>
-<div>/ecurep/sf/TS022/567/TS022567489/2026-08-06/sosreport-chds0064-TS022567489-2026-08-06-olgahch.tar.xz_unpack/sosreport-chds0064-TS022567489-2026-08-06-olgahch/var/log</div>
+<div>aws s3api put-bucket-versioning --bucket &lt;bucket&gt; --versioning-configuration Status=Enabled</div>
+<div>aws s3api put-object-lock-configuration --bucket &lt;bucket&gt; --object-lock-configuration &#x27;{&quot;ObjectLockEnabled&quot;:&quot;Enabled&quot;,&quot;Rule&quot;:{&quot;DefaultRetention&quot;:{&quot;Mode&quot;:&quot;COMPLIANCE&quot;,&quot;Days&quot;:30}}}&#x27;</div>
+<div>-- intent: generate noncurrent versions and delete markers</div>
 <ul>
-<li>[Ravinder Kumar] Hi    Yesterday , We found  below “Segmentation fault” log on node chds0064 in /var/log/messages matching crash time. We requested CU about RGW log from crash time for chds0064 and chds0066. But CU said they do not found logs from crash time now may be rotated. Instead of this CU</li>
-<li>[Vidushi Mishra] hi    Is this crash similar to the one we saw and you fixed in 9.2   ?  Both crash in the  async RADOS shard read completion  path</li>
-<li>[Ravinder Kumar] Hi Team cc   ,    ,    CU did not find coredump in node  chds0056  currently. But he got coredump in another node chds0064. That he has uploaded on box. Core dump File Name:  core.radosgw.167.e9f86934a0d8431a96f0ac82b91873c1.1109110.1785721914000000.zst BOX link:    Regards Ravin</li>
-<li>[Manya Dogra] [INTERNAL DO NOT SHARE WITH CUSTOMER] Some additonal findings from the log analysis 1. Multiple LC worker threads were processing different buckets concurrently while GC was also active. Each of these operations issues async OMAP shard reads. The parent LC operation object was fr</li>
+<li><span class="step-num">3.</span> Configure lifecycle policy with noncurrent expiration and delete marker cleanup:</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>aws s3api put-bucket-lifecycle-configuration --bucket &lt;bucket&gt; --lifecycle-configuration &#x27;{&quot;Rules&quot;:[{&quot;ID&quot;:&quot;cleanup&quot;,&quot;Status&quot;:&quot;Enabled&quot;,&quot;NoncurrentVersionExpiration&quot;:{&quot;NoncurrentDays&quot;:30},&quot;AbortIncompleteMultipartUpload&quot;:{&quot;DaysAfterInitiation&quot;:2},&quot;Expiration&quot;:{&quot;ExpiredObjectDeleteMarker&quot;:true}}]}&#x27;</div>
+<div>-- intent: trigger LC processing that issues async shard reads</div>
 <ul>
-<li>Fix available in build 20.2.1-391.</li>
-<li>Verified by: Shilpa Jagannath</li>
+<li><span class="step-num">4.</span> Generate heavy write+delete workload to create millions of object versions and delete markers per shard</li>
+</ul>
+<div>-- intent: create large OMAP conditions (&gt;200k keys/shard)</div>
+<ul>
+<li><span class="step-num">5.</span> Enable dynamic resharding:</li>
+</ul>
+<div>ceph config set client.rgw rgw_dynamic_resharding true</div>
+<div>-- intent: match customer configuration</div>
+<ul>
+<li><span class="step-num">6.</span> Monitor for RGW crashes:</li>
+</ul>
+<div>ceph health detail | grep RECENT_CRASH</div>
+<div>ceph crash ls-new</div>
+<div>-- intent: detect the segfault</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph crash ls-new</code></li>
+<li><code>ceph crash info &lt;crash-id&gt;</code></li>
+<li><code>ceph health detail</code></li>
+<li><code>radosgw-admin gc list --include-all | wc -l</code></li>
+<li><code>radosgw-admin lc list --include-all</code></li>
+<li><code>radosgw-admin bucket stats --bucket=&lt;bucket&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets</div>
-<div>Environment: IBM Ceph 9.0z2, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">6.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available in build 391 (ON_QA). Original IBMCEPH-17169 not yet verified. QE verification needed for the backport.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for: [9.1z Backport][IBM_Customer][RGW] RGW crashes during async shard OMAP reads on versioned buckets</li>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>IBMCEPH-17169 (original fix) is &#x27;not verified yet&#x27; per Shilpa&#x27;s comment — QE verification of the fix is outstanding</li>
+<li>No automated stress test for concurrent LC+GC with large OMAP on versioned buckets</li>
+<li>No test for the specific race condition between coroutine cleanup and async read callbacks</li>
+<li>No test validates behavior under OSD WAL-full conditions (which widens the race window)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Concurrent LC+GC stress test: 15+ RGW daemons, versioned buckets with 500k+ versions, concurrent LC and GC processing for 24h — verify no crashes</li>
+<li><span class="step-num">2.</span> Large OMAP shard stress: Buckets with &gt;200k keys per shard, dynamic resharding enabled, LC processing — verify no segfault</li>
+<li><span class="step-num">3.</span> Fix verification: Run the crash scenario on build 391 and verify no RECENT_CRASH warnings</li>
+<li><span class="step-num">4.</span> GC queue stability: Verify GC queue does not grow unbounded during LC processing with versioned objects</li>
+<li><span class="step-num">5.</span> LC error handling: Verify that LC correctly handles &#x27;-2 No such file or directory&#x27; errors without marking bucket as COMPLETE prematurely</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15666: Add Prometheus metric to expose PG rebuild time using PG state timestamps</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Add Prometheus metric to expose PG rebuild time using PG state timestamps
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: ceph-mgr/prometheus
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] Call Summary – PG rebuild time using PG state timestamps (IBMCEPH-15666) Context : Apple requires PG rebuild/recovery time as a Prometheus metric (not pg dump polling). Long-term solution (last_degraded + metrics) is planned for Ceph 10 (~9–10 months). Need an interim solution ba
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to expose PG rebuild/recovery duration as a Prometheus metric using existing pg_stats timestamps.
+ROOT CAUSE: No direct Prometheus metric tracks PG rebuild time. Fields like last_clean, last_undegraded, and last_fullsized exist in pg_stats but are not exposed via Prometheus in a way that allows computation of rebuild duration. The PoC mgr module (PR #69245) demonstrated that last_undegraded and last_fullsized converge to the same timestamp as last_clean after recovery completes, making the naive approach (duration = last_recovery_complete - last_clean) unreliable. Additional fields (num_objects_misplaced, num_objects_degraded, num_objects_recovered, last_change) are needed for a close approximation.
+KEY EVIDENCE:
+- Apple customer requirement for durability metrics
+- PoC mgr module: https://github.com/ceph/ceph/pull/69245
+- Pseudo-code logic tested: is_vulnerable = state &amp; (PG_STATE_DEGRADED | PG_STATE_UNDERSIZED)
+- Testing showed last_undegraded/last_fullsized timestamps collapse to last_clean after recovery
+- Long-term solution planned for Ceph 10 (~9-10 months)
+- Interim approach: replicate logic in Prometheus/ceph-exporter
+- Scalability concern: ~50K+ PGs × 10 records = large in-memory footprint
+FIX STATUS: PoC delivered. Interim solution being evaluated by Prometheus/Frontend team. Full productized feature targeted for Ceph 10.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Add Prometheus metric to expose PG rebuild time using PG state timestamps
-Environment: IBM Ceph 8.1, component: ceph-mgr/prometheus
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate PG rebuild time metric accuracy against actual recovery duration
+Environment: IBM Ceph 8.1z3 (RHCS 8.1z3)
+1. Deploy cluster with test pool (size=3, min_size=2) and write data -- intent: create PGs with objects
+2. Install rebuild-stats mgr module from PR #69245 -- intent: enable metric collection
+3. Stop one OSD: ceph orch daemon stop osd.&lt;id&gt; -- intent: trigger PG degradation
+4. Run: ceph rebuild-stats -- intent: observe active_rebuilds with start timestamps
+5. Restart OSD: ceph orch daemon start osd.&lt;id&gt; -- intent: trigger recovery
+6. Compare rebuild-stats duration_seconds with manual observation of recovery time -- intent: validate accuracy
+DIAGNOSTIC COMMANDS:
+- ceph rebuild-stats
+- ceph pg dump | grep -E &#x27;degraded|undersized&#x27;
+- ceph osd perf
+- ceph health detail</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing ceph-mgr/prometheus tests may not cover: Add Prometheus metric to expose PG rebuild time using PG state timestamps
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test coverage. PoC module tested only on single-node cluster.
+GAPS: No test validates metric accuracy at scale (50K+ PGs). No test for multiple concurrent OSD failures. No test for edge cases like backfill vs recovery vs rebalance.
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-mgr/prometheus scenario, verify correct behavior</textarea>
+1. Single OSD failure + recovery: validate rebuild duration matches actual recovery time (±5s tolerance)
+2. Multiple concurrent OSD failures: verify per-PG tracking accuracy
+3. Scale test: 50K+ PGs with periodic failures to validate memory footprint and performance impact
+4. Edge case: PG experiencing scrub events during recovery (last_clean getting bumped)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,34 +236,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Add Prometheus metric to expose PG rebuild time using PG state timestamps</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to expose PG rebuild/recovery duration as a Prometheus metric using existing pg_stats timestamps.</div>
+<div>ROOT CAUSE: No direct Prometheus metric tracks PG rebuild time. Fields like last_clean, last_undegraded, and last_fullsized exist in pg_stats but are not exposed via Prometheus in a way that allows computation of rebuild duration. The PoC mgr module (PR #69245) demonstrated that last_undegraded and last_fullsized converge to the same timestamp as last_clean after recovery completes, making the naive approach (duration = last_recovery_complete - last_clean) unreliable. Additional fields (num_objects_misplaced, num_objects_degraded, num_objects_recovered, last_change) are needed for a close approximation.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-mgr/prometheus</li>
+<li>Apple customer requirement for durability metrics</li>
+<li>PoC mgr module: https://github.com/ceph/ceph/pull/69245</li>
+<li>Pseudo-code logic tested: is_vulnerable = state &amp; (PG_STATE_DEGRADED | PG_STATE_UNDERSIZED)</li>
+<li>Testing showed last_undegraded/last_fullsized timestamps collapse to last_clean after recovery</li>
+<li>Long-term solution planned for Ceph 10 (~9-10 months)</li>
+<li>Interim approach: replicate logic in Prometheus/ceph-exporter</li>
+<li>Scalability concern: ~50K+ PGs × 10 records = large in-memory footprint</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: PoC delivered. Interim solution being evaluated by Prometheus/Frontend team. Full productized feature targeted for Ceph 10.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate PG rebuild time metric accuracy against actual recovery duration</div>
+<div>Environment: IBM Ceph 8.1z3 (RHCS 8.1z3)</div>
 <ul>
-<li>[Prashant Dhange] Call Summary – PG rebuild time using PG state timestamps (IBMCEPH-15666) Context : Apple requires PG rebuild/recovery time as a Prometheus metric (not pg dump polling). Long-term solution (last_degraded + metrics) is planned for Ceph 10 (~9–10 months). Need an interim solution ba</li>
+<li><span class="step-num">1.</span> Deploy cluster with test pool (size=3, min_size=2) and write data -- intent: create PGs with objects</li>
+<li><span class="step-num">2.</span> Install rebuild-stats mgr module from PR #69245 -- intent: enable metric collection</li>
+<li><span class="step-num">3.</span> Stop one OSD: <code>ceph orch daemon stop osd.&lt;id&gt; -- intent: trigger PG degradation</code></li>
+<li><span class="step-num">4.</span> Run: <code>ceph rebuild-stats -- intent: observe active_rebuilds with start timestamps</code></li>
+<li><span class="step-num">5.</span> Restart OSD: <code>ceph orch daemon start osd.&lt;id&gt; -- intent: trigger recovery</code></li>
+<li><span class="step-num">6.</span> Compare rebuild-stats duration_seconds with manual observation of recovery time -- intent: validate accuracy</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph rebuild-stats</code></li>
+<li><code>ceph pg dump | grep -E &#x27;degraded|undersized&#x27;</code></li>
+<li><code>ceph osd perf</code></li>
+<li><code>ceph health detail</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Add Prometheus metric to expose PG rebuild time using PG state timestamps</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-mgr/prometheus</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing ceph-mgr/prometheus tests may not cover: Add Prometheus metric to expose PG rebuild time using PG state timestamps</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test coverage. PoC module tested only on single-node cluster.</div>
+<div>GAPS: No test validates metric accuracy at scale (50K+ PGs). No test for multiple concurrent OSD failures. No test for edge cases like backfill vs recovery vs rebalance.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-mgr/prometheus scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> Single OSD failure + recovery: validate rebuild duration matches actual recovery time (±5s tolerance)</li>
+<li><span class="step-num">2.</span> Multiple concurrent OSD failures: verify per-PG tracking accuracy</li>
+<li><span class="step-num">3.</span> Scale test: 50K+ PGs with periodic failures to validate memory footprint and performance impact</li>
+<li><span class="step-num">4.</span> Edge case: PG experiencing scrub events during recovery (last_clean getting bumped)</li>
 </ul></div>
 </div>
 

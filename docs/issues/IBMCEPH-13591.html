@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13591: [IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,51 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill
-
-ROOT CAUSE:
-- Memory issue (leak, OOM, or excessive consumption).
-- Affected version(s): 7.1z8
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Brad Hubbard] Two observations. osd_memory_target is not a hard limit (see documentation) and this is highly unlikely to be a memory leak so it might be a good idea to either provide definitive proof that it is, or stop using that term without such proof since currently that appears to be an u
-- [Deshpande Vaishnavi Renukadas] Hello Team, Hello Team, sos-report says that ceph-osd is consuming most of the memory there is not any other process which is consuming the memory as per the linux analysis, buffer_io and dentry usage is high Your dmesg output shows a system barely keeping its head above water. W
-- [Ravinder Kumar] Hi Team We got below query from customer. Could you please check it once. ----- We would like to share an additional finding from our investigation. We have formed the following hypothesis, though it has not yet been confirmed. [Hypothesis] With bluefs_buffered_io set to its defa
-- [Deshpande Vaishnavi Renukadas] Hello   , Memory used by ceph-osd  $ grep ceph-osd ps_auxwwwm | awk &#x27;{print $2, $4&quot;%&quot;, $6/1024 &quot; MB&quot;, $11}&#x27; | sort -k3 -nr
-
-7109 3.7% 9543.16 MB /usr/bin/ceph-osd
-6576 3.1% 8025.07 MB /usr/bin/ceph-osd
-7099 2.9% 7678.2 MB /usr/bin/ceph-osd
-7080 2.9% 7662.77 MB /usr/bin/ceph-osd
-7
-- [Prashant Dhange] Hi All, Analysis of ceph-ssd-y130013 sosreport node,  sosreport location : /ecurep/sf/TS021/744/TS021744338/0-all_data/sosreport-ceph-ssd-y130013-2026-03-26-seucics.tar.xz_unpack/sosreport-ceph-ssd-y130013-2026-03-26-seucics [1] System memory usage at time of collection. At the t
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OOM kills during Ceph 5.3 to 7.1z8 upgrade traced to Intel ICE network driver kernel memory leak, not Ceph.
+ROOT CAUSE: The memory growth was initially attributed to Ceph OSD memory leak but investigation proved OSD memory consumption was within expected limits (7-10GB per OSD, within 8GB target). The actual root cause was a memory leak in the Intel ICE network driver on kernel 5.14.0-611.27.1.el9_7. Page_owner data confirmed ~30GB allocated via ICE driver paths out of 155GB total. The issue was exposed during the Ceph 5.3 to 7.1z8 upgrade because the OS was simultaneously upgraded from RHEL 8 to RHEL 9.7 (which changed cgroup accounting from v1 to v2). Under cgroup v2, kernel buffers from bluefs_buffered_io fall outside cgroup memory accounting, preventing proper memory pressure detection.
+KEY EVIDENCE:
+- OSD memory per process: 7-10GB (within osd_memory_target=8GB)
+- Total system memory: 263GB, used: 252GB, free: 3.2GB
+- Page_owner: ~30GB allocated via ICE driver, ~94GB via ceph daemon processes (mostly rocksdb)
+- Fix: kernel downgrade to 5.14.0-611.7.1.el9_7 stabilized memory at 27-34%
+- Related to previously fixed ICE driver bug in kernel-5.14.0-563.el9 (9.6)
+FIX STATUS: Closed. Root cause: Intel ICE driver kernel memory leak on specific RHEL 9.7 kernel. Workaround: downgrade to kernel-5.14.0-611.7.1.el9_7. Permanent fix expected from Red Hat kernel team.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill
-Environment: IBM Ceph 7.1z8, component: rados
-
-1. Deploy IBM Ceph 7.1z8 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Monitor daemon memory -- `ceph tell &lt;daemon&gt; heap stats`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate that OSD memory stays within limits during upgrade and kernel memory is the actual source
+Environment: IBM Ceph 5.3 -&gt; 7.1z8 upgrade on RHEL 9.7 with kernel 5.14.0-611.27.1.el9_7
+1. Upgrade RHEL 8 to RHEL 9.7 with kernel 5.14.0-611.27.1.el9_7 -- intent: reproduce environment
+2. Begin Ceph upgrade from 5.3 to 7.1z8 -- intent: trigger high IO activity
+3. Monitor: watch -n 60 &#x27;free -g; podman stats --no-stream&#x27; -- intent: track memory growth
+4. After few hours observe memory at 100% -- intent: confirm reproduction
+5. Validate with page_owner: echo 1 &gt; /sys/kernel/debug/page_owner_enable -- intent: identify allocator
+6. Downgrade kernel to 5.14.0-611.7.1.el9_7 and verify stability -- intent: confirm fix
+DIAGNOSTIC COMMANDS:
+- free -g
+- podman stats --no-stream
+- cat /proc/meminfo (check Buffers, Active/Inactive)
+- cat /sys/kernel/debug/page_owner &gt; page_owner_full.txt
+- uname -r (verify kernel version)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No memory leak detection test for rados
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue was kernel-level, not Ceph. Ceph team proved OSD memory was within limits.
+GAPS: No automated test validates kernel memory accounting behavior during upgrade across cgroup v1/v2 transition. No test for ICE driver memory leak.
 SCENARIOS NEEDED:
-- Memory: long-running workload, monitor for leaks
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Upgrade test matrix: validate kernel versions against known memory leak CVEs before recommending
+2. Monitor total system memory (not just ceph process RSS) during sustained IO to catch kernel-level leaks
+3. Include page_owner analysis in OOM investigation playbook</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -244,51 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OOM kills during Ceph 5.3 to 7.1z8 upgrade traced to Intel ICE network driver kernel memory leak, not Ceph.</div>
+<div>ROOT CAUSE: The memory growth was initially attributed to Ceph OSD memory leak but investigation proved OSD memory consumption was within expected limits (7-10GB per OSD, within 8GB target). The actual root cause was a memory leak in the Intel ICE network driver on kernel 5.14.0-611.27.1.el9_7. Page_owner data confirmed ~30GB allocated via ICE driver paths out of 155GB total. The issue was exposed during the Ceph 5.3 to 7.1z8 upgrade because the OS was simultaneously upgraded from RHEL 8 to RHEL 9.7 (which changed cgroup accounting from v1 to v2). Under cgroup v2, kernel buffers from bluefs_buffered_io fall outside cgroup memory accounting, preventing proper memory pressure detection.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Memory issue (leak, OOM, or excessive consumption).</li>
-<li>Affected version(s): 7.1z8</li>
-<li>Component: rados</li>
+<li>OSD memory per process: 7-10GB (within osd_memory_target=8GB)</li>
+<li>Total system memory: 263GB, used: 252GB, free: 3.2GB</li>
+<li>Page_owner: ~30GB allocated via ICE driver, ~94GB via <code>ceph daemon processes (mostly rocksdb)</code></li>
+<li>Fix: kernel downgrade to 5.14.0-611.7.1.el9_7 stabilized memory at 27-34%</li>
+<li>Related to previously fixed ICE driver bug in kernel-5.14.0-563.el9 (9.6)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed. Root cause: Intel ICE driver kernel memory leak on specific RHEL 9.7 kernel. Workaround: downgrade to kernel-5.14.0-611.7.1.el9_7. Permanent fix expected from Red Hat kernel team.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate that OSD memory stays within limits during upgrade and kernel memory is the actual source</div>
+<div>Environment: IBM Ceph 5.3 -&gt; 7.1z8 upgrade on RHEL 9.7 with kernel 5.14.0-611.27.1.el9_7</div>
 <ul>
-<li>[Brad Hubbard] Two observations. osd_memory_target is not a hard limit (see documentation) and this is highly unlikely to be a memory leak so it might be a good idea to either provide definitive proof that it is, or stop using that term without such proof since currently that appears to be an u</li>
-<li>[Deshpande Vaishnavi Renukadas] Hello Team, Hello Team, sos-report says that ceph-osd is consuming most of the memory there is not any other process which is consuming the memory as per the linux analysis, buffer_io and dentry usage is high Your dmesg output shows a system barely keeping its head above water. W</li>
-<li>[Ravinder Kumar] Hi Team We got below query from customer. Could you please check it once. ----- We would like to share an additional finding from our investigation. We have formed the following hypothesis, though it has not yet been confirmed. [Hypothesis] With bluefs_buffered_io set to its defa</li>
-<li>[Deshpande Vaishnavi Renukadas] Hello   , Memory used by ceph-osd  $ grep ceph-osd ps_auxwwwm | awk &#x27;{print $2, $4&quot;%&quot;, $6/1024 &quot; MB&quot;, $11}&#x27; | sort -k3 -nr</li>
+<li><span class="step-num">1.</span> Upgrade RHEL 8 to RHEL 9.7 with kernel 5.14.0-611.27.1.el9_7 -- intent: reproduce environment</li>
+<li><span class="step-num">2.</span> Begin Ceph upgrade from 5.3 to 7.1z8 -- intent: trigger high IO activity</li>
+<li><span class="step-num">3.</span> Monitor: watch -n 60 &#x27;free -g; <code>podman stats --no-stream&#x27; -- intent: track memory growth</code></li>
+<li><span class="step-num">4.</span> After few hours observe memory at 100% -- intent: confirm reproduction</li>
+<li><span class="step-num">5.</span> Validate with page_owner: echo 1 &gt; /sys/kernel/debug/page_owner_enable -- intent: identify allocator</li>
+<li><span class="step-num">6.</span> Downgrade kernel to 5.14.0-611.7.1.el9_7 and verify stability -- intent: confirm fix</li>
 </ul>
-<div>7109 3.7% 9543.16 MB /usr/bin/ceph-osd</div>
-<div>6576 3.1% 8025.07 MB /usr/bin/ceph-osd</div>
-<div>7099 2.9% 7678.2 MB /usr/bin/ceph-osd</div>
-<div>7080 2.9% 7662.77 MB /usr/bin/ceph-osd</div>
-<div>7</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Prashant Dhange] Hi All, Analysis of ceph-ssd-y130013 sosreport node,  sosreport location : /ecurep/sf/TS021/744/TS021744338/0-all_data/sosreport-ceph-ssd-y130013-2026-03-26-seucics.tar.xz_unpack/sosreport-ceph-ssd-y130013-2026-03-26-seucics [1] System memory usage at time of collection. At the t</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li>free -g</li>
+<li><code>podman stats --no-stream</code></li>
+<li>cat /proc/meminfo (check Buffers, Active/Inactive)</li>
+<li>cat /sys/kernel/debug/page_owner &gt; page_owner_full.txt</li>
+<li>uname -r (verify kernel version)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Ceph OSD]Upgrading cluster from ceph5.3 to 7.1z8 is having memory leak and getting OOM kill</div>
-<div>Environment: IBM Ceph 7.1z8, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1z8 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Monitor daemon memory -- <code><code>ceph tell &amp;lt;daemon&amp;gt; heap stats</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No memory leak detection test for rados</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue was kernel-level, not Ceph. Ceph team proved OSD memory was within limits.</div>
+<div>GAPS: No automated test validates kernel memory accounting behavior during upgrade across cgroup v1/v2 transition. No test for ICE driver memory leak.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Memory: long-running workload, monitor for leaks</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Upgrade test matrix: validate kernel versions against known memory leak CVEs before recommending</li>
+<li><span class="step-num">2.</span> Monitor total system memory (not just <code>ceph process RSS) during sustained IO to catch kernel-level leaks</code></li>
+<li><span class="step-num">3.</span> Include page_owner analysis in OOM investigation playbook</li>
 </ul></div>
 </div>
 

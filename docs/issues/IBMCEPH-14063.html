@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14063: Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side
-
-ROOT CAUSE:
-- Affected version(s): 5.3z3
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] Hi Shantanu, The issue is a known issue reported in    and  . It is caused during dynamic bucket resharding in 5.1 that permanently altered bucket metadata formats. Customer currently seems to be running radosgw-admin command from version 5.0 : $ cat sosreport-esg4wng01301-2026-0
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Bucket stats fail with ENOENT because customer runs radosgw-admin from Ceph 5.0 against bucket metadata reshaped in 5.1, generating incorrect shard object names.
+ROOT CAUSE: Dynamic bucket resharding in Ceph 5.1 altered bucket metadata format. The customer&#x27;s radosgw-admin binary is from version 16.2.0-117 (Ceph 5.0/Pacific initial release) which does not understand the new metadata format. When it attempts to read bucket stats, it generates incorrect shard object names (e.g., .dir.&lt;marker&gt;.&lt;incorrect_shard_id&gt;), causing RADOS ENOENT responses from OSDs. This is a known issue fixed in ceph-common 16.2.10-94 (5.3+).
+KEY EVIDENCE:
+- Customer running: ceph version 16.2.0-117.el8cp (pacific initial)
+- Cluster version: 16.2.10-172.el8cp (5.3z3)
+- Error: &#x27;failure: (2) No such file or directory&#x27; on bucket stats
+- OSD replies: osd_op_reply(.dir.b010359e... = -2 No such file or directory)
+- Fix available since ceph-common 16.2.10-94
+FIX STATUS: Closed. Customer needs to upgrade ceph-common to 5.3+ version. Known issue in 5.0-&gt;5.1 dynamic resharding metadata format change.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side
-Environment: IBM Ceph 5.3z3, component: rgw
-
-1. Deploy IBM Ceph 5.3z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce bucket stats failure with old radosgw-admin binary against reshaped bucket
+Environment: IBM Ceph 5.3z3 cluster with ceph-common 5.0 client
+1. Deploy IBM Ceph 5.3 cluster with RGW -- intent: match customer cluster version
+2. Install ceph-common 16.2.0-117 (5.0) on admin node -- intent: use old radosgw-admin
+3. Create bucket, upload objects, trigger dynamic resharding -- intent: create new-format metadata
+4. radosgw-admin bucket stats --bucket=&lt;name&gt; -- intent: observe ENOENT failure
+5. Upgrade ceph-common to 16.2.10-94+ and retry -- intent: verify fix
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket stats --bucket=&lt;name&gt;
+- radosgw-admin bucket list --uid=&lt;user&gt;
+- ceph -v (on admin node)
+- rpm -q ceph-common</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Known issue from version mismatch -- testing should validate version compatibility.
+GAPS: No test validates that radosgw-admin commands work correctly when client version differs from cluster version.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Verify radosgw-admin from matching version works after dynamic resharding
+- Verify clear error message when version mismatch causes bucket stats failure</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Bucket stats fail with ENOENT because customer runs radosgw-admin from Ceph 5.0 against bucket metadata reshaped in 5.1, generating incorrect shard object names.</div>
+<div>ROOT CAUSE: Dynamic bucket resharding in Ceph 5.1 altered bucket metadata format. The customer&#x27;s radosgw-admin binary is from version 16.2.0-117 (Ceph 5.0/Pacific initial release) which does not understand the new metadata format. When it attempts to read bucket stats, it generates incorrect shard object names (e.g., .dir.&lt;marker&gt;.&lt;incorrect_shard_id&gt;), causing RADOS ENOENT responses from OSDs. This is a known issue fixed in ceph-common 16.2.10-94 (5.3+).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 5.3z3</li>
-<li>Component: rgw</li>
+<li>Customer running: <code>ceph version 16.2.0-117.el8cp (pacific initial)</code></li>
+<li>Cluster version: 16.2.10-172.el8cp (5.3z3)</li>
+<li>Error: &#x27;failure: (2) No such file or directory&#x27; on bucket stats</li>
+<li>OSD replies: osd_op_reply(.dir.b010359e... = -2 No such file or directory)</li>
+<li>Fix available since ceph-common 16.2.10-94</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed. Customer needs to upgrade ceph-common to 5.3+ version. Known issue in 5.0-&gt;5.1 dynamic resharding metadata format change.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce bucket stats failure with old radosgw-admin binary against reshaped bucket</div>
+<div>Environment: IBM Ceph 5.3z3 cluster with ceph-common 5.0 client</div>
 <ul>
-<li>[Prashant Dhange] Hi Shantanu, The issue is a known issue reported in    and  . It is caused during dynamic bucket resharding in 5.1 that permanently altered bucket metadata formats. Customer currently seems to be running <code>radosgw-admin command from version 5.0 : $ cat sosreport-esg4wng01301-2026-0</code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3 cluster with RGW -- intent: match customer cluster version</li>
+<li><span class="step-num">2.</span> Install ceph-common 16.2.0-117 (5.0) on admin node -- intent: use old radosgw-admin</li>
+<li><span class="step-num">3.</span> Create bucket, upload objects, trigger dynamic resharding -- intent: create new-format metadata</li>
+<li><span class="step-num">4.</span> <code>radosgw-admin bucket stats --bucket=&lt;name&gt; -- intent: observe ENOENT failure</code></li>
+<li><span class="step-num">5.</span> Upgrade ceph-common to 16.2.10-94+ and retry -- intent: verify fix</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>radosgw-admin bucket stats --bucket=&lt;name&gt;</code></li>
+<li><code>radosgw-admin bucket list --uid=&lt;user&gt;</code></li>
+<li><code>ceph -v (on admin node)</code></li>
+<li>rpm -q ceph-common</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side</div>
-<div>Environment: IBM Ceph 5.3z3, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: Different bucket utilization reported for a tenant bucket in &quot;user stats&quot; and at client side</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Known issue from version mismatch -- testing should validate version compatibility.</div>
+<div>GAPS: No test validates that radosgw-admin commands work correctly when client version differs from cluster version.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Verify <code>radosgw-admin from matching version works after dynamic resharding</code></li>
+<li>Verify clear error message when version mismatch causes bucket stats failure</li>
 </ul></div>
 </div>
 

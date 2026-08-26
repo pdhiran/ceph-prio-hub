@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15162: In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log message.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log message.
-
-ROOT CAUSE:
-- Affected version(s): 8.1z6
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Srinivasa Bharath Kanta] Log Details: OSD logs generated with debug level 20 -    Automation log -    Automation script location -
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Missing &#x27;operator-requested&#x27; log message during user-initiated scrub in Ceph 8.x -- logging difference, not functional bug.
+ROOT CAUSE: The &#x27;operator-requested&#x27; log tag was introduced in Ceph 9.x via the new SchedEntry system (commit 2b6e1dd90b73bf1db16f9ee1b7ad519be3ca97ba) and was never backported to Ceph 8.x (Squid). In 8.x, user-initiated scrubs use the &#x27;req_scrub&#x27; flag internally but do not emit the &#x27;operator-requested&#x27; string in PG state logs. The scrub functionality itself works correctly in both versions -- only the logging/state label differs. The original reporter also had confusion about expected log messages for scrub_load_below_threshold when threshold is set to 0 (should produce &#x27;= no&#x27;, not &#x27;= yes&#x27;).
+KEY EVIDENCE:
+- Ceph 9.x OSD log: &#x27;active+clean+scrubbing(operator-requested)&#x27; present
+- Ceph 8.x OSD log: grep for &#x27;operator-requested&#x27; returns empty
+- Timothy Nguyen confirmed: code for &#x27;operator-requested&#x27; only exists in 9.x SchedEntry
+- Assignee recommends CephCI script update to check for both &#x27;operator-requested&#x27; (9.x) and &#x27;req_scrub&#x27; (8.x)
+- CephCI automation script has inconsistencies: Case 5 checks for &#x27;scrub_load_below_threshold:.* = yes&#x27; with threshold=0 (logically should be &#x27;= no&#x27;)
+FIX STATUS: Assigned to Timothy Nguyen. No code fix needed -- this is a test/automation script update. CephCI scripts should look for &#x27;req_scrub&#x27; on 8.x and &#x27;operator-requested&#x27; on 9.x.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log message.
-Environment: IBM Ceph 8.1z6, component: rados
-
-1. Deploy IBM Ceph 8.1z6 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-My apologies for the confusion. The information I provided in my previous update was incorrect.I would like to correct the information provided in my earlier update.  After re-validating the scenario, I confirmed that the same test steps were executed on both the 8.1 and 9.0 cl</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify user-initiated scrub log messages differ between Ceph 8.x and 9.x.
+Environment: Ceph 8.x (19.2.1-374.el9cp) and Ceph 9.x (20.1.0-220.el9cp)
+1. Create a test pool with 1 PG -- intent: isolate scrub to a single PG
+   ceph osd pool create testpool 1 1
+   ceph osd pool set testpool pg_num_max 1
+2. Write data to the pool -- intent: ensure PG has objects to scrub
+   rados bench -p testpool 10 write -b 1024 --no-cleanup
+3. Set osd_scrub_load_threshold to 0 -- intent: block scheduled scrubs
+   ceph config set osd osd_scrub_load_threshold 0
+4. Initiate user-requested deep scrub -- intent: trigger operator-initiated path
+   ceph pg deep-scrub &lt;pg_id&gt;
+5. Check OSD logs for version-specific messages -- intent: verify log difference
+   # On 8.x: grep &#x27;req_scrub&#x27; /var/log/ceph/ceph-osd.&lt;id&gt;.log
+   # On 9.x: grep &#x27;operator-requested&#x27; /var/log/ceph/ceph-osd.&lt;id&gt;.log
+DIAGNOSTIC COMMANDS:
+- ceph pg dump pgs_brief | grep &lt;pool_id&gt;
+- ceph config get osd osd_scrub_load_threshold
+- journalctl -u ceph-osd@&lt;id&gt; --since &#x27;5 minutes ago&#x27; | grep -E &#x27;req_scrub|operator-requested&#x27;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: CephCI automation script has incorrect log message expectations for 8.x scrub tests.
 GAPS:
-- Existing rados tests may not cover: In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log m
-
+- CephCI script checks for &#x27;operator-requested&#x27; on 8.x where it doesn&#x27;t exist
+- Case 5 expects &#x27;scrub_load_below_threshold:.* = yes&#x27; when threshold=0 (should be &#x27;= no&#x27;)
+- No version-aware log validation in scrub test automation
+- &#x27;deep-scrub starts&#x27; is referenced but not checked in the CephCI script
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Test: Version-aware scrub log validation (check &#x27;req_scrub&#x27; on 8.x, &#x27;operator-requested&#x27; on 9.x)
+- Test: Validate &#x27;scrub_load_below_threshold&#x27; log message matches the configured threshold value
+- Test: Confirm user-initiated scrub bypasses load threshold on both 8.x and 9.x
+- Test: Verify &#x27;deep-scrub starts&#x27; appears in logs after user-initiated deep scrub</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +243,61 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log message.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Missing &#x27;operator-requested&#x27; log message during user-initiated scrub in Ceph 8.x -- logging difference, not functional bug.</div>
+<div>ROOT CAUSE: The &#x27;operator-requested&#x27; log tag was introduced in Ceph 9.x via the new SchedEntry system (commit 2b6e1dd90b73bf1db16f9ee1b7ad519be3ca97ba) and was never backported to Ceph 8.x (Squid). In 8.x, user-initiated scrubs use the &#x27;req_scrub&#x27; flag internally but do not emit the &#x27;operator-requested&#x27; string in PG state logs. The scrub functionality itself works correctly in both versions -- only the logging/state label differs. The original reporter also had confusion about expected log messages for scrub_load_below_threshold when threshold is set to 0 (should produce &#x27;= no&#x27;, not &#x27;= yes&#x27;).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z6</li>
-<li>Component: rados</li>
+<li>Ceph 9.x OSD log: &#x27;active+clean+scrubbing(operator-requested)&#x27; present</li>
+<li>Ceph 8.x OSD log: grep for &#x27;operator-requested&#x27; returns empty</li>
+<li>Timothy Nguyen confirmed: code for &#x27;operator-requested&#x27; only exists in 9.x SchedEntry</li>
+<li>Assignee recommends CephCI script update to check for both &#x27;operator-requested&#x27; (9.x) and &#x27;req_scrub&#x27; (8.x)</li>
+<li>CephCI automation script has inconsistencies: Case 5 checks for &#x27;scrub_load_below_threshold:.* = yes&#x27; with threshold=0 (logically should be &#x27;= no&#x27;)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Assigned to Timothy Nguyen. No code fix needed -- this is a test/automation script update. CephCI scripts should look for &#x27;req_scrub&#x27; on 8.x and &#x27;operator-requested&#x27; on 9.x.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify user-initiated scrub log messages differ between Ceph 8.x and 9.x.</div>
+<div>Environment: Ceph 8.x (19.2.1-374.el9cp) and Ceph 9.x (20.1.0-220.el9cp)</div>
 <ul>
-<li>[Srinivasa Bharath Kanta] Log Details: OSD logs generated with debug level 20 -    Automation log -    Automation script location -</li>
+<li><span class="step-num">1.</span> Create a test pool with 1 PG -- intent: isolate scrub to a single PG</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph osd pool create testpool 1 1</div>
+<div>ceph osd pool set testpool pg_num_max 1</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li><span class="step-num">2.</span> Write data to the pool -- intent: ensure PG has objects to scrub</li>
+</ul>
+<div>rados bench -p testpool 10 write -b 1024 --no-cleanup</div>
+<ul>
+<li><span class="step-num">3.</span> Set osd_scrub_load_threshold to 0 -- intent: block scheduled scrubs</li>
+</ul>
+<div>ceph config set osd osd_scrub_load_threshold 0</div>
+<ul>
+<li><span class="step-num">4.</span> Initiate user-requested deep scrub -- intent: trigger operator-initiated path</li>
+</ul>
+<div>ceph pg deep-scrub &lt;pg_id&gt;</div>
+<ul>
+<li><span class="step-num">5.</span> Check OSD logs for version-specific messages -- intent: verify log difference</li>
+</ul>
+<div># On 8.x: grep &#x27;req_scrub&#x27; /var/log/ceph/ceph-osd.&lt;id&gt;.log</div>
+<div># On 9.x: grep &#x27;operator-requested&#x27; /var/log/ceph/ceph-osd.&lt;id&gt;.log</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph pg dump pgs_brief | grep &lt;pool_id&gt;</code></li>
+<li><code>ceph config get osd osd_scrub_load_threshold</code></li>
+<li><code>journalctl -u ceph-osd@&lt;id&gt; --since &#x27;5 minutes ago&#x27; | grep -E &#x27;req_scrub|operator-requested&#x27;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- In 8.x, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log message.</div>
-<div>Environment: IBM Ceph 8.1z6, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z6 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>My apologies for the confusion. The information I provided in my previous update was incorrect.I would like to correct the information provided in my earlier update.  After re-validating the scenario, I confirmed that the same test steps were executed on both the 8.1 and 9.0 cl</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">CephCI automation script has incorrect log message expectations for 8.x scrub tests.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>rados tests may not cover: In 8.x</code>, the user-initiated scrub operation does not generate the expected &quot;operator-requested&quot; log m</li>
+<li>CephCI script checks for &#x27;operator-requested&#x27; on 8.x where it doesn&#x27;t exist</li>
+<li>Case 5 expects &#x27;scrub_load_below_threshold:.* = yes&#x27; when threshold=0 (should be &#x27;= no&#x27;)</li>
+<li>No version-aware log validation in scrub test automation</li>
+<li>&#x27;deep-scrub starts&#x27; is referenced but not checked in the CephCI script</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Test: Version-aware scrub log validation (check &#x27;req_scrub&#x27; on 8.x, &#x27;operator-requested&#x27; on 9.x)</li>
+<li>Test: Validate &#x27;scrub_load_below_threshold&#x27; log message matches the configured threshold value</li>
+<li>Test: Confirm user-initiated scrub bypasses load threshold on both 8.x and 9.x</li>
+<li>Test: Verify &#x27;deep-scrub starts&#x27; appears in logs after user-initiated deep scrub</li>
 </ul></div>
 </div>
 

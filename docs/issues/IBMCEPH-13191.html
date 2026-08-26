@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13191: Updated mon_config_key_max_entry_size config change is not being recognized by MONs</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Updated mon_config_key_max_entry_size config change is not being recognized by MONs
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z3
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] We have found a related BZ    that appears to match the symptoms observed during our 10K scale testing. The behavior and available debug data were reviewed to confirm alignment. Initial review suggested no CEPHADM_STRAY_HOST warning as ceph report and ceph health detail output we
-- [Prashant Dhange] During troubleshooting of   , we observed that updating  mon_config_key_max_entry_size  using the  global  scope— ceph config set global mon_config_key_max_entry_size &lt;value&gt;
- —did  not  take effect on the monitor daemons. Despite the command succeeding and appearing in the confi
-- [Timothy Nguyen] I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Setting `mon_config_key_max_entry_size` via `ceph config set global` was reportedly not taking effect on MON daemons in a 10K-node scale environment, causing CEPHADM_STRAY_HOST warnings for 55+ hosts.
+ROOT CAUSE: In a 10K-scale cluster, the cephadm host inventory stored in MON KV exceeded the default 65KB `mon_config_key_max_entry_size`. Customer set the value via `ceph config set global mon_config_key_max_entry_size 1048576` but MON daemons reportedly continued enforcing the old 65KB limit. The investigation found that using `ceph config set mon mon_config_key_max_entry_size &lt;value&gt;` (MON-scoped) resolved the issue immediately. However, neither IBM engineering (Timothy Nguyen) nor QE could reproduce the global-scope propagation failure -- `ceph config set global` correctly propagated to MONs in all test environments.
+KEY EVIDENCE:
+- CEPHADM_STRAY_HOST: 55 stray host(s) with 528 daemon(s) not managed by cephadm
+- Setting via `global` scope did not work; setting via `mon` scope did
+- Engineering could not reproduce: global scope propagated correctly in lab (19.2.1-274.el9cp)
+- QE verified on 19.2.1-354.el9cp: global scope works correctly
+- Separate patch in 9.0 splits host metadata into multiple KV entries to prevent scale-related size exhaustion
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Not reproducible in lab. The underlying scale issue is addressed by a 9.0 patch that splits host metadata across multiple KV entries.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Updated mon_config_key_max_entry_size config change is not being recognized by MONs
-Environment: IBM Ceph 8.1z3, component: cephadm
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Apply the configuration change described in the JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify mon_config_key_max_entry_size propagation via global scope
+Environment: IBM Ceph 8.1z3 or later
+1. Check default value: `ceph config get mon mon_config_key_max_entry_size` -- intent: verify default 65536
+2. Set via global scope: `ceph config set global mon_config_key_max_entry_size 70000` -- intent: test global propagation
+3. Verify on each MON daemon: `ceph daemon mon.&lt;id&gt; config get mon_config_key_max_entry_size` -- intent: confirm value propagated
+4. Verify in config dump: `ceph config dump | grep mon_config_key_max_entry_size` -- intent: confirm stored value
+DIAGNOSTIC COMMANDS:
+- `ceph config get mon mon_config_key_max_entry_size` -- check effective value
+- `ceph config dump` -- check stored configuration
+- `ceph daemon mon.&lt;id&gt; config get mon_config_key_max_entry_size` -- check per-daemon value
+- `ceph config-key ls | wc -l` -- check KV store size at scale</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: Updated mon_config_key_max_entry_size config change is not being recognized by MONs
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Not reproducible. QE verified global scope works correctly on 19.2.1-354.el9cp.
+GAPS: No scale test (10K+ nodes) for cephadm host inventory KV size limits. No test for config scope propagation under high load.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Scale test: add 100+ hosts and verify cephadm inventory stays within KV size limits
+- Test config propagation under MON leader election / failover
+- Verify config set global vs config set mon behavior differences for MON-specific parameters</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,48 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Updated mon_config_key_max_entry_size config change is not being recognized by MONs</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Setting `mon_config_key_max_entry_size` via `ceph config set global` was reportedly not taking effect on MON daemons in a 10K-node scale environment, causing CEPHADM_STRAY_HOST warnings for 55+ hosts.</div>
+<div>ROOT CAUSE: In a 10K-scale cluster, the cephadm host inventory stored in MON KV exceeded the default 65KB <code>mon_config_key_max_entry_size</code>. Customer set the value via <code>ceph config set global mon_config_key_max_entry_size 1048576</code> but MON daemons reportedly continued enforcing the old 65KB limit. The investigation found that using <code>ceph config set mon mon_config_key_max_entry_size &lt;value&gt;</code> (MON-scoped) resolved the issue immediately. However, neither IBM engineering (Timothy Nguyen) nor QE could reproduce the global-scope propagation failure -- <code>ceph config set global</code> correctly propagated to MONs in all test environments.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: cephadm</li>
+<li>CEPHADM_STRAY_HOST: 55 stray host(s) with 528 daemon(s) not managed by cephadm</li>
+<li>Setting via <code>global</code> scope did not work; setting via <code>mon</code> scope did</li>
+<li>Engineering could not reproduce: global scope propagated correctly in lab (19.2.1-274.el9cp)</li>
+<li>QE verified on 19.2.1-354.el9cp: global scope works correctly</li>
+<li>Separate patch in 9.0 splits host metadata into multiple KV entries to prevent scale-related size exhaustion</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. Not reproducible in lab. The underlying scale issue is addressed by a 9.0 patch that splits host metadata across multiple KV entries.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify mon_config_key_max_entry_size propagation via global scope</div>
+<div>Environment: IBM Ceph 8.1z3 or later</div>
 <ul>
-<li>[Prashant Dhange] We have found a related BZ    that appears to match the symptoms observed during our 10K scale testing. The behavior and available debug data were reviewed to confirm alignment. Initial review suggested no CEPHADM_STRAY_HOST warning as <code>ceph report and ceph health detail output we</code></li>
-<li>[Prashant Dhange] During troubleshooting of   , we observed that updating  mon_config_key_max_entry_size  using the  global  scope— <code>ceph config set global mon_config_key_max_entry_size &lt;value&gt;</code></li>
+<li><span class="step-num">1.</span> Check default value: <code><code>ceph config get mon mon_config_key_max_entry_size</code></code> -- intent: verify default 65536</li>
+<li><span class="step-num">2.</span> Set via global scope: <code><code>ceph config set global mon_config_key_max_entry_size 70000</code></code> -- intent: test global propagation</li>
+<li><span class="step-num">3.</span> Verify on each MON daemon: <code><code>ceph daemon mon.&amp;lt;id&amp;gt; config get mon_config_key_max_entry_size</code></code> -- intent: confirm value propagated</li>
+<li><span class="step-num">4.</span> Verify in config dump: <code><code>ceph config dump | grep mon_config_key_max_entry_size</code></code> -- intent: confirm stored value</li>
 </ul>
-<div>—did  not  take effect on the monitor daemons. Despite the command succeeding and appearing in the confi</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Timothy Nguyen] I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>ceph config get mon mon_config_key_max_entry_size</code></code> -- check effective value</li>
+<li><code><code>ceph config dump</code></code> -- check stored configuration</li>
+<li><code><code>ceph daemon mon.&amp;lt;id&amp;gt; config get mon_config_key_max_entry_size</code></code> -- check per-daemon value</li>
+<li><code><code>ceph config-key ls | wc -l</code></code> -- check KV store size at scale</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Updated mon_config_key_max_entry_size config change is not being recognized by MONs</div>
-<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>I am unable to reproduce issue and investigation of code paths appear to function properly, passing bug to QE/QA.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: Updated mon_config_key_max_entry_size config change is not being recognized by MONs</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Not reproducible. QE verified global scope works correctly on 19.2.1-354.el9cp.</div>
+<div>GAPS: No scale test (10K+ nodes) for cephadm host inventory KV size limits. No test for config scope propagation under high load.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Scale test: add 100+ hosts and verify <code>cephadm inventory stays within KV size limits</code></li>
+<li>Test config propagation under MON leader election / failover</li>
+<li>Verify config set global vs config set mon behavior differences for MON-specific parameters</li>
 </ul></div>
 </div>
 

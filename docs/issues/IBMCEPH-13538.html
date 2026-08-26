@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13538: NFS-Ganesh Deployment via Service Spec with virtual_ip when using ECMP VIPs and BGP at the ganesha node</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,36 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS-Ganesh Deployment via Service Spec with virtual_ip when using ECMP VIPs and BGP at the ganesha node
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: cephadm
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Customer requests NFS-Ganesha deployment with ECMP VIPs and BGP -- active-active NFS not supported in 8.1.
+ROOT CAUSE: This is a feature/architecture request, not a bug. The customer wants to deploy NFS-Ganesha with ECMP (Equal-Cost Multi-Path) VIPs using BGP routing for active-active HA across all MDS/OSD nodes. Each node would run NFS-Ganesha with the same anycast IP advertised via BGP, with automatic route withdrawal on failure. However, Ceph 8.1 does not support active-active NFS-Ganesha deployment because NFS-Ganesha lacks cross-server client reclaim capability. When a backend Ganesha server goes down, clients connected to that server cannot be recovered by another server. HAProxy also cannot track which client was connected to which backend, leading to client hangs requiring manual intervention.
+KEY EVIDENCE:
+- Shweta Bhosale: &#x27;NFS does not support another server&#x27;s client reclaim, so multiple active-active can&#x27;t be supported&#x27;
+- Sachin Punadikar: &#x27;ceph 8.1 do not support active-active deployment for NFS Ganesha&#x27;
+- 8.1 limitation: failed Ganesha backend has no recovery path for connected clients
+- HAProxy unaware of client-to-backend mapping
+- Labeled as &#x27;FutureFeature&#x27;
+FIX STATUS: Open/New. No active development. This would require NFS-Ganesha client reclaim enhancement. Assigned to Adam King (cephadm).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- NFS-Ganesh Deployment via Service Spec with virtual_ip when using ECMP VIPs and BGP at the ganesha node
-Environment: IBM Ceph 8.1z3, component: cephadm
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Trigger failover (stop daemon / power off node / network partition)
-4. Verify recovery -- `ceph -s`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: N/A -- this is a feature request (RFE), not a reproducible bug.
+Environment: IBM Storage Ceph 8.1z3
+No reproduction steps applicable. The request is for a feature (active-active NFS with ECMP/BGP VIPs) that is not currently supported.
+DIAGNOSTIC COMMANDS:
+- ceph nfs cluster info &lt;cluster_name&gt; (shows current NFS topology)
+- ceph orch ls --service-type nfs (shows NFS service placement)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test coverage needed for this feature until it is implemented.
 GAPS:
-
-SCENARIOS NEEDED:
-- HA: failover + recovery, verify data integrity
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- No test validates NFS-Ganesha client reclaim across servers (feature doesn&#x27;t exist)
+- No negative test verifies that active-active NFS is documented as unsupported
+SCENARIOS NEEDED (when feature is implemented):
+- Test: Deploy NFS-Ganesha with anycast VIP across multiple nodes
+- Test: Fail one Ganesha server, verify BGP route withdrawal and client failover
+- Test: Validate client reclaim works when failover to a different Ganesha backend
+- Test: Verify ECMP load distribution across NFS gateways</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,31 +229,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS-Ganesh Deployment via Service Spec with virtual_ip when using ECMP VIPs and BGP at the ganesha node</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Customer requests NFS-Ganesha deployment with ECMP VIPs and BGP -- active-active NFS not supported in 8.1.</div>
+<div>ROOT CAUSE: This is a feature/architecture request, not a bug. The customer wants to deploy NFS-Ganesha with ECMP (Equal-Cost Multi-Path) VIPs using BGP routing for active-active HA across all MDS/OSD nodes. Each node would run NFS-Ganesha with the same anycast IP advertised via BGP, with automatic route withdrawal on failure. However, Ceph 8.1 does not support active-active NFS-Ganesha deployment because NFS-Ganesha lacks cross-server client reclaim capability. When a backend Ganesha server goes down, clients connected to that server cannot be recovered by another server. HAProxy also cannot track which client was connected to which backend, leading to client hangs requiring manual intervention.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: cephadm</li>
+<li>Shweta Bhosale: &#x27;NFS does not support another server&#x27;s client reclaim, so multiple active-active can&#x27;t be supported&#x27;</li>
+<li>Sachin Punadikar: &#x27;<code>ceph 8.1 do not support active-active deployment for NFS Ganesha&#x27;</code></li>
+<li>8.1 limitation: failed Ganesha backend has no recovery path for connected clients</li>
+<li>HAProxy unaware of client-to-backend mapping</li>
+<li>Labeled as &#x27;FutureFeature&#x27;</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Open/New. No active development. This would require NFS-Ganesha client reclaim enhancement. Assigned to Adam King (cephadm).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: N/A -- this is a feature request (RFE), not a reproducible bug.</div>
+<div>Environment: IBM Storage Ceph 8.1z3</div>
+<div>No reproduction steps applicable. The request is for a feature (active-active NFS with ECMP/BGP VIPs) that is not currently supported.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph nfs cluster info &lt;cluster_name&gt; (shows current NFS topology)</code></li>
+<li><code>ceph orch ls --service-type nfs (shows NFS service placement)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- NFS-Ganesh Deployment via Service Spec with virtual_ip when using ECMP VIPs and BGP at the ganesha node</div>
-<div>Environment: IBM Ceph 8.1z3, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Trigger failover (stop daemon / power off node / network partition)</li>
-<li><span class="step-num">4.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test coverage needed for this feature until it is implemented.</div>
 <div class="section-head">GAPS</div>
-<div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA: failover + recovery, verify data integrity</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>No test validates NFS-Ganesha client reclaim across servers (feature doesn&#x27;t exist)</li>
+<li>No negative test verifies that active-active NFS is documented as unsupported</li>
+</ul>
+<div>SCENARIOS NEEDED (when feature is implemented):</div>
+<ul>
+<li>Test: Deploy NFS-Ganesha with anycast VIP across multiple nodes</li>
+<li>Test: Fail one Ganesha server, verify BGP route withdrawal and client failover</li>
+<li>Test: Validate client reclaim works when failover to a different Ganesha backend</li>
+<li>Test: Verify ECMP load distribution across NFS gateways</li>
 </ul></div>
 </div>
 

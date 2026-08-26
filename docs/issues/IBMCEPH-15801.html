@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15801: [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_ignore_history_les=true</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_ignore_history_les=true
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Greg Farnum] Current crash is debug     -2&gt; 2026-06-10T20:11:20.890+0000 7f48e950d640  0 mds.0.cache creating system inode with ino:0x606 debug     -1&gt; 2026-06-10T20:11:20.892+0000 7f48e950d640 -1 /builddir/build/BUILD/ceph-19.2.1/src/mds/CDir.cc: In function &#x27;CDentry* CDir::add_null_dentry(s
-- [Brandon McMurray] Here’s the Current “ceph status” and “ceph fs dump” output as requested: ceph -s
-  cluster:
-    id:     641e87e2-96bd-482c-9392-b2e2905ca8b0
-    health: HEALTH_ERR
-            1 MDSs report damaged metadata
-            38 daemons have recently crashed
- 
-  services:
-    mon: 3 da
-- [Prashant Dhange] No CephFS issue was identified. The journal corruption was caused by incomplete PGs in the CephFS metadata pool and CephFS has been successfully recovered using advanced recovery steps. Two subvolumes had to be recreated due to mount failures. There are no pending items on this J
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CephFS metadata damage after recovering incomplete PGs with osd_find_best_info_ignore_history_les=true -- not a CephFS bug.
+ROOT CAUSE: After recovering incomplete PGs in the CephFS metadata pool using the dangerous flag --osd_find_best_info_ignore_history_les=true, the CephFS journal became corrupted, causing MDS crashes and filesystem damage. The MDS crash was at CDir.cc:374 (FAILED ceph_assert(lookup_exact_snap(dname, last) == 0)) when trying to create a stray directory inode (ino:0x606) that already had a dentry present -- likely residual from the corrupted journal. The damage manifested as: 1 filesystem degraded, 1 filesystem offline, 1 MDS daemon damaged, with multiple dir_frag damage entries. Recovery required journal reset (cephfs-journal-tool --rank &lt;fs&gt;:0 journal reset), data scan (cephfs-data-scan), and ultimately deletion of 2 damaged PVCs. This was not a CephFS code bug but a consequence of using a dangerous recovery flag that can produce inconsistent metadata pool state.
+KEY EVIDENCE:
+- MDS crash: CDir.cc:374 FAILED ceph_assert(lookup_exact_snap(dname, last) == 0)
+- Triggered by recovering PGs with osd_find_best_info_ignore_history_les=true
+- damage ls showed 12 dir_frag entries across 2 CSI volumes
+- Recovery: journal reset + cephfs-data-scan + scrub recursive,repair,force
+- Final resolution: customer deleted 2 affected PVCs, cluster returned to HEALTH_OK
+- Greg Farnum: stray directory fragment issue, possible interaction with stray dir fragmentation
+FIX STATUS: Closed as &#x27;not a bug&#x27;. This was data corruption from using a dangerous recovery option, not a CephFS code defect. Recovery was successful via standard disaster recovery procedures.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_ignore_history_les=true
-Environment: IBM Ceph 8.1z3, component: cephfs
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: N/A -- this is data corruption from a dangerous manual recovery operation, not a reproducible bug path.
+Environment: ODF 4.18.23, Ceph 19.2.1-331.el9cp (Squid)
+The damage was caused by using osd_find_best_info_ignore_history_les=true during PG recovery, which is a documented dangerous operation that can produce inconsistent metadata.
+DIAGNOSTIC COMMANDS:
+- ceph tell mds.&lt;fs&gt;:0 damage ls
+- ceph fs dump
+- ceph -s
+- rados -p &lt;metadata-pool&gt; ls | grep stray
+- cephfs-journal-tool --rank &lt;fs&gt;:0 event get summary</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for CephFS recovery after metadata pool PG recovery with dangerous flags.
 GAPS:
-- Existing cephfs tests may not cover: [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_i
-
+- No test validates CephFS journal integrity after metadata pool PG recovery
+- No test for cephfs-data-scan recovery workflow
+- No test for the full disaster recovery sequence (journal reset -&gt; data scan -&gt; scrub)
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephfs scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test: CephFS disaster recovery workflow after metadata pool corruption
+- Test: Validate cephfs-journal-tool journal reset + cephfs-data-scan + scrub repair sequence
+- Test: Verify CephFS health after stray directory cleanup via rados rm</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,48 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_ignore_history_les=true</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CephFS metadata damage after recovering incomplete PGs with osd_find_best_info_ignore_history_les=true -- not a CephFS bug.</div>
+<div>ROOT CAUSE: After recovering incomplete PGs in the CephFS metadata pool using the dangerous flag --osd_find_best_info_ignore_history_les=true, the CephFS journal became corrupted, causing MDS crashes and filesystem damage. The MDS crash was at CDir.cc:374 (FAILED ceph_assert(lookup_exact_snap(dname, last) == 0)) when trying to create a stray directory inode (ino:0x606) that already had a dentry present -- likely residual from the corrupted journal. The damage manifested as: 1 filesystem degraded, 1 filesystem offline, 1 MDS daemon damaged, with multiple dir_frag damage entries. Recovery required journal reset (cephfs-journal-tool --rank &lt;fs&gt;:0 journal reset), data scan (cephfs-data-scan), and ultimately deletion of 2 damaged PVCs. This was not a CephFS code bug but a consequence of using a dangerous recovery flag that can produce inconsistent metadata pool state.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: cephfs</li>
+<li>MDS crash: CDir.cc:374 FAILED ceph_assert(lookup_exact_snap(dname, last) == 0)</li>
+<li>Triggered by recovering PGs with osd_find_best_info_ignore_history_les=true</li>
+<li>damage ls showed 12 dir_frag entries across 2 CSI volumes</li>
+<li>Recovery: journal reset + cephfs-data-scan + scrub recursive,repair,force</li>
+<li>Final resolution: customer deleted 2 affected PVCs, cluster returned to HEALTH_OK</li>
+<li>Greg Farnum: stray directory fragment issue, possible interaction with stray dir fragmentation</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. This was data corruption from using a dangerous recovery option, not a CephFS code defect. Recovery was successful via standard disaster recovery procedures.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: N/A -- this is data corruption from a dangerous manual recovery operation, not a reproducible bug path.</div>
+<div>Environment: ODF 4.18.23, Ceph 19.2.1-331.el9cp (Squid)</div>
+<div>The damage was caused by using osd_find_best_info_ignore_history_les=true during PG recovery, which is a documented dangerous operation that can produce inconsistent metadata.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Greg Farnum] Current crash is debug     -2&gt; 2026-06-10T20:11:20.890+0000 7f48e950d640  0 mds.0.cache creating system inode with ino:0x606 debug     -1&gt; 2026-06-10T20:11:20.892+0000 7f48e950d640 -1 /builddir/build/BUILD/ceph-19.2.1/src/mds/CDir.cc: In function &#x27;CDentry* CDir::add_null_dentry(s</li>
-<li>[Brandon McMurray] Here’s the Current “<code>ceph status” and “ceph fs dump” output as requested: ceph -s</code></li>
-</ul>
-<div>cluster:</div>
-<div>id:     641e87e2-96bd-482c-9392-b2e2905ca8b0</div>
-<div>health: HEALTH_ERR</div>
-<div>1 MDSs report damaged metadata</div>
-<div>38 daemons have recently crashed</div>
-<div>services:</div>
-<div>mon: 3 da</div>
-<ul>
-<li>[Prashant Dhange] No CephFS issue was identified. The journal corruption was caused by incomplete PGs in the CephFS metadata pool and CephFS has been successfully recovered using advanced recovery steps. Two subvolumes had to be recreated due to <code>mount failures. There are no pending items on this J</code></li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph tell mds.&lt;fs&gt;:0 damage ls</code></li>
+<li><code>ceph fs dump</code></li>
+<li><code>ceph -s</code></li>
+<li><code>rados -p &lt;metadata-pool&gt; ls | grep stray</code></li>
+<li>cephfs-journal-tool --rank &lt;fs&gt;:0 event get summary</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_ignore_history_les=true</div>
-<div>Environment: IBM Ceph 8.1z3, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for CephFS recovery after metadata pool PG recovery with dangerous flags.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing cephfs tests may not cover: [GSS ODF 4.18.23] Cephfs filesystem damaged after incomplete PG recovery with --osd_find_best_info_i</li>
+<li>No test validates CephFS journal integrity after metadata pool PG recovery</li>
+<li>No test for cephfs-data-scan recovery workflow</li>
+<li>No test for the full disaster recovery sequence (journal reset -&gt; data scan -&gt; scrub)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test: CephFS disaster recovery workflow after metadata pool corruption</li>
+<li>Test: Validate cephfs-journal-tool journal reset + cephfs-data-scan + scrub repair sequence</li>
+<li>Test: Verify CephFS health after stray directory cleanup via <code>rados rm</code></li>
 </ul></div>
 </div>
 

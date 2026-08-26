@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12866: [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,36 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Former user] 2025-12-13T00:38:58.360+0000 7f14faec1640  0 log_channel(audit) log [DBG] : from=&#x27;client.14499 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;orch host label rm&quot;, &quot;hostname&quot;: &quot;ceph-host-2&quot;, &quot;label&quot;: &quot;node-exporter&quot;, &quot;target&quot;: [&quot;mon-mgr&quot;, &quot;&quot;]}]: dispatch 2025-12-13T00:38:58.370+0000 7f
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: When all host labels matching a service&#x27;s placement are removed, cephadm orchestrator removes all daemon instances except one (the last host keeps running the daemon).
+ROOT CAUSE: This is a design limitation / RFE in cephadm&#x27;s placement reconciliation logic. When a service is placed by label (e.g., `placement: label: ceph-exporter`) and all labels are removed from all hosts, cephadm&#x27;s serve loop computes that zero hosts match the placement. However, cephadm enforces a minimum daemon count of 1 for safety (to prevent accidentally removing all instances of a service), so it keeps one daemon running on the last host. The expected behavior (per reporter) is that removing all labels should remove all daemons.
+KEY EVIDENCE:
+- Reproduced: 7 hosts with ceph-exporter label, all labels removed, 1 daemon remains on last host
+- MGR log: &#x27;Failed to apply ceph-exporter spec: Cannot place &lt;CephExporterSpec&gt;: No matching hosts for label ceph-exporter&#x27;
+- This error repeats every ~60 seconds in the cephadm serve loop
+- Engineering confirmed this is by-design safety behavior
+FIX STATUS: Open as RFE (assigned, Backlog). No fix timeline. Workaround: `ceph orch rm &lt;service_name&gt;` to explicitly remove the service spec.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce leftover daemon after removing all placement labels
+Environment: IBM Ceph 8.1 (19.2.1-245.el9cp)
+1. Add a label to all hosts: `for h in &lt;hosts&gt;; do ceph orch host label add $h ceph-exporter; done` -- intent: set up label placement
+2. Apply service with label placement: `ceph orch apply -i ceph-exporter.spec.yml` (spec has `placement: label: ceph-exporter`) -- intent: deploy on all labeled hosts
+3. Verify all daemons running: `ceph orch ps | grep ceph-exporter` -- intent: confirm deployment
+4. Remove label from all hosts: `for h in &lt;hosts&gt;; do ceph orch host label rm $h ceph-exporter; done` -- intent: trigger removal
+5. Check remaining daemons: `ceph orch ps | grep ceph-exporter` -- intent: observe one daemon remaining
+DIAGNOSTIC COMMANDS:
+- `ceph orch host ls` -- verify labels removed
+- `ceph orch ps --service-name ceph-exporter` -- check daemon count
+- `ceph orch ls` -- check service spec status</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Open RFE. Current behavior is by-design.
+GAPS: No test for label-removal daemon cleanup behavior. No test distinguishing &#x27;no matching hosts&#x27; from &#x27;service removal&#x27;.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Remove all labels for a label-placed service, verify daemon cleanup behavior
+- Test interaction between label removal and explicit `ceph orch rm` cleanup
+- Test with different service types (ceph-exporter, node-exporter, monitoring services)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -229,35 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2415877] [RFE] Orchestrator failed to remove service after label removal</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">When all host labels matching a service&#x27;s placement are removed, cephadm orchestrator removes all daemon instances except one (the last host keeps running the daemon).</div>
+<div>ROOT CAUSE: This is a design limitation / RFE in cephadm&#x27;s placement reconciliation logic. When a service is placed by label (e.g., <code>placement: label: ceph-exporter</code>) and all labels are removed from all hosts, cephadm&#x27;s serve loop computes that zero hosts match the placement. However, cephadm enforces a minimum daemon count of 1 for safety (to prevent accidentally removing all instances of a service), so it keeps one daemon running on the last host. The expected behavior (per reporter) is that removing all labels should remove all daemons.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephadm</li>
+<li>Reproduced: 7 hosts with ceph-exporter label, all labels removed, 1 daemon remains on last host</li>
+<li>MGR log: &#x27;Failed to apply ceph-exporter spec: Cannot place &lt;CephExporterSpec&gt;: No matching hosts for label ceph-exporter&#x27;</li>
+<li>This error repeats every ~60 seconds in the <code>cephadm serve loop</code></li>
+<li>Engineering confirmed this is by-design safety behavior</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Open as RFE (assigned, Backlog). No fix timeline. Workaround: <code>ceph orch rm &lt;service_name&gt;</code> to explicitly remove the service spec.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce leftover daemon after removing all placement labels</div>
+<div>Environment: IBM Ceph 8.1 (19.2.1-245.el9cp)</div>
 <ul>
-<li>[Former user] 2025-12-13T00:38:58.360+0000 7f14faec1640  0 log_channel(audit) log [DBG] : from=&#x27;client.14499 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;orch host label rm&quot;, &quot;hostname&quot;: &quot;ceph-host-2&quot;, &quot;label&quot;: &quot;node-exporter&quot;, &quot;target&quot;: [&quot;mon-mgr&quot;, &quot;&quot;]}]: dispatch 2025-12-13T00:38:58.370+0000 7f</li>
+<li><span class="step-num">1.</span> Add a label to all hosts: <code>for h in &amp;lt;hosts&amp;gt;; do <code>ceph orch host label add $h ceph-exporter; done</code></code> -- intent: set up label placement</li>
+<li><span class="step-num">2.</span> Apply service with label placement: <code><code>ceph orch apply -i ceph-exporter.spec.yml</code></code> (spec has <code>placement: label: ceph-exporter</code>) -- intent: deploy on all labeled hosts</li>
+<li><span class="step-num">3.</span> Verify all daemons running: <code><code>ceph orch ps | grep ceph-exporter</code></code> -- intent: confirm deployment</li>
+<li><span class="step-num">4.</span> Remove label from all hosts: <code>for h in &amp;lt;hosts&amp;gt;; do <code>ceph orch host label rm $h ceph-exporter; done</code></code> -- intent: trigger removal</li>
+<li><span class="step-num">5.</span> Check remaining daemons: <code><code>ceph orch ps | grep ceph-exporter</code></code> -- intent: observe one daemon remaining</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li><code><code>ceph orch host ls</code></code> -- verify labels removed</li>
+<li><code><code>ceph orch ps --service-name ceph-exporter</code></code> -- check daemon count</li>
+<li><code><code>ceph orch ls</code></code> -- check service spec status</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: [BZ#2415877] [RFE] Orchestrator failed to remove service after label removal</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Open RFE. Current behavior is by-design.</div>
+<div>GAPS: No test for label-removal daemon cleanup behavior. No test distinguishing &#x27;no matching hosts&#x27; from &#x27;service removal&#x27;.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Remove all labels for a label-placed service, verify daemon cleanup behavior</li>
+<li>Test interaction between label removal and explicit <code><code>ceph orch rm</code></code> cleanup</li>
+<li>Test with different service types (ceph-exporter, node-exporter, monitoring services)</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12976: [RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot; command</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot; command
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] Hello Team, I tried reproducing the issue locally and observed that it is consistently reproducible on both Ceph 8 and Ceph 9. I am currently debugging the issue. ceph 8:
-
-[root@rajesh-0 ~]# ceph version
-ceph version 19.2.1-292.el9cp (ba02d589f9356be88303b8e8ec2790f12300f3b5) squ
-- [Abhishek Kane] March 25th onwards is blockers only. Do you plan to fix this in 9.1? If not, please move to 10.0.
-- [Aarti Dhikale] Root cause: cephadm shell --name nfs.&lt;id&gt;  opens an interactive shell inside the NFS container. To do this, cephadm must resolve the container mount paths. Unlike other Ceph daemons ( mon ,  osd ,  mgr ,  mds ,  rgw , etc.), which resolve their container mounts directly, NFS cons
-
-FIX STATUS:
-- Current JIRA status: POST</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: &#x27;cephadm shell --name nfs.&lt;id&gt;&#x27; fails with &#x27;pool missing from dict&#x27; because NFSGanesha constructor requires pool config that&#x27;s only available during deployment.
+ROOT CAUSE: When cephadm shell --name is used with an NFS daemon, cephadm must resolve container mounts by constructing an NFSGanesha object. During deployment, the manager provides config_blobs (including &#x27;pool&#x27; and &#x27;files&#x27;). During cephadm shell invocation, neither config_blobs nor config_json is available, so fetch_configs() returns {}. NFSGanesha.__init__() calls dict_get(config_json, &#x27;pool&#x27;, require=True), which fails immediately on the empty dict. The fix: (1) Remove require=True from pool lookup in __init__, (2) Move pool validation to validate() with a check that skips content validation when config_json is empty (the shell path).
+KEY EVIDENCE:
+- Error: &#x27;cephadmlib.exceptions.Error: pool missing from dict&#x27;
+- Traceback: data_utils.py:39 dict_get -&gt; nfs.py:57 __init__
+- Workaround: use container ID or full container name instead of daemon type.ID
+- Reproducible on Ceph 8 (19.2.1-292) and Ceph 9 (20.1.0-146)
+- Works with other daemons (osd, mon, mgr) because they use Ceph.get_ceph_mounts()
+- Full RCA and fix provided by Aarti Dhikale with working test results
+FIX STATUS: Post (fix implemented, testing). Detailed RCA and two-part fix verified locally. PR under review for upstream.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot; command
-Environment: IBM Ceph 9.0, component: cephadm
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hello Team, I tried reproducing the issue locally and observed that it is consistently reproducible on both Ceph 8 and Ceph 9. I am currently debugging the issue. ceph 8:
-
-[root@rajesh-0 ~]# ceph vers</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify &#x27;cephadm shell --name nfs.&lt;id&gt;&#x27; works after fix.
+Environment: IBM Ceph 8.1+ or 9.x with NFS service deployed
+1. Deploy NFS cluster: ceph nfs cluster create foo &#x27;1 &lt;hostname&gt;&#x27; -- intent: create NFS service
+2. Get NFS daemon name: ceph orch ps --daemon-type nfs -- intent: identify daemon ID
+3. SSH to NFS host and run: cephadm shell --name nfs.&lt;full-daemon-id&gt; -- intent: test shell access
+4. Verify shell opens with NFS container context -- intent: confirm fix
+5. Run &#x27;ganesha.nfsd -v&#x27; inside shell -- intent: verify NFS binaries accessible
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type nfs -- get daemon names
+- cephadm ls -- list daemons on node
+- cephadm shell --name nfs.&lt;id&gt; -- the command being fixed
+- cephadm shell --name &lt;container-id&gt; -- workaround (works today)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: [RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot;
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix locally verified by developer. No automated CI test for cephadm shell with NFS daemons.
+GAPS: No CI test exercises &#x27;cephadm shell --name&#x27; for non-Ceph daemon types (NFS, iSCSI). No regression test validates that deployment path still works after removing require=True.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- cephadm shell --name for each daemon type (nfs, rgw, mds, osd, mon, mgr)
+- Verify deployment still provides pool config correctly after fix
+- Verify NFS shell has correct mount points and config files</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,44 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot; command</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">&#x27;cephadm shell --name nfs.&lt;id&gt;&#x27; fails with &#x27;pool missing from dict&#x27; because NFSGanesha constructor requires pool config that&#x27;s only available during deployment.</div>
+<div>ROOT CAUSE: When cephadm shell --name is used with an NFS daemon, cephadm must resolve container mounts by constructing an NFSGanesha object. During deployment, the manager provides config_blobs (including &#x27;pool&#x27; and &#x27;files&#x27;). During cephadm shell invocation, neither config_blobs nor config_json is available, so fetch_configs() returns {}. NFSGanesha.__init__() calls dict_get(config_json, &#x27;pool&#x27;, require=True), which fails immediately on the empty dict. The fix: (1) Remove require=True from pool lookup in __init__, (2) Move pool validation to validate() with a check that skips content validation when config_json is empty (the shell path).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: cephadm</li>
+<li>Error: &#x27;cephadmlib.exceptions.Error: pool missing from dict&#x27;</li>
+<li>Traceback: data_utils.py:39 dict_get -&gt; nfs.py:57 __init__</li>
+<li>Workaround: use container ID or full container name instead of daemon type.ID</li>
+<li>Reproducible on Ceph 8 (19.2.1-292) and Ceph 9 (20.1.0-146)</li>
+<li>Works with other daemons (osd, mon, mgr) because they use Ceph.get_ceph_mounts()</li>
+<li>Full RCA and fix provided by Aarti Dhikale with working test results</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Post (fix implemented, testing). Detailed RCA and two-part fix verified locally. PR under review for upstream.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify &#x27;cephadm shell --name nfs.&lt;id&gt;&#x27; works after fix.</div>
+<div>Environment: IBM Ceph 8.1+ or 9.x with NFS service deployed</div>
 <ul>
-<li>[Aarti Dhikale] Hello Team, I tried reproducing the issue locally and observed that it is consistently reproducible on both Ceph 8 and Ceph 9. I am currently debugging the issue. <code>ceph 8:</code></li>
+<li><span class="step-num">1.</span> Deploy NFS cluster: <code>ceph nfs cluster create foo &#x27;1 &lt;hostname&gt;&#x27; -- intent: create NFS service</code></li>
+<li><span class="step-num">2.</span> Get NFS daemon name: <code>ceph orch ps --daemon-type nfs -- intent: identify daemon ID</code></li>
+<li><span class="step-num">3.</span> SSH to NFS host and run: <code>cephadm shell --name nfs.&lt;full-daemon-id&gt; -- intent: test shell access</code></li>
+<li><span class="step-num">4.</span> Verify shell opens with NFS container context -- intent: confirm fix</li>
+<li><span class="step-num">5.</span> Run &#x27;ganesha.nfsd -v&#x27; inside shell -- intent: verify NFS binaries accessible</li>
 </ul>
-<div>[root@rajesh-0 ~]# ceph version</div>
-<div>ceph version 19.2.1-292.el9cp (ba02d589f9356be88303b8e8ec2790f12300f3b5) squ</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Abhishek Kane] March 25th onwards is blockers only. Do you plan to fix this in 9.1? If not, please move to 10.0.</li>
-<li>[Aarti Dhikale] Root cause: <code>cephadm shell --name nfs.&lt;id&gt;  opens an interactive shell inside the NFS container. To do this</code>, <code>cephadm must resolve the container mount paths. Unlike other Ceph daemons ( mon</code>,  osd ,  mgr ,  mds ,  rgw , etc.), which resolve their container mounts directly, NFS cons</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: POST</li>
+<li><code>ceph orch ps --daemon-type nfs -- get daemon names</code></li>
+<li><code>cephadm ls -- list daemons on node</code></li>
+<li><code>cephadm shell --name nfs.&lt;id&gt; -- the command being fixed</code></li>
+<li><code>cephadm shell --name &lt;container-id&gt; -- workaround (works today)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot; command</div>
-<div>Environment: IBM Ceph 9.0, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hello Team, I tried reproducing the issue locally and observed that it is consistently reproducible on both Ceph 8 and Ceph 9. I am currently debugging the issue. ceph 8:</div>
-<div>[root@rajesh-0 ~]# ceph vers</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: [RFE][BZ#2435240] Unable to start nfs container instance via &quot;cephadm shell --name &lt;daemon_type.id&gt;&quot;</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix locally verified by developer. No automated CI test for cephadm shell with NFS daemons.</div>
+<div>GAPS: No CI test exercises &#x27;cephadm shell --name&#x27; for non-Ceph daemon types (NFS, iSCSI). No regression test validates that deployment path still works after removing require=True.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li><code>cephadm shell --name for each daemon type (nfs</code>, rgw, mds, osd, mon, mgr)</li>
+<li>Verify deployment still provides pool config correctly after fix</li>
+<li>Verify NFS shell has correct <code>mount points and config files</code></li>
 </ul></div>
 </div>
 

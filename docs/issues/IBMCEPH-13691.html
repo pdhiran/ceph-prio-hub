@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13691: [8.1z Backport]- cephadm shell ceph-volume inventory errors out when Thin LVS are created.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport]- cephadm shell ceph-volume inventory errors out when Thin LVS are created.
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: ceph-volume
-
-ENGINEERING FINDINGS:
-- [Karun Josy] Thanks   for quickly coming up with a fix!   Can we have this backported to IBM 8.1 as well?
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on the node, because hidden thinpool_tdata/tmeta LVs are not accessible via /dev/&lt;vgname&gt;/ path.
+ROOT CAUSE: ceph-volume&#x27;s device enumeration code (util/device.py) iterates all LVs reported by the LVM API, including hidden thin pool data and metadata LVs (thinpool_tdata, thinpool_tmeta). These hidden LVs have device-mapper paths under /dev/mapper/ but NOT symlinks under /dev/&lt;vgname&gt;/. When ceph-volume tries to get UdevData for /dev/test/thinpool_tdata, the path doesn&#x27;t exist (only /dev/mapper/test-thinpool_tdata exists), causing RuntimeError and crashing the entire inventory command. The fix filters out thin pool internal LVs from the device enumeration.
+KEY EVIDENCE:
+- Error: RuntimeError: /dev/test/thinpool_tdata not found
+- Stack: device.py:322 _get_device_id() -&gt; disk.py:1323 UdevData.__init__()
+- ls -la /dev/test shows only &#x27;thinpool&#x27; symlink, NOT thinpool_tdata/tmeta
+- /dev/mapper/test-thinpool_tdata exists correctly
+- 100% reproducible with simple steps: vgcreate + lvcreate -T
+- Regression from 7.1 (7.1 showed the LVs but didn&#x27;t crash)
+- Fixed in 8.1z6 (19.2.1-354.el9cp) -- thin LVs now properly filtered
+FIX STATUS: Fixed in 8.1z6. Verified with reproducer steps on build 19.2.1-354.el9cp. Thin pool LVs are now excluded from inventory listing.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport]- cephadm shell ceph-volume inventory errors out when Thin LVS are created.
-Environment: IBM Ceph 8.1, component: ceph-volume
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-3. Monitor upgrade -- `ceph orch upgrade status`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify ceph-volume inventory handles thin-provisioned LVs without crashing
+Environment: IBM Ceph 8.1 (any z-stream before z6 for reproduction, z6+ for verification)
+1. dd if=/dev/zero of=/disk.img bs=1M count=1024 -- intent: create backing file
+2. losetup -f --show /disk.img -- intent: create loop device
+3. vgcreate test /dev/loop0 -- intent: create volume group
+4. lvcreate -L 900M -T test/thinpool -- intent: create thin pool (creates hidden _tdata/_tmeta)
+5. cephadm ceph-volume inventory -- intent: trigger the crash (pre-fix) or verify no crash (post-fix)
+DIAGNOSTIC COMMANDS:
+- cephadm ceph-volume inventory
+- lvs -a (shows hidden LVs)
+- ls -la /dev/&lt;vgname&gt;/
+- ls -la /dev/mapper/&lt;vgname&gt;*</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified in 8.1z6 with exact reproducer steps.
+GAPS: No automated CI test includes thin-provisioned LVM setup alongside Ceph OSD volumes.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-volume scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- ceph-volume inventory with thin pools present (verified fixed)
+- ceph-volume inventory with various LVM configurations (RAID LVs, cache LVs, snapshots)
+- Verify ceph orch device ls works correctly when thin pools exist on OSD nodes</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,39 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport]- cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on the node, because hidden thinpool_tdata/tmeta LVs are not accessible via /dev/&lt;vgname&gt;/ path.</div>
+<div>ROOT CAUSE: ceph-volume&#x27;s device enumeration code (util/device.py) iterates all LVs reported by the LVM API, including hidden thin pool data and metadata LVs (thinpool_tdata, thinpool_tmeta). These hidden LVs have device-mapper paths under /dev/mapper/ but NOT symlinks under /dev/&lt;vgname&gt;/. When ceph-volume tries to get UdevData for /dev/test/thinpool_tdata, the path doesn&#x27;t exist (only /dev/mapper/test-thinpool_tdata exists), causing RuntimeError and crashing the entire inventory command. The fix filters out thin pool internal LVs from the device enumeration.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-volume</li>
+<li>Error: RuntimeError: /dev/test/thinpool_tdata not found</li>
+<li>Stack: device.py:322 _get_device_id() -&gt; disk.py:1323 UdevData.__init__()</li>
+<li>ls -la /dev/test shows only &#x27;thinpool&#x27; symlink, NOT thinpool_tdata/tmeta</li>
+<li>/dev/mapper/test-thinpool_tdata exists correctly</li>
+<li>100% reproducible with simple steps: vgcreate + lvcreate -T</li>
+<li>Regression from 7.1 (7.1 showed the LVs but didn&#x27;t crash)</li>
+<li>Fixed in 8.1z6 (19.2.1-354.el9cp) -- thin LVs now properly filtered</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 8.1z6. Verified with reproducer steps on build 19.2.1-354.el9cp. Thin pool LVs are now excluded from inventory listing.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify ceph-volume inventory handles thin-provisioned LVs without crashing</div>
+<div>Environment: IBM Ceph 8.1 (any z-stream before z6 for reproduction, z6+ for verification)</div>
 <ul>
-<li>[Karun Josy] Thanks   for quickly coming up with a fix!   Can we have this backported to IBM 8.1 as well?</li>
+<li><span class="step-num">1.</span> dd if=/dev/zero of=/disk.img bs=1M count=1024 -- intent: create backing file</li>
+<li><span class="step-num">2.</span> losetup -f --show /disk.img -- intent: create loop device</li>
+<li><span class="step-num">3.</span> vgcreate test /dev/loop0 -- intent: create volume group</li>
+<li><span class="step-num">4.</span> lvcreate -L 900M -T test/thinpool -- intent: create thin pool (creates hidden _tdata/_tmeta)</li>
+<li><span class="step-num">5.</span> <code>cephadm ceph-volume inventory -- intent: trigger the crash (pre-fix) or verify no crash (post-fix)</code></li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>cephadm ceph-volume inventory</code></li>
+<li>lvs -a (shows hidden LVs)</li>
+<li>ls -la /dev/&lt;vgname&gt;/</li>
+<li>ls -la /dev/mapper/&lt;vgname&gt;*</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport]- cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-volume</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified in 8.1z6 with exact reproducer steps.</div>
+<div>GAPS: No automated CI test includes thin-provisioned LVM setup alongside Ceph OSD volumes.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-volume scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>ceph-volume inventory with thin pools present (verified fixed)</li>
+<li>ceph-volume inventory with various LVM configurations (RAID LVs, cache LVs, snapshots)</li>
+<li>Verify <code>ceph orch device ls works correctly when thin pools exist on OSD nodes</code></li>
 </ul></div>
 </div>
 

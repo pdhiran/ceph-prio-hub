@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17937: [8.1z Backport] ceph pg query returns JSONDecodeError when EIO flag is set</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,15 +189,35 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 8.1z backport clone of the same `ceph pg query` JSONDecodeError when EIO flag is set.
+
+ROOT CAUSE: Identical to IBMCEPH-17938/IBMCEPH-8606. The OSD returns empty/error output for `ceph pg query` when the pool&#x27;s EIO flag is enabled, and the Python CLI parser cannot handle non-JSON responses, throwing JSONDecodeError. See IBMCEPH-17938 for full root cause analysis.
+
+KEY EVIDENCE:
+- Clone of IBMCEPH-8606 (original) for 8.1z backport
+- Same description, same reproduction steps, same error trace
+- Created 2026-08-25, status: New
+- Assigned to Aarti Dhikale
+
+FIX STATUS: No fix available. Original IBMCEPH-8606 is &#x27;in progress&#x27;. This 8.1z backport tracks the fix for Squid 19.x (IBM Ceph 8.1z).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-17938 — reproduce JSONDecodeError with EIO flag.
+Environment: IBM Ceph 8.1z (Squid 19.x).
+
+Steps identical to IBMCEPH-17938 — see that entry for full reproduction procedure.
+
+DIAGNOSTIC COMMANDS:
+- Same as IBMCEPH-17938</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;"></textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Same as IBMCEPH-17938. No QE test coverage exists.
+
+GAPS: Identical to IBMCEPH-17938.
+
+SCENARIOS NEEDED: Same scenarios as IBMCEPH-17938, executed on IBM Ceph 8.1z (Squid 19.x) build.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -208,9 +228,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">8.1z backport clone of the same `ceph pg query` JSONDecodeError when EIO flag is set.</div>
+<div>ROOT CAUSE: Identical to IBMCEPH-17938/IBMCEPH-8606. The OSD returns empty/error output for <code>ceph pg query</code> when the pool&#x27;s EIO flag is enabled, and the Python CLI parser cannot handle non-JSON responses, throwing JSONDecodeError. See IBMCEPH-17938 for full root cause analysis.</div>
+<div class="section-head">KEY EVIDENCE</div>
+<ul>
+<li>Clone of IBMCEPH-8606 (original) for 8.1z backport</li>
+<li>Same description, same reproduction steps, same error trace</li>
+<li>Created 2026-08-25, status: New</li>
+<li>Assigned to Aarti Dhikale</li>
+</ul>
+<div>FIX STATUS: No fix available. Original IBMCEPH-8606 is &#x27;in progress&#x27;. This 8.1z backport tracks the fix for Squid 19.x (IBM Ceph 8.1z).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-17938 — reproduce JSONDecodeError with EIO flag.</div>
+<div>Environment: IBM Ceph 8.1z (Squid 19.x).</div>
+<div>Steps identical to IBMCEPH-17938 — see that entry for full reproduction procedure.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li>Same as IBMCEPH-17938</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Same as IBMCEPH-17938. No QE test coverage exists.</div>
+<div>GAPS: Identical to IBMCEPH-17938.</div>
+<div>SCENARIOS NEEDED: Same scenarios as IBMCEPH-17938, executed on IBM Ceph 8.1z (Squid 19.x) build.</div></div>
 </div>
 
 

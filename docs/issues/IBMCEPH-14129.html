@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14129: CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 6.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Kinjal Dhaduk] Hi   Please find the debug logs for all the daemons at  http://magna002.ceph.redhat.com/ceph/ceph-qe-logs/kdhaduk/cehci-run-WHM487-mon-slow-ops/debug-logs/ Please find the daemon status and node details below.  ceph orch ps NAME
-- [Brad Hubbard] The standard logs produced by the ceph cluster. If you are going to report bugs against ceph clusters you will need to investigate what these are since without data we will be unlikely to be able to help. The log from each monitor would be an excellent start, preferably with deb
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Non-leader MON has a log forwarding operation stuck indefinitely in &#x27;forwarded&#x27; state, causing persistent SLOW_OPS HEALTH_WARN. Reproducible at 5/5 hit rate on Reef (18.2.1).
+ROOT CAUSE: A non-leader MON forwards internal log entries to the leader MON for processing. In some cases, the leader MON never acknowledges the forwarded log entry, leaving the operation stuck in &#x27;forwarded&#x27; state indefinitely. The stuck op accumulates age and eventually triggers SLOW_OPS health warning. The operation details show: a log entry forwarded from a non-leader MON (sourced from osd.11) that is never processed by the leader. This occurs during cluster startup or after MDS deployment. Investigation is ongoing.
+KEY EVIDENCE:
+- Stuck op: &#x27;log(1 entries from seq 2)&#x27; in &#x27;forwarded&#x27; state for 666+ seconds
+- Op events: initiated -&gt; header_read -&gt; throttled -&gt; all_read -&gt; dispatched -&gt; forward_request_leader -&gt; forwarded (and stays)
+- Reproducible: 5/5 hit rate on Reef (18.2.1-390.el9cp) during CephFS tier-0 test
+- `forwarded_to_leader: true` but leader never processes it
+- HEALTH_WARN SLOW_OPS persists, cluster never reaches HEALTH_OK
+FIX STATUS: In progress. Assigned to Brad Hubbard. Being investigated with MON debug logs from reproduction.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response
-Environment: IBM Ceph 6.1, component: rados
-
-1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Run baseline benchmark (fio/rados bench) -- record metrics
-5. Trigger the performance scenario described in JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi   , Could you please let me know what all logs are needed? ( ceph daemon mon.&lt;&gt; ops  from all mon?) We do not have the setup now. I need to reproduce the issue and collect logs.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce MON slow ops from stuck forwarded log entry
+Environment: Ceph Reef 18.2.1-390.el9cp, 3+ MON nodes
+1. Deploy multi-node Ceph cluster with 3+ MON nodes using cephadm -- intent: set up multi-MON cluster
+2. Deploy MDS with default values -- intent: generate log entries during MDS setup
+3. Check cluster health: `ceph health detail` -- intent: observe SLOW_OPS warning
+4. On the reporting MON node, dump ops: `cephadm shell -- ceph daemon mon.&lt;hostname&gt; ops` -- intent: find stuck forwarded log op
+5. Verify op shows &#x27;forwarded_to_leader: true&#x27; with increasing age -- intent: confirm the bug
+DIAGNOSTIC COMMANDS:
+- `ceph health detail` -- identify SLOW_OPS
+- `ceph daemon mon.&lt;hostname&gt; ops` on each MON -- find stuck ops
+- `ceph mon dump` -- identify leader and non-leader MONs
+- `ceph daemon mon.&lt;leader&gt; ops` -- verify leader has no corresponding op</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In progress. Reproducible at 5/5 rate in CI (tier-0 CephFS test).
+GAPS: No existing test specifically validates MON log forwarding completion. The issue blocks tier-0 CephFS tests.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Deploy MDS and verify cluster reaches HEALTH_OK within timeout
+- Monitor MON ops during MDS deployment for stuck forwarded entries
+- Test MON log forwarding under leader election/failover
+- Verify SLOW_OPS clears when stuck op is resolved</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,43 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Non-leader MON has a log forwarding operation stuck indefinitely in &#x27;forwarded&#x27; state, causing persistent SLOW_OPS HEALTH_WARN. Reproducible at 5/5 hit rate on Reef (18.2.1).</div>
+<div>ROOT CAUSE: A non-leader MON forwards internal log entries to the leader MON for processing. In some cases, the leader MON never acknowledges the forwarded log entry, leaving the operation stuck in &#x27;forwarded&#x27; state indefinitely. The stuck op accumulates age and eventually triggers SLOW_OPS health warning. The operation details show: a log entry forwarded from a non-leader MON (sourced from osd.11) that is never processed by the leader. This occurs during cluster startup or after MDS deployment. Investigation is ongoing.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 6.1</li>
-<li>Component: rados</li>
+<li>Stuck op: &#x27;log(1 entries from seq 2)&#x27; in &#x27;forwarded&#x27; state for 666+ seconds</li>
+<li>Op events: initiated -&gt; header_read -&gt; throttled -&gt; all_read -&gt; dispatched -&gt; forward_request_leader -&gt; forwarded (and stays)</li>
+<li>Reproducible: 5/5 hit rate on Reef (18.2.1-390.el9cp) during CephFS tier-0 test</li>
+<li><code>forwarded_to_leader: true</code> but leader never processes it</li>
+<li>HEALTH_WARN SLOW_OPS persists, cluster never reaches HEALTH_OK</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: In progress. Assigned to Brad Hubbard. Being investigated with MON debug logs from reproduction.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce MON slow ops from stuck forwarded log entry</div>
+<div>Environment: Ceph Reef 18.2.1-390.el9cp, 3+ MON nodes</div>
 <ul>
-<li>[Kinjal Dhaduk] Hi   Please find the debug logs for all the daemons at  http://magna002.ceph.redhat.com/ceph/ceph-qe-logs/kdhaduk/cehci-run-WHM487-mon-slow-ops/debug-logs/ Please find the daemon status and node details below.  <code>ceph orch ps NAME</code></li>
-<li>[Brad Hubbard] The standard logs produced by the <code>ceph cluster. If you are going to report bugs against ceph clusters you will need to investigate what these are since without data we will be unlikely to be able to help. The log from each monitor would be an excellent start</code>, preferably with deb</li>
+<li><span class="step-num">1.</span> Deploy multi-node Ceph cluster with 3+ MON nodes using <code>cephadm -- intent: set up multi-MON cluster</code></li>
+<li><span class="step-num">2.</span> Deploy MDS with default values -- intent: generate log entries during MDS setup</li>
+<li><span class="step-num">3.</span> Check cluster health: <code><code>ceph health detail</code></code> -- intent: observe SLOW_OPS warning</li>
+<li><span class="step-num">4.</span> On the reporting MON node, dump ops: <code><code>cephadm shell -- ceph daemon mon.&amp;lt;hostname&amp;gt; ops</code></code> -- intent: find stuck forwarded log op</li>
+<li><span class="step-num">5.</span> Verify op shows &#x27;forwarded_to_leader: true&#x27; with increasing age -- intent: confirm the bug</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
+<li><code><code>ceph health detail</code></code> -- identify SLOW_OPS</li>
+<li><code><code>ceph daemon mon.&amp;lt;hostname&amp;gt; ops</code></code> on each MON -- find stuck ops</li>
+<li><code><code>ceph mon dump</code></code> -- identify leader and non-leader MONs</li>
+<li><code><code>ceph daemon mon.&amp;lt;leader&amp;gt; ops</code></code> -- verify leader has no corresponding op</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response</div>
-<div>Environment: IBM Ceph 6.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">5.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi   , Could you please let me know what all logs are needed? ( ceph daemon mon.&lt;&gt; ops  from all mon?) We do not have the setup now. I need to reproduce the issue and collect logs.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: CLONE - Mon slow ops due to forwarded log entry stuck waiting on leader mon response</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In progress. Reproducible at 5/5 rate in CI (tier-0 CephFS test).</div>
+<div>GAPS: No existing test specifically validates MON log forwarding completion. The issue blocks tier-0 CephFS tests.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Deploy MDS and verify cluster reaches HEALTH_OK within timeout</li>
+<li>Monitor MON ops during MDS deployment for stuck forwarded entries</li>
+<li>Test MON log forwarding under leader election/failover</li>
+<li>Verify SLOW_OPS clears when stuck op is resolved</li>
 </ul></div>
 </div>
 

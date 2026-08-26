@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16079: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,47 +189,66 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm intermittently fails to create OSD daemons for some devices because the OSD IDs are not present in osd_uuid_map at deployment time, causing deploy_osd_daemons_for_existing_osds() to skip them.
 
 ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: cephadm
+During new OSD node addition, ceph-volume successfully creates LVM structures and registers OSDs in the CRUSH map, but cephadm&#x27;s `deploy_osd_daemons_for_existing_osds()` skips deploying the daemon because the OSD ID is not yet in `osd_uuid_map`. This happens because there&#x27;s a timing issue between ceph-volume registering the OSD and the mgr&#x27;s osd_uuid_map being updated. The skip condition `if osd_id not in osd_uuid_map: continue` silently drops the deployment request at debug log level. 80% reproducible on IBM Cloud Acadia environment.
 
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  cephadm ? Sharing these logs will help us investigate further.
-- [Gorantla Ramya Sree] Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. ceph orch set-unmanaged osd.default_drive_group
-2. systemctl stop ceph-&lt;cluster_id&gt;@osd.&lt;number&gt;.service
-3. ceph osd o
-- [Aarti Dhikale] Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will help us investigate further.
-- [G Sri Harsha] Issue appeared once again. Added attachment  ceph_osd_recreation_issue.pdf cc:      Note : didn’t noticed the ask in the ticket hence missed collecting debug logs during the steps execution.
-- [G Sri Harsha] the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix/workaround.  Let us know your availability today for a call. cc:
+KEY EVIDENCE:
+- Aarti Dhikale analysis: `osd.62` and `osd.63` skipped in `deploy_osd_daemons_for_existing_osds()` because not in `osd_uuid_map`
+- MGR logs show &quot;Deploying daemon&quot; for osd.56-61 but NOT for osd.62-63
+- LVMs exist and are ACTIVE: `ceph-volume lvm list` shows both OSDs
+- Workaround: `cephadm ceph-volume lvm zap /dev/nvme4n1 --destroy` then `ceph mgr fail &amp;&amp; ceph orch set-managed osd.default_drive_group`
+- 80% hit rate on reproduction
 
 FIX STATUS:
-- Fix available in build 20.2.1-330.
-- Workaround: the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix</textarea>
+- Status: Assigned (Guillaume Abrioux)
+- Under investigation; debug logs requested from customer
+- Workaround: zap + mgr fail + re-manage OSD group</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
-Environment: IBM Ceph 9.0, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm failing to create OSD daemons during node addition
+Environment: IBM Ceph 9.x cluster, adding new OSD node with multiple NVMe devices
 
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Set OSD service to unmanaged -- intent: prepare for controlled test
+   ```
+   ceph orch set-unmanaged osd.default_drive_group
+   ```
+2. Purge existing OSDs from a device (simulate fresh device) -- intent: create conditions
+   ```
+   ceph-volume lvm zap /dev/nvme4n1 --destroy
+   ```
+3. Re-enable managed OSD service and refresh devices -- intent: trigger OSD creation
+   ```
+   ceph orch set-managed osd.default_drive_group
+   ceph orch device ls &lt;hostname&gt; --refresh
+   ```
+4. Check if all OSDs come up -- intent: detect missing daemons
+   ```
+   ceph osd tree | grep down
+   ceph orch ps --hostname &lt;hostname&gt; | grep osd
+   ```
 
-SCENARIO DETAIL (from engineering comments):
-Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will help us investigate further.</textarea>
+DIAGNOSTIC COMMANDS:
+- `ceph osd tree` (identify down OSDs)
+- `ceph-volume lvm list` (verify LVMs exist)
+- `ceph orch ps` (check which OSD daemons are running)
+- MGR debug logs: `ceph config set mgr mgr/cephadm/log_to_cluster_level debug`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test for intermittent OSD daemon creation failure during batch deployment.
 
 GAPS:
-- Existing cephadm tests may not cover: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map
+- No test validates all OSDs have running daemons after node addition
+- No test for osd_uuid_map consistency during batch OSD creation
+- No retry logic test for failed OSD daemon deployment
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Add new OSD node with 8 devices, verify all 8 OSD daemons come up within timeout
+- Repeat node addition 5 times, verify 100% success rate
+- Monitor osd_uuid_map population timing vs daemon deployment attempts</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,45 +259,70 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm intermittently fails to create OSD daemons for some devices because the OSD IDs are not present in osd_uuid_map at deployment time, causing deploy_osd_daemons_for_existing_osds() to skip them.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>During new OSD node addition, ceph-volume successfully creates LVM structures and registers OSDs in the CRUSH map, but cephadm&#x27;s <code>deploy_osd_daemons_for_existing_osds()</code> skips deploying the daemon because the OSD ID is not yet in <code>osd_uuid_map</code>. This happens because there&#x27;s a timing issue between ceph-volume registering the OSD and the mgr&#x27;s osd_uuid_map being updated. The skip condition <code>if osd_id not in osd_uuid_map: continue</code> silently drops the deployment request at debug log level. 80% reproducible on IBM Cloud Acadia environment.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Aarti Dhikale] , Additionally, if possible, could you please reproduce the issue and collect the debug logs for  ceph-volume  and  <code>cephadm ? Sharing these logs will help us investigate further.</code></li>
-<li>[Gorantla Ramya Sree] Hi    Please find the reproduction steps we followed. After performing these steps, we observed that Cephadm intermittently fails to recreate the OSD daemons. 1. <code>ceph orch set-unmanaged osd.default_drive_group</code></li>
-<li><span class="step-num">2.</span> <code>systemctl stop ceph-&lt;cluster_id&gt;@osd.&lt;number&gt;.service</code></li>
-<li><span class="step-num">3.</span> <code>ceph osd o</code></li>
-<li>[Aarti Dhikale] Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  <code>cephadm  after reproducing the issue? These logs will help us investigate further.</code></li>
-<li>[G Sri Harsha] Issue appeared once again. Added attachment  ceph_osd_recreation_issue.pdf cc:      Note : didn’t noticed the ask in the ticket hence missed collecting debug logs during the steps execution.</li>
-<li>[G Sri Harsha] the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix/workaround.  Let us know your availability today for a call. cc:</li>
+<li>Aarti Dhikale analysis: <code>osd.62</code> and <code>osd.63</code> skipped in <code>deploy_osd_daemons_for_existing_osds()</code> because not in <code>osd_uuid_map</code></li>
+<li>MGR logs show &quot;Deploying daemon&quot; for osd.56-61 but NOT for osd.62-63</li>
+<li>LVMs exist and are ACTIVE: <code>ceph-volume lvm list</code> shows both OSDs</li>
+<li>Workaround: <code><code>cephadm ceph-volume lvm zap /dev/nvme4n1 --destroy</code></code> then <code><code>ceph mgr fail &amp;amp;&amp;amp; ceph orch set-managed osd.default_drive_group</code></code></li>
+<li>80% hit rate on reproduction</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Fix available in build 20.2.1-330.</li>
-<li>Workaround: the cluster is still in the same state.  shall we have a debugging session..  we soon need to perform this activity in our production cluster. Before that we need to understand and get ready with fix</li>
+<li>Status: Assigned (Guillaume Abrioux)</li>
+<li>Under investigation; debug logs requested from customer</li>
+<li>Workaround: zap + mgr fail + re-manage OSD group</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</div>
-<div>Environment: IBM Ceph 9.0, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm failing to create OSD daemons during node addition</div>
+<div>Environment: IBM Ceph 9.x cluster, adding new OSD node with multiple NVMe devices</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Set OSD service to unmanaged -- intent: prepare for controlled test</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Thanks for sharing the reproduction steps. I&#x27;ll try to reproduce the issue in my local environment as well. If possible, could you please collect and share the debug logs for  ceph-volume  and  cephadm  after reproducing the issue? These logs will help us investigate further.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
+<pre>
+   ceph orch set-unmanaged osd.default_drive_group
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Purge existing OSDs from a device (simulate fresh device) -- intent: create conditions</li>
+</ul>
+<pre>
+   ceph-volume lvm zap /dev/nvme4n1 --destroy
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Re-enable managed OSD service and refresh devices -- intent: trigger OSD creation</li>
+</ul>
+<pre>
+   ceph orch set-managed osd.default_drive_group
+   ceph orch device ls &lt;hostname&gt; --refresh
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Check if all OSDs come up -- intent: detect missing daemons</li>
+</ul>
+<pre>
+   ceph osd tree | grep down
+   ceph orch ps --hostname &lt;hostname&gt; | grep osd
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph osd tree</code></code> (identify down OSDs)</li>
+<li><code>ceph-volume lvm list</code> (verify LVMs exist)</li>
+<li><code><code>ceph orch ps</code></code> (check which OSD daemons are running)</li>
+<li>MGR debug logs: <code><code>ceph config set mgr mgr/cephadm/log_to_cluster_level debug</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test for intermittent OSD daemon creation failure during batch deployment.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing <code>cephadm tests may not cover: Cephadm not creating OSD daemons for few OSDs despite being present in CRUSH map</code></li>
+<li>No test validates all OSDs have running daemons after node addition</li>
+<li>No test for osd_uuid_map consistency during batch OSD creation</li>
+<li>No retry logic test for failed OSD daemon deployment</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Add new OSD node with 8 devices, verify all 8 OSD daemons come up within timeout</li>
+<li>Repeat node addition 5 times, verify 100% success rate</li>
+<li>Monitor osd_uuid_map population timing vs daemon deployment attempts</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12878: [BZ#2431585] [IBM_Support][RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,47 +189,35 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2431585] [IBM_Support][RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&quot;
-
-ROOT CAUSE:
-- Affected version(s): 6.1
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] We could definitely create a testfix for the customer. But I don&#x27;t think commit 5ca138f8 (the one planned for 7.1z10) will address the issue of a missing metadata object. There&#x27;s the bucket entry-point object, the bucket instance object, and finally the bucket index shards. Woul
-- [Kritik Sachdeva] Hello    customer responded back and it didn’t helped to resolve the issue. Here is the response from the customer that they did observe many deletions in the  bucket check olh --fix  command. There were several deletions during command &quot;bucket check olh -fix&quot;: 
-...
-2026-05-12T19
-- [Aarti Dhikale] Thanks. If we can also get the debug logs for OSD 12 along with the RGW logs, that would be great. Also, could you please clarify one thing: did the customer run only  bucket check olh --fix , or did they run both  bucket check olh --fix  and  radosgw-admin bucket check unlinked
-- [Kritik Sachdeva] Yes I have asked customer to clarify the later part if only one command was executed or both. I am awaiting for ther response on ticket. Besides that we can ask customer to provide the OSD.12 debug logs as well. Regards, Kritik Sachdeva
-- [Aarti Dhikale] Rerunning the above commands should not cause any issues, as they are intended only to fix unlinked and OLH entries.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA for detailed root cause (large output file not fully readable). Based on title: RGW user deletion fails with cls_bucket_list_unordered error -27 (EFBIG).
+ROOT CAUSE: Based on the issue title and available metadata, this involves an RGW user deletion failure where the bucket index listing operation returns -27 (EFBIG / file too large), suggesting the bucket index object has grown beyond the cls operation size limit. This typically occurs with very large buckets (millions of objects) where a single index shard becomes oversized. The cls_bucket_list_unordered operation fails because the index entry exceeds RADOS object size limits.
+KEY EVIDENCE:
+- Error: &#x27;cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&#x27;
+- Affects user deletion workflow
+- Version: IBM Ceph (IBM_Support tag)
+- Status: closed
+FIX STATUS: Issue closed. Specific resolution details not available from truncated output.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2431585] [RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&quot;
-Environment: IBM Ceph 6.1, component: rgw
-
-1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-[Internal - do not share with customer] Summary From the command outputs shared, it is observed that high-level bucket operations and maintenance checks (e.g., bucket check, OLH, and unlinked operatio
-Hello   ,  From the OSD logs (osd.45), we&#x27;ve observed that bucket deletion is failing when attempting to list objects from the index pool. The error &quot;File too large&quot; (errno -27) occurs for  Shard 34</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce RGW user deletion failure due to oversized bucket index
+Environment: IBM Ceph with large bucket (millions of objects per shard)
+1. Create RGW user and bucket with many objects per index shard -- intent: create oversized index
+2. Attempt radosgw-admin user rm --uid=&lt;user&gt; --purge-data -- intent: trigger the error
+3. Check RGW debug logs for cls_bucket_list_unordered error -- intent: confirm EFBIG
+DIAGNOSTIC COMMANDS:
+- radosgw-admin user rm --uid=&lt;user&gt; --purge-data
+- radosgw-admin bucket stats --bucket=&lt;name&gt;
+- rados -p &lt;index-pool&gt; listomapkeys &lt;bucket-index-object&gt; | wc -l
+- radosgw-admin bucket reshard --bucket=&lt;name&gt; --num-shards=&lt;N&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: [BZ#2431585] [RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_op
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Limited information available for specific test coverage assessment.
+GAPS: No test validates user deletion with very large bucket indexes; no test for cls_bucket_list_unordered with oversized index shards.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Create bucket with millions of objects in single shard, attempt user deletion
+- Verify bucket reshard resolves the issue before user deletion retry</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,47 +228,36 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2431585] [IBM_Support][RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&quot;</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA for detailed root cause (large output file not fully readable). Based on title: RGW user deletion fails with cls_bucket_list_unordered error -27 (EFBIG).</div>
+<div>ROOT CAUSE: Based on the issue title and available metadata, this involves an RGW user deletion failure where the bucket index listing operation returns -27 (EFBIG / file too large), suggesting the bucket index object has grown beyond the cls operation size limit. This typically occurs with very large buckets (millions of objects) where a single index shard becomes oversized. The cls_bucket_list_unordered operation fails because the index entry exceeds RADOS object size limits.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 6.1</li>
-<li>Component: rgw</li>
+<li>Error: &#x27;cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&#x27;</li>
+<li>Affects user deletion workflow</li>
+<li>Version: IBM Ceph (IBM_Support tag)</li>
+<li>Status: closed</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Issue closed. Specific resolution details not available from truncated output.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce RGW user deletion failure due to oversized bucket index</div>
+<div>Environment: IBM Ceph with large bucket (millions of objects per shard)</div>
 <ul>
-<li>[Aarti Dhikale] We could definitely create a testfix for the customer. But I don&#x27;t think commit 5ca138f8 (the one planned for 7.1z10) will address the issue of a missing metadata object. There&#x27;s the bucket entry-point object, the bucket instance object, and finally the bucket index shards. Woul</li>
-<li>[Kritik Sachdeva] Hello    customer responded back and it didn’t helped to resolve the issue. Here is the response from the customer that they did observe many deletions in the  bucket check olh --fix  command. There were several deletions during command &quot;bucket check olh -fix&quot;:</li>
+<li><span class="step-num">1.</span> Create RGW user and bucket with many objects per index shard -- intent: create oversized index</li>
+<li><span class="step-num">2.</span> Attempt <code>radosgw-admin user rm --uid=&lt;user&gt; --purge-data -- intent: trigger the error</code></li>
+<li><span class="step-num">3.</span> Check RGW debug logs for cls_bucket_list_unordered error -- intent: confirm EFBIG</li>
 </ul>
-<div>...</div>
-<div>2026-05-12T19</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Aarti Dhikale] Thanks. If we can also get the debug logs for OSD 12 along with the RGW logs, that would be great. Also, could you please clarify one thing: did the customer run only  bucket check olh --fix , or did they run both  bucket check olh --fix  and  <code>radosgw-admin bucket check unlinked</code></li>
-<li>[Kritik Sachdeva] Yes I have asked customer to clarify the later part if only one command was executed or both. I am awaiting for ther response on ticket. Besides that we can ask customer to provide the OSD.12 debug logs as well. Regards, Kritik Sachdeva</li>
-<li>[Aarti Dhikale] Rerunning the above commands should not cause any issues, as they are intended only to fix unlinked and OLH entries.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code>radosgw-admin user rm --uid=&lt;user&gt; --purge-data</code></li>
+<li><code>radosgw-admin bucket stats --bucket=&lt;name&gt;</code></li>
+<li><code>rados -p &lt;index-pool&gt; listomapkeys &lt;bucket-index-object&gt; | wc -l</code></li>
+<li><code>radosgw-admin bucket reshard --bucket=&lt;name&gt; --num-shards=&lt;N&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2431585] [RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_operate (bucket list op), r=-27&quot;</div>
-<div>Environment: IBM Ceph 6.1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>[Internal - do not share with customer] Summary From the command outputs shared, it is observed that high-level bucket operations and maintenance checks (e.g., bucket check, OLH, and unlinked operatio</div>
-<div>Hello   ,  From the OSD logs (osd.45), we&#x27;ve observed that bucket deletion is failing when attempting to list objects from the index pool. The error &quot;File too large&quot; (errno -27) occurs for  Shard 34</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [BZ#2431585] [RGW] user deletion failed with &quot;ERROR: cls_bucket_list_unordered error in rgw_rados_op</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Limited information available for specific test coverage assessment.</div>
+<div>GAPS: No test validates user deletion with very large bucket indexes; no test for cls_bucket_list_unordered with oversized index shards.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Create bucket with millions of objects in single shard, attempt user deletion</li>
+<li>Verify bucket reshard resolves the issue before user deletion retry</li>
 </ul></div>
 </div>
 

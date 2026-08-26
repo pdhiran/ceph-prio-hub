@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15802: RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)
-
-ROOT CAUSE:
-- Affected version(s): not specified
-- Component: cephfs
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to handle missing journal header in cephfs-journal-tool recover_dentries, allowing partial metadata recovery.
+ROOT CAUSE: When CephFS journal header object (object 200.00000000) is missing or corrupted due to incomplete PG in the metadata pool, cephfs-journal-tool event recover_dentries fails with &#x27;Header 200.00000000 is unreadable&#x27;. The tool unconditionally requires the journal header to proceed with dentry recovery. Without it, the only option is destructive journal reset + full metadata rebuild via data scan, which loses uncommitted metadata changes. The RFE requests best-effort recovery that can extract dentries from surviving journal event objects even when the header is absent.
+KEY EVIDENCE:
+- Error: &#x27;2026-06-09T20:16:06.290+0000 7f09a5246400 -1 Header 200.00000000 is unreadable&#x27;
+- Triggered by incomplete PG in metadata pool (since recovered)
+- Workaround: cephfs-journal-tool journal reset + backward scrub (data scan) -- involves data loss
+- Environment: ODF 4.18.23 (OCP-based)
+- Upstream tracker filed
+FIX STATUS: Status &#x27;new&#x27;. Upstream tracker opened. No fix timeline established. Assigned to Pavan Rallabhandi.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)
-Environment: IBM Ceph 9.x, component: cephfs
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce missing journal header scenario and verify recover_dentries failure
+Environment: CephFS on IBM Ceph 8.1 or 9.1
+1. Create CephFS filesystem with active metadata operations (fio + mdtest) -- intent: populate journal
+2. Identify journal header object: rados -p &lt;metadata_pool&gt; ls | grep 200.00000000 -- intent: locate target
+3. Remove journal header object: rados -p &lt;metadata_pool&gt; rm 200.00000000 -- intent: simulate PG loss
+4. Run: cephfs-journal-tool --rank=&lt;fs&gt;:0 journal inspect -- intent: confirm header missing
+5. Run: cephfs-journal-tool --rank=&lt;fs&gt;:0 event recover_dentries summary -- intent: reproduce failure
+6. Observe &#x27;Header is unreadable&#x27; error -- intent: confirm bug
+DIAGNOSTIC COMMANDS:
+- cephfs-journal-tool --rank=&lt;fs&gt;:0 journal inspect
+- rados -p &lt;metadata_pool&gt; ls | grep 200
+- ceph pg dump | grep &lt;metadata_pool&gt;
+- ceph health detail</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephfs tests may not cover: RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test coverage for journal recovery with missing header objects.
+GAPS: cephfs-journal-tool tests do not cover the missing-header scenario. No test validates partial recovery from surviving journal event objects.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+1. Remove journal header, attempt recover_dentries, verify graceful failure/partial recovery
+2. Remove random journal event objects (not header), verify recover_dentries still works for remaining events
+3. Simulate incomplete PG in metadata pool, recover PG, then attempt journal recovery</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to handle missing journal header in cephfs-journal-tool recover_dentries, allowing partial metadata recovery.</div>
+<div>ROOT CAUSE: When CephFS journal header object (object 200.00000000) is missing or corrupted due to incomplete PG in the metadata pool, cephfs-journal-tool event recover_dentries fails with &#x27;Header 200.00000000 is unreadable&#x27;. The tool unconditionally requires the journal header to proceed with dentry recovery. Without it, the only option is destructive journal reset + full metadata rebuild via data scan, which loses uncommitted metadata changes. The RFE requests best-effort recovery that can extract dentries from surviving journal event objects even when the header is absent.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: cephfs</li>
+<li>Error: &#x27;2026-06-09T20:16:06.290+0000 7f09a5246400 -1 Header 200.00000000 is unreadable&#x27;</li>
+<li>Triggered by incomplete PG in metadata pool (since recovered)</li>
+<li>Workaround: cephfs-journal-tool journal reset + backward scrub (data scan) -- involves data loss</li>
+<li>Environment: ODF 4.18.23 (OCP-based)</li>
+<li>Upstream tracker filed</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Status &#x27;new&#x27;. Upstream tracker opened. No fix timeline established. Assigned to Pavan Rallabhandi.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce missing journal header scenario and verify recover_dentries failure</div>
+<div>Environment: CephFS on IBM Ceph 8.1 or 9.1</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)</div>
-<div>Environment: IBM Ceph 9.x, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing cephfs tests may not cover: RFE: Handle missing journal header in recover_dentries (CephFS journal recovery)</li>
+<li><span class="step-num">1.</span> Create CephFS filesystem with active metadata operations (<code>fio + mdtest) -- intent: populate journal</code></li>
+<li><span class="step-num">2.</span> Identify journal header object: <code>rados -p &lt;metadata_pool&gt; ls | grep 200.00000000 -- intent: locate target</code></li>
+<li><span class="step-num">3.</span> Remove journal header object: <code>rados -p &lt;metadata_pool&gt; rm 200.00000000 -- intent: simulate PG loss</code></li>
+<li><span class="step-num">4.</span> Run: cephfs-journal-tool --rank=&lt;fs&gt;:0 journal inspect -- intent: confirm header missing</li>
+<li><span class="step-num">5.</span> Run: cephfs-journal-tool --rank=&lt;fs&gt;:0 event recover_dentries summary -- intent: reproduce failure</li>
+<li><span class="step-num">6.</span> Observe &#x27;Header is unreadable&#x27; error -- intent: confirm bug</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li>cephfs-journal-tool --rank=&lt;fs&gt;:0 journal inspect</li>
+<li><code>rados -p &lt;metadata_pool&gt; ls | grep 200</code></li>
+<li><code>ceph pg dump | grep &lt;metadata_pool&gt;</code></li>
+<li><code>ceph health detail</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test coverage for journal recovery with missing header objects.</div>
+<div>GAPS: cephfs-journal-tool tests do not cover the missing-header scenario. No test validates partial recovery from surviving journal event objects.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> Remove journal header, attempt recover_dentries, verify graceful failure/partial recovery</li>
+<li><span class="step-num">2.</span> Remove random journal event objects (not header), verify recover_dentries still works for remaining events</li>
+<li><span class="step-num">3.</span> Simulate incomplete PG in metadata pool, recover PG, then attempt journal recovery</li>
 </ul></div>
 </div>
 

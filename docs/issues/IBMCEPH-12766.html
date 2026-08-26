@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12766: [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,60 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OAuth2 integration with Microsoft Entra ID fails due to multiple issues: initial code defect (missing ssl field), then 502 Bad Gateway from routing misconfiguration, and finally 403 Forbidden due to missing Entra ID Premium P1/P2 for role assignment.
 
 ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): 8.1
-- Component: ceph-dashboard
+Multiple issues: (1) A downstream merge conflict removed the `ssl` parameter from `Oauth2ProxySpec.__init__()`, causing `NameError: name &#x27;ssl&#x27; is not defined` when applying the oauth2-proxy spec. (2) After code fix, the OAuth2 authentication flow completes but returns 502 Bad Gateway due to miscommunication between mgmt-gateway (nginx) and the OAuth2-proxy/Dashboard services. (3) Even when routing works, the Dashboard returns 403 because the Entra ID user has no Ceph Dashboard role assigned -- and assigning custom roles requires Microsoft Entra ID Premium P1/P2.
 
-ENGINEERING FINDINGS:
-- [STEVEN Sroczynski] This was the Latest response from Eng in the L3 Collab Channel: I am not sure I can provide any other useful feedback here as a workaround, as stated in the  official docs  we are only officially supporting Red Hat Single-Sign-On and IBM Security Verify as identity providers, thi
-- [STEVEN Sroczynski] Hi Team, I wanted to pass along a couple of updates from the customer as they proceeded to work with and test their workaround for getting Entra-ID to work in their Environment. First Update: There have been some developments in getting email in the claim and we were successful i
-- [Pedro Gonzalez] Moved priority to blocker as it’s an important fix to include into 9.1 which is still being worked on.
-- [Pedro Gonzalez] Tried to find the cluster’s  mgmt-gateway  logs for more information on the reported error by  nginx  :  502 Bad Gateway . But they were not available, I would need   help to do the login process again to capture the traceback and identify the reason of failure. I believe this co
-- [Pentakota Divya Gowri] I updated the  http_addrs  parameter to  0.0.0.0:4180  as suggested and re-tested the login flow after applying the requested service changes. The issue is still reproducible. The authentication flow successfully reaches the callback URL, but the request ends with a  502 Bad Ga
+KEY EVIDENCE:
+- Initial error: `NameError: name &#x27;ssl&#x27; is not defined` in `service_spec.py:2938`
+- Redouane Kachach: &quot;Code right now is broken, the fields are really missing from the Oauth2Proxy Spec&quot; -- caused by DS conflict resolution
+- Pedro Gonzalez: &quot;Dashboard freezes due to missing permissions on the EntraID user&quot;
+- `Http failure response for /api/auth/check: 403 Forbidden`
+- TestFix being prepared for customer validation
 
 FIX STATUS:
-- Fix available in build 20.2.1-282.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1832/commits
-- Workaround: Hi Team, I wanted to pass along a couple of updates from the customer as they proceeded to work with and test their workaround for getting Entra-ID to work in their Environment. First Update: There ha</textarea>
+- Status: ON_QA
+- Code fix: merged (spec field fix)
+- Remaining: Full end-to-end validation with Entra ID Premium pending
+- TestFix image being provided to customer for non-prod testing</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2
-Environment: IBM Ceph 8.1, component: ceph-dashboard
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate OAuth2 integration with Microsoft Entra ID on IBM Ceph 9.x
+Environment: IBM Ceph 9.1+ with mgmt-gateway, OAuth2-proxy, Microsoft Entra ID (Premium P1/P2)
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Configure Microsoft Entra ID application with redirect URI -- intent: IdP setup
+2. Deploy OAuth2-proxy service -- intent: enable SSO
+   ```
+   ceph orch apply -i oauth2.yaml
+   ```
+3. Enable SSO on Dashboard -- intent: activate OAuth2 flow
+   ```
+   ceph dashboard sso enable oauth2
+   ```
+4. Access Dashboard and authenticate via Entra ID -- intent: test flow
+5. Verify user can access Dashboard after authentication -- intent: end-to-end
+
+DIAGNOSTIC COMMANDS:
+- `ceph dashboard sso status`
+- `ceph orch ps --service-type oauth2-proxy`
+- `journalctl -u ceph-mgmt-gateway*` (check nginx logs)
+- `journalctl -u ceph-mgr* | grep &#x27;auth/check&#x27;`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: OAuth2 integration with Entra ID requires Premium P1/P2 for complete testing. In progress.
 
 GAPS:
-- Permission test gap for: [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2
+- No end-to-end test with Microsoft Entra ID (requires Premium license)
+- No test for OAuth2-proxy spec field validation
+- No test for user role assignment after OAuth2 authentication
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</textarea>
+- Deploy OAuth2-proxy, authenticate via Entra ID, verify Dashboard access
+- Test with Keycloak as alternative OIDC provider (no license requirement)
+- Verify proper error message when user has no Dashboard role</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,43 +253,62 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OAuth2 integration with Microsoft Entra ID fails due to multiple issues: initial code defect (missing ssl field), then 502 Bad Gateway from routing misconfiguration, and finally 403 Forbidden due to missing Entra ID Premium P1/P2 for role assignment.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>Multiple issues: (1) A downstream merge conflict removed the <code>ssl</code> parameter from <code>Oauth2ProxySpec.__init__()</code>, causing <code>NameError: name &#x27;ssl&#x27; is not defined</code> when applying the oauth2-proxy spec. (2) After code fix, the OAuth2 authentication flow completes but returns 502 Bad Gateway due to miscommunication between mgmt-gateway (nginx) and the OAuth2-proxy/Dashboard services. (3) Even when routing works, the Dashboard returns 403 because the Entra ID user has no Ceph Dashboard role assigned -- and assigning custom roles requires Microsoft Entra ID Premium P1/P2.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-dashboard</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[STEVEN Sroczynski] This was the Latest response from Eng in the L3 Collab Channel: I am not sure I can provide any other useful feedback here as a workaround, as stated in the  official docs  we are only officially supporting Red Hat Single-Sign-On and IBM Security Verify as identity providers, thi</li>
-<li>[STEVEN Sroczynski] Hi Team, I wanted to pass along a couple of updates from the customer as they proceeded to work with and test their workaround for getting Entra-ID to work in their Environment. First Update: There have been some developments in getting email in the claim and we were successful i</li>
-<li>[Pedro Gonzalez] Moved priority to blocker as it’s an important fix to include into 9.1 which is still being worked on.</li>
-<li>[Pedro Gonzalez] Tried to find the cluster’s  mgmt-gateway  logs for more information on the reported error by  nginx  :  502 Bad Gateway . But they were not available, I would need   help to do the login process again to capture the traceback and identify the reason of failure. I believe this co</li>
-<li>[Pentakota Divya Gowri] I updated the  http_addrs  parameter to  0.0.0.0:4180  as suggested and re-tested the login flow after applying the requested service changes. The issue is still reproducible. The authentication flow successfully reaches the callback URL, but the request ends with a  502 Bad Ga</li>
+<li>Initial error: <code>NameError: name &amp;#x27;ssl&amp;#x27; is not defined</code> in <code>service_spec.py:2938</code></li>
+<li>Redouane Kachach: &quot;Code right now is broken, the fields are really missing from the Oauth2Proxy Spec&quot; -- caused by DS conflict resolution</li>
+<li>Pedro Gonzalez: &quot;Dashboard freezes due to missing permissions on the EntraID user&quot;</li>
+<li><code>Http failure response for /api/auth/check: 403 Forbidden</code></li>
+<li>TestFix being prepared for customer validation</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Fix available in build 20.2.1-282.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1832/commits</li>
-<li>Workaround: Hi Team, I wanted to pass along a couple of updates from the customer as they proceeded to work with and test their workaround for getting Entra-ID to work in their Environment. First Update: There ha</li>
+<li>Status: ON_QA</li>
+<li>Code fix: merged (spec field fix)</li>
+<li>Remaining: Full end-to-end validation with Entra ID Premium pending</li>
+<li>TestFix image being provided to customer for non-prod testing</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-dashboard</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate OAuth2 integration with Microsoft Entra ID on IBM Ceph 9.x</div>
+<div>Environment: IBM Ceph 9.1+ with mgmt-gateway, OAuth2-proxy, Microsoft Entra ID (Premium P1/P2)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Configure Microsoft Entra ID application with redirect URI -- intent: IdP setup</li>
+<li><span class="step-num">2.</span> Deploy OAuth2-proxy service -- intent: enable SSO</li>
+</ul>
+<pre>
+   ceph orch apply -i oauth2.yaml
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Enable SSO on Dashboard -- intent: activate OAuth2 flow</li>
+</ul>
+<pre>
+   ceph dashboard sso enable oauth2
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Access Dashboard and authenticate via Entra ID -- intent: test flow</li>
+<li><span class="step-num">5.</span> Verify user can access Dashboard after authentication -- intent: end-to-end</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph dashboard sso status</code></code></li>
+<li><code><code>ceph orch ps --service-type oauth2-proxy</code></code></li>
+<li><code><code>journalctl -u ceph-mgmt-gateway*</code></code> (check nginx logs)</li>
+<li><code><code>journalctl -u ceph-mgr* | grep &amp;#x27;auth/check&amp;#x27;</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">OAuth2 integration with Entra ID requires Premium P1/P2 for complete testing. In progress.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission test gap for: [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2</li>
+<li>No end-to-end test with Microsoft Entra ID (requires Premium license)</li>
+<li>No test for OAuth2-proxy spec field validation</li>
+<li>No test for user role assignment after OAuth2 authentication</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Deploy OAuth2-proxy, authenticate via Entra ID, verify Dashboard access</li>
+<li>Test with Keycloak as alternative OIDC provider (no license requirement)</li>
+<li>Verify proper error message when user has no Dashboard role</li>
 </ul></div>
 </div>
 

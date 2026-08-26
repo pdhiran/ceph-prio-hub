@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14907: [IBM_Support][RFE] Enable Ceph staggered upgrade via the Ceph dashboard</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,36 +189,34 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][RFE] Enable Ceph staggered upgrade via the Ceph dashboard
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.0
-- Component: ceph-mgr/orchestrator
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to enable Ceph staggered upgrade management via the Ceph Dashboard UI.
+ROOT CAUSE: Currently staggered upgrades (upgrading daemons in a controlled order with pauses) are only supported via CLI commands (ceph orch upgrade start --daemon_types, --crush_bucket_type, etc.). For customers managing large clusters, a dashboard UI workflow would reduce operational complexity and human error. The Dashboard team has triaged this for Ceph 10.0 or later.
+KEY EVIDENCE:
+- Currently CLI-only for staggered upgrades
+- Dashboard lead (Afreen Misbah) confirmed: &#x27;This can be done in 10.0 or post&#x27;
+- No customer name provided despite request from Gaurav Sitlani (Aug 2026)
+- Labeled as FutureFeature
+FIX STATUS: Planned for Ceph 10.0 or later. No active development. Assigned to Afreen Misbah (Dashboard lead).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE] Enable Ceph staggered upgrade via the Ceph dashboard
-Environment: IBM Ceph 9.0, component: ceph-mgr/orchestrator
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-3. Monitor upgrade -- `ceph orch upgrade status`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: N/A - This is a UI RFE, not a bug. No reproduction needed.
+Environment: IBM Ceph 9.0+
+1. Attempt staggered upgrade via Dashboard UI -- intent: confirm feature absence
+2. Verify staggered upgrade works via CLI: ceph orch upgrade start --image &lt;img&gt; --daemon_types mgr,mon -- intent: confirm CLI path works
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade status
+- ceph orch upgrade start --help</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA. This is a future RFE with no implementation.
+GAPS: No Dashboard UI test for upgrade workflow exists. CLI staggered upgrade tests may exist in CephCI but Dashboard coverage is absent.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior</textarea>
+1. When implemented: Dashboard-initiated staggered upgrade with daemon_types selection
+2. Dashboard progress tracking during upgrade
+3. Dashboard pause/resume upgrade controls
+4. Error handling when upgrade fails mid-way via Dashboard</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -229,34 +227,35 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][RFE] Enable Ceph staggered upgrade via the Ceph dashboard</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to enable Ceph staggered upgrade management via the Ceph Dashboard UI.</div>
+<div>ROOT CAUSE: Currently staggered upgrades (upgrading daemons in a controlled order with pauses) are only supported via CLI commands (ceph orch upgrade start --daemon_types, --crush_bucket_type, etc.). For customers managing large clusters, a dashboard UI workflow would reduce operational complexity and human error. The Dashboard team has triaged this for Ceph 10.0 or later.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.0</li>
-<li>Component: ceph-mgr/orchestrator</li>
+<li>Currently CLI-only for staggered upgrades</li>
+<li>Dashboard lead (Afreen Misbah) confirmed: &#x27;This can be done in 10.0 or post&#x27;</li>
+<li>No customer name provided despite request from Gaurav Sitlani (Aug 2026)</li>
+<li>Labeled as FutureFeature</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Planned for Ceph 10.0 or later. No active development. Assigned to Afreen Misbah (Dashboard lead).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: N/A - This is a UI RFE, not a bug. No reproduction needed.</div>
+<div>Environment: IBM Ceph 9.0+</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE] Enable Ceph staggered upgrade via the Ceph dashboard</div>
-<div>Environment: IBM Ceph 9.0, component: ceph-mgr/orchestrator</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li><span class="step-num">1.</span> Attempt staggered upgrade via Dashboard UI -- intent: confirm feature absence</li>
+<li><span class="step-num">2.</span> Verify staggered upgrade works via CLI: <code>ceph orch upgrade start --image &lt;img&gt; --daemon_types mgr</code>,mon -- intent: confirm CLI path works</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch upgrade status</code></li>
+<li><code>ceph orch upgrade start --help</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA. This is a future RFE with no implementation.</div>
+<div>GAPS: No Dashboard UI test for upgrade workflow exists. CLI staggered upgrade tests may exist in CephCI but Dashboard coverage is absent.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> When implemented: Dashboard-initiated staggered upgrade with daemon_types selection</li>
+<li><span class="step-num">2.</span> Dashboard progress tracking during upgrade</li>
+<li><span class="step-num">3.</span> Dashboard pause/resume upgrade controls</li>
+<li><span class="step-num">4.</span> Error handling when upgrade fails mid-way via Dashboard</li>
 </ul></div>
 </div>
 

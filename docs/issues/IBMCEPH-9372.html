@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-9372: [BZ#2298858] [IBM_Support][RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host list&quot; using single command</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,36 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2298858] [IBM_Support][RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host list&quot; using single command
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: nvmeof
-
-ENGINEERING FINDINGS:
-- [Aviv Caro] This is already fixed, but I see for 8.0z1 for QE validation.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to support multiple client NQNs in a single nvmeof-cli host add command - implemented by separating NQNs with spaces (not commas or quotes).
+ROOT CAUSE: The nvmeof-cli originally only accepted a single host NQN per `host add` command. The fix (PR#817 on ceph-nvmeof) enables passing multiple NQNs as space-separated arguments WITHOUT quotes. Using commas or enclosing in quotes causes the entire string to be treated as a single NQN, failing UUID validation. The confusion arose from unclear documentation and non-intuitive CLI behavior.
+KEY EVIDENCE:
+- Correct syntax: `host add --subsystem &lt;nqn&gt; --host-nqn nqn1 nqn2 nqn3` (space-separated, no quotes)
+- Incorrect: `--host-nqn &quot;nqn1, nqn2&quot;` or `--host-nqn &quot;nqn1 nqn2&quot;` (quotes combine into single arg)
+- Fix available in nvmeof 1.3.3+ (IBM Ceph 8.0z2)
+- Limitation: cannot use multiple NQNs when PSK keys are involved
+- Doc update tracked via ISCE-1802
+FIX STATUS: Fixed and verified in 8.0z2. Closed. Documentation update tracked in ISCE-1802.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2298858] [RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host list&quot; using single command
-Environment: IBM Ceph 7.1, component: nvmeof
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify multiple NQN addition in single host add command
+Environment: IBM Ceph 8.0z2+ with NVMeoF gateway
+1. Create NVMe subsystem with listener -- intent: establish target
+2. Add multiple hosts with CORRECT syntax: `cephnvmf host add -n &lt;subsystem&gt; --host-nqn nqn1 nqn2` -- intent: verify multi-NQN works
+3. Verify: `cephnvmf host list -n &lt;subsystem&gt;` -- intent: confirm both added
+4. Delete multiple: `cephnvmf host del -n &lt;subsystem&gt; --host-nqn nqn1 nqn2` -- intent: verify multi-delete
+DIAGNOSTIC COMMANDS:
+- nvmeof-cli host list --subsystem &lt;nqn&gt;
+- nvmeof-cli host add --subsystem &lt;nqn&gt; --host-nqn &lt;nqn1&gt; &lt;nqn2&gt;
+- nvmeof-cli host del --subsystem &lt;nqn&gt; --host-nqn &lt;nqn1&gt; &lt;nqn2&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing nvmeof tests may not cover: [BZ#2298858] [RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host 
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified by QE (Rahul Lepakshi) on 8.0z2 with nvmeof-cli-rhel9:1.3.3-1.
+GAPS: No automated test in CI for multi-NQN host add. Potential confusion from documentation not being updated.
 SCENARIOS NEEDED:
-- Functional: reproduce reported nvmeof scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Add 3+ NQNs in single command, verify all added
+2. Negative: verify quoted NQNs fail with clear error message
+3. Delete multiple NQNs in single command
+4. Verify PSK restriction: multiple NQNs rejected when PSK keys specified</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -229,35 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2298858] [IBM_Support][RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host list&quot; using single command</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to support multiple client NQNs in a single nvmeof-cli host add command - implemented by separating NQNs with spaces (not commas or quotes).</div>
+<div>ROOT CAUSE: The nvmeof-cli originally only accepted a single host NQN per <code>host add</code> command. The fix (PR#817 on ceph-nvmeof) enables passing multiple NQNs as space-separated arguments WITHOUT quotes. Using commas or enclosing in quotes causes the entire string to be treated as a single NQN, failing UUID validation. The confusion arose from unclear documentation and non-intuitive CLI behavior.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: nvmeof</li>
+<li>Correct syntax: <code>host add --subsystem &amp;lt;nqn&amp;gt; --host-nqn nqn1 nqn2 nqn3</code> (space-separated, no quotes)</li>
+<li>Incorrect: <code>--host-nqn &amp;quot;nqn1, nqn2&amp;quot;</code> or <code>--host-nqn &amp;quot;nqn1 nqn2&amp;quot;</code> (quotes combine into single arg)</li>
+<li>Fix available in nvmeof 1.3.3+ (IBM Ceph 8.0z2)</li>
+<li>Limitation: cannot use multiple NQNs when PSK keys are involved</li>
+<li>Doc update tracked via ISCE-1802</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed and verified in 8.0z2. Closed. Documentation update tracked in ISCE-1802.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify multiple NQN addition in single host add command</div>
+<div>Environment: IBM Ceph 8.0z2+ with NVMeoF gateway</div>
 <ul>
-<li>[Aviv Caro] This is already fixed, but I see for 8.0z1 for QE validation.</li>
+<li><span class="step-num">1.</span> Create NVMe subsystem with listener -- intent: establish target</li>
+<li><span class="step-num">2.</span> Add multiple hosts with CORRECT syntax: <code>cephnvmf host add -n &amp;lt;subsystem&amp;gt; --host-nqn nqn1 nqn2</code> -- intent: verify multi-NQN works</li>
+<li><span class="step-num">3.</span> Verify: <code>cephnvmf host list -n &amp;lt;subsystem&amp;gt;</code> -- intent: confirm both added</li>
+<li><span class="step-num">4.</span> Delete multiple: <code>cephnvmf host del -n &amp;lt;subsystem&amp;gt; --host-nqn nqn1 nqn2</code> -- intent: verify multi-delete</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>nvmeof-cli host list --subsystem &lt;nqn&gt;</li>
+<li>nvmeof-cli host add --subsystem &lt;nqn&gt; --host-nqn &lt;nqn1&gt; &lt;nqn2&gt;</li>
+<li>nvmeof-cli host del --subsystem &lt;nqn&gt; --host-nqn &lt;nqn1&gt; &lt;nqn2&gt;</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2298858] [RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host list&quot; using single command</div>
-<div>Environment: IBM Ceph 7.1, component: nvmeof</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing nvmeof tests may not cover: [BZ#2298858] [RFE][Testathon][NvmeOF] Unable to add multiple Client&#x27;s NQN in nvme subsystem&#x27;s &quot;host</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified by QE (Rahul Lepakshi) on 8.0z2 with nvmeof-cli-rhel9:1.3.3-1.</div>
+<div>GAPS: No automated test in CI for multi-NQN host add. Potential confusion from documentation not being updated.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported nvmeof scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Add 3+ NQNs in single command, verify all added</li>
+<li><span class="step-num">2.</span> Negative: verify quoted NQNs fail with clear error message</li>
+<li><span class="step-num">3.</span> Delete multiple NQNs in single command</li>
+<li><span class="step-num">4.</span> Verify PSK restriction: multiple NQNs rejected when PSK keys specified</li>
 </ul></div>
 </div>
 

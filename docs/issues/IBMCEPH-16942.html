@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16942: Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,54 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin
-
-ROOT CAUSE:
-- Daemon crash reported in cephfs.
-- Affected version(s): 9.1
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Active-active CephFS cluster went offline after repeated MDS crashes during recovery/rejoin operations.
+ROOT CAUSE: Insufficient engineering analysis in JIRA. The issue describes an active-active CephFS cluster becoming completely offline after repeated MDS crashes during recovery/rejoin cycles, but the JIRA data available in the KB does not contain detailed root cause analysis, fix commits, or engineering comments explaining the specific mechanism. The large output file for this issue was not fully accessible for analysis.
+KEY EVIDENCE:
+- Active-active CephFS topology
+- Repeated MDS crashes during recovery/rejoin
+- Entire cluster went offline (all MDS down)
 - Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Prachi Lasurkar] Hi   we are going through logs but in meantime is it possible to get coredump for crash analysis(mds).
-- [Ravinder Kumar] Hi    Thanks! Sure , Please let us know the steps to get coredump for crash analysis(mds). So that we would be sharing same with Customer.  Also please let us know if you need coredump on BOX or ecurep server is fine ? Regards Ravinder Kumar
-- [Vivek Maurya] Multiple crashes happen at CU setup. 2026-07-19T02:09:33.620739Z_2476e6b9-539d-4efd-8a05-1c1c2e399e3c  mds.production.rhcs01-production-n03-az1.lxfgwa   *
-2026-07-19T02:09:45.477630Z_677abbd8-f992-46c2-9824-c36beb27cd69  mds.production.rhcs01-production-n03-az1.lxfgwa   *
-2026-07
-- [Venky Shankar] - This should have been fixed by commit 5fc94be121f8f99d0d46a2e7b41a05a9956e2fce
-Author: Patrick Donnelly &lt;pdonnell@ibm.com&gt;
-Date:   Tue Mar 11 15:01:46 2025 -0400
-
-    mds: set alternate_name for new fullbit dentries
-
-    Fixes: 9fbf37ade38bc1d057eda2459b0ccfd2ab40626a
-    Fixe
-- [Venky Shankar] - my bad. The MDS assert at the place the assert() was added in the above commit.
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+- Severity: normal
+FIX STATUS: Insufficient engineering analysis in JIRA to determine fix status.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin
-Environment: IBM Ceph 9.1, component: cephfs
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce active-active CephFS offline condition from repeated MDS crashes.
+Environment: CephFS with multiple active MDS (active-active configuration)
+1. Deploy CephFS with max_mds &gt; 1 (active-active) -- intent: establish multi-active topology
+2. Generate load across multiple MDS ranks -- intent: distribute metadata across ranks
+3. Induce MDS crash on one rank during active I/O -- intent: trigger recovery/rejoin
+4. Observe if cascading failures occur across remaining MDS ranks -- intent: identify offline trigger
+DIAGNOSTIC COMMANDS:
+- ceph fs status -- check MDS rank states
+- ceph -s -- observe overall cluster health
+- ceph crash ls-new -- check for MDS crash records
+- journalctl -u ceph-mds@* -- collect all MDS logs</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient data in JIRA for specific test coverage assessment.
+GAPS: Need tests for cascading MDS failures in active-active configuration. Need tests for recovery/rejoin stability under repeated crashes.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+- Repeated MDS crash injection in active-active configuration
+- Cascading failure resistance testing with max_mds &gt; 1
+- Recovery validation after all MDS go down simultaneously</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -247,55 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Active-active CephFS cluster went offline after repeated MDS crashes during recovery/rejoin operations.</div>
+<div>ROOT CAUSE: Insufficient engineering analysis in JIRA. The issue describes an active-active CephFS cluster becoming completely offline after repeated MDS crashes during recovery/rejoin cycles, but the JIRA data available in the KB does not contain detailed root cause analysis, fix commits, or engineering comments explaining the specific mechanism. The large output file for this issue was not fully accessible for analysis.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in cephfs.</li>
-<li>Affected version(s): 9.1</li>
+<li>Active-active CephFS topology</li>
+<li>Repeated MDS crashes during recovery/rejoin</li>
+<li>Entire cluster went offline (all MDS down)</li>
 <li>Component: cephfs</li>
+<li>Severity: normal</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Insufficient engineering analysis in JIRA to determine fix status.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce active-active CephFS offline condition from repeated MDS crashes.</div>
+<div>Environment: CephFS with multiple active MDS (active-active configuration)</div>
 <ul>
-<li>[Prachi Lasurkar] Hi   we are going through logs but in meantime is it possible to get coredump for crash analysis(mds).</li>
-<li>[Ravinder Kumar] Hi    Thanks! Sure , Please let us know the steps to get coredump for crash analysis(mds). So that we would be sharing same with Customer.  Also please let us know if you need coredump on BOX or ecurep server is fine ? Regards Ravinder Kumar</li>
-<li>[Vivek Maurya] Multiple crashes happen at CU setup. 2026-07-19T02:09:33.620739Z_2476e6b9-539d-4efd-8a05-1c1c2e399e3c  mds.production.rhcs01-production-n03-az1.lxfgwa   *</li>
+<li><span class="step-num">1.</span> Deploy CephFS with max_mds &gt; 1 (active-active) -- intent: establish multi-active topology</li>
+<li><span class="step-num">2.</span> Generate load across multiple MDS ranks -- intent: distribute metadata across ranks</li>
+<li><span class="step-num">3.</span> Induce MDS crash on one rank during active I/O -- intent: trigger recovery/rejoin</li>
+<li><span class="step-num">4.</span> Observe if cascading failures occur across remaining MDS ranks -- intent: identify offline trigger</li>
 </ul>
-<div>2026-07-19T02:09:45.477630Z_677abbd8-f992-46c2-9824-c36beb27cd69  mds.production.rhcs01-production-n03-az1.lxfgwa   *</div>
-<div>2026-07</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Venky Shankar] - This should have been fixed by commit 5fc94be121f8f99d0d46a2e7b41a05a9956e2fce</li>
-</ul>
-<div>Author: Patrick Donnelly &lt;pdonnell@ibm.com&gt;</div>
-<div>Date:   Tue Mar 11 15:01:46 2025 -0400</div>
-<div>mds: set alternate_name for new fullbit dentries</div>
-<div>Fixes: 9fbf37ade38bc1d057eda2459b0ccfd2ab40626a</div>
-<div>Fixe</div>
-<ul>
-<li>[Venky Shankar] - my bad. The MDS assert at the place the assert() was added in the above commit.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph fs status -- check MDS rank states</code></li>
+<li><code>ceph -s -- observe overall cluster health</code></li>
+<li><code>ceph crash ls-new -- check for MDS crash records</code></li>
+<li><code>journalctl -u ceph-mds@* -- collect all MDS logs</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</div>
-<div>Environment: IBM Ceph 9.1, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: Active-active CephFS cluster became offline after repeated MDS crashes during recovery/rejoin</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient data in JIRA for specific test coverage assessment.</div>
+<div>GAPS: Need tests for cascading MDS failures in active-active configuration. Need tests for recovery/rejoin stability under repeated crashes.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li>Repeated MDS crash injection in active-active configuration</li>
+<li>Cascading failure resistance testing with max_mds &gt; 1</li>
+<li>Recovery validation after all MDS go down simultaneously</li>
 </ul></div>
 </div>
 

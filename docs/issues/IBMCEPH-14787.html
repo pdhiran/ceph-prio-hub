@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14787: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,33 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
-
-ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): 8.0, 8.1, 9.0, 9.1, 9.2
-- Component: documentation
-
-FIX STATUS:
-- Current JIRA status: In Progress</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Documentation bug - RGW Keystone authentication guide includes obsolete nss_db_path step and has incorrect case for rgw_keystone_admin_domain.
+ROOT CAUSE: The IBM Storage Ceph documentation for configuring RGW with Keystone authentication still includes Step 1 to set `nss_db_path`, which was needed for PKI/PKIz token validation using a local NSS database. PKI/PKIz tokens were removed from OpenStack years ago, making nss_db_path completely irrelevant. Additionally, the docs specify `rgw_keystone_admin_domain = default` (lowercase) but Keystone&#x27;s default domain is `Default` (capital D) - this case sensitivity causes RGW to fail admin token acquisition with 401 Unauthorized.
+KEY EVIDENCE:
+- nss_db_path is not a valid Ceph config key in current codebase
+- Successfully completed Keystone auth (HTTP 204) on Ceph Tentacle 20.1.0 without nss_db_path
+- rgw_keystone_admin_domain case sensitivity: lowercase &#x27;default&#x27; causes 401 Unauthorized
+- Affects docs for IBM Ceph versions 5, 6, 7, 8, 9
+FIX STATUS: In progress. Assigned to RIVKA POLLACK (docs). QE (Prachi Lasurkar) verified both issues and requested doc changes from version 8 onward.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
-Environment: IBM Ceph 8.0, component: documentation
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify RGW Keystone auth works without nss_db_path and with correct domain case
+Environment: IBM Ceph 8.1+ with OpenStack Keystone integration
+1. Configure RGW with Keystone auth WITHOUT setting nss_db_path -- intent: verify it&#x27;s unnecessary
+2. Set `ceph config set client.rgw rgw_keystone_admin_domain Default` (capital D) -- intent: correct config
+3. Verify RGW auth works: create a user via Keystone, access S3/Swift endpoint -- intent: confirm HTTP 204
+4. Test incorrect case: `ceph config set client.rgw rgw_keystone_admin_domain default` -- intent: demonstrate failure
+5. Verify RGW returns 401 Unauthorized with debug logs showing admin token failure -- intent: confirm case sensitivity
+DIAGNOSTIC COMMANDS:
+- ceph config get client.rgw rgw_keystone_admin_domain
+- curl -v against RGW endpoint with Keystone token
+- journalctl -u ceph-radosgw@ (look for &#x27;reason=-22&#x27;)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: In Progress. Investigation and test coverage needed.
-
-GAPS:
-- Permission test gap for: [DOC] Modification needed in the Object Gateway doc when using Keystone authentication
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE validation completed by Prachi Lasurkar on Tentacle 20.1.0. No automated regression test.
+GAPS: No automated test for RGW+Keystone integration that verifies nss_db_path is not needed. No test for domain name case sensitivity.
 SCENARIOS NEEDED:
-- Functional: reproduce reported documentation scenario, verify correct behavior</textarea>
+1. RGW Keystone auth without nss_db_path (positive test)
+2. Case sensitivity test: &#x27;default&#x27; vs &#x27;Default&#x27; for rgw_keystone_admin_domain
+3. Document validation: verify all documented steps produce working auth</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -226,31 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Documentation bug - RGW Keystone authentication guide includes obsolete nss_db_path step and has incorrect case for rgw_keystone_admin_domain.</div>
+<div>ROOT CAUSE: The IBM Storage Ceph documentation for configuring RGW with Keystone authentication still includes Step 1 to set <code>nss_db_path</code>, which was needed for PKI/PKIz token validation using a local NSS database. PKI/PKIz tokens were removed from OpenStack years ago, making nss_db_path completely irrelevant. Additionally, the docs specify <code>rgw_keystone_admin_domain = default</code> (lowercase) but Keystone&#x27;s default domain is <code>Default</code> (capital D) - this case sensitivity causes RGW to fail admin token acquisition with 401 Unauthorized.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 8.0, 8.1, 9.0, 9.1, 9.2</li>
-<li>Component: documentation</li>
+<li>nss_db_path is not a valid Ceph config key in current codebase</li>
+<li>Successfully completed Keystone auth (HTTP 204) on Ceph Tentacle 20.1.0 without nss_db_path</li>
+<li>rgw_keystone_admin_domain case sensitivity: lowercase &#x27;default&#x27; causes 401 Unauthorized</li>
+<li>Affects docs for IBM Ceph versions 5, 6, 7, 8, 9</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: In progress. Assigned to RIVKA POLLACK (docs). QE (Prachi Lasurkar) verified both issues and requested doc changes from version 8 onward.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify RGW Keystone auth works without nss_db_path and with correct domain case</div>
+<div>Environment: IBM Ceph 8.1+ with OpenStack Keystone integration</div>
 <ul>
-<li>Current JIRA status: In Progress</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</div>
-<div>Environment: IBM Ceph 8.0, component: documentation</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">In Progress. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Permission test gap for: [DOC] Modification needed in the Object Gateway doc when using Keystone authentication</li>
+<li><span class="step-num">1.</span> Configure RGW with Keystone auth WITHOUT setting nss_db_path -- intent: verify it&#x27;s unnecessary</li>
+<li><span class="step-num">2.</span> Set <code><code>ceph config set client.rgw rgw_keystone_admin_domain Default</code></code> (capital D) -- intent: correct config</li>
+<li><span class="step-num">3.</span> Verify RGW auth works: create a user via Keystone, access S3/Swift endpoint -- intent: confirm HTTP 204</li>
+<li><span class="step-num">4.</span> Test incorrect case: <code><code>ceph config set client.rgw rgw_keystone_admin_domain default</code></code> -- intent: demonstrate failure</li>
+<li><span class="step-num">5.</span> Verify RGW returns 401 Unauthorized with debug logs showing admin token failure -- intent: confirm case sensitivity</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config get client.rgw rgw_keystone_admin_domain</code></li>
+<li><code>curl -v against RGW endpoint with Keystone token</code></li>
+<li><code>journalctl -u ceph-radosgw@ (look for &#x27;reason=-22&#x27;)</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE validation completed by Prachi Lasurkar on Tentacle 20.1.0. No automated regression test.</div>
+<div>GAPS: No automated test for RGW+Keystone integration that verifies nss_db_path is not needed. No test for domain name case sensitivity.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported documentation scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> RGW Keystone auth without nss_db_path (positive test)</li>
+<li><span class="step-num">2.</span> Case sensitivity test: &#x27;default&#x27; vs &#x27;Default&#x27; for rgw_keystone_admin_domain</li>
+<li><span class="step-num">3.</span> Document validation: verify all documented steps produce working auth</li>
 </ul></div>
 </div>
 

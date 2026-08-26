@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17452: [9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z5
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 9.1z backport of ganesha-rados-grace timeout issue (IBMCEPH-14352) -- identical to IBMCEPH-17453.
+ROOT CAUSE: Same as IBMCEPH-17453. The ganesha-rados-grace command times out after 10 seconds during NFS daemon provisioning, causing transient CEPHADM_APPLY_SPEC_FAIL health warnings.
+KEY EVIDENCE:
+- Same customer (TS022093470), same logs, same version (19.2.1-331.el9cp)
+- Clone of IBMCEPH-14352 for 9.1z backport
+- Upstream patch not yet merged
+FIX STATUS: New. Moved to next z-release (2026-08-13).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL
-Environment: IBM Ceph 8.1z5, component: cephadm
-
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Run baseline benchmark (fio/rados bench) -- record metrics
-6. Trigger the performance scenario described in JIRA
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-17453.
+Environment: IBM Ceph 9.1z.
+See IBMCEPH-17453 for identical reproduction steps.
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-17453.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-- No performance baseline test for: [9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_S
-
-SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Same gaps as IBMCEPH-17453. See IBMCEPH-17453 for full analysis.
+GAPS: See IBMCEPH-17453.
+SCENARIOS NEEDED: See IBMCEPH-17453.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,45 +219,22 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">9.1z backport of ganesha-rados-grace timeout issue (IBMCEPH-14352) -- identical to IBMCEPH-17453.</div>
+<div>ROOT CAUSE: Same as IBMCEPH-17453. The ganesha-rados-grace command times out after 10 seconds during NFS daemon provisioning, causing transient CEPHADM_APPLY_SPEC_FAIL health warnings.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: cephadm</li>
+<li>Same customer (TS022093470), same logs, same version (19.2.1-331.el9cp)</li>
+<li>Clone of IBMCEPH-14352 for 9.1z backport</li>
+<li>Upstream patch not yet merged</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_SPEC_FAIL</div>
-<div>Environment: IBM Ceph 8.1z5, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">6.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-<li>No performance baseline test for: [9.1z Backport] NFS Service Deployment Failures: ganesha-rados-grace Timeout Causing CEPHADM_APPLY_S</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-</ul></div>
+<div>FIX STATUS: New. Moved to next z-release (2026-08-13).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-17453.</div>
+<div>Environment: IBM Ceph 9.1z.</div>
+<div>See IBMCEPH-17453 for identical reproduction steps.</div>
+<div>DIAGNOSTIC COMMANDS: Same as IBMCEPH-17453.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Same gaps as IBMCEPH-17453. See IBMCEPH-17453 for full analysis.</div>
+<div>GAPS: See IBMCEPH-17453.</div>
+<div>SCENARIOS NEEDED: See IBMCEPH-17453.</div></div>
 </div>
 
 

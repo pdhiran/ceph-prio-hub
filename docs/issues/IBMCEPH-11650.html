@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11650: [BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in &quot;/proc/self/cgroup&quot;` logged in the Journal.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in &quot;/proc/self/cgroup&quot;` logged in the Journal.
-
-ROOT CAUSE:
-- Affected version(s): 5.3
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Akash Fanase] Hi Team, Please let us know if you required any additional data from the customer as they still waiting for permanent fix for this issue. Thanks, Akash
-- [Aarti Dhikale] Hi   , As we are unable to reproduce this issue, can we proceed with closing the case for now? If we encounter a similar issue again in the future, we can reopen it for further investigation. Thank you.
-- [Omid Yoosefi] Hi,  We’ve hit this in our custom code since we have a stunnel container with our NFS service, the fix is actually pretty simple. The issue is we add  --cgroups=split  without enabling it.   Below is how we’ve solved it         if self.supports_split_cgroups and not ctx.no_cgrou
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Containers fail to start after node reboot with &#x27;could not find cgroup mount in /proc/self/cgroup&#x27; due to podman/systemd cgroup interaction bug.
+ROOT CAUSE: After a node reboot, podman containers (including MON, OSD) fail to start because the --cgroups=split flag (set by cephadm) does not properly enable cgroup management in certain kernel/podman/systemd version combinations on RHEL 8.10. The exact environmental trigger is unknown -- multiple customers hit this intermittently, and engineering has been unable to reproduce it. The issue appears related to a race condition or state mismatch between podman&#x27;s cgroup expectations and systemd&#x27;s cgroup hierarchy after reboot. A fix proposed by IBM Cloud (Acadia) team appends &#x27;--cgroups=enabled&#x27; after &#x27;--cgroups=split&#x27; in the podman run command, which resolves the container startup.
+KEY EVIDENCE:
+- Error: &#x27;could not find cgroup mount in /proc/self/cgroup&#x27;
+- Workaround: add --cgroups=enabled to podman run via extra_container_args in service spec
+- Alternative workaround: migrate to cgroups v2 (grubby --update-kernel=ALL --args=&#x27;systemd.unified_cgroup_hierarchy=1&#x27;)
+- Multiple customers affected (at least 3 cases), RHEL 8.10 with kernel 4.18.x
+- Issue not reproducible in lab despite attempts to force cgroups v1
+- Acadia team&#x27;s fix: append &#x27;--cgroups=enabled&#x27; after &#x27;--cgroups=split&#x27; in cephadm code
+FIX STATUS: Still assigned/open. Not reproducible in lab. Proposed code fix from Acadia team (appending --cgroups=enabled) shared in latest comment. No formal patch merged yet.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in &quot;/proc/self/cgroup&quot;` logged in the Journal.
-Environment: IBM Ceph 5.3, component: cephadm
-
-1. Deploy IBM Ceph 5.3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Tried to reproduce this issue by moving cgroups to v1( https://bugzilla.redhat.com/show_bug.cgi?id=2374000#c15 ), but was not able to reproduce it.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce container startup failure with cgroup mount error after node reboot
+Environment: RHEL 8.10, RHCS 5.3z6 (16.2.10-248.el8cp), podman 4.x, cgroups v1
+1. Deploy Ceph cluster on RHEL 8.10 with cgroups v1 -- intent: match affected environment
+2. Verify containers running normally -- intent: baseline
+3. Reboot one OSD/MON node -- intent: trigger condition
+4. Check journalctl -u ceph-&lt;fsid&gt;-mon.&lt;hostname&gt; -- intent: look for cgroup error
+5. If not reproduced, attempt: downgrade systemd or podman between reboots
+DIAGNOSTIC COMMANDS:
+- journalctl -u ceph-&lt;fsid&gt;-&lt;daemon&gt; --since &#x27;last boot&#x27;
+- podman inspect &lt;container_id&gt;
+- cat /proc/self/cgroup
+- mount | grep cgroup
+- rpm -q podman systemd</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Not reproducible in lab; no automated test coverage possible without reproduction.
+GAPS: No test validates container startup resilience across reboots with cgroups v1; no test verifies --cgroups=enabled workaround via extra_container_args.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Reboot test with cgroups v1 on RHEL 8.10 with various podman/systemd version combinations
+- Validate that extra_container_args with --cgroups=enabled persists across daemon redeploy
+- Test cephadm daemon redeploy of OSD service with unmanaged=true + extra_container_args</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,36 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2374000] [GSS] Containers unable to start after reboot. `Error: could not find cgroup mount in &quot;/proc/self/cgroup&quot;` logged in the Journal.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Containers fail to start after node reboot with &#x27;could not find cgroup mount in /proc/self/cgroup&#x27; due to podman/systemd cgroup interaction bug.</div>
+<div>ROOT CAUSE: After a node reboot, podman containers (including MON, OSD) fail to start because the --cgroups=split flag (set by cephadm) does not properly enable cgroup management in certain kernel/podman/systemd version combinations on RHEL 8.10. The exact environmental trigger is unknown -- multiple customers hit this intermittently, and engineering has been unable to reproduce it. The issue appears related to a race condition or state mismatch between podman&#x27;s cgroup expectations and systemd&#x27;s cgroup hierarchy after reboot. A fix proposed by IBM Cloud (Acadia) team appends &#x27;--cgroups=enabled&#x27; after &#x27;--cgroups=split&#x27; in the podman run command, which resolves the container startup.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 5.3</li>
-<li>Component: cephadm</li>
+<li>Error: &#x27;could not find cgroup <code>mount in /proc/self/cgroup&#x27;</code></li>
+<li>Workaround: add --cgroups=enabled to <code>podman run via extra_container_args in service spec</code></li>
+<li>Alternative workaround: migrate to cgroups v2 (grubby --update-kernel=ALL --args=&#x27;systemd.unified_cgroup_hierarchy=1&#x27;)</li>
+<li>Multiple customers affected (at least 3 cases), RHEL 8.10 with kernel 4.18.x</li>
+<li>Issue not reproducible in lab despite attempts to force cgroups v1</li>
+<li>Acadia team&#x27;s fix: append &#x27;--cgroups=enabled&#x27; after &#x27;--cgroups=split&#x27; in <code>cephadm code</code></li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Still assigned/open. Not reproducible in lab. Proposed code fix from Acadia team (appending --cgroups=enabled) shared in latest comment. No formal patch merged yet.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce container startup failure with cgroup mount error after node reboot</div>
+<div>Environment: RHEL 8.10, RHCS 5.3z6 (16.2.10-248.el8cp), podman 4.x, cgroups v1</div>
 <ul>
-<li>[Akash Fanase] Hi Team, Please let us know if you required any additional data from the customer as they still waiting for permanent fix for this issue. Thanks, Akash</li>
-<li>[Aarti Dhikale] Hi   , As we are unable to reproduce this issue, can we proceed with closing the case for now? If we encounter a similar issue again in the future, we can reopen it for further investigation. Thank you.</li>
-<li>[Omid Yoosefi] Hi,  We’ve hit this in our custom code since we have a stunnel container with our NFS service, the fix is actually pretty simple. The issue is we add  --cgroups=split  without enabling it.   Below is how we’ve solved it         if self.supports_split_cgroups and not ctx.no_cgrou</li>
+<li><span class="step-num">1.</span> Deploy Ceph cluster on RHEL 8.10 with cgroups v1 -- intent: match affected environment</li>
+<li><span class="step-num">2.</span> Verify containers running normally -- intent: baseline</li>
+<li><span class="step-num">3.</span> Reboot one OSD/MON node -- intent: trigger condition</li>
+<li><span class="step-num">4.</span> Check <code>journalctl -u ceph-&lt;fsid&gt;-mon.&lt;hostname&gt; -- intent: look for cgroup error</code></li>
+<li><span class="step-num">5.</span> If not reproduced, attempt: downgrade systemd or <code>podman between reboots</code></li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li><code>journalctl -u ceph-&lt;fsid&gt;-&lt;daemon&gt; --since &#x27;last boot&#x27;</code></li>
+<li><code>podman inspect &lt;container_id&gt;</code></li>
+<li>cat /proc/self/cgroup</li>
+<li><code>mount | grep cgroup</code></li>
+<li>rpm -q <code>podman systemd</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2374000] [GSS] Containers unable to start after reboot. <code>Error: could not find cgroup mount in &quot;/proc/self/cgroup&quot;</code> logged in the Journal.</div>
-<div>Environment: IBM Ceph 5.3, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Tried to reproduce this issue by moving cgroups to v1( https://bugzilla.redhat.com/show_bug.cgi?id=2374000#c15 ), but was not able to reproduce it.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Not reproducible in lab; no automated test coverage possible without reproduction.</div>
+<div>GAPS: No test validates container startup resilience across reboots with cgroups v1; no test verifies --cgroups=enabled workaround via extra_container_args.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Reboot test with cgroups v1 on RHEL 8.10 with various podman/systemd version combinations</li>
+<li>Validate that extra_container_args with --cgroups=enabled persists across daemon redeploy</li>
+<li>Test <code>cephadm daemon redeploy of OSD service with unmanaged=true + extra_container_args</code></li>
 </ul></div>
 </div>
 

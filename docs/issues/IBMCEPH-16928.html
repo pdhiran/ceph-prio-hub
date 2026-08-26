@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16928: MDS pod crash ceph_assert FAILED ceph_assert(_raw)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,43 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS pod crash ceph_assert FAILED ceph_assert(_raw)
-
-ROOT CAUSE:
-- Daemon crash reported in cephfs.
-- Affected version(s): 8.1z5
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Zbigniew Cofala] The customer provided the following analysis of the case including the contents of the file: /ecurep/sf/TS022/559/TS022559107/IBM_Ceph_MDS_Case_Summary.txt IBM Case Summary – CephFS MDS Cache Oversized and MDS Crash Investigation Environment Ceph version: 19.2.1-331.el9cp (Squid)
-- [Vivek Maurya] Hi   , Please share the core dump for analysis. Share it on BOX. Thanks Vivek
-- [Manya Dogra] I cross checked the fix commits, they’re present in 8.1, 9.0, and 9.1 . Also verified that the call stack of the current bug matches the reference bug IBMCEPH-12861. Will be needing core dump to proceed further.
-- [Manya Dogra] Hello  , Could you please help with two things: Could you share the core dump file(s) so we can proceed with further analysis? Could you clarify why and what triggered the dump tree admin socket command at the time crash? For example, was it run manually by an user for diagnostic
-- [Zbigniew Cofala] Hi    I&#x27;m not sure if they even have core dumps from these crashes, I sent a question, still waiting for a reply, I&#x27;ll let you know when I get it.  As for the second part, I know that the first crash occurred on its own, and the second one while creating an sosreport.
-
-FIX STATUS:
-- Fix available
-- Verified by: Manya Dogra</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crash with FAILED ceph_assert(_raw) during dump_tree admin socket command on IBM Ceph 8.1z5, same signature as IBMCEPH-12883 but fix reportedly already present.
+ROOT CAUSE: Same mechanism as IBMCEPH-12883 -- MDCache::dump_tree() encounters an inode with an empty xattr buffer (nullptr _raw pointer) and crashes when calling c_str(). In this specific case, detailed log analysis by Manya Dogra revealed the MDS main thread had been frozen for ~3 minutes due to enormous journal events (2-2.5MB each, caused by 9.8M caps across clients). The dump_tree command was running on the admin_socket thread independently. When the pod received SIGTERM, the admin_socket thread was mid-traversal and hit the null buffer 1 second later. The fix commits for this assert are reportedly present in 8.1z5, but the crash still occurred -- engineering needs core dump to investigate why.
+KEY EVIDENCE:
+- Assert: FAILED ceph_assert(_raw) at buffer.cc:455
+- Thread: admin_socket (dump_tree operation)
+- Version: 19.2.1-331.el9cp (8.1z5, container v8.1-15201)
+- MDS cache: 26.9GB / 8GB limit, ~11.8M caps, ~6.3M inodes
+- Trigger: sosreport collection (which invokes dump_tree)
+- Fix for IBMCEPH-12883 reportedly present in this build
+- No core dump available from customer
+- Labels: Regression, IBM_Customer_Issue
+FIX STATUS: Under investigation. Fix commits are supposedly present in the build but crash still occurs. Core dump needed for further analysis. Customer instructed on core dump collection for future crashes.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- MDS pod crash ceph_assert FAILED ceph_assert(_raw)
-Environment: IBM Ceph 8.1z5, component: cephfs
-
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce dump_tree crash on 8.1z5 where fix is supposedly present.
+Environment: IBM Ceph 8.1z5 (19.2.1-331.el9cp) with high cap count workload
+1. Deploy CephFS with 200+ clients generating high cap counts (&gt;1M caps per client) -- intent: replicate customer&#x27;s 11.8M cap environment
+2. Allow MDS cache to grow significantly beyond mds_cache_memory_limit -- intent: create conditions for large journal events and MDS thread stalls
+3. Run sosreport or &#x27;ceph daemon mds.&lt;id&gt; dump tree /&#x27; while MDS is under stress -- intent: trigger dump_tree on admin_socket thread
+4. Collect core dump if crash occurs -- intent: determine why fix is ineffective
+DIAGNOSTIC COMMANDS:
+- ceph daemon mds.&lt;id&gt; cache status -- check cache size and inode count
+- ceph daemon mds.&lt;id&gt; session ls -- identify high-cap clients
+- ceph daemon mds.&lt;id&gt; dump tree / -- trigger the crash path
+- coredumpctl list -- collect core dump
+- ceph crash ls-new -- check crash records</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
-
-GAPS:
-- No crash regression test for: MDS pod crash ceph_assert FAILED ceph_assert(_raw)
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified for IBMCEPH-12883 on 20.1.0-155, but this ticket shows potential regression or incomplete fix on 8.1z5.
+GAPS: No stress test combines high-cap-count workload (&gt;10M caps) with concurrent dump_tree execution. No test validates the fix under MDS cache pressure conditions matching this customer&#x27;s 26.9GB cache.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+- dump_tree execution under extreme MDS cache pressure (3x limit)
+- Concurrent sosreport collection during MDS heartbeat timeout
+- dump_tree with SIGTERM racing (pod termination during traversal)
+- High cap count (&gt;5M) with periodic admin socket operations</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,45 +236,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS pod crash ceph_assert FAILED ceph_assert(_raw)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crash with FAILED ceph_assert(_raw) during dump_tree admin socket command on IBM Ceph 8.1z5, same signature as IBMCEPH-12883 but fix reportedly already present.</div>
+<div>ROOT CAUSE: Same mechanism as IBMCEPH-12883 -- MDCache::dump_tree() encounters an inode with an empty xattr buffer (nullptr _raw pointer) and crashes when calling c_str(). In this specific case, detailed log analysis by Manya Dogra revealed the MDS main thread had been frozen for ~3 minutes due to enormous journal events (2-2.5MB each, caused by 9.8M caps across clients). The dump_tree command was running on the admin_socket thread independently. When the pod received SIGTERM, the admin_socket thread was mid-traversal and hit the null buffer 1 second later. The fix commits for this assert are reportedly present in 8.1z5, but the crash still occurred -- engineering needs core dump to investigate why.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in cephfs.</li>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: cephfs</li>
+<li>Assert: FAILED ceph_assert(_raw) at buffer.cc:455</li>
+<li>Thread: admin_socket (dump_tree operation)</li>
+<li>Version: 19.2.1-331.el9cp (8.1z5, container v8.1-15201)</li>
+<li>MDS cache: 26.9GB / 8GB limit, ~11.8M caps, ~6.3M inodes</li>
+<li>Trigger: sosreport collection (which invokes dump_tree)</li>
+<li>Fix for IBMCEPH-12883 reportedly present in this build</li>
+<li>No core dump available from customer</li>
+<li>Labels: Regression, IBM_Customer_Issue</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Under investigation. Fix commits are supposedly present in the build but crash still occurs. Core dump needed for further analysis. Customer instructed on core dump collection for future crashes.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce dump_tree crash on 8.1z5 where fix is supposedly present.</div>
+<div>Environment: IBM Ceph 8.1z5 (19.2.1-331.el9cp) with high cap count workload</div>
 <ul>
-<li>[Zbigniew Cofala] The customer provided the following analysis of the case including the contents of the file: /ecurep/sf/TS022/559/TS022559107/IBM_Ceph_MDS_Case_Summary.txt IBM Case Summary – CephFS MDS Cache Oversized and MDS Crash Investigation Environment Ceph version: 19.2.1-331.el9cp (Squid)</li>
-<li>[Vivek Maurya] Hi   , Please share the core dump for analysis. Share it on BOX. Thanks Vivek</li>
-<li>[Manya Dogra] I cross checked the fix commits, they’re present in 8.1, 9.0, and 9.1 . Also verified that the call stack of the current bug matches the reference bug IBMCEPH-12861. Will be needing core dump to proceed further.</li>
-<li>[Manya Dogra] Hello  , Could you please help with two things: Could you share the core dump file(s) so we can proceed with further analysis? Could you clarify why and what triggered the dump tree admin socket command at the time crash? For example, was it run manually by an user for diagnostic</li>
-<li>[Zbigniew Cofala] Hi    I&#x27;m not sure if they even have core dumps from these crashes, I sent a question, still waiting for a reply, I&#x27;ll let you know when I get it.  As for the second part, I know that the first crash occurred on its own, and the second one while creating an sosreport.</li>
+<li><span class="step-num">1.</span> Deploy CephFS with 200+ clients generating high cap counts (&gt;1M caps per client) -- intent: replicate customer&#x27;s 11.8M cap environment</li>
+<li><span class="step-num">2.</span> Allow MDS cache to grow significantly beyond mds_cache_memory_limit -- intent: create conditions for large journal events and MDS thread stalls</li>
+<li><span class="step-num">3.</span> Run sosreport or &#x27;<code>ceph daemon mds.&lt;id&gt; dump tree /&#x27; while MDS is under stress -- intent: trigger dump_tree on admin_socket thread</code></li>
+<li><span class="step-num">4.</span> Collect core dump if crash occurs -- intent: determine why fix is ineffective</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available</li>
-<li>Verified by: Manya Dogra</li>
+<li><code>ceph daemon mds.&lt;id&gt; cache status -- check cache size and inode count</code></li>
+<li><code>ceph daemon mds.&lt;id&gt; session ls -- identify high-cap clients</code></li>
+<li><code>ceph daemon mds.&lt;id&gt; dump tree / -- trigger the crash path</code></li>
+<li>coredumpctl list -- collect core dump</li>
+<li><code>ceph crash ls-new -- check crash records</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- MDS pod crash ceph_assert FAILED ceph_assert(_raw)</div>
-<div>Environment: IBM Ceph 8.1z5, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: MDS pod crash ceph_assert FAILED ceph_assert(_raw)</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified for IBMCEPH-12883 on 20.1.0-155, but this ticket shows potential regression or incomplete fix on 8.1z5.</div>
+<div>GAPS: No stress test combines high-cap-count workload (&gt;10M caps) with concurrent dump_tree execution. No test validates the fix under MDS cache pressure conditions matching this customer&#x27;s 26.9GB cache.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li>dump_tree execution under extreme MDS cache pressure (3x limit)</li>
+<li>Concurrent sosreport collection during MDS heartbeat timeout</li>
+<li>dump_tree with SIGTERM racing (pod termination during traversal)</li>
+<li>High cap count (&gt;5M) with periodic admin socket operations</li>
 </ul></div>
 </div>
 

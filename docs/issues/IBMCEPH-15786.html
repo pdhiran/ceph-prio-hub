@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15786: [8.1z Backport] [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,31 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Permission or access control issue.
-- Affected version(s): 8.1
-- Component: ceph-dashboard
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 8.1z backport for Ceph Dashboard OAuth2 integration issues -- blocker priority, no details in JIRA.
+ROOT CAUSE: Insufficient engineering analysis in JIRA. The ticket is an 8.1z backport clone of IBMCEPH-12766 for OAuth2 integration issues with the Ceph Dashboard. The description contains only the empty bug template with no technical details filled in. The parent ticket IBMCEPH-12766 likely contains the actual technical analysis. Despite being marked as &#x27;blocker&#x27; priority, no comments or engineering analysis have been added to this backport ticket.
+KEY EVIDENCE:
+- Backport clone of IBMCEPH-12766
+- Priority: Blocker
+- Status: Assigned to Pedro Gonzalez
+- Description: Empty template only
+- 0 comments
+- Reporter: Bipin Kunal
+- IBM Customer Issue label
+FIX STATUS: Assigned but no visible progress. Blocker priority. Refer to IBMCEPH-12766 for technical details.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport] [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2
-Environment: IBM Ceph 8.1, component: ceph-dashboard
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Insufficient data in this JIRA to determine reproduction steps.
+Environment: IBM Storage Ceph 8.1
+Refer to parent ticket IBMCEPH-12766 for technical details and reproduction steps.
+DIAGNOSTIC COMMANDS: Refer to IBMCEPH-12766.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-- Permission test gap for: [8.1z Backport] [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA to determine test coverage gaps.
+GAPS: Cannot determine without technical details from IBMCEPH-12766.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</textarea>
+- Test: OAuth2 integration with Ceph Dashboard on 8.1z (details from IBMCEPH-12766)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +224,28 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] [BZ#2429757] [IBM_Support][ceph-dashboard] Issues integrating OAuth2</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">8.1z backport for Ceph Dashboard OAuth2 integration issues -- blocker priority, no details in JIRA.</div>
+<div>ROOT CAUSE: Insufficient engineering analysis in JIRA. The ticket is an 8.1z backport clone of IBMCEPH-12766 for OAuth2 integration issues with the Ceph Dashboard. The description contains only the empty bug template with no technical details filled in. The parent ticket IBMCEPH-12766 likely contains the actual technical analysis. Despite being marked as &#x27;blocker&#x27; priority, no comments or engineering analysis have been added to this backport ticket.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-dashboard</li>
+<li>Backport clone of IBMCEPH-12766</li>
+<li>Priority: Blocker</li>
+<li>Status: Assigned to Pedro Gonzalez</li>
+<li>Description: Empty template only</li>
+<li>0 comments</li>
+<li>Reporter: Bipin Kunal</li>
+<li>IBM Customer Issue label</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: ASSIGNED</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport] [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-dashboard</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-<li>Permission test gap for: [8.1z Backport] [BZ#2429757] [ceph-dashboard] Issues integrating OAuth2</li>
-</ul>
+<div>FIX STATUS: Assigned but no visible progress. Blocker priority. Refer to IBMCEPH-12766 for technical details.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Insufficient data in this JIRA to determine reproduction steps.</div>
+<div>Environment: IBM Storage Ceph 8.1</div>
+<div>Refer to parent ticket IBMCEPH-12766 for technical details and reproduction steps.</div>
+<div>DIAGNOSTIC COMMANDS: Refer to IBMCEPH-12766.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA to determine test coverage gaps.</div>
+<div>GAPS: Cannot determine without technical details from IBMCEPH-12766.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
+<li>Test: OAuth2 integration with Ceph Dashboard on 8.1z (details from IBMCEPH-12766)</li>
 </ul></div>
 </div>
 

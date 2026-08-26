@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16022: Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection
-
-ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): 9.1z2
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [K Amarnath Reddy] Agreed this was reproduced by fault-injecting a bad agent keyring; we are not claiming keyrings commonly go bad on their own during upgrade/redeploy/rotation. The issue we want fixed is the failure handling: MGR rejects the metadata but still returns  HTTP 200 , so the agent tr
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: Cephadm agent silently fails when keyring is invalid because MGR returns HTTP 200 on auth rejection
+ROOT CAUSE: When the cephadm agent has an invalid/corrupted keyring, the MGR rejects the metadata POST but returns HTTP 200 with the error message in the response body (&#x27;Got wrong keyring&#x27;). The agent only checks the HTTP status code, sees 200, and considers the POST successful. This means: (1) agent appears &#x27;running&#x27; in ceph orch ps and systemctl, (2) no CEPHADM_AGENT_DOWN warning is raised, (3) host metadata silently goes stale. The failure is only visible by examining agent journal logs for &#x27;Got wrong keyring&#x27; messages, which doesn&#x27;t scale.
+KEY EVIDENCE:
+- MGR returns HTTP 200 even when auth fails (error in response body, not status code)
+- Agent checks only HTTP status code, not response body
+- Stale metadata with no cluster-level warning
+- Reproducer: corrupt agent keyring -&gt; restart agent -&gt; still shows &#x27;running&#x27;
+- Version: 9.1z2 (20.2.1-290)
+FIX STATUS: Open (new). Agreed as valid improvement (not blocker). Agent should detect auth rejection and MGR should return proper HTTP error code. Assigned to Kushal Deb.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection
-Environment: IBM Ceph 9.1z2, component: cephadm
-
-1. Deploy IBM Ceph 9.1z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Demonstrate silent agent failure on invalid keyring
+Environment: IBM Ceph 9.1z2 (20.2.1-290), mgr/cephadm/use_agent=true
+1. Deploy healthy cluster with cephadm agents enabled
+2. Corrupt agent keyring: printf &#x27;[client.agent.%s]\n    key = AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\n&#x27; &quot;$(hostname)&quot; &gt; /var/lib/ceph/&lt;fsid&gt;/agent.&lt;host&gt;/keyring
+3. Restart agent: systemctl restart ceph-&lt;fsid&gt;@agent.&lt;host&gt;
+4. Wait 30-45 seconds
+5. Check: systemctl is-active ceph-&lt;fsid&gt;@agent.&lt;host&gt; -- still &#x27;active&#x27;
+6. Check: ceph orch ps --daemon-type agent -- still &#x27;running&#x27;
+7. Check journal: journalctl -u ceph-&lt;fsid&gt;@agent.&lt;host&gt; | grep &#x27;Got wrong keyring&#x27;
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type agent
+- journalctl -u ceph-&lt;fsid&gt;@agent.&lt;host&gt;
+- ceph health detail | grep CEPHADM_AGENT_DOWN (not raised -- that&#x27;s the bug)
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Permission test gap for: Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Manual reproducer exists. No automated test.
+GAPS: No test validates agent behavior with invalid credentials. No test for CEPHADM_AGENT_DOWN health warning accuracy.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Corrupt agent keyring -&gt; verify health warning raised within reasonable time
+- Corrupt agent keyring -&gt; verify stale metadata detected
+- MGR should return HTTP 401/403 on auth failure (not 200)
+- Agent should parse response body for error messages when HTTP 200
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,37 +243,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 9.1z2</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[K Amarnath Reddy] Agreed this was reproduced by fault-injecting a bad agent keyring; we are not claiming keyrings commonly go bad on their own during upgrade/redeploy/rotation. The issue we want fixed is the failure handling: MGR rejects the metadata but still returns  HTTP 200 , so the agent tr</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection</div>
-<div>Environment: IBM Ceph 9.1z2, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Permission test gap for: Cephadm Agent : MGR returns HTTP 200 on auth failure, agent cannot detect keyring rejection</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: Cephadm agent silently fails when keyring is invalid because MGR returns HTTP 200 on auth rejection
+ROOT CAUSE: When the cephadm agent has an invalid/corrupted keyring, the MGR rejects the metadata POST but returns HTTP 200 with the error message in the response body (&#x27;Got wrong keyring&#x27;). The agent only checks the HTTP status code, sees 200, and considers the POST successful. This means: (1) agent appears &#x27;running&#x27; in ceph orch ps and systemctl, (2) no CEPHADM_AGENT_DOWN warning is raised, (3) host metadata silently goes stale. The failure is only visible by examining agent journal logs for &#x27;Got wrong keyring&#x27; messages, which doesn&#x27;t scale.
+KEY EVIDENCE:
+- MGR returns HTTP 200 even when auth fails (error in response body, not status code)
+- Agent checks only HTTP status code, not response body
+- Stale metadata with no cluster-level warning
+- Reproducer: corrupt agent keyring -&gt; restart agent -&gt; still shows &#x27;running&#x27;
+- Version: 9.1z2 (20.2.1-290)
+FIX STATUS: Open (new). Agreed as valid improvement (not blocker). Agent should detect auth rejection and MGR should return proper HTTP error code. Assigned to Kushal Deb.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Demonstrate silent agent failure on invalid keyring
+Environment: IBM Ceph 9.1z2 (20.2.1-290), mgr/cephadm/use_agent=true
+1. Deploy healthy cluster with cephadm agents enabled
+2. Corrupt agent keyring: printf &#x27;[client.agent.%s]\n    key = AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==\n&#x27; &quot;$(hostname)&quot; &gt; /var/lib/ceph/&lt;fsid&gt;/agent.&lt;host&gt;/keyring
+3. Restart agent: systemctl restart ceph-&lt;fsid&gt;@agent.&lt;host&gt;
+4. Wait 30-45 seconds
+5. Check: systemctl is-active ceph-&lt;fsid&gt;@agent.&lt;host&gt; -- still &#x27;active&#x27;
+6. Check: ceph orch ps --daemon-type agent -- still &#x27;running&#x27;
+7. Check journal: journalctl -u ceph-&lt;fsid&gt;@agent.&lt;host&gt; | grep &#x27;Got wrong keyring&#x27;
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type agent
+- journalctl -u ceph-&lt;fsid&gt;@agent.&lt;host&gt;
+- ceph health detail | grep CEPHADM_AGENT_DOWN (not raised -- that&#x27;s the bug)
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Manual reproducer exists. No automated test.
+GAPS: No test validates agent behavior with invalid credentials. No test for CEPHADM_AGENT_DOWN health warning accuracy.
+SCENARIOS NEEDED:
+- Corrupt agent keyring -&gt; verify health warning raised within reasonable time
+- Corrupt agent keyring -&gt; verify stale metadata detected
+- MGR should return HTTP 401/403 on auth failure (not 200)
+- Agent should parse response body for error messages when HTTP 200
+</pre></div>
 </div>
 
 

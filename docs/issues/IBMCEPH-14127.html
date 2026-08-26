@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14127: /var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,36 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: /var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5
-
-ROOT CAUSE:
-- Affected version(s): 5.3
-- Component: ceph
-
-ENGINEERING FINDINGS:
-- [Indira Sawant] As per Ceph documentation, the default logging levels are: debug_bluestore = 1/5 debug_rocksdb = 4/5 This behavior was also verified on a cluster running  ceph version 19.2.1‑331.el9cp , where the same defaults are observed. Regarding  bluestore_rocksdb_options , the current beha
-- [Indira Sawant] Hello    The default logging levels ( debug_bluestore = 1/5 ,  debug_rocksdb = 4/5 ) have been unchanged for many years. Since other deployments with these defaults are not consistently seeing excessive log growth, we need to better understand what is different in this environmen
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RocksDB logging at debug level 4/5 causes excessive /var/log/messages growth on OSD nodes.
+ROOT CAUSE: The default debug_rocksdb=4/5 setting in shipped container images causes high-frequency log entries, particularly when combined with bluestore_rocksdb_options that configure multiple WAL buffers with per-buffer compression. Each compression event generates verbose RocksDB log output. The 4/5 notation means &#x27;log at level 4 to memory, level 5 to disk&#x27; which is very verbose for production. The default was verified on 19.2.1-331.el9cp (8.1z5). The issue is environment-dependent -- clusters with heavy write workloads see significantly more log growth.
+KEY EVIDENCE:
+- Confirmed debug_rocksdb=4/5 is the upstream default (unchanged for years)
+- Affected version: 16.2.10-275.el8cp (Ceph 5.3), also seen in Ceph 7
+- Workaround exists: manually set logging to level 1/5
+- bluestore_rocksdb_options configured with 4 WAL buffers of 256MB each, individually compressed
+- Engineering requested specific log samples and growth rates to justify changing defaults
+FIX STATUS: Status &#x27;new&#x27;. Engineering is investigating whether the default should be lowered. Awaiting customer-provided log samples and growth rate data.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- /var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5
-Environment: IBM Ceph 5.3, component: ceph
-
-1. Deploy IBM Ceph 5.3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce excessive OSD log growth due to RocksDB debug level 4/5 under write-heavy workload
+Environment: IBM Ceph 5.3 (16.2.10-275.el8cp) or 8.1z5 (19.2.1-331.el9cp)
+1. Deploy cluster with default debug_rocksdb=4/5 -- intent: use production defaults
+2. Run sustained write workload (fio --rw=randwrite --bs=4k --numjobs=16) for 4 hours -- intent: generate compression events
+3. Monitor /var/log/messages growth rate (du -sh /var/log/messages every 30 min) -- intent: measure log inflation
+4. Check bluestore_rocksdb_options WAL buffer config: ceph config get osd bluestore_rocksdb_options -- intent: confirm WAL buffer settings
+5. Apply fix: ceph config set osd debug_rocksdb 1/5 -- intent: reduce logging
+6. Re-run workload and measure log growth -- intent: confirm reduction
+DIAGNOSTIC COMMANDS:
+- ceph config get osd debug_rocksdb
+- ceph config get osd debug_bluestore
+- ceph config get osd bluestore_rocksdb_options
+- du -sh /var/log/ceph/</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing ceph tests may not cover: /var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test coverage for log growth rate under various debug_rocksdb levels.
+GAPS: No automated test validates that production-recommended log levels produce manageable log file sizes. No test measures log growth as a function of write workload intensity.
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph scenario, verify correct behavior</textarea>
+1. Measure OSD log growth rate at debug_rocksdb=4/5 vs 1/5 under sustained 4K random write workload
+2. Verify bluestore_rocksdb_options WAL merge behavior impact on log volume
+3. Regression test: confirm default logging levels after container image upgrade</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -229,35 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">/var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RocksDB logging at debug level 4/5 causes excessive /var/log/messages growth on OSD nodes.</div>
+<div>ROOT CAUSE: The default debug_rocksdb=4/5 setting in shipped container images causes high-frequency log entries, particularly when combined with bluestore_rocksdb_options that configure multiple WAL buffers with per-buffer compression. Each compression event generates verbose RocksDB log output. The 4/5 notation means &#x27;log at level 4 to memory, level 5 to disk&#x27; which is very verbose for production. The default was verified on 19.2.1-331.el9cp (8.1z5). The issue is environment-dependent -- clusters with heavy write workloads see significantly more log growth.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 5.3</li>
-<li>Component: ceph</li>
+<li>Confirmed debug_rocksdb=4/5 is the upstream default (unchanged for years)</li>
+<li>Affected version: 16.2.10-275.el8cp (Ceph 5.3), also seen in Ceph 7</li>
+<li>Workaround exists: manually set logging to level 1/5</li>
+<li>bluestore_rocksdb_options configured with 4 WAL buffers of 256MB each, individually compressed</li>
+<li>Engineering requested specific log samples and growth rates to justify changing defaults</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Status &#x27;new&#x27;. Engineering is investigating whether the default should be lowered. Awaiting customer-provided log samples and growth rate data.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce excessive OSD log growth due to RocksDB debug level 4/5 under write-heavy workload</div>
+<div>Environment: IBM Ceph 5.3 (16.2.10-275.el8cp) or 8.1z5 (19.2.1-331.el9cp)</div>
 <ul>
-<li>[Indira Sawant] As per Ceph documentation, the default logging levels are: debug_bluestore = 1/5 debug_rocksdb = 4/5 This behavior was also verified on a cluster running  <code>ceph version 19.2.1‑331.el9cp</code>, where the same defaults are observed. Regarding  bluestore_rocksdb_options , the current beha</li>
-<li>[Indira Sawant] Hello    The default logging levels ( debug_bluestore = 1/5 ,  debug_rocksdb = 4/5 ) have been unchanged for many years. Since other deployments with these defaults are not consistently seeing excessive log growth, we need to better understand what is different in this environmen</li>
+<li><span class="step-num">1.</span> Deploy cluster with default debug_rocksdb=4/5 -- intent: use production defaults</li>
+<li><span class="step-num">2.</span> Run sustained write workload (<code>fio --rw=randwrite --bs=4k --numjobs=16) for 4 hours -- intent: generate compression events</code></li>
+<li><span class="step-num">3.</span> Monitor /var/log/messages growth rate (du -sh /var/log/messages every 30 min) -- intent: measure log inflation</li>
+<li><span class="step-num">4.</span> Check bluestore_rocksdb_options WAL buffer config: <code>ceph config get osd bluestore_rocksdb_options -- intent: confirm WAL buffer settings</code></li>
+<li><span class="step-num">5.</span> Apply fix: <code>ceph config set osd debug_rocksdb 1/5 -- intent: reduce logging</code></li>
+<li><span class="step-num">6.</span> Re-run workload and measure log growth -- intent: confirm reduction</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph config get osd debug_rocksdb</code></li>
+<li><code>ceph config get osd debug_bluestore</code></li>
+<li><code>ceph config get osd bluestore_rocksdb_options</code></li>
+<li>du -sh /var/log/ceph/</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- /var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5</div>
-<div>Environment: IBM Ceph 5.3, component: ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 5.3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>ceph tests may not cover: /var/log/messges files in storage nodes growing too fast due to Rocksdb logging is set to 4/5</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test coverage for log growth rate under various debug_rocksdb levels.</div>
+<div>GAPS: No automated test validates that production-recommended log levels produce manageable log file sizes. No test measures log growth as a function of write workload intensity.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>ceph scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Measure OSD log growth rate at debug_rocksdb=4/5 vs 1/5 under sustained 4K random write workload</li>
+<li><span class="step-num">2.</span> Verify bluestore_rocksdb_options WAL merge behavior impact on log volume</li>
+<li><span class="step-num">3.</span> Regression test: confirm default logging levels after container image upgrade</li>
 </ul></div>
 </div>
 

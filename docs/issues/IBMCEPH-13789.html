@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13789: [8.1z6] GUI OSD Delete Popup Does not have Option for Preserve OSD ID as Documented</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z6] GUI OSD Delete Popup Does not have Option for Preserve OSD ID as Documented
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: ceph-dashboard
-
-ENGINEERING FINDINGS:
-- [Pentakota Divya Gowri] Fix has been validated successfully and is working as expected. Marking this issue as Verified. The supporting document has been attached in the web links.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Dashboard OSD Delete popup missing &#x27;Preserve OSD ID(s)&#x27; checkbox option that documentation describes.
+ROOT CAUSE: The Ceph Dashboard UI was missing the &#x27;Preserve OSD ID(s) for replacement&#x27; checkbox in the OSD Delete dialog. The documentation described this option but the UI implementation did not include it. This is a straightforward UI bug -- the feature existed in the backend (OSD can be destroyed/preserved via CLI) but the dashboard form was incomplete.
+KEY EVIDENCE:
+- Documentation shows &#x27;Preserve OSD ID(s)&#x27; option in Delete OSD dialog
+- UI did not render this checkbox
+- 100% reproducible
+- Customer used CLI workaround
+- Fix: GitLab MR #1646
+- Verified in 8.1z6 build
+FIX STATUS: Fixed in 8.1z6. MR #1646 merged. Verified by QE.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z6] GUI OSD Delete Popup Does not have Option for Preserve OSD ID as Documented
-Environment: IBM Ceph 8.0, component: ceph-dashboard
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Apply the configuration change described in the JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify &#x27;Preserve OSD ID(s)&#x27; option appears in Dashboard OSD Delete dialog
+Environment: IBM Ceph 8.1z6+ with Dashboard enabled
+1. Access Dashboard &gt; Cluster &gt; OSDs -- intent: navigate to OSD list
+2. Select a down/out OSD -- intent: prepare for deletion
+3. Click Delete from action drop-down -- intent: open Delete dialog
+4. Verify &#x27;Preserve OSD ID(s) for replacement&#x27; checkbox is present -- intent: confirm fix
+DIAGNOSTIC COMMANDS:
+- ceph dashboard ac-role-show admin
+- ceph orch osd rm status
+- ceph osd destroy &lt;id&gt; --yes-i-really-mean-it (CLI equivalent)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified in 8.1z6 by QE team.
+GAPS: Need automated UI test (Selenium/Cypress) validating the presence and functionality of the Preserve OSD ID checkbox.
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Dashboard UI test: verify Preserve OSD ID checkbox appears in Delete OSD dialog
+- Dashboard UI test: verify checking the option results in OSD being destroyed (not removed)
+- Verify documented workflow matches actual UI behavior end-to-end</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,35 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z6] GUI OSD Delete Popup Does not have Option for Preserve OSD ID as Documented</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Dashboard OSD Delete popup missing &#x27;Preserve OSD ID(s)&#x27; checkbox option that documentation describes.</div>
+<div>ROOT CAUSE: The Ceph Dashboard UI was missing the &#x27;Preserve OSD ID(s) for replacement&#x27; checkbox in the OSD Delete dialog. The documentation described this option but the UI implementation did not include it. This is a straightforward UI bug -- the feature existed in the backend (OSD can be destroyed/preserved via CLI) but the dashboard form was incomplete.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: ceph-dashboard</li>
+<li>Documentation shows &#x27;Preserve OSD ID(s)&#x27; option in Delete OSD dialog</li>
+<li>UI did not render this checkbox</li>
+<li>100% reproducible</li>
+<li>Customer used CLI workaround</li>
+<li>Fix: GitLab MR #1646</li>
+<li>Verified in 8.1z6 build</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 8.1z6. MR #1646 merged. Verified by QE.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify &#x27;Preserve OSD ID(s)&#x27; option appears in Dashboard OSD Delete dialog</div>
+<div>Environment: IBM Ceph 8.1z6+ with Dashboard enabled</div>
 <ul>
-<li>[Pentakota Divya Gowri] Fix has been validated successfully and is working as expected. Marking this issue as Verified. The supporting document has been attached in the web links.</li>
+<li><span class="step-num">1.</span> Access Dashboard &gt; Cluster &gt; OSDs -- intent: navigate to OSD list</li>
+<li><span class="step-num">2.</span> Select a down/out OSD -- intent: prepare for deletion</li>
+<li><span class="step-num">3.</span> Click Delete from action drop-down -- intent: open Delete dialog</li>
+<li><span class="step-num">4.</span> Verify &#x27;Preserve OSD ID(s) for replacement&#x27; checkbox is present -- intent: confirm fix</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph dashboard ac-role-show admin</code></li>
+<li><code>ceph orch osd rm status</code></li>
+<li><code>ceph osd destroy &lt;id&gt; --yes-i-really-mean-it (CLI equivalent)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z6] GUI OSD Delete Popup Does not have Option for Preserve OSD ID as Documented</div>
-<div>Environment: IBM Ceph 8.0, component: ceph-dashboard</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified in 8.1z6 by QE team.</div>
+<div>GAPS: Need automated UI test (Selenium/Cypress) validating the presence and functionality of the Preserve OSD ID checkbox.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Dashboard UI test: verify Preserve OSD ID checkbox appears in Delete OSD dialog</li>
+<li>Dashboard UI test: verify checking the option results in OSD being destroyed (not removed)</li>
+<li>Verify documented workflow matches actual UI behavior end-to-end</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15780: [9.1] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1] SMB: User/group names missing for permissions
-
-ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): 9.2
-- Component: smb
-
-ENGINEERING FINDINGS:
-- [Aditya Roshan Ramteke] Verified the backport for the SID-to-name resolution issue with the following build: # ceph -v
-ceph version 20.2.1-367.el9cp (a5a909679465df5812cb0990847edd56f4cab2d3) tentacle (stable) # ceph config get mgr | grep samba
-mgr           advanced  mgr/cephadm/container_image_samba
-
-FIX STATUS:
-- Fix available in build 20.2.1-350.
-- Verified by: Aditya Roshan Ramteke</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SMB share permissions show SID values instead of AD group names after some time -- 9.1 backport, fix verified.
+ROOT CAUSE: The Samba server&#x27;s SID-to-name resolution mechanism fails after a period of time, causing Windows Security tab to display raw SID values (e.g., S-1-5-21-...) instead of resolved AD group/user names (e.g., TEAM-deus-developers). Functional access is not affected -- only the display resolution breaks. The issue is related to the Samba container&#x27;s winbind cache or LDAP connection lifecycle, where the SID-to-name resolution becomes unreliable over time. The fix was in the samba-server container image, addressing the underlying winbind resolution issue.
+KEY EVIDENCE:
+- Customer screenshots show mix of resolved names and SID entries, eventually only SIDs
+- Same customer/cluster as previous case TS020905124
+- Related to IBMCEPH-13484 (parent) and BZ#2425712
+- Fix in samba-server-rhel10:v9.9.1-22394 container image
+- Verified by Aditya Ramteke: &#x27;Windows correctly displays Administrator and Domain Users (SAMBA\Domain Users) instead of raw SID values&#x27;
+FIX STATUS: Verified. Fix in ceph-20.2.1-350 build (samba container v9.9.1-22394). Confirmed working by Aditya Ramteke on ceph 20.2.1-367.el9cp.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1] SMB: User/group names missing for permissions
-Environment: IBM Ceph 9.2, component: smb
-
-1. Deploy IBM Ceph 9.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify SID-to-name resolution persists over time for SMB share permissions.
+Environment: IBM Storage Ceph 9.1 with SMB/Samba and Active Directory
+1. Deploy SMB service with AD integration -- intent: establish SMB with AD auth
+2. Add AD groups to SMB share permissions -- intent: populate permissions
+3. Verify group names resolve correctly initially -- intent: confirm baseline
+4. Wait several hours or trigger the cache expiry -- intent: reproduce the resolution failure
+5. Check Windows Security tab -- intent: verify names persist (or revert to SIDs)
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type smb
+- smbstatus (inside Samba container)
+- wbinfo -n &lt;SID&gt; (test SID-to-name resolution inside container)
+- ceph config get mgr | grep samba</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified manually. Longevity test for SID resolution needed.
 GAPS:
-- Permission test gap for: [9.1] SMB: User/group names missing for permissions
-
+- No automated longevity test for SID-to-name resolution persistence
+- No test validates resolution after Samba container restart
 SCENARIOS NEEDED:
-- Functional: reproduce reported smb scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test: Add AD groups to SMB permissions, verify resolution after 24h
+- Test: Restart Samba container, verify SID-to-name resolution recovers
+- Test: Verify fix with samba-server container version &gt;= v9.9.1-22394</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,41 +234,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1] SMB: User/group names missing for permissions</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SMB share permissions show SID values instead of AD group names after some time -- 9.1 backport, fix verified.</div>
+<div>ROOT CAUSE: The Samba server&#x27;s SID-to-name resolution mechanism fails after a period of time, causing Windows Security tab to display raw SID values (e.g., S-1-5-21-...) instead of resolved AD group/user names (e.g., TEAM-deus-developers). Functional access is not affected -- only the display resolution breaks. The issue is related to the Samba container&#x27;s winbind cache or LDAP connection lifecycle, where the SID-to-name resolution becomes unreliable over time. The fix was in the samba-server container image, addressing the underlying winbind resolution issue.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 9.2</li>
-<li>Component: smb</li>
+<li>Customer screenshots show mix of resolved names and SID entries, eventually only SIDs</li>
+<li>Same customer/cluster as previous case TS020905124</li>
+<li>Related to IBMCEPH-13484 (parent) and BZ#2425712</li>
+<li>Fix in samba-server-rhel10:v9.9.1-22394 container image</li>
+<li>Verified by Aditya Ramteke: &#x27;Windows correctly displays Administrator and Domain Users (SAMBA\Domain Users) instead of raw SID values&#x27;</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Verified. Fix in ceph-20.2.1-350 build (samba container v9.9.1-22394). Confirmed working by Aditya Ramteke on ceph 20.2.1-367.el9cp.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify SID-to-name resolution persists over time for SMB share permissions.</div>
+<div>Environment: IBM Storage Ceph 9.1 with SMB/Samba and Active Directory</div>
 <ul>
-<li>[Aditya Roshan Ramteke] Verified the backport for the SID-to-name resolution issue with the following build: # <code>ceph -v</code></li>
+<li><span class="step-num">1.</span> Deploy SMB service with AD integration -- intent: establish SMB with AD auth</li>
+<li><span class="step-num">2.</span> Add AD groups to SMB share permissions -- intent: populate permissions</li>
+<li><span class="step-num">3.</span> Verify group names resolve correctly initially -- intent: confirm baseline</li>
+<li><span class="step-num">4.</span> Wait several hours or trigger the cache expiry -- intent: reproduce the resolution failure</li>
+<li><span class="step-num">5.</span> Check Windows Security tab -- intent: verify names persist (or revert to SIDs)</li>
 </ul>
-<div>ceph version 20.2.1-367.el9cp (a5a909679465df5812cb0990847edd56f4cab2d3) tentacle (stable) # ceph config get mgr | grep samba</div>
-<div>mgr           advanced  mgr/cephadm/container_image_samba</div>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available in build 20.2.1-350.</li>
-<li>Verified by: Aditya Roshan Ramteke</li>
+<li><code>ceph orch ps --daemon-type smb</code></li>
+<li>smbstatus (inside Samba container)</li>
+<li>wbinfo -n &lt;SID&gt; (test SID-to-name resolution inside container)</li>
+<li><code>ceph config get mgr | grep samba</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1] SMB: User/group names missing for permissions</div>
-<div>Environment: IBM Ceph 9.2, component: smb</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified manually. Longevity test for SID resolution needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission test gap for: [9.1] SMB: User/group names missing for permissions</li>
+<li>No automated longevity test for SID-to-name resolution persistence</li>
+<li>No test validates resolution after Samba container restart</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test: Add AD groups to SMB permissions, verify resolution after 24h</li>
+<li>Test: Restart Samba container, verify SID-to-name resolution recovers</li>
+<li>Test: Verify fix with samba-server container version &gt;= v9.9.1-22394</li>
 </ul></div>
 </div>
 

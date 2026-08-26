@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17491: [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
-
-ROOT CAUSE:
-- Daemon crash reported in cephfs.
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.
-
-FIX STATUS:
-- Current JIRA status: POST</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crash during cap reconnect replay due to assertion assuming single client per inode in cap_imports map (8.1z backport of IBMCEPH-16365).
+ROOT CAUSE: During MDS restart/failover, multiple CephFS clients reconnect and send CLIENT_RECONNECT messages for capabilities they held. These are stored in cap_imports[ino][client]. The function remove_replay_cap_reconnect() in MDCache.h:681 asserts cap_imports[ino].size() == 1, assuming only one client has caps on any given inode. When two or more clients held caps on the same inode before the MDS restart, this assertion fails because the map contains entries for multiple clients. The code then calls cap_imports.erase(ino) which would remove all client entries, but the assertion aborts the MDS before reaching that line. The crash cascades between both MDS ranks (a and b) as they repeatedly restart and crash in the same path.
+KEY EVIDENCE:
+- Assertion: FAILED ceph_assert(cap_imports[ino].size() == 1) at MDCache.h:681
+- Backtrace: MDCache::try_reconnect_cap() -&gt; Server::reply_client_request() -&gt; Finisher thread
+- 10 crashes in rapid succession across both MDS ranks (a and b) between 2026-05-27 and 2026-06-28
+- VMware/ODF environment with odf-operator.v4.20.2
+- Clone of IBMCEPH-16365 (original bug) for 8.1z backport
+- Upstream patch not yet merged per comment from Bipin Kunal (2026-08-13)
+FIX STATUS: PR opened upstream (referenced in IBMCEPH-16365). The fix modifies remove_replay_cap_reconnect() to remove only the specific client entry and delete the inode entry only when no reconnect records remain. Moved out of current z-release; targeted for next z-release. 9.1z backport tracked in IBMCEPH-17490.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
-Environment: IBM Ceph 8.1, component: cephfs
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Trigger the failure scenario (see engineering findings below)
-7. Check for daemon crash -- `ceph crash ls-new`
-8. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger MDS crash via cap_imports assertion during multi-client reconnect replay.
+Environment: IBM Ceph 8.1 (19.2.1) with CephFS, 2 active MDS ranks, multiple kernel or FUSE clients.
+1. Deploy CephFS with 2 active MDS ranks -- intent: establish multi-rank MDS for failover testing
+   ceph fs set cephfs max_mds 2
+2. Mount CephFS from 2+ clients (kernel mount preferred) -- intent: create multiple clients with shared inode caps
+   mount -t ceph mon1:/ /mnt/cephfs -o name=admin
+3. From both clients, open and hold the same file simultaneously -- intent: ensure both clients hold caps on same inode
+   Client A: tail -f /mnt/cephfs/shared-file
+   Client B: cat /mnt/cephfs/shared-file
+4. Force MDS restart while clients hold caps -- intent: trigger reconnect replay with multiple clients per inode
+   ceph mds fail 0
+5. Monitor crash logs -- intent: detect assertion failure
+   ceph crash ls-new
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph daemon mds.&lt;name&gt; session ls (check active sessions)
+- ceph daemon mds.&lt;name&gt; dump_mds_cache (inspect cap state)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test covers multi-client cap reconnect replay assertion during MDS restart.
 GAPS:
-- No crash regression test for: [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)
-- Upgrade path may lack pre-condition coverage for this scenario
-
+- No test validates remove_replay_cap_reconnect() with &gt;1 client holding caps on same inode
+- No test exercises MDS failover with multiple clients holding overlapping capabilities
+- No crash resilience test for rapid MDS restart cycles with active client sessions
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+- Multi-client same-inode caps: 2+ clients open same file, force MDS restart; verify MDS recovers without crash
+- Rapid MDS failover cycling: repeatedly fail MDS with active multi-client workload; verify no assertion failures
+- Cross-rank cap migration: with max_mds=2, ensure cap reconnect across rank migration handles multiple clients
+- ODF environment: test on OCP/ODF VMware deployment matching customer topology</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,45 +243,61 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crash during cap reconnect replay due to assertion assuming single client per inode in cap_imports map (8.1z backport of IBMCEPH-16365).</div>
+<div>ROOT CAUSE: During MDS restart/failover, multiple CephFS clients reconnect and send CLIENT_RECONNECT messages for capabilities they held. These are stored in cap_imports[ino][client]. The function remove_replay_cap_reconnect() in MDCache.h:681 asserts cap_imports[ino].size() == 1, assuming only one client has caps on any given inode. When two or more clients held caps on the same inode before the MDS restart, this assertion fails because the map contains entries for multiple clients. The code then calls cap_imports.erase(ino) which would remove all client entries, but the assertion aborts the MDS before reaching that line. The crash cascades between both MDS ranks (a and b) as they repeatedly restart and crash in the same path.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in cephfs.</li>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephfs</li>
+<li>Assertion: FAILED ceph_assert(cap_imports[ino].size() == 1) at MDCache.h:681</li>
+<li>Backtrace: MDCache::try_reconnect_cap() -&gt; Server::reply_client_request() -&gt; Finisher thread</li>
+<li>10 crashes in rapid succession across both MDS ranks (a and b) between 2026-05-27 and 2026-06-28</li>
+<li>VMware/ODF environment with odf-operator.v4.20.2</li>
+<li>Clone of IBMCEPH-16365 (original bug) for 8.1z backport</li>
+<li>Upstream patch not yet merged per comment from Bipin Kunal (2026-08-13)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: PR opened upstream (referenced in IBMCEPH-16365). The fix modifies remove_replay_cap_reconnect() to remove only the specific client entry and delete the inode entry only when no reconnect records remain. Moved out of current z-release; targeted for next z-release. 9.1z backport tracked in IBMCEPH-17490.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger MDS crash via cap_imports assertion during multi-client reconnect replay.</div>
+<div>Environment: IBM Ceph 8.1 (19.2.1) with CephFS, 2 active MDS ranks, multiple kernel or FUSE clients.</div>
 <ul>
-<li>[Bipin Kunal] Moving it out to next z-release as the patch is not yet merged in upstream.</li>
+<li><span class="step-num">1.</span> Deploy CephFS with 2 active MDS ranks -- intent: establish multi-rank MDS for failover testing</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph fs set cephfs max_mds 2</div>
 <ul>
-<li>Current JIRA status: POST</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</div>
-<div>Environment: IBM Ceph 8.1, component: cephfs</div>
+<li><span class="step-num">2.</span> Mount CephFS from 2+ clients (kernel <code>mount preferred) -- intent: create multiple clients with shared inode caps</code></li>
+</ul>
+<div>mount -t ceph mon1:/ /mnt/cephfs -o name=admin</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">7.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">8.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> From both clients, open and hold the same file simultaneously -- intent: ensure both clients hold caps on same inode</li>
+</ul>
+<div>Client A: tail -f /mnt/cephfs/shared-file</div>
+<div>Client B: cat /mnt/cephfs/shared-file</div>
+<ul>
+<li><span class="step-num">4.</span> Force MDS restart while clients hold caps -- intent: trigger reconnect replay with multiple clients per inode</li>
+</ul>
+<div>ceph mds fail 0</div>
+<ul>
+<li><span class="step-num">5.</span> Monitor crash logs -- intent: detect assertion failure</li>
+</ul>
+<div>ceph crash ls-new</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph crash ls-new</code></li>
+<li><code>ceph crash info &lt;crash-id&gt;</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; session ls (check active sessions)</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; dump_mds_cache (inspect cap state)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test covers multi-client cap reconnect replay assertion during MDS restart.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for: [8.1z backport][FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)</li>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No test validates remove_replay_cap_reconnect() with &gt;1 client holding caps on same inode</li>
+<li>No test exercises MDS failover with multiple clients holding overlapping capabilities</li>
+<li>No crash resilience test for rapid MDS restart cycles with active client sessions</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li>Multi-client same-inode caps: 2+ clients open same file, force MDS restart; verify MDS recovers without crash</li>
+<li>Rapid MDS failover cycling: repeatedly fail MDS with active multi-client workload; verify no assertion failures</li>
+<li>Cross-rank cap migration: with max_mds=2, ensure cap reconnect across rank migration handles multiple clients</li>
+<li>ODF environment: test on OCP/ODF VMware deployment matching customer topology</li>
 </ul></div>
 </div>
 

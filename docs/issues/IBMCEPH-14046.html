@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14046: [9.0z Backport] orch export of  ingress service contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z Backport] orch export of  ingress service contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: `ceph orch ls --export` outputs ingress ssl_cert as a single-line quoted string instead of YAML multiline (|), causing certificate corruption when the exported YAML is re-applied.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.0
-- Component: ceph-mgr/orchestrator
+The cephadm service spec export code serializes the ssl_cert field as a regular YAML string (single-line with quotes) instead of using the YAML block scalar indicator (|) for multiline content. When this exported YAML is fed back into `ceph orch apply`, the certificate newlines are lost, producing a corrupted certificate that HAProxy cannot use. The fix ensures ssl_cert is always serialized with the YAML multiline block indicator.
+
+KEY EVIDENCE:
+- `ceph orch ls --export` outputs: `ssl_cert: &#x27;---BEGIN RSA PRIVATE KEY---...` (single line)
+- Expected: `ssl_cert: |\n    -----BEGIN CERTIFICATE-----` (multiline)
+- Reproducible always
+- Workaround: manually edit YAML to add multiline indicator
+- Fix merged downstream: gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1753
+- Verified in 9.0z3 build 20.1.0-205
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (GA in 9.0z3)
+- Downstream MR 1753 merged. Verified working in build 20.1.0-205.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0z Backport] orch export of  ingress service contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml
-Environment: IBM Ceph 8.0, component: ceph-mgr/orchestrator
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify ssl_cert export format in ingress service spec
+Environment: IBM Ceph 8.1 or 9.0 (pre-fix)
 
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-3. Monitor upgrade -- `ceph orch upgrade status`
-4. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy ingress service with SSL cert: `ceph orch apply -i ingress-spec.yaml` -- intent: create ingress with cert
+2. Export: `ceph orch ls --export &gt; exported.yaml` -- intent: capture current spec
+3. Inspect exported.yaml for ssl_cert format -- intent: check if multiline or single-line
+4. Re-apply: `ceph orch apply -i exported.yaml` -- intent: verify round-trip
+5. Check HAProxy cert: connect to frontend port with `openssl s_client` -- intent: detect corruption
+
+DIAGNOSTIC COMMANDS:
+- `ceph orch ls ingress --export`
+- `ceph orch ls &lt;service-name&gt; --export`
+- `openssl s_client -connect &lt;vip&gt;:&lt;port&gt;`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fixed in 9.0z3. Need regression test for spec export round-trip.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- No test for YAML round-trip of ingress spec with SSL certificates
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Export ingress spec, re-apply, verify SSL cert is intact
+- Verify ssl_cert uses YAML multiline indicator (|) in export output
+- End-to-end: ingress with SSL -&gt; export -&gt; re-apply -&gt; verify TLS connectivity</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,36 +243,48 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z Backport] orch export of  ingress service contains single line `ssl_cert` instead of multiline, preventing orch apply of the yaml</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">`ceph orch ls --export` outputs ingress ssl_cert as a single-line quoted string instead of YAML multiline (|), causing certificate corruption when the exported YAML is re-applied.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The cephadm service spec export code serializes the ssl_cert field as a regular YAML string (single-line with quotes) instead of using the YAML block scalar indicator (|) for multiline content. When this exported YAML is fed back into <code>ceph orch apply</code>, the certificate newlines are lost, producing a corrupted certificate that HAProxy cannot use. The fix ensures ssl_cert is always serialized with the YAML multiline block indicator.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.0</li>
-<li>Component: ceph-mgr/orchestrator</li>
+<li><code><code>ceph orch ls --export</code></code> outputs: <code>ssl_cert: &amp;#x27;---BEGIN RSA PRIVATE KEY---...</code> (single line)</li>
+<li>Expected: <code>ssl_cert: |\n    -----BEGIN CERTIFICATE-----</code> (multiline)</li>
+<li>Reproducible always</li>
+<li>Workaround: manually edit YAML to add multiline indicator</li>
+<li>Fix merged downstream: gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1753</li>
+<li>Verified in 9.0z3 build 20.1.0-205</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (GA in 9.0z3)</li>
+<li>Downstream MR 1753 merged. Verified working in build 20.1.0-205.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0z Backport] orch export of  ingress service contains single line <code>ssl_cert</code> instead of multiline, preventing orch apply of the yaml</div>
-<div>Environment: IBM Ceph 8.0, component: ceph-mgr/orchestrator</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify ssl_cert export format in ingress service spec</div>
+<div>Environment: IBM Ceph 8.1 or 9.0 (pre-fix)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">4.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy ingress service with SSL cert: <code><code>ceph orch apply -i ingress-spec.yaml</code></code> -- intent: create ingress with cert</li>
+<li><span class="step-num">2.</span> Export: <code><code>ceph orch ls --export &amp;gt; exported.yaml</code></code> -- intent: capture current spec</li>
+<li><span class="step-num">3.</span> Inspect exported.yaml for ssl_cert format -- intent: check if multiline or single-line</li>
+<li><span class="step-num">4.</span> Re-apply: <code><code>ceph orch apply -i exported.yaml</code></code> -- intent: verify round-trip</li>
+<li><span class="step-num">5.</span> Check HAProxy cert: connect to frontend port with <code>openssl s_client</code> -- intent: detect corruption</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph orch ls ingress --export</code></code></li>
+<li><code><code>ceph orch ls &amp;lt;service-name&amp;gt; --export</code></code></li>
+<li><code>openssl s_client -connect &amp;lt;vip&amp;gt;:&amp;lt;port&amp;gt;</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fixed in 9.0z3. Need regression test for spec export round-trip.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No test for YAML round-trip of ingress spec with SSL certificates</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-mgr/orchestrator scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Export ingress spec, re-apply, verify SSL cert is intact</li>
+<li>Verify ssl_cert uses YAML multiline indicator (|) in export output</li>
+<li>End-to-end: ingress with SSL -&gt; export -&gt; re-apply -&gt; verify TLS connectivity</li>
 </ul></div>
 </div>
 

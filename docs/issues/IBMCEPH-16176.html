@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16176: RGW cluster brownout and GetObject latency observed (10+ minutes)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW cluster brownout and GetObject latency observed (10+ minutes)
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW cluster-wide brownout with GetObject latencies reaching 350+ seconds (up to 10+ minutes per customer metrics), correlated with BLUESTORE_SLOW_OP_ALERT on osd.2233.
 
 ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1
-- Component: rgw
+A ~50-minute brownout affected 182 RGW nodes across 6 buckets. The worst-affected bucket (swe-diaglogs-prod-acos-b1-us-east-1, ~500M objects) experienced GetObject latencies up to 354 seconds in RGW logs (customer-side metrics showed up to 487 seconds). The cluster logs show BLUESTORE_SLOW_OP_ALERT on osd.2233 starting at the same time as the latency spikes, persisting for ~70 minutes. The high latencies are for large objects (600MB-800MB) being served via Hadoop/Spark clients. The brownout self-resolved around 09:00 UTC with no manual intervention. Engineering (Matthew Benjamin) noted there&#x27;s no evidence of an RGW software defect — this appears to be a storage-layer performance event (BlueStore slow ops on a single OSD cascading to RGW read latency). The root cause may be hardware (NVMe/disk issue on osd.2233&#x27;s host) or transient I/O contention.
 
-ENGINEERING FINDINGS:
-- [Stephen Baldwin] Questions customer provided in case How do we debug this? What logs, perf counters, or commands should we run to figure out where the 11 minutes were being spent? (RGW request logs, OSD slow-op dumps, bucket-index state, network counters, anything else?) Where are the 11 minutes
-- [Stephen Baldwin] Reviewed with Prashant and he provided the following analysis from the first set of logs: We do not see any GET op taken more than 2min to complete. Based on the provided logs, we do not observe any GET operations blocked at the RADOS/RGW layer for durations exceeding 2 minutes,
+KEY EVIDENCE:
+- 182 RGW nodes affected in ~50-minute window
+- Worst GetObject latency: 354s (RGW logs) / 487s (customer metrics)
+- BLUESTORE_SLOW_OP_ALERT on osd.2233 during same window
+- Self-resolved; no manual intervention
+- All affected GET requests returned HTTP 200/206 (succeeded, just slow)
+- Cluster: Ceph 18.2.1-229 (Reef), ~500M object bucket
+- Not related to earlier CompleteMultipartUpload fix (March 18)
 
 FIX STATUS:
-- Current JIRA status: New</textarea>
+- Status: New
+- Under investigation. Likely hardware/storage-layer issue, not RGW defect.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- RGW cluster brownout and GetObject latency observed (10+ minutes)
-Environment: IBM Ceph 8.1, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Investigate correlation between BlueStore slow ops and RGW latency spikes
+Environment: IBM Ceph 8.1 (Reef), large-scale RGW deployment
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Identify OSD with slow ops: `ceph health detail | grep BLUESTORE_SLOW_OP` -- intent: find affected OSD
+2. Correlate RGW latency with OSD slow ops: compare timestamps -- intent: confirm causation
+3. Check OSD host hardware: `smartctl -a /dev/&lt;device&gt;` -- intent: rule out hardware failure
+4. Enable perf counters: `ceph tell osd.&lt;id&gt; perf dump` -- intent: capture BlueStore metrics
+
+DIAGNOSTIC COMMANDS:
+- `ceph health detail`
+- `ceph tell osd.&lt;id&gt; perf dump | grep bluestore`
+- `ceph tell osd.&lt;id&gt; dump_historic_slow_ops`
+- RGW access logs: grep for `latency=` and sort by latency</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for RGW latency impact from BlueStore slow ops.
 
 GAPS:
-- No performance baseline test for: RGW cluster brownout and GetObject latency observed (10+ minutes)
+- No test correlating OSD-level slow ops with RGW read latency
+- No monitoring/alerting test for cluster-wide brownout detection
 
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- Inject BlueStore slow ops (via IO injection) and measure RGW read latency impact
+- Verify RGW latency recovers after BlueStore slow ops clear
+- Monitor dashboard: verify BLUESTORE_SLOW_OP_ALERT visibility and correlation tools</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,40 +245,50 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW cluster brownout and GetObject latency observed (10+ minutes)</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW cluster-wide brownout with GetObject latencies reaching 350+ seconds (up to 10+ minutes per customer metrics), correlated with BLUESTORE_SLOW_OP_ALERT on osd.2233.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>A ~50-minute brownout affected 182 RGW nodes across 6 buckets. The worst-affected bucket (swe-diaglogs-prod-acos-b1-us-east-1, ~500M objects) experienced GetObject latencies up to 354 seconds in RGW logs (customer-side metrics showed up to 487 seconds). The cluster logs show BLUESTORE_SLOW_OP_ALERT on osd.2233 starting at the same time as the latency spikes, persisting for ~70 minutes. The high latencies are for large objects (600MB-800MB) being served via Hadoop/Spark clients. The brownout self-resolved around 09:00 UTC with no manual intervention. Engineering (Matthew Benjamin) noted there&#x27;s no evidence of an RGW software defect — this appears to be a storage-layer performance event (BlueStore slow ops on a single OSD cascading to RGW read latency). The root cause may be hardware (NVMe/disk issue on osd.2233&#x27;s host) or transient I/O contention.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Stephen Baldwin] Questions customer provided in case How do we debug this? What logs, perf counters, or commands should we run to figure out where the 11 minutes were being spent? (RGW request logs, OSD slow-op dumps, bucket-index state, network counters, anything else?) Where are the 11 minutes</li>
-<li>[Stephen Baldwin] Reviewed with Prashant and he provided the following analysis from the first set of logs: We do not see any GET op taken more than 2min to complete. Based on the provided logs, we do not observe any GET operations blocked at the RADOS/RGW layer for durations exceeding 2 minutes,</li>
+<li>182 RGW nodes affected in ~50-minute window</li>
+<li>Worst GetObject latency: 354s (RGW logs) / 487s (customer metrics)</li>
+<li>BLUESTORE_SLOW_OP_ALERT on osd.2233 during same window</li>
+<li>Self-resolved; no manual intervention</li>
+<li>All affected GET requests returned HTTP 200/206 (succeeded, just slow)</li>
+<li>Cluster: Ceph 18.2.1-229 (Reef), ~500M object bucket</li>
+<li>Not related to earlier CompleteMultipartUpload fix (March 18)</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li>Status: New</li>
+<li>Under investigation. Likely hardware/storage-layer issue, not RGW defect.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- RGW cluster brownout and GetObject latency observed (10+ minutes)</div>
-<div>Environment: IBM Ceph 8.1, component: rgw</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Investigate correlation between BlueStore slow ops and RGW latency spikes</div>
+<div>Environment: IBM Ceph 8.1 (Reef), large-scale RGW deployment</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Identify OSD with slow ops: <code><code>ceph health detail | grep BLUESTORE_SLOW_OP</code></code> -- intent: find affected OSD</li>
+<li><span class="step-num">2.</span> Correlate RGW latency with OSD slow ops: compare timestamps -- intent: confirm causation</li>
+<li><span class="step-num">3.</span> Check OSD host hardware: <code>smartctl -a /dev/&amp;lt;device&amp;gt;</code> -- intent: rule out hardware failure</li>
+<li><span class="step-num">4.</span> Enable perf counters: <code><code>ceph tell osd.&amp;lt;id&amp;gt; perf dump</code></code> -- intent: capture BlueStore metrics</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph health detail</code></code></li>
+<li><code><code>ceph tell osd.&amp;lt;id&amp;gt; perf dump | grep bluestore</code></code></li>
+<li><code><code>ceph tell osd.&amp;lt;id&amp;gt; dump_historic_slow_ops</code></code></li>
+<li>RGW access logs: grep for <code>latency=</code> and sort by latency</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for RGW latency impact from BlueStore slow ops.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance baseline test for: RGW cluster brownout and GetObject latency observed (10+ minutes)</li>
+<li>No test correlating OSD-level slow ops with RGW read latency</li>
+<li>No monitoring/alerting test for cluster-wide brownout detection</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Inject BlueStore slow ops (via IO injection) and measure RGW read latency impact</li>
+<li>Verify RGW latency recovers after BlueStore slow ops clear</li>
+<li>Monitor dashboard: verify BLUESTORE_SLOW_OP_ALERT visibility and correlation tools</li>
 </ul></div>
 </div>
 

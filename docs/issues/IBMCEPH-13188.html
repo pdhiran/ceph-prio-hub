@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13188: [8.1z Backport][IBM_Support] &quot;ceph orch ls&quot; is misreporting the count for OSD services</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport][IBM_Support] &quot;ceph orch ls&quot; is misreporting the count for OSD services
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Abhishek Kane] is moved to 10.0. We won’t get the fix in 81z6.
-- [Bipin Kunal] I have moved back this for 8.1z6 and the primary bug is being targeted for 9.1. The fix is already in 9.1 branch now. check here  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1552
-- [Justin Caratzas] In the future, can you make sure the Resolves annotation has the following format: Resolves: IBMCEPH-13188 In this commit:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1661  we found: Resolves: jira#IBMCEPH-13187 Setting Fixed in Build to ceph-19.2.1-356 and moving
-
-FIX STATUS:
-- Fix available
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1661</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: &#x27;ceph orch ls&#x27; misreports OSD service daemon count -- backport of upstream fix to 8.1z6.
+ROOT CAUSE: The ceph orchestrator&#x27;s service listing (&#x27;ceph orch ls&#x27;) incorrectly counts OSD daemons for OSD services. This is a cephadm/orchestrator bookkeeping bug where the running daemon count displayed does not match actual running OSD daemons. The fix was already in the 9.1 branch (MR #1552) and was backported to 8.1z6 (MR #1661). The JIRA description is empty (template only) but the fix is clearly tracked through the merge requests.
+KEY EVIDENCE:
+- Primary bug: IBMCEPH-12719 (parent issue)
+- Fix for 9.1: GitLab MR #1552
+- Backport for 8.1z6: GitLab MR #1661
+- Fixed in build: ceph-19.2.1-356
+- Customer-reported (IBM_Customer_Issue label)
+FIX STATUS: Fixed in 8.1z6 (ceph-19.2.1-356). Closed as part of 8.1z6 release.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport] &quot;ceph orch ls&quot; is misreporting the count for OSD services
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify &#x27;ceph orch ls&#x27; reports correct OSD service count
+Environment: IBM Ceph 8.1z6+ (19.2.1-356+)
+1. Deploy cluster with multiple OSD services -- intent: create scenario with multiple OSD specs
+2. ceph orch ls --service-type=osd -- intent: check reported count
+3. ceph orch ps --service-type=osd | wc -l -- intent: verify actual daemon count
+4. Compare counts -- intent: verify they match
+DIAGNOSTIC COMMANDS:
+- ceph orch ls --service-type=osd
+- ceph orch ps --service-type=osd
+- ceph osd tree
+- ceph osd stat</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix merged and released in 8.1z6. Basic verification implied by release process.
+GAPS: No dedicated automated test comparing &#x27;ceph orch ls&#x27; count with actual daemon count across all service types.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Verify &#x27;ceph orch ls&#x27; count matches &#x27;ceph orch ps&#x27; count for OSD services after scale operations
+- Add/remove OSDs and verify count updates correctly
+- Test across multiple OSD service specs with different placement rules</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,43 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport][IBM_Support] &quot;ceph orch ls&quot; is misreporting the count for OSD services</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">&#x27;ceph orch ls&#x27; misreports OSD service daemon count -- backport of upstream fix to 8.1z6.</div>
+<div>ROOT CAUSE: The ceph orchestrator&#x27;s service listing (&#x27;ceph orch ls&#x27;) incorrectly counts OSD daemons for OSD services. This is a cephadm/orchestrator bookkeeping bug where the running daemon count displayed does not match actual running OSD daemons. The fix was already in the 9.1 branch (MR #1552) and was backported to 8.1z6 (MR #1661). The JIRA description is empty (template only) but the fix is clearly tracked through the merge requests.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephadm</li>
+<li>Primary bug: IBMCEPH-12719 (parent issue)</li>
+<li>Fix for 9.1: GitLab MR #1552</li>
+<li>Backport for 8.1z6: GitLab MR #1661</li>
+<li>Fixed in build: ceph-19.2.1-356</li>
+<li>Customer-reported (IBM_Customer_Issue label)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 8.1z6 (ceph-19.2.1-356). Closed as part of 8.1z6 release.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify &#x27;ceph orch ls&#x27; reports correct OSD service count</div>
+<div>Environment: IBM Ceph 8.1z6+ (19.2.1-356+)</div>
 <ul>
-<li>[Abhishek Kane] is moved to 10.0. We won’t get the fix in 81z6.</li>
-<li>[Bipin Kunal] I have moved back this for 8.1z6 and the primary bug is being targeted for 9.1. The fix is already in 9.1 branch now. check here  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1552</li>
-<li>[Justin Caratzas] In the future, can you make sure the Resolves annotation has the following format: Resolves: IBMCEPH-13188 In this commit:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1661  we found: Resolves: jira#IBMCEPH-13187 Setting Fixed in Build to ceph-19.2.1-356 and moving</li>
+<li><span class="step-num">1.</span> Deploy cluster with multiple OSD services -- intent: create scenario with multiple OSD specs</li>
+<li><span class="step-num">2.</span> <code>ceph orch ls --service-type=osd -- intent: check reported count</code></li>
+<li><span class="step-num">3.</span> <code>ceph orch ps --service-type=osd | wc -l -- intent: verify actual daemon count</code></li>
+<li><span class="step-num">4.</span> Compare counts -- intent: verify they match</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1661</li>
+<li><code>ceph orch ls --service-type=osd</code></li>
+<li><code>ceph orch ps --service-type=osd</code></li>
+<li><code>ceph osd tree</code></li>
+<li><code>ceph osd stat</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport] &quot;ceph orch ls&quot; is misreporting the count for OSD services</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix merged and released in 8.1z6. Basic verification implied by release process.</div>
+<div>GAPS: No dedicated automated test comparing &#x27;ceph orch ls&#x27; count with actual daemon count across all service types.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Verify &#x27;<code>ceph orch ls&#x27; count matches &#x27;ceph orch ps&#x27; count for OSD services after scale operations</code></li>
+<li>Add/remove OSDs and verify count updates correctly</li>
+<li>Test across multiple OSD service specs with different placement rules</li>
 </ul></div>
 </div>
 

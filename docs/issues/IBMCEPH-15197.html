@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15197: &#x27;radosgw-admin role list&#x27; lists roles in loop</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: &#x27;radosgw-admin role list&#x27; lists roles in loop
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Ashish Singh] Hi Team, An upstream tracker    and a PR has been raised to fix this issue   . Regards, Ashish Singh
-- [Bipin Kunal] Can this be assigned to Ashish? I see he has posted a patch and working actively on upstream PR
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: radosgw-admin role list enters infinite loop when role count exceeds ~97, repeating entries endlessly.
+ROOT CAUSE: The radosgw-admin role list command has a pagination bug in its OMAP listing logic. When the number of IAM roles exceeds a threshold (observed at 97 roles), the listing marker/cursor logic fails to advance correctly, causing the same set of entries to be returned repeatedly in an infinite loop. The AWS CLI (iam list-roles) uses proper pagination with markers and works correctly with the same data, confirming the bug is in the radosgw-admin CLI pagination implementation, not the underlying role storage.
+KEY EVIDENCE:
+- Reproducible with 97+ roles on Ceph 19.2.1-331.el9cp (8.1z5)
+- Same role ARN repeated indefinitely: &#x27;arn:aws:iam:::role/anita-test-role-519&#x27; appears 10+ times
+- AWS CLI list-roles works correctly with same data
+- Upstream tracker and PR raised by Ashish Singh
+- Reproducer: create 1000 roles using radosgw-admin role create in a loop, then list
+FIX STATUS: Upstream PR submitted. Ashish Singh actively working on fix. No downstream target version confirmed yet. Customer awaiting update (Aug 20 follow-up).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- &#x27;radosgw-admin role list&#x27; lists roles in loop
-Environment: IBM Ceph 8.1, component: rgw
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce radosgw-admin role list infinite loop with 97+ IAM roles
+Environment: IBM Ceph 8.1z5 (19.2.1-331.el9cp)
+1. Create trust policy JSON file -- intent: prerequisite for role creation
+2. Create 1000 roles: for i in $(seq 1 1000); do radosgw-admin role create --role-name test-role-$i --path / --assume-role-policy-doc &quot;$(cat trust.json)&quot; --yes-i-really-mean-it; done -- intent: exceed threshold
+3. Run: radosgw-admin role list | grep Arn | wc -l -- intent: observe infinite output
+4. Verify AWS CLI works: aws iam list-roles --endpoint-url http://&lt;rgw&gt; | grep Arn | wc -l -- intent: confirm workaround
+5. Reduce to 96 roles and verify listing completes -- intent: identify threshold
+DIAGNOSTIC COMMANDS:
+- radosgw-admin role list
+- aws iam list-roles --endpoint-url http://&lt;rgw-endpoint&gt;
+- radosgw-admin role list 2&gt;&amp;1 | head -100 | grep Arn | sort | uniq -c | sort -rn</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: &#x27;radosgw-admin role list&#x27; lists roles in loop
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing test for role list pagination at scale.
+GAPS: CephCI RGW role tests likely only test small numbers of roles (&lt;10). No test validates pagination correctness at 100+ roles.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. Create 100, 500, 1000 roles and verify radosgw-admin role list returns each exactly once
+2. Verify list termination -- command should exit with complete output
+3. Compare radosgw-admin output with AWS CLI output for consistency</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">&#x27;radosgw-admin role list&#x27; lists roles in loop</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">radosgw-admin role list enters infinite loop when role count exceeds ~97, repeating entries endlessly.</div>
+<div>ROOT CAUSE: The radosgw-admin role list command has a pagination bug in its OMAP listing logic. When the number of IAM roles exceeds a threshold (observed at 97 roles), the listing marker/cursor logic fails to advance correctly, causing the same set of entries to be returned repeatedly in an infinite loop. The AWS CLI (iam list-roles) uses proper pagination with markers and works correctly with the same data, confirming the bug is in the radosgw-admin CLI pagination implementation, not the underlying role storage.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw</li>
+<li>Reproducible with 97+ roles on Ceph 19.2.1-331.el9cp (8.1z5)</li>
+<li>Same role ARN repeated indefinitely: &#x27;arn:aws:iam:::role/anita-test-role-519&#x27; appears 10+ times</li>
+<li>AWS CLI list-roles works correctly with same data</li>
+<li>Upstream tracker and PR raised by Ashish Singh</li>
+<li>Reproducer: create 1000 roles using <code>radosgw-admin role create in a loop</code>, then list</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Upstream PR submitted. Ashish Singh actively working on fix. No downstream target version confirmed yet. Customer awaiting update (Aug 20 follow-up).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce radosgw-admin role list infinite loop with 97+ IAM roles</div>
+<div>Environment: IBM Ceph 8.1z5 (19.2.1-331.el9cp)</div>
 <ul>
-<li>[Ashish Singh] Hi Team, An upstream tracker    and a PR has been raised to fix this issue   . Regards, Ashish Singh</li>
-<li>[Bipin Kunal] Can this be assigned to Ashish? I see he has posted a patch and working actively on upstream PR</li>
+<li><span class="step-num">1.</span> Create trust policy JSON file -- intent: prerequisite for role creation</li>
+<li><span class="step-num">2.</span> Create 1000 roles: for i in $(seq 1 1000); do <code>radosgw-admin role create --role-name test-role-$i --path / --assume-role-policy-doc &quot;$(cat trust.json)&quot; --yes-i-really-mean-it; done -- intent: exceed threshold</code></li>
+<li><span class="step-num">3.</span> Run: <code>radosgw-admin role list | grep Arn | wc -l -- intent: observe infinite output</code></li>
+<li><span class="step-num">4.</span> Verify AWS CLI works: aws iam list-roles --endpoint-url http://&lt;rgw&gt; | grep Arn | wc -l -- intent: confirm workaround</li>
+<li><span class="step-num">5.</span> Reduce to 96 roles and verify listing completes -- intent: identify threshold</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>radosgw-admin role list</code></li>
+<li>aws iam list-roles --endpoint-url http://&lt;rgw-endpoint&gt;</li>
+<li><code>radosgw-admin role list 2&gt;&amp;1 | head -100 | grep Arn | sort | uniq -c | sort -rn</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- &#x27;radosgw-admin role list&#x27; lists roles in loop</div>
-<div>Environment: IBM Ceph 8.1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: &#x27;radosgw-admin role list&#x27; lists roles in loop</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing test for role list pagination at scale.</div>
+<div>GAPS: CephCI RGW role tests likely only test small numbers of roles (&lt;10). No test validates pagination correctness at 100+ roles.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Create 100, 500, 1000 roles and verify <code>radosgw-admin role list returns each exactly once</code></li>
+<li><span class="step-num">2.</span> Verify list termination -- command should exit with complete output</li>
+<li><span class="step-num">3.</span> Compare <code>radosgw-admin output with AWS CLI output for consistency</code></li>
 </ul></div>
 </div>
 

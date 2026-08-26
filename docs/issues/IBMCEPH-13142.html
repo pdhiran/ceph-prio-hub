@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13142: [IBM_Support][RGW] Modify/Rotate the RGW multisite replication user credentials</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,33 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support][RGW] Modify/Rotate the RGW multisite replication user credentials
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: rgw-multisite
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Procedure for rotating RGW multisite replication user credentials without sync disruption.
+ROOT CAUSE: After a security incident, the customer needed to rotate the system user credentials used for multisite replication. The naive approach (modify user key, then remove old key) breaks sync immediately with &#x27;Permission denied&#x27; errors because the zone configurations on both sites still reference the old credentials. The correct procedure requires careful ordering: add new key first, update zone configs on both sites with period updates, then remove old key.
+KEY EVIDENCE:
+- Error after naive rotation: &#x27;failed to retrieve sync info: (13) Permission denied&#x27;
+- Error: &#x27;failed to fetch datalog info&#x27; and &#x27;failed to fetch mdlog info&#x27;
+- Tested procedure by Kritik Sachdeva:
+  1. Add new key via radosgw-admin user modify
+  2. Update zone on primary with radosgw-admin zone modify
+  3. Pull period on secondary
+  4. Update zone on secondary + period update --commit
+- Improved procedure (no sync interruption): add new key, wait for sync of user, modify zones, confirm sync, remove old key
+- Casey Bodley approved; noted commands must run on metadata master zone
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Procedure documented in JIRA. Documentation ticket requested but status unclear.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RGW] Modify/Rotate the RGW multisite replication user credentials
-Environment: IBM Ceph 8.1, component: rgw-multisite
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate zero-downtime replication credential rotation procedure
+Environment: IBM Ceph 8.1 with active multisite sync
+1. Verify sync is healthy: radosgw-admin sync status -- intent: confirm baseline
+2. Add new key: radosgw-admin user modify --uid=&lt;system_user&gt; --access-key=&lt;NEW&gt; --secret=&lt;NEW_SECRET&gt; -- intent: add without removing old
+3. Wait for user metadata to sync to secondary -- intent: ensure new key is available on both zones
+4. Update primary zone: radosgw-admin zone modify ... --access-key=&lt;NEW&gt; --secret-key=&lt;NEW_SECRET&gt; -- intent: update zone config
+5. Pull period on secondary: radosgw-admin period pull ... --access-key=&lt;NEW&gt; --secret=&lt;NEW_SECRET&gt; -- intent: propagate
+6. Update secondary zone + period update --commit -- intent: complete rotation
+7. Verify sync: radosgw-admin sync status -- intent: confirm no disruption
+8. Remove old key: radosgw-admin key rm --uid=&lt;uid&gt; --access-key=&lt;OLD&gt; -- intent: cleanup
+DIAGNOSTIC COMMANDS:
+- radosgw-admin sync status
+- radosgw-admin user info --uid=&lt;system_user&gt;
+- radosgw-admin zone get --rgw-zone=&lt;zone&gt;
+- radosgw-admin period get</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw-multisite tests may not cover: [RGW] Modify/Rotate the RGW multisite replication user credentials
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Procedure tested manually but no automated test exists.
+GAPS: No automated test for credential rotation in multisite. No test validates zero-downtime rotation sequence.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Full credential rotation with zero sync downtime using the documented procedure
+2. Negative: naive rotation (remove old key first) causes Permission denied
+3. Rotation during active data sync -- verify no objects lost
+4. Rotation on non-metadata-master zone -- verify proper error handling</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -226,31 +240,48 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support][RGW] Modify/Rotate the RGW multisite replication user credentials</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Procedure for rotating RGW multisite replication user credentials without sync disruption.</div>
+<div>ROOT CAUSE: After a security incident, the customer needed to rotate the system user credentials used for multisite replication. The naive approach (modify user key, then remove old key) breaks sync immediately with &#x27;Permission denied&#x27; errors because the zone configurations on both sites still reference the old credentials. The correct procedure requires careful ordering: add new key first, update zone configs on both sites with period updates, then remove old key.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw-multisite</li>
+<li>Error after naive rotation: &#x27;failed to retrieve sync info: (13) Permission denied&#x27;</li>
+<li>Error: &#x27;failed to fetch datalog info&#x27; and &#x27;failed to fetch mdlog info&#x27;</li>
+<li>Tested procedure by Kritik Sachdeva:</li>
+<li><span class="step-num">1.</span> Add new key via <code>radosgw-admin user modify</code></li>
+<li><span class="step-num">2.</span> Update zone on primary with <code>radosgw-admin zone modify</code></li>
+<li><span class="step-num">3.</span> Pull period on secondary</li>
+<li><span class="step-num">4.</span> Update zone on secondary + period update --commit</li>
+<li>Improved procedure (no sync interruption): add new key, wait for sync of user, modify zones, confirm sync, remove old key</li>
+<li>Casey Bodley approved; noted commands must run on metadata master zone</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Procedure documented in JIRA. Documentation ticket requested but status unclear.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate zero-downtime replication credential rotation procedure</div>
+<div>Environment: IBM Ceph 8.1 with active multisite sync</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RGW] Modify/Rotate the RGW multisite replication user credentials</div>
-<div>Environment: IBM Ceph 8.1, component: rgw-multisite</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing rgw-multisite tests may not cover: [RGW] Modify/Rotate the RGW multisite replication user credentials</li>
+<li><span class="step-num">1.</span> Verify sync is healthy: <code>radosgw-admin sync status -- intent: confirm baseline</code></li>
+<li><span class="step-num">2.</span> Add new key: <code>radosgw-admin user modify --uid=&lt;system_user&gt; --access-key=&lt;NEW&gt; --secret=&lt;NEW_SECRET&gt; -- intent: add without removing old</code></li>
+<li><span class="step-num">3.</span> Wait for user metadata to sync to secondary -- intent: ensure new key is available on both zones</li>
+<li><span class="step-num">4.</span> Update primary zone: <code>radosgw-admin zone modify ... --access-key=&lt;NEW&gt; --secret-key=&lt;NEW_SECRET&gt; -- intent: update zone config</code></li>
+<li><span class="step-num">5.</span> Pull period on secondary: <code>radosgw-admin period pull ... --access-key=&lt;NEW&gt; --secret=&lt;NEW_SECRET&gt; -- intent: propagate</code></li>
+<li><span class="step-num">6.</span> Update secondary zone + period update --commit -- intent: complete rotation</li>
+<li><span class="step-num">7.</span> Verify sync: <code>radosgw-admin sync status -- intent: confirm no disruption</code></li>
+<li><span class="step-num">8.</span> Remove old key: <code>radosgw-admin key rm --uid=&lt;uid&gt; --access-key=&lt;OLD&gt; -- intent: cleanup</code></li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>radosgw-admin sync status</code></li>
+<li><code>radosgw-admin user info --uid=&lt;system_user&gt;</code></li>
+<li><code>radosgw-admin zone get --rgw-zone=&lt;zone&gt;</code></li>
+<li><code>radosgw-admin period get</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Procedure tested manually but no automated test exists.</div>
+<div>GAPS: No automated test for credential rotation in multisite. No test validates zero-downtime rotation sequence.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Full credential rotation with zero sync downtime using the documented procedure</li>
+<li><span class="step-num">2.</span> Negative: naive rotation (remove old key first) causes Permission denied</li>
+<li><span class="step-num">3.</span> Rotation during active data sync -- verify no objects lost</li>
+<li><span class="step-num">4.</span> Rotation on non-metadata-master zone -- verify proper error handling</li>
 </ul></div>
 </div>
 

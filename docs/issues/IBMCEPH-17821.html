@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17821: [8.1z Backport]- [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport]- [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 8.1z backport clone of the same RGW archive zone &#x27;-deleted-&#x27; bucket timestamp issue as IBMCEPH-17822.
 
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: rgw
+ROOT CAUSE: Identical to IBMCEPH-17822/IBMCEPH-14111. RGW&#x27;s lifecycle management in archive zones copies original bucket mtime/creation_time to the internally-created &#x27;-deleted-&#x27; bucket instead of using the deletion timestamp. The &#x27;-deleted-&#x27; bucket is logically a new entity but inherits stale timestamps from the original. This is a code-level error in the archive zone bucket deletion handler where timestamp fields are propagated rather than regenerated.
 
-FIX STATUS:
-- Current JIRA status: New</textarea>
+KEY EVIDENCE:
+- Cloned from IBMCEPH-14111 (same parent as IBMCEPH-17822)
+- Affected version: IBM Ceph 8.1 (backport target: 8.1z)
+- Status: New, no fix merged
+- Labels: Ceph_L3, rgw
+- No comments or engineering analysis on this backport clone
+
+FIX STATUS: No fix merged. This is an 8.1z backport clone of IBMCEPH-14111. Assigned to Shilpa Jagannath. Fix must be developed or backported from the original ticket.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport]- [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket
-Environment: IBM Ceph 8.1, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-17822 but targeting IBM Ceph 8.1 (Squid 19.x).
+Environment: IBM Ceph 8.1 (Squid 19.x) with archive zone configured.
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+Steps identical to IBMCEPH-17822 — see that entry for full reproduction procedure. The only difference is the target Ceph version (8.1z instead of 9.1z).
+
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket stats --bucket=&lt;bucket&gt;
+- radosgw-admin lc list
+- radosgw-admin metadata get bucket:&lt;bucket-name&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing QE test coverage. Same gap as IBMCEPH-17822.
 
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+GAPS: Identical to IBMCEPH-17822. No test validates archive zone &#x27;-deleted-&#x27; bucket timestamp correctness on 8.1z.
 
-SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+SCENARIOS NEEDED: Same as IBMCEPH-17822 but executed on IBM Ceph 8.1 (Squid 19.x) environment. Both 8.1z and 9.1z need independent verification since the fix must be backported to both branches.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,36 +231,29 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport]- [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">8.1z backport clone of the same RGW archive zone &#x27;-deleted-&#x27; bucket timestamp issue as IBMCEPH-17822.</div>
+<div>ROOT CAUSE: Identical to IBMCEPH-17822/IBMCEPH-14111. RGW&#x27;s lifecycle management in archive zones copies original bucket mtime/creation_time to the internally-created &#x27;-deleted-&#x27; bucket instead of using the deletion timestamp. The &#x27;-deleted-&#x27; bucket is logically a new entity but inherits stale timestamps from the original. This is a code-level error in the archive zone bucket deletion handler where timestamp fields are propagated rather than regenerated.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw</li>
+<li>Cloned from IBMCEPH-14111 (same parent as IBMCEPH-17822)</li>
+<li>Affected version: IBM Ceph 8.1 (backport target: 8.1z)</li>
+<li>Status: New, no fix merged</li>
+<li>Labels: Ceph_L3, rgw</li>
+<li>No comments or engineering analysis on this backport clone</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: No fix merged. This is an 8.1z backport clone of IBMCEPH-14111. Assigned to Shilpa Jagannath. Fix must be developed or backported from the original ticket.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-17822 but targeting IBM Ceph 8.1 (Squid 19.x).</div>
+<div>Environment: IBM Ceph 8.1 (Squid 19.x) with archive zone configured.</div>
+<div>Steps identical to IBMCEPH-17822 — see that entry for full reproduction procedure. The only difference is the target Ceph version (8.1z instead of 9.1z).</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>radosgw-admin bucket stats --bucket=&lt;bucket&gt;</code></li>
+<li><code>radosgw-admin lc list</code></li>
+<li><code>radosgw-admin metadata get bucket:&lt;bucket-name&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport]- [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</div>
-<div>Environment: IBM Ceph 8.1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing QE test coverage. Same gap as IBMCEPH-17822.</div>
+<div>GAPS: Identical to IBMCEPH-17822. No test validates archive zone &#x27;-deleted-&#x27; bucket timestamp correctness on 8.1z.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-17822 but executed on IBM Ceph 8.1 (Squid 19.x) environment. Both 8.1z and 9.1z need independent verification since the fix must be backported to both branches.</div></div>
 </div>
 
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16552: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,64 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm module crashes with &#x27;dictionary changed size during iteration&#x27; due to race condition between spec store iteration and concurrent CLI mutations.
 
 ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 9.0z2
-- Component: cephadm
+The cephadm serve loop&#x27;s `_find_orphans_to_remove()` function accesses `self.mgr.spec_store.active_specs` which builds a dict comprehension from `self._specs.items()`. If a concurrent CLI command (e.g., `ceph orch apply -i spec.yaml` or `ceph orch rm`) modifies the `_specs` dictionary while the serve loop is iterating, Python raises `RuntimeError: dictionary changed size during iteration`. The race window is microseconds wide. The fix wraps the iteration in a `list()` constructor to iterate over a snapshot copy.
 
-ENGINEERING FINDINGS:
-- [Timothy Nguyen] PR:    Change should fix the general issue of  RuntimeError: dictionary changed size during iteration
-- [Sayalee Raut] [QE update] RCA: A CLI command (ceph orch apply or ceph orch rm) mutated the stored specs dictionary while the serve loop was iterating it during orphan daemon cleanup. The race window is microseconds wide. Fix: mgr/cephadm: protect against dict size change during iteration by ti
+KEY EVIDENCE:
+- Traceback: `inventory.py:460 active_specs -&gt; return {k: v for k, v in self._specs.items() if k not in self.spec_deleted}` -&gt; RuntimeError
+- Timothy Nguyen RCA: &quot;the stored specs was changed during the serve loop&#x27;s orphan daemon clean up, so likely a cli command...was ran&quot;
+- Customer (IBM Cloud Acadia): intermittent HEALTH_WARN, resolved by `ceph mgr fail`
+- Fix PR: https://github.com/ceph/ceph/pull/70411 (wraps dict iteration in list())
+- QE unable to reproduce despite multiple attempts with concurrent orch apply/rm loops
+- Impact: control plane only, data path unaffected
 
 FIX STATUS:
-- Current JIRA status: POST</textarea>
+- Status: Post (fix merged to main, targeting 10.0)
+- Workaround: `ceph mgr fail` to restart the cephadm module
+- PR: #70411 (ceph:main)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration
-Environment: IBM Ceph 9.0z2, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger race condition in cephadm spec_store during concurrent spec mutations
+Environment: IBM Ceph 9.x cluster with multiple services deployed
 
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy cluster with multiple services (mon, mgr, osd, rgw, nfs) -- intent: populate spec store
+2. In parallel terminals, run rapid spec mutations -- intent: trigger race
+   ```
+   # Terminal 1: continuous apply loop
+   while true; do ceph orch apply -i spec.yaml; done
+   # Terminal 2: continuous rm loop
+   while true; do ceph orch rm nfs.test 2&gt;/dev/null; ceph orch apply nfs test pool ns; done
+   ```
+3. Monitor for cephadm module failure -- intent: detect the crash
+   ```
+   watch &#x27;ceph health detail | grep cephadm&#x27;
+   ```
+4. Check mgr logs for RuntimeError -- intent: confirm the specific error
+   ```
+   journalctl -u ceph-mgr* | grep &#x27;dictionary changed size&#x27;
+   ```
+
+DIAGNOSTIC COMMANDS:
+- `ceph health detail`
+- `ceph mgr module ls`
+- `journalctl -u ceph-mgr* | grep -i &#x27;RuntimeError\|dictionary changed&#x27;`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Race condition is extremely difficult to reproduce in QE (multiple attempts failed). Targeted stress test with instrumented delays needed.
 
 GAPS:
-- No performance baseline test for: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration
+- No concurrent spec mutation stress test exists
+- No test for cephadm module recovery after RuntimeError
+- No test validating that mgr fail properly restores cephadm operations
 
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Stress test: concurrent `ceph orch apply` and `ceph orch rm` from multiple clients during serve loop
+- Validate mgr failover properly restores cephadm module and reconciles pending specs
+- With fix applied: same stress test should not produce RuntimeError</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,40 +257,66 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm module crashes with &#x27;dictionary changed size during iteration&#x27; due to race condition between spec store iteration and concurrent CLI mutations.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The cephadm serve loop&#x27;s <code>_find_orphans_to_remove()</code> function accesses <code>self.mgr.spec_store.active_specs</code> which builds a dict comprehension from <code>self._specs.items()</code>. If a concurrent CLI command (e.g., <code>ceph orch apply -i spec.yaml</code> or <code>ceph orch rm</code>) modifies the <code>_specs</code> dictionary while the serve loop is iterating, Python raises <code>RuntimeError: dictionary changed size during iteration</code>. The race window is microseconds wide. The fix wraps the iteration in a <code>list()</code> constructor to iterate over a snapshot copy.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Timothy Nguyen] PR:    Change should fix the general issue of  RuntimeError: dictionary changed size during iteration</li>
-<li>[Sayalee Raut] [QE update] RCA: A CLI command (<code>ceph orch apply or ceph orch rm) mutated the stored specs dictionary while the serve loop was iterating it during orphan daemon cleanup. The race window is microseconds wide. Fix: mgr/cephadm: protect against dict size change during iteration by ti</code></li>
+<li>Traceback: <code>inventory.py:460 active_specs -&amp;gt; return {k: v for k, v in self._specs.items() if k not in self.spec_deleted}</code> -&gt; RuntimeError</li>
+<li>Timothy Nguyen RCA: &quot;the stored specs was changed during the serve loop&#x27;s orphan daemon clean up, so likely a cli command...was ran&quot;</li>
+<li>Customer (IBM Cloud Acadia): intermittent HEALTH_WARN, resolved by <code><code>ceph mgr fail</code></code></li>
+<li>Fix PR: https://github.com/ceph/ceph/pull/70411 (wraps dict iteration in list())</li>
+<li>QE unable to reproduce despite multiple attempts with concurrent orch apply/rm loops</li>
+<li>Impact: control plane only, data path unaffected</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: POST</li>
+<li>Status: Post (fix merged to main, targeting 10.0)</li>
+<li>Workaround: <code><code>ceph mgr fail</code></code> to restart the <code>cephadm module</code></li>
+<li>PR: #70411 (ceph:main)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration</div>
-<div>Environment: IBM Ceph 9.0z2, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger race condition in cephadm spec_store during concurrent spec mutations</div>
+<div>Environment: IBM Ceph 9.x cluster with multiple services deployed</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy cluster with multiple services (mon, mgr, osd, rgw, nfs) -- intent: populate spec store</li>
+<li><span class="step-num">2.</span> In parallel terminals, run rapid spec mutations -- intent: trigger race</li>
+</ul>
+<pre>
+   # Terminal 1: continuous apply loop
+   while true; do ceph orch apply -i spec.yaml; done
+   # Terminal 2: continuous rm loop
+   while true; do ceph orch rm nfs.test 2&gt;/dev/null; ceph orch apply nfs test pool ns; done
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Monitor for <code>cephadm module failure -- intent: detect the crash</code></li>
+</ul>
+<pre>
+   watch &#x27;ceph health detail | grep cephadm&#x27;
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Check mgr logs for RuntimeError -- intent: confirm the specific error</li>
+</ul>
+<pre>
+   journalctl -u ceph-mgr* | grep &#x27;dictionary changed size&#x27;
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph health detail</code></code></li>
+<li><code><code>ceph mgr module ls</code></code></li>
+<li><code><code>journalctl -u ceph-mgr* | grep -i &amp;#x27;RuntimeError\|dictionary changed&amp;#x27;</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Race condition is extremely difficult to reproduce in QE (multiple attempts failed). Targeted stress test with instrumented delays needed.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No performance baseline test for: Module &#x27;cephadm&#x27; has failed: dictionary changed size during iteration</li>
+<li>No concurrent spec mutation stress test exists</li>
+<li>No test for <code>cephadm module recovery after RuntimeError</code></li>
+<li>No test validating that mgr fail properly restores <code>cephadm operations</code></li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Stress test: concurrent <code><code>ceph orch apply</code></code> and <code><code>ceph orch rm</code></code> from multiple clients during serve loop</li>
+<li>Validate mgr failover properly restores <code>cephadm module and reconciles pending specs</code></li>
+<li>With fix applied: same stress test should not produce RuntimeError</li>
 </ul></div>
 </div>
 

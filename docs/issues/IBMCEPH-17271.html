@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17271: [8.1z Backport][IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport][IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.0
-- Component: nfs-ganesha
-
-ENGINEERING FINDINGS:
-- [Naresh Chillarege] Issue has been fixed in 8.1z8 release with following commit-id b30b1a75c192e5a2ef2b21f705612af5924f2be6
-- [Manish Singh] Update – Issue Verified as Resolved Test Environment: Cluster created with IBM Cloud Hotfix build: text ceph version 19.2.1-292.1.hotfix.bz2405397.el9cp (474220ee7febe83aa8b50a7519f8e6de2fb9b84a) squid (stable) NFS-Ganesha packages: text nfs-ganesha-6.5-29.el9cp
-nfs-ganesha-ceph-
-
-FIX STATUS:
-- Current JIRA status: Verified</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS upgrade from IBM Ceph 8 to 9 fails because qos_type config parameter is converted from integer to string format before NFS daemon image is upgraded, causing parse failure and daemon crash loop.
+ROOT CAUSE: During upgrade from Ceph 8 to Ceph 9, the mon/mgr daemons upgrade first and convert the QOS configuration in the .nfs RADOS pool from integer values (e.g., `qos_type = 1`) to string values (e.g., `qos_type = &quot;Per_Export&quot;`). However, the NFS daemon is still running the old Ceph 8 image (nfs-ganesha 6.5) which expects integer values. When the NFS daemon is restarted as part of the upgrade, it reads the now-string-format config and fails with &#x27;Expected a number, got a double quoted string&#x27;, entering a crash loop with UPGRADE_REDEPLOY_DAEMON error.
+KEY EVIDENCE:
+- Log: &#x27;Config File (qosconf-nfs...): Expected a number, got a double quoted string&#x27;
+- Log: &#x27;Error while parsing qos configuration&#x27; -&gt; &#x27;Error setting parameters from configuration file&#x27;
+- Upgrade path: IBM Ceph 8 (19.2.1-292.1.hotfix) to IBM Ceph 9 (20.2.1-379)
+- Customer: Acadia Denali (IBM Cloud)
+- Fix: commit b30b1a75c192 in 8.1z8 release - delays config conversion until after NFS image upgrade
+FIX STATUS: Fixed in 8.1z8 (build ceph-19.2.1-397.el9cp). Verified by QE (Manish Singh) - qos_type correctly changes from integer to string only after mon+mgr upgrade, and NFS daemon remains stable.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport][IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON
-Environment: IBM Ceph 9.0, component: nfs-ganesha
-
-1. Deploy IBM Ceph 9.0 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-6. Monitor upgrade -- `ceph orch upgrade status`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify NFS upgrade from Ceph 8 to 9 handles qos_type config conversion correctly
+Environment: IBM Ceph 8 with NFS QOS enabled, upgrading to Ceph 9
+1. Deploy IBM Ceph 8 cluster with NFS service and QOS enabled -- intent: establish pre-upgrade state
+2. Enable QOS: `ceph nfs cluster qos enable &lt;cluster&gt; --qos_type=1` -- intent: set integer format config
+3. Verify .nfs pool config shows integer qos_type -- intent: confirm starting state
+4. Start staggered upgrade to Ceph 9 image -- intent: trigger the upgrade sequence
+5. After mon+mgr upgrade, verify NFS daemon stays running with old image -- intent: confirm no premature config conversion
+6. After NFS daemon upgrades, verify qos_type is now string format -- intent: confirm correct conversion timing
+DIAGNOSTIC COMMANDS:
+- rados -p .nfs get &lt;cluster-id&gt;/qosconf-nfs.&lt;cluster-id&gt; - (read qos config object)
+- ceph orch upgrade status
+- ceph orch ps --daemon-type nfs
+- journalctl | grep &#x27;qos\|ganesha\|CRIT&#x27;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified by QE (Manish Singh) on 19.2.1-397.el9cp with staggered upgrade.
+GAPS: No automated upgrade test specifically for NFS QOS config migration. No test for partial upgrade state (mon+mgr upgraded, NFS not yet).
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported nfs-ganesha scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Full upgrade Ceph 8-&gt;9 with NFS QOS enabled - verify no crash loop
+2. Staggered upgrade: mon+mgr first, verify NFS stable on old image
+3. Verify qos_type conversion timing: must happen AFTER NFS image upgrade
+4. Rollback scenario: if NFS upgrade fails, verify integer config still works</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,44 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport][IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS upgrade from IBM Ceph 8 to 9 fails because qos_type config parameter is converted from integer to string format before NFS daemon image is upgraded, causing parse failure and daemon crash loop.</div>
+<div>ROOT CAUSE: During upgrade from Ceph 8 to Ceph 9, the mon/mgr daemons upgrade first and convert the QOS configuration in the .nfs RADOS pool from integer values (e.g., <code>qos_type = 1</code>) to string values (e.g., <code>qos_type = &quot;Per_Export&quot;</code>). However, the NFS daemon is still running the old Ceph 8 image (nfs-ganesha 6.5) which expects integer values. When the NFS daemon is restarted as part of the upgrade, it reads the now-string-format config and fails with &#x27;Expected a number, got a double quoted string&#x27;, entering a crash loop with UPGRADE_REDEPLOY_DAEMON error.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.0</li>
-<li>Component: nfs-ganesha</li>
+<li>Log: &#x27;Config File (qosconf-nfs...): Expected a number, got a double quoted string&#x27;</li>
+<li>Log: &#x27;Error while parsing qos configuration&#x27; -&gt; &#x27;Error setting parameters from configuration file&#x27;</li>
+<li>Upgrade path: IBM Ceph 8 (19.2.1-292.1.hotfix) to IBM Ceph 9 (20.2.1-379)</li>
+<li>Customer: Acadia Denali (IBM Cloud)</li>
+<li>Fix: commit b30b1a75c192 in 8.1z8 release - delays config conversion until after NFS image upgrade</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 8.1z8 (build ceph-19.2.1-397.el9cp). Verified by QE (Manish Singh) - qos_type correctly changes from integer to string only after mon+mgr upgrade, and NFS daemon remains stable.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify NFS upgrade from Ceph 8 to 9 handles qos_type config conversion correctly</div>
+<div>Environment: IBM Ceph 8 with NFS QOS enabled, upgrading to Ceph 9</div>
 <ul>
-<li>[Naresh Chillarege] Issue has been fixed in 8.1z8 release with following commit-id b30b1a75c192e5a2ef2b21f705612af5924f2be6</li>
-<li>[Manish Singh] Update – Issue Verified as Resolved Test Environment: Cluster created with IBM Cloud Hotfix build: text <code>ceph version 19.2.1-292.1.hotfix.bz2405397.el9cp (474220ee7febe83aa8b50a7519f8e6de2fb9b84a) squid (stable) NFS-Ganesha packages: text nfs-ganesha-6.5-29.el9cp</code></li>
+<li><span class="step-num">1.</span> Deploy IBM Ceph 8 cluster with NFS service and QOS enabled -- intent: establish pre-upgrade state</li>
+<li><span class="step-num">2.</span> Enable QOS: <code><code>ceph nfs cluster qos enable &amp;lt;cluster&amp;gt; --qos_type=1</code></code> -- intent: set integer format config</li>
+<li><span class="step-num">3.</span> Verify .nfs pool config shows integer qos_type -- intent: confirm starting state</li>
+<li><span class="step-num">4.</span> Start staggered upgrade to Ceph 9 image -- intent: trigger the upgrade sequence</li>
+<li><span class="step-num">5.</span> After mon+mgr upgrade, verify NFS daemon stays running with old image -- intent: confirm no premature config conversion</li>
+<li><span class="step-num">6.</span> After NFS daemon upgrades, verify qos_type is now string format -- intent: confirm correct conversion timing</li>
 </ul>
-<div>nfs-ganesha-ceph-</div>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
+<li><code>rados -p .nfs get &lt;cluster-id&gt;/qosconf-nfs.&lt;cluster-id&gt; - (read qos config object)</code></li>
+<li><code>ceph orch upgrade status</code></li>
+<li><code>ceph orch ps --daemon-type nfs</code></li>
+<li><code>journalctl | grep &#x27;qos\|ganesha\|CRIT&#x27;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport][IBM_Customer][Acadia] NFS upgrade is failing with Error: UPGRADE_REDEPLOY_DAEMON</div>
-<div>Environment: IBM Ceph 9.0, component: nfs-ganesha</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">6.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified by QE (Manish Singh) on 19.2.1-397.el9cp with staggered upgrade.</div>
+<div>GAPS: No automated upgrade test specifically for NFS QOS config migration. No test for partial upgrade state (mon+mgr upgraded, NFS not yet).</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported nfs-ganesha scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Full upgrade Ceph 8-&gt;9 with NFS QOS enabled - verify no crash loop</li>
+<li><span class="step-num">2.</span> Staggered upgrade: mon+mgr first, verify NFS stable on old image</li>
+<li><span class="step-num">3.</span> Verify qos_type conversion timing: must happen AFTER NFS image upgrade</li>
+<li><span class="step-num">4.</span> Rollback scenario: if NFS upgrade fails, verify integer config still works</li>
 </ul></div>
 </div>
 

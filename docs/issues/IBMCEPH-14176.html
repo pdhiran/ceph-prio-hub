@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14176: [IBM_Support] Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,42 +189,34 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support] Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1z5
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Timothy Nguyen] Looks like the mgr logs in the sosreport are only info level, to properly debug and understand the situation, we’ll need some addition logs from Acadia team. MGR Debug Logs: Set debug_mgr = 20 Set debug_ms = 1 It would also be good to have the Acadia mgr plugin logs in its own l
-- [Varuni Sawant] the CU is not expierincing at this moment, so not sure debug logs would be of much help.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Custom Acadia MGR plugin experiences delays during OSD slow ops because RBD/RADOS operations go directly to OSDs, not cached MGR data.
+ROOT CAUSE: The Acadia (IBM Cloud) MGR plugin uses RADOS/RBD APIs (rbd.Image(), image.diff_iterate(), self.rados.open_ioctx()) which perform direct I/O to OSDs, unlike cached cluster maps (self.get(&#x27;df&#x27;), self.get(&#x27;osd_map&#x27;)) which are served from MGR memory. During slow OSD operations, these direct I/O calls experience the same delays as client I/O. Additionally, the plugin encounters &#x27;failed to retrieve initial metadata: (2) No such file or directory&#x27; for multiple RBD images, suggesting stale/deleted image references in the plugin&#x27;s internal state or expired cache.
+KEY EVIDENCE:
+- Slow ops reported: &#x27;get_health_metrics reporting 26 slow ops&#x27; for RBD read/write operations
+- Multiple &#x27;librbd::image::OpenRequest: failed to retrieve initial metadata: (2) No such file or directory&#x27; errors
+- Plugin uses RBD/RADOS APIs that directly interact with OSDs
+- L3 team determined the custom plugin issues are out of scope for Ceph engineering
+- Customer&#x27;s Acadia plugin source code access was not granted
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Issue is in the custom Acadia MGR plugin, not in Ceph itself. Customer directed to contact Acadia plugin maintainers.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops
-Environment: IBM Ceph 8.1z5, component: cephadm
-
-1. Deploy IBM Ceph 8.1z5 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Run baseline benchmark (fio/rados bench) -- record metrics
-4. Trigger the performance scenario described in JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Understand MGR plugin behavior during OSD slow ops (informational -- not a Ceph bug)
+Environment: IBM Ceph 8.1z5 (19.2.1-331.el9cp) with custom Acadia MGR plugin
+1. Deploy cluster with Acadia MGR plugin enabled -- intent: replicate customer setup
+2. Induce OSD slow ops (e.g., heavy write load with small thread pool) -- intent: create slow OSD condition
+3. Monitor mgr logs for plugin delays -- intent: observe correlation
+DIAGNOSTIC COMMANDS:
+- ceph config set mgr mgr/&lt;module-name&gt;/log_to_file true
+- ceph config set mgr mgr/&lt;module-name&gt;/log_level debug
+- ceph config set mgr debug_mgr 20
+- ceph health detail (check for slow ops)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops
-
-SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Out of scope for Ceph QE -- issue is in custom third-party plugin.
+GAPS: N/A -- custom plugin issues are not testable by Ceph QE team.
+SCENARIOS NEEDED: None for Ceph QE. The Acadia team should test their plugin&#x27;s resilience to OSD slow ops.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -235,42 +227,34 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support] Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Custom Acadia MGR plugin experiences delays during OSD slow ops because RBD/RADOS operations go directly to OSDs, not cached MGR data.</div>
+<div>ROOT CAUSE: The Acadia (IBM Cloud) MGR plugin uses RADOS/RBD APIs (rbd.Image(), image.diff_iterate(), self.rados.open_ioctx()) which perform direct I/O to OSDs, unlike cached cluster maps (self.get(&#x27;df&#x27;), self.get(&#x27;osd_map&#x27;)) which are served from MGR memory. During slow OSD operations, these direct I/O calls experience the same delays as client I/O. Additionally, the plugin encounters &#x27;failed to retrieve initial metadata: (2) No such file or directory&#x27; for multiple RBD images, suggesting stale/deleted image references in the plugin&#x27;s internal state or expired cache.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1z5</li>
-<li>Component: cephadm</li>
+<li>Slow ops reported: &#x27;get_health_metrics reporting 26 slow ops&#x27; for RBD read/write operations</li>
+<li>Multiple &#x27;librbd::image::OpenRequest: failed to retrieve initial metadata: (2) No such file or directory&#x27; errors</li>
+<li>Plugin uses RBD/RADOS APIs that directly interact with OSDs</li>
+<li>L3 team determined the custom plugin issues are out of scope for Ceph engineering</li>
+<li>Customer&#x27;s Acadia plugin source code access was not granted</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Issue is in the custom Acadia MGR plugin, not in Ceph itself. Customer directed to contact Acadia plugin maintainers.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Understand MGR plugin behavior during OSD slow ops (informational -- not a Ceph bug)</div>
+<div>Environment: IBM Ceph 8.1z5 (19.2.1-331.el9cp) with custom Acadia MGR plugin</div>
 <ul>
-<li>[Timothy Nguyen] Looks like the mgr logs in the sosreport are only info level, to properly debug and understand the situation, we’ll need some addition logs from Acadia team. MGR Debug Logs: Set debug_mgr = 20 Set debug_ms = 1 It would also be good to have the Acadia mgr plugin logs in its own l</li>
-<li>[Varuni Sawant] the CU is not expierincing at this moment, so not sure debug logs would be of much help.</li>
+<li><span class="step-num">1.</span> Deploy cluster with Acadia MGR plugin enabled -- intent: replicate customer setup</li>
+<li><span class="step-num">2.</span> Induce OSD slow ops (e.g., heavy write load with small thread pool) -- intent: create slow OSD condition</li>
+<li><span class="step-num">3.</span> Monitor mgr logs for plugin delays -- intent: observe correlation</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph config set mgr mgr/&lt;module-name&gt;/log_to_file true</code></li>
+<li><code>ceph config set mgr mgr/&lt;module-name&gt;/log_level debug</code></li>
+<li><code>ceph config set mgr debug_mgr 20</code></li>
+<li><code>ceph health detail (check for slow ops)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops</div>
-<div>Environment: IBM Ceph 8.1z5, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z5 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">4.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: Acadia Ceph MGR Plugin Update Delays During OSD Slow Ops</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Out of scope for Ceph QE -- issue is in custom third-party plugin.</div>
+<div>GAPS: N/A -- custom plugin issues are not testable by Ceph QE team.</div>
+<div>SCENARIOS NEEDED: None for Ceph QE. The Acadia team should test their plugin&#x27;s resilience to OSD slow ops.</div></div>
 </div>
 
 

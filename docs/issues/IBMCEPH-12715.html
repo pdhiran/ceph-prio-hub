@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12715: [BZ#2427854] [GSS] Multisite - no progress with the data synchronization</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2427854] [GSS] Multisite - no progress with the data synchronization
-
-ROOT CAUSE:
-- Affected version(s): 7.1, 6.1
-- Component: rgw-multisite
-
-ENGINEERING FINDINGS:
-- [Karun Josy] Preliminary investigation [1] suggest that these extra objects in secondary are deleted objects in primary site which did not get removed in secondary site.  We also had seen the same symptom for buckets. There were some buckets that were deleted in primary but still present in s
-- [Uri Tanis] The next steps on our own will be extending the bucket objects comparison and investigation. Means that we’ll check up to the first 10M objects in each site and see, first of all, how many extra objects are there in the secondary site. Then, we’ll check whether there are objects
-- [Uri Tanis] as far as I understand neither  sync init  nor  sync status  evaluate and properly handle extra objects that failed to be removed. The  sync init  does  not  delete the actual data objects in the bucket, but it wipes the memory of what has already been synced, forcing the synchr
-- [Karun Josy] All identified issues have been addressed, and the multi-site synchronization is now operating as expected. Copying update from slack from Uri : removed all the uncompleted multipart uploads and then: Master Bucket size_kb_utilized: 2235693186307
-num_objects: 113416374 Secondary
-- [Karun Josy] Sorry I missed to update the Jira.  When executed the  --bucket-check  command, the object in question was immediately reported then customer proceeded to run the  --fix , which helped to correct it.  Customer has agreed to close the case.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW multisite data synchronization stalled at ~99.5% with ~7.3M extra objects on secondary site. Root cause was misconfigured `rgw_dns_name` on secondary site disrupting sync status reporting and delete operations not syncing.
+ROOT CAUSE: Three distinct issues: (1) `rgw_dns_name` was incorrectly configured on the secondary site from initial deployment, causing sync status to report &#x27;failed to retrieve sync info: No such file or directory&#x27; on the primary. (2) Deleted buckets on primary did not get their metadata removed from secondary, causing 22 shards to show as &#x27;recovering&#x27;. (3) ~7.3M objects deleted on primary were never deleted on secondary, likely due to the initial misconfiguration disrupting sync before/during the delete operations. Removing stale bucket metadata and clearing `rgw_dns_name` resolved issues 1 and 2. Customers manually deleted the orphaned objects and cleared uncompleted multipart uploads to reach parity.
+KEY EVIDENCE:
+- Secondary had 125M objects vs primary&#x27;s 121M objects (4M discrepancy)
+- `rgw_dns_name` was set on secondary site from day one, disrupting master site sync status
+- RGW log errors: &#x27;failed to get bucket instance info&#x27; for deleted buckets
+- Customer investigation: 10M object sample showed 1.69M objects on secondary that were deleted from primary
+- Resolution: `radosgw-admin bucket check --bucket=&lt;name&gt; --check-objects --fix` for remaining single object
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Configuration issue on customer side. RFE filed for better sync status reporting of orphaned objects. Customer reached full sync parity after manual cleanup.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2427854] [GSS] Multisite - no progress with the data synchronization
-Environment: IBM Ceph 7.1, component: rgw-multisite
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Understand multisite sync stall due to rgw_dns_name misconfiguration
+Environment: Ceph 7.1/6.1 multisite with 2 sites, 2.2PB data, HAProxy between sites
+1. Set up multisite with primary (2.2PB) and empty secondary -- intent: initial sync
+2. Configure `rgw_dns_name` on secondary RGWs (this is the misconfiguration) -- intent: replicate customer error
+3. Start sync and observe progress: `radosgw-admin sync status` on both sites -- intent: monitor sync
+4. Delete buckets and objects on primary during sync -- intent: trigger delete sync path
+5. Observe sync stalls with &#x27;recovering shards&#x27; and extra objects on secondary -- intent: confirm issue
+DIAGNOSTIC COMMANDS:
+- `radosgw-admin sync status` on both sites -- check sync progress
+- `radosgw-admin sync error list` -- check sync errors
+- `radosgw-admin bucket stats --bucket=&lt;name&gt;` -- compare object counts
+- `radosgw-admin bucket check --bucket=&lt;name&gt; --check-objects` -- find inconsistencies</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw-multisite tests may not cover: [BZ#2427854] [GSS] Multisite - no progress with the data synchronization
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Resolved via configuration fix and manual cleanup. No product bug fix needed.
+GAPS: No test for multisite sync with misconfigured rgw_dns_name. No test for delete sync verification at scale.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Multisite sync with intentionally misconfigured rgw_dns_name -- verify error reporting
+- Bulk delete on primary during active sync -- verify all deletes propagate to secondary
+- Verify `radosgw-admin bucket check --check-objects --fix` corrects inconsistencies
+- Sync status accuracy: detect extra objects on secondary vs primary</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,42 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2427854] [GSS] Multisite - no progress with the data synchronization</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW multisite data synchronization stalled at ~99.5% with ~7.3M extra objects on secondary site. Root cause was misconfigured `rgw_dns_name` on secondary site disrupting sync status reporting and delete operations not syncing.</div>
+<div>ROOT CAUSE: Three distinct issues: (1) <code>rgw_dns_name</code> was incorrectly configured on the secondary site from initial deployment, causing sync status to report &#x27;failed to retrieve sync info: No such file or directory&#x27; on the primary. (2) Deleted buckets on primary did not get their metadata removed from secondary, causing 22 shards to show as &#x27;recovering&#x27;. (3) ~7.3M objects deleted on primary were never deleted on secondary, likely due to the initial misconfiguration disrupting sync before/during the delete operations. Removing stale bucket metadata and clearing <code>rgw_dns_name</code> resolved issues 1 and 2. Customers manually deleted the orphaned objects and cleared uncompleted multipart uploads to reach parity.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1, 6.1</li>
-<li>Component: rgw-multisite</li>
+<li>Secondary had 125M objects vs primary&#x27;s 121M objects (4M discrepancy)</li>
+<li><code>rgw_dns_name</code> was set on secondary site from day one, disrupting master site sync status</li>
+<li>RGW log errors: &#x27;failed to get bucket instance info&#x27; for deleted buckets</li>
+<li>Customer investigation: 10M object sample showed 1.69M objects on secondary that were deleted from primary</li>
+<li>Resolution: <code><code>radosgw-admin bucket check --bucket=&amp;lt;name&amp;gt; --check-objects --fix</code></code> for remaining single object</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Configuration issue on customer side. RFE filed for better sync status reporting of orphaned objects. Customer reached full sync parity after manual cleanup.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Understand multisite sync stall due to rgw_dns_name misconfiguration</div>
+<div>Environment: Ceph 7.1/6.1 multisite with 2 sites, 2.2PB data, HAProxy between sites</div>
 <ul>
-<li>[Karun Josy] Preliminary investigation [1] suggest that these extra objects in secondary are deleted objects in primary site which did not get removed in secondary site.  We also had seen the same symptom for buckets. There were some buckets that were deleted in primary but still present in s</li>
-<li>[Uri Tanis] The next steps on our own will be extending the bucket objects comparison and investigation. Means that we’ll check up to the first 10M objects in each site and see, first of all, how many extra objects are there in the secondary site. Then, we’ll check whether there are objects</li>
-<li>[Uri Tanis] as far as I understand neither  sync init  nor  sync status  evaluate and properly handle extra objects that failed to be removed. The  sync init  does  not  delete the actual data objects in the bucket, but it wipes the memory of what has already been synced, forcing the synchr</li>
-<li>[Karun Josy] All identified issues have been addressed, and the multi-site synchronization is now operating as expected. Copying update from slack from Uri : removed all the uncompleted multipart uploads and then: Master Bucket size_kb_utilized: 2235693186307</li>
+<li><span class="step-num">1.</span> Set up multisite with primary (2.2PB) and empty secondary -- intent: initial sync</li>
+<li><span class="step-num">2.</span> Configure <code>rgw_dns_name</code> on secondary RGWs (this is the misconfiguration) -- intent: replicate customer error</li>
+<li><span class="step-num">3.</span> Start sync and observe progress: <code><code>radosgw-admin sync status</code></code> on both sites -- intent: monitor sync</li>
+<li><span class="step-num">4.</span> Delete buckets and objects on primary during sync -- intent: trigger delete sync path</li>
+<li><span class="step-num">5.</span> Observe sync stalls with &#x27;recovering shards&#x27; and extra objects on secondary -- intent: confirm issue</li>
 </ul>
-<div>num_objects: 113416374 Secondary</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Karun Josy] Sorry I missed to update the Jira.  When executed the  --bucket-check  command, the object in question was immediately reported then customer proceeded to run the  --fix , which helped to correct it.  Customer has agreed to close the case.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>radosgw-admin sync status</code></code> on both sites -- check sync progress</li>
+<li><code><code>radosgw-admin sync error list</code></code> -- check sync errors</li>
+<li><code><code>radosgw-admin bucket stats --bucket=&amp;lt;name&amp;gt;</code></code> -- compare object counts</li>
+<li><code><code>radosgw-admin bucket check --bucket=&amp;lt;name&amp;gt; --check-objects</code></code> -- find inconsistencies</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2427854] [GSS] Multisite - no progress with the data synchronization</div>
-<div>Environment: IBM Ceph 7.1, component: rgw-multisite</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing rgw-multisite tests may not cover: [BZ#2427854] [GSS] Multisite - no progress with the data synchronization</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Resolved via configuration fix and manual cleanup. No product bug fix needed.</div>
+<div>GAPS: No test for multisite sync with misconfigured rgw_dns_name. No test for delete sync verification at scale.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Multisite sync with intentionally misconfigured rgw_dns_name -- verify error reporting</li>
+<li>Bulk delete on primary during active sync -- verify all deletes propagate to secondary</li>
+<li>Verify <code><code>radosgw-admin bucket check --check-objects --fix</code></code> corrects inconsistencies</li>
+<li>Sync status accuracy: detect extra objects on secondary vs primary</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13694: [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1, 9.0, 9.1
-- Component: ceph-volume
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Based on program call discussion today Now that fix is already in the branch, lets pick it for 9.0z2 as the new RC is needed due to other bug.  I have updated the target release to 9.0z2.  Please ensure that fixes are not merged into the branch in the blocker only phase without J
-- [Aditya Roshan Ramteke] , I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-
-
-FIX STATUS:
-- Fix available
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1650
-- Verified by: Aditya Roshan Ramteke</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on a node, because it tries to access device nodes that don&#x27;t exist at the expected /dev/&lt;vgname&gt;/ path.
+ROOT CAUSE: The `ceph-volume inventory` command enumerates all LVM logical volumes including thin pool internal components (_tdata and _tmeta). These internal LVs have symlinks only under /dev/mapper/ (e.g., /dev/mapper/test-thinpool_tdata) but NOT under /dev/&lt;vgname&gt;/ (e.g., /dev/test/thinpool_tdata). The UdevData class in ceph-volume&#x27;s device.py raises RuntimeError when it cannot find /dev/test/thinpool_tdata. The fix filters out thin pool internal LVs from the inventory enumeration.
+KEY EVIDENCE:
+- Error: &quot;RuntimeError: /dev/test/thinpool_tdata not found.&quot;
+- Stack trace: device.py:322 -&gt; disk.py:1323 raising RuntimeError
+- Reproducer: `losetup -f --show /disk.img &amp;&amp; vgcreate test /dev/loop0 &amp;&amp; lvcreate -L 900M -T test/thinpool &amp;&amp; cephadm ceph-volume inventory`
+- Confirmed regression: worked in Reef (18.2.1-381) but showed incorrect data; crashes in Squid (19.x)
+- Fix MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1630
+FIX STATUS: Fixed in 9.0z2 (verified on 20.1.0-182.el9cp). Also backported to 8.1z6. Blocker severity. Closed as part of 9.0z2 release.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.
-Environment: IBM Ceph 8.1, component: ceph-volume
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-3. Monitor upgrade -- `ceph orch upgrade status`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-, I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-volume inventory crash with thin-provisioned LVs
+Environment: IBM Ceph 8.1 or 9.0 pre-z2
+1. Create a disk image and loop device: `dd if=/dev/zero of=/disk.img bs=1M count=1024 &amp;&amp; losetup -f --show /disk.img` -- intent: create backing storage
+2. Create a volume group: `vgcreate test /dev/loop0` -- intent: set up LVM
+3. Create a thin pool: `lvcreate -L 900M -T test/thinpool` -- intent: create thin-provisioned LV that triggers the bug
+4. Run ceph-volume inventory: `cephadm ceph-volume inventory` -- intent: trigger the crash
+5. Observe RuntimeError for /dev/test/thinpool_tdata
+DIAGNOSTIC COMMANDS:
+- `ls -la /dev/test/` vs `ls -la /dev/mapper/test*` -- show path discrepancy
+- `lvs -a` -- list all LVs including internal ones
+- `cephadm ceph-volume inventory 2&gt;&amp;1` -- capture full error</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified on 9.0z2. Fix filters thin pool components from inventory.
+GAPS: No existing automated test for ceph-volume inventory with non-standard LVM configurations (thin pools, VDO, RAID LVs).
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-volume scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- ceph-volume inventory with thin-provisioned LVs present
+- ceph-volume inventory with mixed LVM types (thin, thick, striped)
+- Verify OSD deployment is not affected by thin LVs on the same node
+- Test ceph-volume inventory inside and outside container (cephadm shell vs direct)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,44 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">ceph-volume inventory crashes with RuntimeError when thin-provisioned LVM volumes exist on a node, because it tries to access device nodes that don&#x27;t exist at the expected /dev/&lt;vgname&gt;/ path.</div>
+<div>ROOT CAUSE: The <code>ceph-volume inventory</code> command enumerates all LVM logical volumes including thin pool internal components (_tdata and _tmeta). These internal LVs have symlinks only under /dev/mapper/ (e.g., /dev/mapper/test-thinpool_tdata) but NOT under /dev/&lt;vgname&gt;/ (e.g., /dev/test/thinpool_tdata). The UdevData class in ceph-volume&#x27;s device.py raises RuntimeError when it cannot find /dev/test/thinpool_tdata. The fix filters out thin pool internal LVs from the inventory enumeration.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1, 9.0, 9.1</li>
-<li>Component: ceph-volume</li>
+<li>Error: &quot;RuntimeError: /dev/test/thinpool_tdata not found.&quot;</li>
+<li>Stack trace: device.py:322 -&gt; disk.py:1323 raising RuntimeError</li>
+<li>Reproducer: <code>losetup -f --show /disk.img &amp;amp;&amp;amp; vgcreate test /dev/loop0 &amp;amp;&amp;amp; lvcreate -L 900M -T test/thinpool &amp;amp;&amp;amp; <code>cephadm ceph-volume inventory</code></code></li>
+<li>Confirmed regression: worked in Reef (18.2.1-381) but showed incorrect data; crashes in Squid (19.x)</li>
+<li>Fix MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1630</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 9.0z2 (verified on 20.1.0-182.el9cp). Also backported to 8.1z6. Blocker severity. Closed as part of 9.0z2 release.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-volume inventory crash with thin-provisioned LVs</div>
+<div>Environment: IBM Ceph 8.1 or 9.0 pre-z2</div>
 <ul>
-<li>[Bipin Kunal] Based on program call discussion today Now that fix is already in the branch, lets pick it for 9.0z2 as the new RC is needed due to other bug.  I have updated the target release to 9.0z2.  Please ensure that fixes are not merged into the branch in the blocker only phase without J</li>
-<li>[Aditya Roshan Ramteke] , I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# <code>cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-</code></li>
+<li><span class="step-num">1.</span> Create a disk image and loop device: <code>dd if=/dev/zero of=/disk.img bs=1M count=1024 &amp;amp;&amp;amp; losetup -f --show /disk.img</code> -- intent: create backing storage</li>
+<li><span class="step-num">2.</span> Create a volume group: <code>vgcreate test /dev/loop0</code> -- intent: set up LVM</li>
+<li><span class="step-num">3.</span> Create a thin pool: <code>lvcreate -L 900M -T test/thinpool</code> -- intent: create thin-provisioned LV that triggers the bug</li>
+<li><span class="step-num">4.</span> Run ceph-volume inventory: <code><code>cephadm ceph-volume inventory</code></code> -- intent: trigger the crash</li>
+<li><span class="step-num">5.</span> Observe RuntimeError for /dev/test/thinpool_tdata</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/1650</li>
-<li>Verified by: Aditya Roshan Ramteke</li>
+<li><code>ls -la /dev/test/</code> vs <code>ls -la /dev/mapper/test*</code> -- show path discrepancy</li>
+<li><code>lvs -a</code> -- list all LVs including internal ones</li>
+<li><code><code>cephadm ceph-volume inventory 2&amp;gt;&amp;amp;1</code></code> -- capture full error</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0z2 Backport] - cephadm shell ceph-volume inventory errors out when Thin LVS are created.</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-volume</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>, I was able to reproduce on the fixed version. Can you check if a fix is available with the below RC:  [root@ceph-aramteke-smb-90z2-1vcppf-node1-installer ~]# cephadm shell -- ceph -v Inferring fsid 4212870e-31bf-11f1-90dc-fa163e42d286 Inferring config /var/lib/ceph/4212870e-</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified on 9.0z2. Fix filters thin pool components from inventory.</div>
+<div>GAPS: No existing automated test for ceph-volume inventory with non-standard LVM configurations (thin pools, VDO, RAID LVs).</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-volume scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>ceph-volume inventory with thin-provisioned LVs present</li>
+<li>ceph-volume inventory with mixed LVM types (thin, thick, striped)</li>
+<li>Verify OSD deployment is not affected by thin LVs on the same node</li>
+<li>Test ceph-volume inventory inside and outside container (<code>cephadm shell vs direct)</code></li>
 </ul></div>
 </div>
 

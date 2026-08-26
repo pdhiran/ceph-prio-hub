@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15785: [9.1z Backport] [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,42 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.1
-- Component: cephadm
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm-agent daemon version displays as &#x27;&lt;unknown&gt;&#x27; in &#x27;ceph orch ps&#x27; output on Ceph 9.1.
+ROOT CAUSE: The cephadm-agent daemon does not report its version to the orchestrator, causing &#x27;ceph orch ps&#x27; to display &#x27;&lt;unknown&gt;&#x27; for both VERSION and IMAGE_ID columns. This is a cosmetic/informational issue -- the agent functions correctly. The cephadm-agent is a Python-based lightweight daemon that doesn&#x27;t have a traditional Ceph version string embedded in the same way as containerized daemons (MON, OSD, MDS, etc.). The version reporting mechanism in cephadm likely lacks a handler for the agent daemon type.
+KEY EVIDENCE:
+- ceph orch ps --daemon-type agent shows VERSION and IMAGE_ID as &#x27;&lt;unknown&gt;&#x27; for all agent daemons
+- 100% reproducible (3/3 deployments)
+- Agent functionality is not affected
+- Version: 9.1 (20.2.1-280)
+- Cloned from IBMCEPH-15691 (likely the 8.1z backport tracker)
+FIX STATUS: New/Open. No engineering comments or proposed fix yet. Assigned to Swati Thombe.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;
-Environment: IBM Ceph 9.1, component: cephadm
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce cephadm-agent version display as &#x27;&lt;unknown&gt;&#x27;.
+Environment: IBM Storage Ceph 9.1 (20.2.1-280)
+1. Deploy a Ceph cluster with cephadm -- intent: create baseline cluster
+2. Enable cephadm-agent -- intent: deploy the agent daemons
+   ceph config set mgr mgr/cephadm/use_agent true
+3. Verify agents are deployed and running -- intent: confirm agents are active
+   ceph orch ps --daemon-type agent
+4. Check version column -- intent: observe the &#x27;&lt;unknown&gt;&#x27; display
+   ceph orch ps --daemon-type agent --format json-pretty | jq &#x27;.[].version&#x27;
+DIAGNOSTIC COMMANDS:
+- ceph orch ps --daemon-type agent
+- ceph config get mgr mgr/cephadm/use_agent
+- ceph orch daemon status agent.&lt;hostname&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test validates cephadm-agent version reporting in &#x27;ceph orch ps&#x27;.
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+- No test checks that all daemon types report valid version strings in orch ps output
+- No test specifically validates cephadm-agent metadata fields
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+- Test: Verify all daemon types in &#x27;ceph orch ps&#x27; have non-&#x27;&lt;unknown&gt;&#x27; version strings
+- Test: Enable/disable cephadm-agent and verify version is reported correctly
+- Test: Validate cephadm-agent version matches the deployed Ceph version</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,35 +235,49 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm-agent daemon version displays as &#x27;&lt;unknown&gt;&#x27; in &#x27;ceph orch ps&#x27; output on Ceph 9.1.</div>
+<div>ROOT CAUSE: The cephadm-agent daemon does not report its version to the orchestrator, causing &#x27;ceph orch ps&#x27; to display &#x27;&lt;unknown&gt;&#x27; for both VERSION and IMAGE_ID columns. This is a cosmetic/informational issue -- the agent functions correctly. The cephadm-agent is a Python-based lightweight daemon that doesn&#x27;t have a traditional Ceph version string embedded in the same way as containerized daemons (MON, OSD, MDS, etc.). The version reporting mechanism in cephadm likely lacks a handler for the agent daemon type.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: cephadm</li>
+<li><code>ceph orch ps --daemon-type agent shows VERSION and IMAGE_ID as &#x27;&lt;unknown&gt;&#x27; for all agent daemons</code></li>
+<li>100% reproducible (3/3 deployments)</li>
+<li>Agent functionality is not affected</li>
+<li>Version: 9.1 (20.2.1-280)</li>
+<li>Cloned from IBMCEPH-15691 (likely the 8.1z backport tracker)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: New/Open. No engineering comments or proposed fix yet. Assigned to Swati Thombe.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce cephadm-agent version display as &#x27;&lt;unknown&gt;&#x27;.</div>
+<div>Environment: IBM Storage Ceph 9.1 (20.2.1-280)</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] [IBMSC][9.1][Cephadm-Agent]cephadm-agent daemon version displayed as &lt;unknown&gt;</div>
-<div>Environment: IBM Ceph 9.1, component: cephadm</div>
+<li><span class="step-num">1.</span> Deploy a Ceph cluster with <code>cephadm -- intent: create baseline cluster</code></li>
+<li><span class="step-num">2.</span> Enable cephadm-agent -- intent: deploy the agent daemons</li>
+</ul>
+<div>ceph config set mgr mgr/cephadm/use_agent true</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Verify agents are deployed and running -- intent: confirm agents are active</li>
+</ul>
+<div>ceph orch ps --daemon-type agent</div>
+<ul>
+<li><span class="step-num">4.</span> Check version column -- intent: observe the &#x27;&lt;unknown&gt;&#x27; display</li>
+</ul>
+<div>ceph orch ps --daemon-type agent --format json-pretty | jq &#x27;.[].version&#x27;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch ps --daemon-type agent</code></li>
+<li><code>ceph config get mgr mgr/cephadm/use_agent</code></li>
+<li><code>ceph orch daemon status agent.&lt;hostname&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test validates cephadm-agent version reporting in &#x27;ceph orch ps&#x27;.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No test checks that all daemon types report valid version strings in orch ps output</li>
+<li>No test specifically validates cephadm-agent metadata fields</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Test: Verify all daemon types in &#x27;<code>ceph orch ps&#x27; have non-&#x27;&lt;unknown&gt;&#x27; version strings</code></li>
+<li>Test: Enable/disable cephadm-agent and verify version is reported correctly</li>
+<li>Test: Validate cephadm-agent version matches the deployed Ceph version</li>
 </ul></div>
 </div>
 

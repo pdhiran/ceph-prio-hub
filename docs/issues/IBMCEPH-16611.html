@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16611: [Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,50 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: ceph-ansible
-
-ENGINEERING FINDINGS:
-- [Shantanu Bhardwaj] Is there any possible workaround that can be performed before running the preflight playbook as we have another customer hitting this issue? SELinux and FirewallD both got enabled post running the playbook and it impacted the cluster communication
-- [Swati Thombe] As a workaround, you can modify the FirewallD task in  cephadm-preflight.yml  and set  enabled: false  before running the preflight playbook. by default, it is true 
-# cephadm-preflight.yml
-- name: Ensure firewalld is enabled and running
-  ansible.builtin.systemd:
-    name: fire
-
-FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: As a workaround, you can modify the FirewallD task in  cephadm-preflight.yml  and set  enabled: false  before running the preflight playbook. by default, it is true 
-# cephadm-preflight.yml
-- name: E</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: cephadm-ansible preflight playbook force-enables firewalld regardless of customer configuration, disrupting cluster communication.
+ROOT CAUSE: The cephadm-ansible preflight playbook (cephadm-preflight.yml) unconditionally enables and starts firewalld via `ansible.builtin.systemd: name: firewalld, state: started, enabled: true`. In environments where firewalld is intentionally disabled and customers rely on external firewall solutions, this causes immediate inter-node communication disruption and temporary cluster inaccessibility. Similarly, checks.yml enforces SELinux to enforcing mode via `ansible.posix.selinux: state: enforcing`, which also disrupts customers running in permissive mode.
+KEY EVIDENCE:
+- Customer execution of preflight playbook resulted in firewalld being started across cluster nodes
+- Multiple customers hit this issue (second customer reported via Shantanu Bhardwaj)
+- Proposed fix: add `ceph_defaults_configure_firewalld: false` variable, make task conditional
+- PR was under review but issue was closed as duplicate of IBMCEPH-16612
+FIX STATUS: Closed as duplicate of IBMCEPH-16612. Fix involves adding configuration variable in roles/ceph_defaults/defaults/main.yml with conditional handling in cephadm-preflight.yml. Was proposed as blocker for 9.1z2 but moved out during blockers-only phase.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)
-Environment: IBM Ceph 8.1, component: ceph-ansible
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Apply the configuration change described in the JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify preflight playbook does not force-enable firewalld when customer has it disabled
+Environment: Any IBM Ceph version with cephadm-ansible preflight playbook
+1. Deploy a multi-node cluster with firewalld disabled and stopped on all nodes -- intent: simulate customer environment
+2. Verify firewalld is disabled: `systemctl status firewalld` shows inactive/disabled -- intent: establish baseline
+3. Run the preflight playbook: `ansible-playbook -i inventory cephadm-preflight.yml` -- intent: trigger the forced enablement
+4. Check firewalld state on all nodes: `systemctl status firewalld` -- intent: verify it was force-enabled
+5. Verify cluster communication is disrupted: `ceph -s` times out or fails -- intent: confirm impact
+DIAGNOSTIC COMMANDS:
+- systemctl status firewalld
+- systemctl is-enabled firewalld
+- firewall-cmd --state
+- getenforce (for SELinux check)
+- ceph -s</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates that preflight playbook respects existing firewalld/SELinux state.
+GAPS: No test for preflight playbook behavior with firewalld disabled. No test for SELinux permissive mode preservation. No test for the new `ceph_defaults_configure_firewalld` variable.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported ceph-ansible scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Run preflight with firewalld disabled - verify it remains disabled (default behavior after fix)
+2. Run preflight with `ceph_defaults_configure_firewalld: true` - verify firewalld is enabled
+3. Run preflight with SELinux in permissive mode - verify it remains permissive
+4. Run preflight with --extra-vars override for firewalld - verify override works</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -243,53 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">cephadm-ansible preflight playbook force-enables firewalld regardless of customer configuration, disrupting cluster communication.</div>
+<div>ROOT CAUSE: The cephadm-ansible preflight playbook (cephadm-preflight.yml) unconditionally enables and starts firewalld via <code>ansible.builtin.systemd: name: firewalld, state: started, enabled: true</code>. In environments where firewalld is intentionally disabled and customers rely on external firewall solutions, this causes immediate inter-node communication disruption and temporary cluster inaccessibility. Similarly, checks.yml enforces SELinux to enforcing mode via <code>ansible.posix.selinux: state: enforcing</code>, which also disrupts customers running in permissive mode.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph-ansible</li>
+<li>Customer execution of preflight playbook resulted in firewalld being started across cluster nodes</li>
+<li>Multiple customers hit this issue (second customer reported via Shantanu Bhardwaj)</li>
+<li>Proposed fix: add <code>ceph_defaults_configure_firewalld: false</code> variable, make task conditional</li>
+<li>PR was under review but issue was closed as duplicate of IBMCEPH-16612</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as duplicate of IBMCEPH-16612. Fix involves adding configuration variable in roles/ceph_defaults/defaults/main.yml with conditional handling in cephadm-preflight.yml. Was proposed as blocker for 9.1z2 but moved out during blockers-only phase.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify preflight playbook does not force-enable firewalld when customer has it disabled</div>
+<div>Environment: Any IBM Ceph version with cephadm-ansible preflight playbook</div>
 <ul>
-<li>[Shantanu Bhardwaj] Is there any possible workaround that can be performed before running the preflight playbook as we have another customer hitting this issue? SELinux and FirewallD both got enabled post running the playbook and it impacted the cluster communication</li>
-<li>[Swati Thombe] As a workaround, you can modify the FirewallD task in  cephadm-preflight.yml  and set  enabled: false  before running the preflight playbook. by default, it is true</li>
+<li><span class="step-num">1.</span> Deploy a multi-node cluster with firewalld disabled and stopped on all nodes -- intent: simulate customer environment</li>
+<li><span class="step-num">2.</span> Verify firewalld is disabled: <code><code>systemctl status firewalld</code></code> shows inactive/disabled -- intent: establish baseline</li>
+<li><span class="step-num">3.</span> Run the preflight playbook: <code>ansible-playbook -i inventory cephadm-preflight.yml</code> -- intent: trigger the forced enablement</li>
+<li><span class="step-num">4.</span> Check firewalld state on all nodes: <code><code>systemctl status firewalld</code></code> -- intent: verify it was force-enabled</li>
+<li><span class="step-num">5.</span> Verify cluster communication is disrupted: <code><code>ceph -s</code></code> times out or fails -- intent: confirm impact</li>
 </ul>
-<div># cephadm-preflight.yml</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>name: Ensure firewalld is enabled and running</li>
-</ul>
-<div>ansible.builtin.systemd:</div>
-<div>name: fire</div>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: As a workaround, you can modify the FirewallD task in  cephadm-preflight.yml  and set  enabled: false  before running the preflight playbook. by default, it is true</li>
-</ul>
-<div># cephadm-preflight.yml</div>
-<ul>
-<li>name: E</li>
+<li><code>systemctl status firewalld</code></li>
+<li><code>systemctl is-enabled firewalld</code></li>
+<li>firewall-cmd --state</li>
+<li>getenforce (for SELinux check)</li>
+<li><code>ceph -s</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [Backport 9.1z2]- Preflight playbook should not force-enable firewalld (make it configurable/conditional)</div>
-<div>Environment: IBM Ceph 8.1, component: ceph-ansible</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates that preflight playbook respects existing firewalld/SELinux state.</div>
+<div>GAPS: No test for preflight playbook behavior with firewalld disabled. No test for SELinux permissive mode preservation. No test for the new <code>ceph_defaults_configure_firewalld</code> variable.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported ceph-ansible scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Run preflight with firewalld disabled - verify it remains disabled (default behavior after fix)</li>
+<li><span class="step-num">2.</span> Run preflight with <code>ceph_defaults_configure_firewalld: true</code> - verify firewalld is enabled</li>
+<li><span class="step-num">3.</span> Run preflight with SELinux in permissive mode - verify it remains permissive</li>
+<li><span class="step-num">4.</span> Run preflight with --extra-vars override for firewalld - verify override works</li>
 </ul></div>
 </div>
 

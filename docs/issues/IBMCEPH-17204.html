@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17204: [8.1z Backport] [GSS] Health Warning is missing the descriptive text</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [8.1z Backport] [GSS] Health Warning is missing the descriptive text
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): not specified
-- Component: rados
-
-FIX STATUS:
-- Fix available in build 19.2.1-387.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/4ae74812407c8325ac3c05536cf19fbe7ebc4899
-- Verified by: Srinivasa Bharath Kanta</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: BLUESTORE_FREE_FRAGMENTATION health warning shows only &#x27;N OSD(s)&#x27; without descriptive text explaining the warning.
+ROOT CAUSE: The health warning formatter for BLUESTORE_FREE_FRAGMENTATION was missing the descriptive suffix text. Instead of showing &#x27;3 OSD(s) experiencing high free space fragmentation of BlueStore&#x27;, it only showed &#x27;3 OSD(s)&#x27;. This was a formatting bug in the health warning message construction code.
+KEY EVIDENCE:
+- Actual: &#x27;HEALTH_WARN 3 OSD(s)&#x27; -- missing description
+- Expected: &#x27;HEALTH_WARN 3 OSD(s) experiencing high free space fragmentation of BlueStore&#x27;
+- Version: 19.2.1-366.el9cp (8.1)
+- MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2167/diffs
+- Backport commit: 4ae74812407c8325ac3c05536cf19fbe7ebc4899
+- Verified on build 19.2.1-396.el9cp
+- Config: bluestore_warn_on_free_fragmentation
+FIX STATUS: Verified. Fix backported to 8.1 branch. Available in build ceph-19.2.1-387+. QA verified by Srinivasa Bharath Kanta on 19.2.1-396.el9cp.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [8.1z Backport] [GSS] Health Warning is missing the descriptive text
-Environment: IBM Ceph 9.x, component: rados
-
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify health warning includes descriptive text after fix.
+Environment: IBM Ceph 8.1 with build &gt;= 19.2.1-387
+1. ceph config set osd bluestore_warn_on_free_fragmentation 0.0001 -- intent: lower threshold to trigger warning
+2. ceph -s -- intent: observe health warning message format
+3. ceph health detail -- intent: verify full descriptive text present
+4. Verify output shows &#x27;experiencing high free space fragmentation of BlueStore&#x27; -- intent: confirm fix
+DIAGNOSTIC COMMANDS:
+- ceph config get osd bluestore_warn_on_free_fragmentation -- check threshold
+- ceph -s -- observe warning format
+- ceph health detail -- full warning details</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QA verified on 19.2.1-396.el9cp.
+GAPS: No automated CI test validates health warning message formatting/completeness.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Automated test that triggers BLUESTORE_FREE_FRAGMENTATION and validates message contains descriptive text
+- Regression test for all health warning message formats</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,39 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[8.1z Backport] [GSS] Health Warning is missing the descriptive text</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">BLUESTORE_FREE_FRAGMENTATION health warning shows only &#x27;N OSD(s)&#x27; without descriptive text explaining the warning.</div>
+<div>ROOT CAUSE: The health warning formatter for BLUESTORE_FREE_FRAGMENTATION was missing the descriptive suffix text. Instead of showing &#x27;3 OSD(s) experiencing high free space fragmentation of BlueStore&#x27;, it only showed &#x27;3 OSD(s)&#x27;. This was a formatting bug in the health warning message construction code.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): not specified</li>
-<li>Component: rados</li>
+<li>Actual: &#x27;HEALTH_WARN 3 OSD(s)&#x27; -- missing description</li>
+<li>Expected: &#x27;HEALTH_WARN 3 OSD(s) experiencing high free space fragmentation of BlueStore&#x27;</li>
+<li>Version: 19.2.1-366.el9cp (8.1)</li>
+<li>MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2167/diffs</li>
+<li>Backport commit: 4ae74812407c8325ac3c05536cf19fbe7ebc4899</li>
+<li>Verified on build 19.2.1-396.el9cp</li>
+<li>Config: bluestore_warn_on_free_fragmentation</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Verified. Fix backported to 8.1 branch. Available in build ceph-19.2.1-387+. QA verified by Srinivasa Bharath Kanta on 19.2.1-396.el9cp.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify health warning includes descriptive text after fix.</div>
+<div>Environment: IBM Ceph 8.1 with build &gt;= 19.2.1-387</div>
 <ul>
-<li>Fix available in build 19.2.1-387.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/commit/4ae74812407c8325ac3c05536cf19fbe7ebc4899</li>
-<li>Verified by: Srinivasa Bharath Kanta</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [8.1z Backport] [GSS] Health Warning is missing the descriptive text</div>
-<div>Environment: IBM Ceph 9.x, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li><span class="step-num">1.</span> <code>ceph config set osd bluestore_warn_on_free_fragmentation 0.0001 -- intent: lower threshold to trigger warning</code></li>
+<li><span class="step-num">2.</span> <code>ceph -s -- intent: observe health warning message format</code></li>
+<li><span class="step-num">3.</span> <code>ceph health detail -- intent: verify full descriptive text present</code></li>
+<li><span class="step-num">4.</span> Verify output shows &#x27;experiencing high free space fragmentation of BlueStore&#x27; -- intent: confirm fix</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config get osd bluestore_warn_on_free_fragmentation -- check threshold</code></li>
+<li><code>ceph -s -- observe warning format</code></li>
+<li><code>ceph health detail -- full warning details</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QA verified on 19.2.1-396.el9cp.</div>
+<div>GAPS: No automated CI test validates health warning message formatting/completeness.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Automated test that triggers BLUESTORE_FREE_FRAGMENTATION and validates message contains descriptive text</li>
+<li>Regression test for all health warning message formats</li>
 </ul></div>
 </div>
 

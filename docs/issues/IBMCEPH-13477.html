@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13477: [odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under chaos testing with degraded PGs</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,48 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under chaos testing with degraded PGs
-
-ROOT CAUSE:
-- Daemon crash reported in rados.
-- Affected version(s): 8.0
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] From the OSD.0 logs, it is observed that Placement Group 5.d encountered a fatal assertion failure during recovery at epoch 858. The PG was expected to be hosted on OSDs [1, 0, 2], but was instead being served by [0, 2], indicating that OSD.1 was unavailable. Consequently, the PG
-- [Parag Kamble] We are collecting logs using the ODF must-gather utility which mainly includes storage and Ceph diagnostics. node level logs like core dumps are not included by default. And since the cluster is no longer available we cant collect those logs now. If this is blocking further inv
-- [Aarti Dhikale] From the logs, it appears that the cluster has recovered. To further investigate the issue, the current logs are insufficient. We will need a core dump and logs with debug logging enabled. Could you please try to reproduce the issue and share these logs?
-- [Aarti Dhikale] Hello   , closing this issue as logs not available for further debugging.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD.0 crashes with assertion failure `ceph_assert(p-&gt;second.need &lt;= v || p-&gt;second.is_delete())` in `pg_missing_set::got()` during PG recovery under chaos testing with degraded PGs.
+ROOT CAUSE: During PG recovery operations, when OSD.0 processes push replies from peer OSDs, the PG missing set encounters an inconsistency: it expects a newer version of an object but receives an older version that is not marked as deleted. This assertion failure in `osd_types.h:5220` occurs in the `ReplicatedBackend::handle_push_reply` path. The crash happens during concurrent OSD/MON/MDS failures and network chaos (pod kill, network disruption, node-level chaos) with PG 5.d in `active+undersized+degraded+remapped` state. Related upstream tracker: https://tracker.ceph.com/issues/47299.
+KEY EVIDENCE:
+- Assertion: `ceph_assert(p-&gt;second.need &lt;= v || p-&gt;second.is_delete())` at osd_types.h:5220
+- Stack: ReplicatedBackend::handle_push_reply -&gt; pg_missing_set::got()
+- Ceph version: 20.1.0-159.el9cp (tentacle RC)
+- PG 5.d acting set changed from [1,0,2] to [0,2] with async replica [1] (osd.1 laggy)
+- Closed as &#x27;insufficient data&#x27; -- no coredump available, cluster was destroyed
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. No fix applied. Upstream tracker https://tracker.ceph.com/issues/47299 exists but resolution unclear.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under chaos testing with degraded PGs
-Environment: IBM Ceph 8.0, component: rados
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-From the logs, it appears that the cluster has recovered. To further investigate the issue, the current logs are insufficient. We will need a core dump and logs with debug logging enabled. Could you please try to reproduce the issue and share these logs?</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce OSD crash during PG recovery under chaos conditions
+Environment: Ceph 20.1.0-159.el9cp (tentacle RC), OCP/ODF 4.21, 3 OSDs across 3 racks
+1. Deploy ODF cluster with 3 OSDs (1 per rack), encryption and msgr2 encryption enabled -- intent: set up minimal fault-tolerance topology
+2. Run mixed workloads: VDBENCH (CephFS + RBD) and RGW operations -- intent: generate I/O load
+3. Execute chaos plan with pod kill, network disruption, and node-level chaos: `krknctl run --plan random_chaos_plan.yaml --max-parallel 2-4` -- intent: trigger concurrent failures
+4. Monitor for crashes: `ceph crash ls` every 3 minutes -- intent: detect OSD assertion failure
+5. Collect must-gather logs and coredumps if crash occurs -- intent: provide debugging data
+DIAGNOSTIC COMMANDS:
+- `ceph crash ls` -- list crashes
+- `ceph crash info &lt;crash_id&gt;` -- get crash details
+- `ceph tell &lt;pg_id&gt; query` -- query PG state
+- `ceph pg dump | grep &lt;pg_id&gt;` -- check PG status</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: [odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under c
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed due to insufficient data. No fix verified.
+GAPS: No automated chaos test that specifically targets PG recovery assertion paths. No coredump collection in ODF must-gather by default.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Chaos test with debug logging enabled to capture PG recovery state transitions
+- Test OSD recovery after acting set changes with async replicas
+- Ensure coredump collection is enabled in chaos test environments
+- PG recovery under concurrent OSD flapping with degraded PGs</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -241,46 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under chaos testing with degraded PGs</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD.0 crashes with assertion failure `ceph_assert(p-&gt;second.need &lt;= v || p-&gt;second.is_delete())` in `pg_missing_set::got()` during PG recovery under chaos testing with degraded PGs.</div>
+<div>ROOT CAUSE: During PG recovery operations, when OSD.0 processes push replies from peer OSDs, the PG missing set encounters an inconsistency: it expects a newer version of an object but receives an older version that is not marked as deleted. This assertion failure in <code>osd_types.h:5220</code> occurs in the <code>ReplicatedBackend::handle_push_reply</code> path. The crash happens during concurrent OSD/MON/MDS failures and network chaos (pod kill, network disruption, node-level chaos) with PG 5.d in <code>active+undersized+degraded+remapped</code> state. Related upstream tracker: https://tracker.ceph.com/issues/47299.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rados.</li>
-<li>Affected version(s): 8.0</li>
-<li>Component: rados</li>
+<li>Assertion: <code>ceph_assert(p-&amp;gt;second.need &amp;lt;= v || p-&amp;gt;second.is_delete())</code> at osd_types.h:5220</li>
+<li>Stack: ReplicatedBackend::handle_push_reply -&gt; pg_missing_set::got()</li>
+<li>Ceph version: 20.1.0-159.el9cp (tentacle RC)</li>
+<li>PG 5.d acting set changed from [1,0,2] to [0,2] with async replica [1] (osd.1 laggy)</li>
+<li>Closed as &#x27;insufficient data&#x27; -- no coredump available, cluster was destroyed</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. No fix applied. Upstream tracker https://tracker.ceph.com/issues/47299 exists but resolution unclear.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce OSD crash during PG recovery under chaos conditions</div>
+<div>Environment: Ceph 20.1.0-159.el9cp (tentacle RC), OCP/ODF 4.21, 3 OSDs across 3 racks</div>
 <ul>
-<li>[Aarti Dhikale] From the OSD.0 logs, it is observed that Placement Group 5.d encountered a fatal assertion failure during recovery at epoch 858. The PG was expected to be hosted on OSDs [1, 0, 2], but was instead being served by [0, 2], indicating that OSD.1 was unavailable. Consequently, the PG</li>
-<li>[Parag Kamble] We are collecting logs using the ODF must-gather utility which mainly includes storage and Ceph diagnostics. node level logs like core dumps are not included by default. And since the cluster is no longer available we cant collect those logs now. If this is blocking further inv</li>
-<li>[Aarti Dhikale] From the logs, it appears that the cluster has recovered. To further investigate the issue, the current logs are insufficient. We will need a core dump and logs with debug logging enabled. Could you please try to reproduce the issue and share these logs?</li>
-<li>[Aarti Dhikale] Hello   , closing this issue as logs not available for further debugging.</li>
+<li><span class="step-num">1.</span> Deploy ODF cluster with 3 OSDs (1 per rack), encryption and msgr2 encryption enabled -- intent: set up minimal fault-tolerance topology</li>
+<li><span class="step-num">2.</span> Run mixed workloads: VDBENCH (CephFS + RBD) and RGW operations -- intent: generate I/O load</li>
+<li><span class="step-num">3.</span> Execute chaos plan with pod kill, network disruption, and node-level chaos: <code>krknctl run --plan random_chaos_plan.yaml --max-parallel 2-4</code> -- intent: trigger concurrent failures</li>
+<li><span class="step-num">4.</span> Monitor for crashes: <code><code>ceph crash ls</code></code> every 3 minutes -- intent: detect OSD assertion failure</li>
+<li><span class="step-num">5.</span> Collect must-gather logs and coredumps if crash occurs -- intent: provide debugging data</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>ceph crash ls</code></code> -- list crashes</li>
+<li><code><code>ceph crash info &amp;lt;crash_id&amp;gt;</code></code> -- get crash details</li>
+<li><code><code>ceph tell &amp;lt;pg_id&amp;gt; query</code></code> -- query PG state</li>
+<li><code><code>ceph pg dump | grep &amp;lt;pg_id&amp;gt;</code></code> -- check PG status</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under chaos testing with degraded PGs</div>
-<div>Environment: IBM Ceph 8.0, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>From the logs, it appears that the cluster has recovered. To further investigate the issue, the current logs are insufficient. We will need a core dump and logs with debug logging enabled. Could you please try to reproduce the issue and share these logs?</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [odf-4.21] osd.0 crash with assertion failure in pg_missing_set::got() (p-&gt;second.need &lt;= v) under c</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed due to insufficient data. No fix verified.</div>
+<div>GAPS: No automated chaos test that specifically targets PG recovery assertion paths. No coredump collection in ODF must-gather by default.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Chaos test with debug logging enabled to capture PG recovery state transitions</li>
+<li>Test OSD recovery after acting set changes with async replicas</li>
+<li>Ensure coredump collection is enabled in chaos test environments</li>
+<li>PG recovery under concurrent OSD flapping with degraded PGs</li>
 </ul></div>
 </div>
 

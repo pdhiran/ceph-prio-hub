@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12266: [BZ#2401094] [IBM_Support] [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,52 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2401094] [IBM_Support] [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: documentation
-
-ENGINEERING FINDINGS:
-- [Vivek Maurya] Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file cephadm shell – cat /usr/share/ceph/mgr/cephadm/templates/services/nfs/ganesha.conf.j2 &gt; ganesha.conf.j2 2. Verify the conf file before
-- [Sachin Punadikar] Hi Rivka, Please do below: 1. Change the topic name &quot;Customizing an NFS configuration&quot; to &quot;Adding custom debug configuration&quot; - Keep rest of the information as is for this topic. 2. Add a new topic &quot;Changing default NFS configuration&quot; under  https://www.ibm.com/docs/en/storage-ce
-
-FIX STATUS:
-- Current JIRA status: MODIFIED
-- Workaround: Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file cephadm shell – cat /usr/share/ceph/mgr/cephadm/templat</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS-Ganesha custom configuration via documented &#x27;ceph nfs cluster config set&#x27; does not work -- documentation defect.
+ROOT CAUSE: The documented method for customizing NFS-Ganesha configuration using &#x27;ceph nfs cluster config set &lt;cluster&gt; -i &lt;config-file&gt;&#x27; writes the custom config to a RADOS object but does NOT override the cephadm-generated /etc/ganesha/ganesha.conf inside the container. The ganesha.conf is regenerated from a Jinja2 template (ganesha.conf.j2) during each deploy/redeploy cycle, ignoring the RADOS-stored custom config for core NFS_CORE_PARAM settings. The working method requires modifying the cephadm template itself via &#x27;ceph config-key set mgr/cephadm/services/nfs/ganesha.conf -i &lt;modified-template&gt;&#x27; and then redeploying. QA confirmed the documented steps don&#x27;t work, but the config-key template override method does work and persists across reboots and upgrades.
+KEY EVIDENCE:
+- QA verified: &#x27;ceph nfs cluster config set&#x27; + &#x27;ceph orch redeploy nfs&#x27; does NOT apply changes to ganesha.conf
+- Working workaround: modify ganesha.conf.j2 template -&gt; ceph config-key set mgr/cephadm/services/nfs/ganesha.conf -&gt; redeploy
+- Changes via config-key template persist across reboots, upgrades, and new cluster creation
+- Sachin Punadikar confirmed: documentation defect, valid for 8.1, 9.0, and 9.1
+- Docs updated by Prajesha Naidu: &#x27;Customize an NFS configuration&#x27; and &#x27;Remove customized NFS configurations&#x27;
+FIX STATUS: Modified. Documentation updated for 9.0 release. Updates needed for 8.1 and 9.1 as well. Prajesha Naidu published updated docs.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2401094]  [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working
-Environment: IBM Ceph 8.1, component: documentation
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Trigger failover (stop daemon / power off node / network partition)
-3. Verify recovery -- `ceph -s`
-4. Apply the configuration change described in the JIRA
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate that documented NFS config customization doesn&#x27;t work, and show working method.
+Environment: IBM Storage Ceph 8.1 or 9.x
+1. Deploy NFS-Ganesha cluster -- intent: establish baseline
+   ceph nfs cluster create nfsganesha &lt;hostname&gt;
+2. Create custom config disabling NFSv3 -- intent: attempt documented method
+   echo &#x27;NFS_CORE_PARAM { Protocols = 4; }&#x27; &gt; customised-nfs.conf
+   ceph nfs cluster config set nfsganesha -i customised-nfs.conf
+   ceph orch redeploy nfs.nfsganesha
+3. Verify config NOT applied -- intent: confirm the documentation bug
+   cat /var/lib/ceph/&lt;fsid&gt;/nfs.*/etc/ganesha/ganesha.conf | grep Protocols
+   mount -t nfs -o vers=3 &lt;nfs-ip&gt;:/export /mnt/test  # should succeed (bug)
+4. Use working config-key template method -- intent: apply the real fix
+   cephadm shell -- cat /usr/share/ceph/mgr/cephadm/templates/services/nfs/ganesha.conf.j2 &gt; ganesha.conf.j2
+   # Edit to set Protocols = 4;
+   ceph config-key set mgr/cephadm/services/nfs/ganesha.conf -i ganesha.conf.j2
+   ceph orch redeploy nfs.nfsganesha
+5. Verify config IS applied -- intent: confirm working method
+   mount -t nfs -o vers=3 &lt;nfs-ip&gt;:/export /mnt/test  # should FAIL
+DIAGNOSTIC COMMANDS:
+- ceph nfs cluster config get &lt;cluster&gt;
+- ceph config-key get mgr/cephadm/services/nfs/ganesha.conf
+- cat ganesha.conf inside NFS container</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: MODIFIED. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QA verified both broken and working paths. Good manual coverage.
 GAPS:
-
+- No automated test for NFS config customization via the correct config-key template method
+- No test validates config persistence across upgrades and reboots (manual verification done)
 SCENARIOS NEEDED:
-- HA: failover + recovery, verify data integrity
-- Functional: reproduce reported documentation scenario, verify correct behavior</textarea>
+- Test: Apply NFS custom config via config-key template, verify ganesha.conf reflects changes
+- Test: Verify custom NFS config persists across daemon redeploy, node reboot, and upgrade
+- Test: Verify new NFS clusters created after template change inherit the customization
+- Test: Negative test -- &#x27;ceph nfs cluster config set&#x27; alone does NOT modify ganesha.conf</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,37 +245,63 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2401094] [IBM_Support] [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS-Ganesha custom configuration via documented &#x27;ceph nfs cluster config set&#x27; does not work -- documentation defect.</div>
+<div>ROOT CAUSE: The documented method for customizing NFS-Ganesha configuration using &#x27;ceph nfs cluster config set &lt;cluster&gt; -i &lt;config-file&gt;&#x27; writes the custom config to a RADOS object but does NOT override the cephadm-generated /etc/ganesha/ganesha.conf inside the container. The ganesha.conf is regenerated from a Jinja2 template (ganesha.conf.j2) during each deploy/redeploy cycle, ignoring the RADOS-stored custom config for core NFS_CORE_PARAM settings. The working method requires modifying the cephadm template itself via &#x27;ceph config-key set mgr/cephadm/services/nfs/ganesha.conf -i &lt;modified-template&gt;&#x27; and then redeploying. QA confirmed the documented steps don&#x27;t work, but the config-key template override method does work and persists across reboots and upgrades.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: documentation</li>
+<li>QA verified: &#x27;<code>ceph nfs cluster config set&#x27; + &#x27;ceph orch redeploy nfs&#x27; does NOT apply changes to ganesha.conf</code></li>
+<li>Working workaround: modify ganesha.conf.j2 template -&gt; <code>ceph config-key set mgr/cephadm/services/nfs/ganesha.conf -&gt; redeploy</code></li>
+<li>Changes via config-key template persist across reboots, upgrades, and new cluster creation</li>
+<li>Sachin Punadikar confirmed: documentation defect, valid for 8.1, 9.0, and 9.1</li>
+<li>Docs updated by Prajesha Naidu: &#x27;Customize an NFS configuration&#x27; and &#x27;Remove customized NFS configurations&#x27;</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Modified. Documentation updated for 9.0 release. Updates needed for 8.1 and 9.1 as well. Prajesha Naidu published updated docs.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate that documented NFS config customization doesn&#x27;t work, and show working method.</div>
+<div>Environment: IBM Storage Ceph 8.1 or 9.x</div>
 <ul>
-<li>[Vivek Maurya] Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file <code>cephadm shell – cat /usr/share/ceph/mgr/cephadm/templates/services/nfs/ganesha.conf.j2 &gt; ganesha.conf.j2 2. Verify the conf file before</code></li>
-<li>[Sachin Punadikar] Hi Rivka, Please do below: 1. Change the topic name &quot;Customizing an NFS configuration&quot; to &quot;Adding custom debug configuration&quot; - Keep rest of the information as is for this topic. 2. Add a new topic &quot;Changing default NFS configuration&quot; under  https://www.ibm.com/docs/en/storage-ce</li>
+<li><span class="step-num">1.</span> Deploy NFS-Ganesha cluster -- intent: establish baseline</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph nfs cluster create nfsganesha &lt;hostname&gt;</div>
 <ul>
-<li>Current JIRA status: MODIFIED</li>
-<li>Workaround: Hi @Ravindera As a workaround, you can suggest the following steps to set MNT_Port. 1. On the admin node, copy the template of ganesha.conf file <code>cephadm shell – cat /usr/share/ceph/mgr/cephadm/templat</code></li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2401094]  [NFS-Ganesha] Setting custom NFS-Ganesha configuration to IBM Ceph is not working</div>
-<div>Environment: IBM Ceph 8.1, component: documentation</div>
+<li><span class="step-num">2.</span> Create custom config disabling NFSv3 -- intent: attempt documented method</li>
+</ul>
+<div>echo &#x27;NFS_CORE_PARAM { Protocols = 4; }&#x27; &gt; customised-nfs.conf</div>
+<div>ceph nfs cluster config set nfsganesha -i customised-nfs.conf</div>
+<div>ceph orch redeploy nfs.nfsganesha</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Trigger failover (stop daemon / power off node / network partition)</li>
-<li><span class="step-num">3.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
-<li><span class="step-num">4.</span> Apply the configuration change described in the JIRA</li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Verify config NOT applied -- intent: confirm the documentation bug</li>
+</ul>
+<div>cat /var/lib/ceph/&lt;fsid&gt;/nfs.*/etc/ganesha/ganesha.conf | grep Protocols</div>
+<div>mount -t nfs -o vers=3 &lt;nfs-ip&gt;:/export /mnt/test  # should succeed (bug)</div>
+<ul>
+<li><span class="step-num">4.</span> Use working config-key template method -- intent: apply the real fix</li>
+</ul>
+<div>cephadm shell -- cat /usr/share/ceph/mgr/cephadm/templates/services/nfs/ganesha.conf.j2 &gt; ganesha.conf.j2</div>
+<div># Edit to set Protocols = 4;</div>
+<div>ceph config-key set mgr/cephadm/services/nfs/ganesha.conf -i ganesha.conf.j2</div>
+<div>ceph orch redeploy nfs.nfsganesha</div>
+<ul>
+<li><span class="step-num">5.</span> Verify config IS applied -- intent: confirm working method</li>
+</ul>
+<div>mount -t nfs -o vers=3 &lt;nfs-ip&gt;:/export /mnt/test  # should FAIL</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph nfs cluster config get &lt;cluster&gt;</code></li>
+<li><code>ceph config-key get mgr/cephadm/services/nfs/ganesha.conf</code></li>
+<li>cat ganesha.conf inside NFS container</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">MODIFIED. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QA verified both broken and working paths. Good manual coverage.</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>No automated test for NFS config customization via the correct config-key template method</li>
+<li>No test validates config persistence across upgrades and reboots (manual verification done)</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA: failover + recovery, verify data integrity</li>
-<li>Functional: reproduce reported documentation scenario, verify correct behavior</li>
+<li>Test: Apply NFS custom config via config-key template, verify ganesha.conf reflects changes</li>
+<li>Test: Verify custom NFS config persists across daemon redeploy, node reboot, and upgrade</li>
+<li>Test: Verify new NFS clusters created after template change inherit the customization</li>
+<li>Test: Negative test -- &#x27;<code>ceph nfs cluster config set&#x27; alone does NOT modify ganesha.conf</code></li>
 </ul></div>
 </div>
 

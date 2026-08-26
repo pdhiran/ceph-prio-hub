@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16538: [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,49 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 9.1z2 backport of hostname lowercase normalization fix from IBMCEPH-16535.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 9.1
-- Component: cephadm
+Same as IBMCEPH-16535. After upgrading from 8.1 to 9.1, cephadm normalizes hostnames to lowercase but service placement specs retain uppercase references, causing service apply failures. The fix migrates persisted specs to use normalized lowercase hostnames.
 
-ENGINEERING FINDINGS:
-- [SHUBHA JAIN] Final Update: Tested the hostname normalization changes using the custom image ( quay.io/shubhjai/ceph1:hostname-normalize-fix-issue ) on an upgraded cluster. Verified fixes: ceph orch host ls  displays normalized lowercase hostnames. ceph orch host ls --format yaml  displays nor
-- [Anushree Hallur] Hi Team, Verified the fix in 8.1 GA build(ceph version 19.2.1-375.el9cp), upgraded to 9.9.2 build(ceph version 20.2.2-181.el10cp) , observed the following: Deployed ceph cluster with uppercase hostnames in 8.1 Upgraded to 9.9.2 build Cluster successfully got upgraded to 9.9.2 bui
-- [SHUBHA JAIN] Follow up fix MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2189
-- [Anushree Hallur] Hi Team, Verified the fix in  8.1 GA build(ceph version 19.2.1-375.el9cp) , upgraded to  9.1z2 build (ceph version 20.2.1-367.el9cp) Deployed ceph cluster with uppercase hostnames in 8.1 Upgraded to 9.9.1.2 build Cluster successfully got upgraded to 9.9.1.2 build After upgrade cl
+KEY EVIDENCE:
+- Same issue as IBMCEPH-16535, this is the 9.1z2 backport tracker
+- Fix PR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2166
+- Follow-up fix MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2189
+- Verified by Anushree Hallur: 8.1 -&gt; 9.1z2 upgrade shows HEALTH_OK, hostnames normalized
 
 FIX STATUS:
-- Current JIRA status: Verified</textarea>
+- Status: Verified
+- Fix in 9.1z2 build (20.2.1-367.el9cp)
+- Verified: cluster HEALTH_OK after upgrade with uppercase hostnames</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed
-Environment: IBM Ceph 9.1, component: cephadm
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-16535 -- verify 8.1 to 9.1z2 upgrade with uppercase hostnames
+Environment: IBM Ceph 8.1 with uppercase hostnames, upgrading to 9.1z2
 
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Run baseline benchmark (fio/rados bench) -- record metrics
-6. Trigger the performance scenario described in JIRA
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+(Same steps as IBMCEPH-16535)
+
+DIAGNOSTIC COMMANDS:
+- Same as IBMCEPH-16535</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE verified in 9.1z2 build. Same coverage needs as IBMCEPH-16535.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-- No performance baseline test for: [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service fai
+- Same as IBMCEPH-16535
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Same as IBMCEPH-16535, targeted at 9.1z2 stream</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -242,48 +234,37 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">9.1z2 backport of hostname lowercase normalization fix from IBMCEPH-16535.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>Same as IBMCEPH-16535. After upgrading from 8.1 to 9.1, cephadm normalizes hostnames to lowercase but service placement specs retain uppercase references, causing service apply failures. The fix migrates persisted specs to use normalized lowercase hostnames.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: cephadm</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[SHUBHA JAIN] Final Update: Tested the hostname normalization changes using the custom image ( quay.io/shubhjai/ceph1:hostname-normalize-fix-issue ) on an upgraded cluster. Verified fixes: <code>ceph orch host ls  displays normalized lowercase hostnames. ceph orch host ls --format yaml  displays nor</code></li>
-<li>[Anushree Hallur] Hi Team, Verified the fix in 8.1 GA build(<code>ceph version 19.2.1-375.el9cp)</code>, upgraded to 9.9.2 build(<code>ceph version 20.2.2-181.el10cp)</code>, observed the following: Deployed <code>ceph cluster with uppercase hostnames in 8.1 Upgraded to 9.9.2 build Cluster successfully got upgraded to 9.9.2 bui</code></li>
-<li>[SHUBHA JAIN] Follow up fix MR:  https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2189</li>
-<li>[Anushree Hallur] Hi Team, Verified the fix in  8.1 GA build(<code>ceph version 19.2.1-375.el9cp)</code>, upgraded to  9.1z2 build (<code>ceph version 20.2.1-367.el9cp) Deployed ceph cluster with uppercase hostnames in 8.1 Upgraded to 9.9.1.2 build Cluster successfully got upgraded to 9.9.1.2 build After upgrade cl</code></li>
+<li>Same issue as IBMCEPH-16535, this is the 9.1z2 backport tracker</li>
+<li>Fix PR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2166</li>
+<li>Follow-up fix MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2189</li>
+<li>Verified by Anushree Hallur: 8.1 -&gt; 9.1z2 upgrade shows HEALTH_OK, hostnames normalized</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
+<li>Status: Verified</li>
+<li>Fix in 9.1z2 build (20.2.1-367.el9cp)</li>
+<li>Verified: cluster HEALTH_OK after upgrade with uppercase hostnames</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service failed to get placed</div>
-<div>Environment: IBM Ceph 9.1, component: cephadm</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-16535 -- verify 8.1 to 9.1z2 upgrade with uppercase hostnames</div>
+<div>Environment: IBM Ceph 8.1 with uppercase hostnames, upgrading to 9.1z2</div>
+<div>(Same steps as IBMCEPH-16535)</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">6.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li>Same as IBMCEPH-16535</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE verified in 9.1z2 build. Same coverage needs as IBMCEPH-16535.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-<li>No performance baseline test for: [9.1z Backport] hostname changed to lower case post upgrade to 9.9.1 causing the running service fai</li>
+<li>Same as IBMCEPH-16535</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Same as IBMCEPH-16535, targeted at 9.1z2 stream</li>
 </ul></div>
 </div>
 

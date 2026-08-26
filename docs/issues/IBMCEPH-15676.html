@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15676: [IBM_Support]Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,50 +189,55 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [IBM_Support]Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Multiple RGW segfaults (128 crashes in 5 days) during delete operations in a multisite environment after upgrade to IBM Storage Ceph 9.9.0.2, caused by memory corruption in the async request processing path.
 
 ROOT CAUSE:
-- Daemon crash reported in rgw.
-- Upgrade-related issue or backport request.
-- Affected version(s): 9.0z2
-- Component: rgw
+The RGW crashes are caused by memory corruption within the asynchronous processing framework (coroutine/io_context_pool). During multi-object delete operations in a multisite environment, a race condition leads to use-after-free or double-free of request state objects (req_state). The crash occurs in `req_state::~req_state()` during object destruction after the request has been processed. Analysis by L3 (Swati Thombe) confirmed this correlates with the memory corruption fix addressed in IBMCEPH-14213, involving the same async processing path. Stack trace shows: tcmalloc::ThreadCache::ReleaseToCentralCache -&gt; req_state::~req_state -&gt; process_request, indicating heap corruption detected during memory management.
 
-ENGINEERING FINDINGS:
-- [Varuni Sawant] Hello team, CU confirmed that they are experiencing the crashes mostly on delete operations.   can we also have an update on the progress on this ticket
-- [Prashant Dhange] Let me set up the debug environment and continue investigating this issue. Apologies for the delay from the L3 side.
-- [Swati Thombe] //  Internal Discussion, don’t share with customer  //                                                                                        Hi    Our investigation indicates that these two incidents are likely related and may be manifestations of the same underlying memory corr
-- [Mark Kogan] although searching above could not find an answer if the CU env is MS or not …  there  is  a comment above that the workload is a delete workload –  CU confirmed that they are experiencing the crashes mostly on delete operations. which is a possitive indicator that this could b
-- [Varuni Sawant] Hello    Can we please have an update on this jira, if the hotfix created for issue    can also be used for this customer? The customer is pushing for a hotfix as they has 78 RGW crashes over the weekend.
+KEY EVIDENCE:
+- 128 RGW crashes in 5 days, all segfaults in thread `io_context_pool`
+- Customer confirmed crashes occur mostly on delete operations
+- Multisite environment confirmed
+- Duplicate of IBMCEPH-14213 (memory corruption in async processing)
+- Hotfix applied from private-tserlin-ceph-9.0-rhel-9-hotfix branch
+- Customer confirmed hotfix resolved the issue (2026-07-08)
+- Fix included in IBM Storage Ceph 9.9.1.0
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (duplicate of IBMCEPH-14213)
+- Fixed in IBM Storage Ceph 9.9.1.0. Hotfix validated by customer.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade
-Environment: IBM Ceph 9.0z2, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger RGW memory corruption during multi-object delete in multisite
+Environment: IBM Ceph 9.9.0.2 (tentacle), multisite configuration
 
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Trigger the failure scenario (see engineering findings below)
-6. Check for daemon crash -- `ceph crash ls-new`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy multisite RGW cluster with 2+ zones -- intent: multisite environment
+2. Create a bucket with thousands of objects -- intent: seed data for deletion
+3. Issue concurrent multi-object delete requests (S3 DeleteObjects API with 1000 keys per request) -- intent: trigger async processing race
+4. Monitor for RGW crashes via `ceph crash ls-new` -- intent: detect segfaults
+5. Check journalctl for `Caught signal (Segmentation fault)` in radosgw -- intent: capture crash details
+
+DIAGNOSTIC COMMANDS:
+- `ceph crash ls-new`
+- `ceph crash info &lt;crash-id&gt;`
+- `journalctl -u ceph-radosgw@* | grep &#x27;Segmentation fault&#x27;`
+- `ceph orch ps --daemon-type rgw` (check for restart counts)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Limited automated test coverage for multisite multi-object delete under concurrency.
 
 GAPS:
-- No crash regression test for: Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade
-- Upgrade path may lack pre-condition coverage for this scenario
+- No stress test for concurrent multi-object delete in multisite RGW
+- No memory sanitizer (ASan) test for RGW delete path
+- No test verifying RGW stability under sustained delete workload in multisite
 
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Sustained concurrent multi-object delete (DeleteObjects API) in multisite for 24h
+- Verify zero RGW crashes after delete workload completes
+- Run with AddressSanitizer enabled to catch use-after-free earlier
+- Test with varying concurrency levels (10, 50, 100 concurrent clients)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -243,49 +248,53 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[IBM_Support]Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Multiple RGW segfaults (128 crashes in 5 days) during delete operations in a multisite environment after upgrade to IBM Storage Ceph 9.9.0.2, caused by memory corruption in the async request processing path.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The RGW crashes are caused by memory corruption within the asynchronous processing framework (coroutine/io_context_pool). During multi-object delete operations in a multisite environment, a race condition leads to use-after-free or double-free of request state objects (req_state). The crash occurs in <code>req_state::~req_state()</code> during object destruction after the request has been processed. Analysis by L3 (Swati Thombe) confirmed this correlates with the memory corruption fix addressed in IBMCEPH-14213, involving the same async processing path. Stack trace shows: tcmalloc::ThreadCache::ReleaseToCentralCache -&gt; req_state::~req_state -&gt; process_request, indicating heap corruption detected during memory management.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rgw.</li>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Varuni Sawant] Hello team, CU confirmed that they are experiencing the crashes mostly on delete operations.   can we also have an update on the progress on this ticket</li>
-<li>[Prashant Dhange] Let me set up the debug environment and continue investigating this issue. Apologies for the delay from the L3 side.</li>
-<li>[Swati Thombe] //  Internal Discussion, don’t share with customer  //                                                                                        Hi    Our investigation indicates that these two incidents are likely related and may be manifestations of the same underlying memory corr</li>
-<li>[Mark Kogan] although searching above could not find an answer if the CU env is MS or not …  there  is  a comment above that the workload is a delete workload –  CU confirmed that they are experiencing the crashes mostly on delete operations. which is a possitive indicator that this could b</li>
-<li>[Varuni Sawant] Hello    Can we please have an update on this jira, if the hotfix created for issue    can also be used for this customer? The customer is pushing for a hotfix as they has 78 RGW crashes over the weekend.</li>
+<li>128 RGW crashes in 5 days, all segfaults in thread <code>io_context_pool</code></li>
+<li>Customer confirmed crashes occur mostly on delete operations</li>
+<li>Multisite environment confirmed</li>
+<li>Duplicate of IBMCEPH-14213 (memory corruption in async processing)</li>
+<li>Hotfix applied from private-tserlin-ceph-9.0-rhel-9-hotfix branch</li>
+<li>Customer confirmed hotfix resolved the issue (2026-07-08)</li>
+<li>Fix included in IBM Storage Ceph 9.9.1.0</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (duplicate of IBMCEPH-14213)</li>
+<li>Fixed in IBM Storage Ceph 9.9.1.0. Hotfix validated by customer.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Multiple RGW crashes after ceph 8.1z5 to 9.9.0.2 upgrade</div>
-<div>Environment: IBM Ceph 9.0z2, component: rgw</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger RGW memory corruption during multi-object delete in multisite</div>
+<div>Environment: IBM Ceph 9.9.0.2 (tentacle), multisite configuration</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">6.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy multisite RGW cluster with 2+ zones -- intent: multisite environment</li>
+<li><span class="step-num">2.</span> Create a bucket with thousands of objects -- intent: seed data for deletion</li>
+<li><span class="step-num">3.</span> Issue concurrent multi-object delete requests (S3 DeleteObjects API with 1000 keys per request) -- intent: trigger async processing race</li>
+<li><span class="step-num">4.</span> Monitor for RGW crashes via <code><code>ceph crash ls-new</code></code> -- intent: detect segfaults</li>
+<li><span class="step-num">5.</span> Check <code>journalctl for</code><code>Caught signal (Segmentation fault)</code> in radosgw -- intent: capture crash details</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph crash ls-new</code></code></li>
+<li><code><code>ceph crash info &amp;lt;crash-id&amp;gt;</code></code></li>
+<li><code><code>journalctl -u ceph-radosgw@* | grep &amp;#x27;Segmentation fault&amp;#x27;</code></code></li>
+<li><code><code>ceph orch ps --daemon-type rgw</code></code> (check for restart counts)</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Limited automated test coverage for multisite multi-object delete under concurrency.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No crash regression test for: Multiple RGW crashes after <code>ceph 8.1z5 to 9.9.0.2 upgrade</code></li>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No stress test for concurrent multi-object delete in multisite RGW</li>
+<li>No memory sanitizer (ASan) test for RGW delete path</li>
+<li>No test verifying RGW stability under sustained delete workload in multisite</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Sustained concurrent multi-object delete (DeleteObjects API) in multisite for 24h</li>
+<li>Verify zero RGW crashes after delete workload completes</li>
+<li>Run with AddressSanitizer enabled to catch use-after-free earlier</li>
+<li>Test with varying concurrency levels (10, 50, 100 concurrent clients)</li>
 </ul></div>
 </div>
 

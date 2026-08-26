@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12594: [BZ#2425712] [IBM_Support] [SMB] Access control for SMB AD share</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,59 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2425712] [IBM_Support] [SMB] Access control for SMB AD share
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Multiple SMB/AD access control issues including incorrect login_control format, SID-to-name resolution failures, and AD groups with spaces not supported.
 
 ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): 8.1
-- Component: smb
+This was a tracker bug covering multiple distinct SMB AD integration issues: (1) login_control YAML required domain\\group format with backslash escaping -- customers used incorrect format. (2) SID-to-name resolution intermittently failed in the Security tab. (3) AD groups with spaces (e.g., &#x27;Domain Users&#x27;) were not supported -- fix PR #66574 available upstream, planned for 9.0z. (4) Setting permissions from MMC not working (requires Windows Explorer). The issues spawned multiple child JIRAs with fixes tracked separately.
 
-ENGINEERING FINDINGS:
-- [Mohit Bisht] We are proposing this bug fix for the 9.1 release.  Once the fix is available in the downstream build, the QE team will validate it.
-- [Bipin Kunal] Thank you. Lets have those information added to the Jira as well to avoid any confusion.    Do we have any ETA for it, asking it as this is customer issue raised against 8.1. So we need to backport the fix to 8.1. I haven’t yet created the backport clones for it but let me know
-- [Sachin Prabhu] I believe that there are 2 separate issues here.   The fix is already in 9.0z2 and 9.1. We can backport this to 8.1z stream release if support raises a request.   - I will update you on this. Sachin Prabhu
-- [Sachin Prabhu] , The second issue mentioned above - The fix for 9.2 has been merged and is ON_QA. The fix was handled in a different jira
-- [Sachin Prabhu] There have been 2 fixes related to this problem which has been included.   - The fix has been present in downstream since 9.1.   - The customer has verfied the fix and the patch is already merged in 9.2.
+KEY EVIDENCE:
+- Anoop C S: login_control issue resolved by correcting YAML format (domain\\group)
+- Fix for spaces in AD groups: https://github.com/ceph/ceph/pull/66574 (upstream)
+- Sachin Prabhu: &quot;2 separate fixes both upstream and downstream&quot; -- both merged and ON_QA
+- Customer verified fix and case closed
+- Version: ceph 19.2.1-292.el9cp (Squid/8.1)
 
 FIX STATUS:
-- Fix available</textarea>
+- Status: Closed (Done)
+- Fix 1 (spaces in AD groups): Available in 9.0z2 and 9.1
+- Fix 2 (SID resolution): Merged in 9.2
+- Customer case closed</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2425712]  [SMB] Access control for SMB AD share
-Environment: IBM Ceph 8.1, component: smb
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate SMB AD access control with various group name formats
+Environment: IBM Ceph 8.1+ with SMB AD shares, Active Directory domain
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Configure SMB share with AD login_control using domain\\group format -- intent: verify correct format works
+   ```yaml
+   login_control:
+     - name: &quot;DOMAIN\\group_name&quot;
+       category: group
+       access: read-write
+   ```
+2. Test with AD group containing spaces (e.g., &#x27;Domain Users&#x27;) -- intent: verify PR #66574 fix
+3. Check Windows Security tab for SID-to-name resolution -- intent: verify SID resolution
+4. Attempt to set permissions via MMC and Windows Explorer -- intent: compare behavior
+
+DIAGNOSTIC COMMANDS:
+- `ceph smb show ceph.smb.share.&lt;cluster&gt;.&lt;share&gt;`
+- `smbclient -L //&lt;vip&gt;/ -U DOMAIN\\user`
+- Check Samba container logs for winbind/SID resolution errors</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: SMB AD integration tests need expanded coverage for group name formats, SID resolution, and MMC compatibility.
 
 GAPS:
-- Permission test gap for: [BZ#2425712]  [SMB] Access control for SMB AD share
+- No test for AD groups with spaces in login_control
+- No automated SID-to-name resolution validation
+- No test for login_control YAML format validation (backslash escaping)
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported smb scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Create SMB share with AD group containing spaces in login_control
+- Verify SID-to-name resolution from Windows Security tab after share access
+- Negative test: incorrect login_control format (missing backslash) should give clear error
+- Test restrict_access with multiple AD groups</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,42 +252,59 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2425712] [IBM_Support] [SMB] Access control for SMB AD share</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Multiple SMB/AD access control issues including incorrect login_control format, SID-to-name resolution failures, and AD groups with spaces not supported.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>This was a tracker bug covering multiple distinct SMB AD integration issues: (1) login_control YAML required domain\\group format with backslash escaping -- customers used incorrect format. (2) SID-to-name resolution intermittently failed in the Security tab. (3) AD groups with spaces (e.g., &#x27;Domain Users&#x27;) were not supported -- fix PR #66574 available upstream, planned for 9.0z. (4) Setting permissions from MMC not working (requires Windows Explorer). The issues spawned multiple child JIRAs with fixes tracked separately.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: smb</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Mohit Bisht] We are proposing this bug fix for the 9.1 release.  Once the fix is available in the downstream build, the QE team will validate it.</li>
-<li>[Bipin Kunal] Thank you. Lets have those information added to the Jira as well to avoid any confusion.    Do we have any ETA for it, asking it as this is customer issue raised against 8.1. So we need to backport the fix to 8.1. I haven’t yet created the backport clones for it but let me know</li>
-<li>[Sachin Prabhu] I believe that there are 2 separate issues here.   The fix is already in 9.0z2 and 9.1. We can backport this to 8.1z stream release if support raises a request.   - I will update you on this. Sachin Prabhu</li>
-<li>[Sachin Prabhu] , The second issue mentioned above - The fix for 9.2 has been merged and is ON_QA. The fix was handled in a different jira</li>
-<li>[Sachin Prabhu] There have been 2 fixes related to this problem which has been included.   - The fix has been present in downstream since 9.1.   - The customer has verfied the fix and the patch is already merged in 9.2.</li>
+<li>Anoop C S: login_control issue resolved by correcting YAML format (domain\\group)</li>
+<li>Fix for spaces in AD groups: https://github.com/ceph/ceph/pull/66574 (upstream)</li>
+<li>Sachin Prabhu: &quot;2 separate fixes both upstream and downstream&quot; -- both merged and ON_QA</li>
+<li>Customer verified fix and case closed</li>
+<li>Version: <code>ceph 19.2.1-292.el9cp (Squid/8.1)</code></li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Fix available</li>
+<li>Status: Closed (Done)</li>
+<li>Fix 1 (spaces in AD groups): Available in 9.0z2 and 9.1</li>
+<li>Fix 2 (SID resolution): Merged in 9.2</li>
+<li>Customer case closed</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2425712]  [SMB] Access control for SMB AD share</div>
-<div>Environment: IBM Ceph 8.1, component: smb</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate SMB AD access control with various group name formats</div>
+<div>Environment: IBM Ceph 8.1+ with SMB AD shares, Active Directory domain</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Configure SMB share with AD login_control using domain\\group format -- intent: verify correct format works</li>
+</ul>
+<pre>
+   login_control:
+     - name: &quot;DOMAIN\\group_name&quot;
+       category: group
+       access: read-write
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Test with AD group containing spaces (e.g., &#x27;Domain Users&#x27;) -- intent: verify PR #66574 fix</li>
+<li><span class="step-num">3.</span> Check Windows Security tab for SID-to-name resolution -- intent: verify SID resolution</li>
+<li><span class="step-num">4.</span> Attempt to set permissions via MMC and Windows Explorer -- intent: compare behavior</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph smb show ceph.smb.share.&amp;lt;cluster&amp;gt;.&amp;lt;share&amp;gt;</code></code></li>
+<li><code><code>smbclient -L //&amp;lt;vip&amp;gt;/ -U DOMAIN\\user</code></code></li>
+<li>Check Samba container logs for winbind/SID resolution errors</li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">SMB AD integration tests need expanded coverage for group name formats, SID resolution, and MMC compatibility.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission test gap for: [BZ#2425712]  [SMB] Access control for SMB AD share</li>
+<li>No test for AD groups with spaces in login_control</li>
+<li>No automated SID-to-name resolution validation</li>
+<li>No test for login_control YAML format validation (backslash escaping)</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Create SMB share with AD group containing spaces in login_control</li>
+<li>Verify SID-to-name resolution from Windows Security tab after share access</li>
+<li>Negative test: incorrect login_control format (missing backslash) should give clear error</li>
+<li>Test restrict_access with multiple AD groups</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13877: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,44 +189,49 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Permission or access control issue.
-- Affected version(s): 9.0
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Prajesha Naidu] here is the RN for this bug fix  https://ibmdocs-test.dcs.ibm.com/docs/en/storage-ceph/9.9.0?topic=9902-bug-fixes#GUID-72293705-d27f-4d6d-b4cf-4639f310e26d_ object_gatewaytitle _1
-
-FIX STATUS:
-- Fix available in build 20.1.0-184.
-- Verified by: Chaithra .</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: RGW fails to start after upgrade from Ceph 7 (Reef) to Ceph 9 (Tentacle) due to undecodable period object
+ROOT CAUSE: After a combined OS upgrade (RHEL 9.4→9.7) and Ceph upgrade (7→9), the RGW period epoch .3 stored in .rgw.root pool became undecodable by the new Tentacle RGW code. The customer had previously used an incorrect zone name (&#x27;aim-storage0-zone&#x27; instead of &#x27;aim-storage-0-zone&#x27;) which worked under Reef but caused encoding incompatibility under Tentacle. The period data written with the wrong zone name was accepted by Reef but could not be decoded by Tentacle&#x27;s stricter period deserialization.
+KEY EVIDENCE:
+- Error: &quot;failed to decode obj from .rgw.root:periods.&lt;id&gt;.3&quot; and &quot;failed to load current period: (5) Input/output error&quot;
+- Epoch .2 was readable, epoch .3 (latest_epoch) was not
+- Customer admitted zone name discrepancy between setup and actual usage
+- All radosgw-admin commands failed with same decode error
+FIX STATUS: Fixed in 9.0z2 (build ceph-20.1.0-184). Verified by QE on both multisite and single-site configurations.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.
-Environment: IBM Ceph 9.0, component: rgw
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce RGW period decode failure after Reef → Tentacle upgrade
+Environment: IBM Ceph 7 (Reef) → 9 (Tentacle 20.1.0-145)
+1. Deploy Ceph 7.x cluster with RGW multisite -- intent: create initial period state
+2. Create realm, zonegroup, and zone with specific naming
+3. Perform period update --commit multiple times to advance period epochs
+4. Upgrade cluster to Ceph 9.0 (Tentacle) -- intent: trigger decode incompatibility
+5. Check RGW daemon status: ceph orch ps -- intent: observe error state
+6. Check RGW logs for &#x27;failed to decode&#x27; and &#x27;failed to load current period&#x27;
+DIAGNOSTIC COMMANDS:
+- rados -p .rgw.root ls | grep periods (list period objects)
+- rados -p .rgw.root get periods.&lt;id&gt;.2 /tmp/period2 (test epoch readability)
+- rados -p .rgw.root get periods.&lt;id&gt;.3 /tmp/period3 (test failing epoch)
+- radosgw-admin period get (will fail with decode error)
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Fix verified. Regression test needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-- Permission test gap for: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current pe
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: Verified by QE (Chaithra) on both multisite and single-site with 9.0z0 (fail) and 9.0z2 (pass)
+GAPS: No test for upgrade path with pre-existing zone name mismatches or period encoding edge cases
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Reef → Tentacle upgrade with multisite period containing multiple epochs
+- Upgrade with zone name containing special characters or naming discrepancies
+- Period decode verification post-upgrade (automated check)
+- Combined OS + Ceph version upgrade path testing
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -237,44 +242,43 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 9.0</li>
-<li>Component: rgw</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Prajesha Naidu] here is the RN for this bug fix  https://ibmdocs-test.dcs.ibm.com/docs/en/storage-ceph/9.9.0?topic=9902-bug-fixes#GUID-72293705-d27f-4d6d-b4cf-4639f310e26d_ object_gatewaytitle _1</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Fix available in build 20.1.0-184.</li>
-<li>Verified by: Chaithra .</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current period object (.3) from .rgw.root pool.</div>
-<div>Environment: IBM Ceph 9.0, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-<li>Permission test gap for: [9.0z Backport] [RGW] fails to start after upgrade to Tentacle due to inability to decode current pe</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: RGW fails to start after upgrade from Ceph 7 (Reef) to Ceph 9 (Tentacle) due to undecodable period object
+ROOT CAUSE: After a combined OS upgrade (RHEL 9.4→9.7) and Ceph upgrade (7→9), the RGW period epoch .3 stored in .rgw.root pool became undecodable by the new Tentacle RGW code. The customer had previously used an incorrect zone name (&#x27;aim-storage0-zone&#x27; instead of &#x27;aim-storage-0-zone&#x27;) which worked under Reef but caused encoding incompatibility under Tentacle. The period data written with the wrong zone name was accepted by Reef but could not be decoded by Tentacle&#x27;s stricter period deserialization.
+KEY EVIDENCE:
+- Error: &quot;failed to decode obj from .rgw.root:periods.&lt;id&gt;.3&quot; and &quot;failed to load current period: (5) Input/output error&quot;
+- Epoch .2 was readable, epoch .3 (latest_epoch) was not
+- Customer admitted zone name discrepancy between setup and actual usage
+- All radosgw-admin commands failed with same decode error
+FIX STATUS: Fixed in 9.0z2 (build ceph-20.1.0-184). Verified by QE on both multisite and single-site configurations.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce RGW period decode failure after Reef → Tentacle upgrade
+Environment: IBM Ceph 7 (Reef) → 9 (Tentacle 20.1.0-145)
+1. Deploy Ceph 7.x cluster with RGW multisite -- intent: create initial period state
+2. Create realm, zonegroup, and zone with specific naming
+3. Perform period update --commit multiple times to advance period epochs
+4. Upgrade cluster to Ceph 9.0 (Tentacle) -- intent: trigger decode incompatibility
+5. Check RGW daemon status: ceph orch ps -- intent: observe error state
+6. Check RGW logs for &#x27;failed to decode&#x27; and &#x27;failed to load current period&#x27;
+DIAGNOSTIC COMMANDS:
+- rados -p .rgw.root ls | grep periods (list period objects)
+- rados -p .rgw.root get periods.&lt;id&gt;.2 /tmp/period2 (test epoch readability)
+- rados -p .rgw.root get periods.&lt;id&gt;.3 /tmp/period3 (test failing epoch)
+- radosgw-admin period get (will fail with decode error)
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: Verified by QE (Chaithra) on both multisite and single-site with 9.0z0 (fail) and 9.0z2 (pass)
+GAPS: No test for upgrade path with pre-existing zone name mismatches or period encoding edge cases
+SCENARIOS NEEDED:
+- Reef → Tentacle upgrade with multisite period containing multiple epochs
+- Upgrade with zone name containing special characters or naming discrepancies
+- Period decode verification post-upgrade (automated check)
+- Combined OS + Ceph version upgrade path testing
+</pre></div>
 </div>
 
 

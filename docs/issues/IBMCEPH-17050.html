@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17050: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET
-
-ROOT CAUSE:
-- Affected version(s): 8.1z4
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw_mp_lock_max_time = 1800 (30 min) The analysis of earlier provided logs showed:
-- [Prashant Dhange] Summary of the 29th July call :  1) As informed to us during the call, there was an index pool migration activity to move index pool to SSD drives due to which cluster was not healthy and this is the reason for the observed increased latency in RGW operation.
-
-2) The ghost object
-
-FIX STATUS:
-- Current JIRA status: New
-- Workaround: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW ghost object (HEAD=200, GET=404) caused by multipart upload completion exceeding rgw_mp_lock_max_time, creating a lock-expiry race with overlapping CompleteMultipartUpload requests.
+ROOT CAUSE: Multiple overlapping CompleteMultipartUpload requests for the same upload ID ran concurrently. The completion operation took ~104 minutes (far exceeding rgw_mp_lock_max_time=1800s/30min), causing the CLS multipart lock to expire. When the lock expired, a second request acquired it and completed as a fresh overwrite, enqueueing tail objects for GC. The first request eventually completed too, logging &#x27;WARNING: failed to unlock&#x27;. GC later deleted the tail objects, leaving a ghost object (HEAD returns 200 from head object metadata, GET returns 404 because tail objects are gone). A concurrent cluster-wide latency event (index pool migration) caused the extreme completion times that exposed this known race (IBMCEPH-13341).
+KEY EVIDENCE:
+- CompleteMultipartUpload took 1h43m (6239s) -- far exceeding 1800s lock timeout
+- 9 CompleteMultipartUpload requests sent within 6 minutes for same object
+- &#x27;WARNING: failed to unlock&#x27; in RGW logs -- confirms lock race
+- Object accessible at 22:16 (GET 206), ghost at 23:13 (GET 404, HEAD 200)
+- Cluster-wide latency spikes: bucket listings taking ~6850s
+- &#x27;Scheduling request failed with -2218&#x27; -- RGW saturation
+- Root cause: index pool migration activity caused cluster instability
+- Version: IBM Ceph 8.1z4
+- Related: IBMCEPH-13341 (known ghost object race condition)
+FIX STATUS: Under investigation. The known fix for IBMCEPH-13341 was NOT installed on this cluster. Customer was using workaround (rgw_mp_lock_max_time=1800). The fix needs to be applied. Complete RGW daemon logs were not available for definitive RCA -- customer asked to collect full logs on future occurrence.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET
-Environment: IBM Ceph 8.1z4, component: rgw
-
-1. Deploy IBM Ceph 8.1z4 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ghost object from overlapping CompleteMultipartUpload with lock expiry.
+Environment: IBM Ceph 8.1z4 WITHOUT IBMCEPH-13341 hotfix
+1. Set rgw_mp_lock_max_time 1800 -- intent: establish timeout that can be exceeded
+2. Initiate multipart upload for a single object -- intent: create upload
+3. Upload one part -- intent: complete part upload
+4. Inject RGW/OSD latency (e.g., throttle bucket index pool) -- intent: make completion slow
+5. Send multiple concurrent CompleteMultipartUpload requests -- intent: trigger race
+6. Wait for GC cycle -- intent: allow tail object deletion
+7. Verify HEAD returns 200 but GET returns 404 -- intent: confirm ghost object
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket check --fix -- detect ghost objects
+- radosgw-admin bucket radoslist vs bucket list -- gap detection
+- grep &#x27;failed to unlock&#x27; /var/log/ceph/ceph-client.rgw* -- identify races
+- ceph health detail -- check for OSD/latency warnings</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Known issue (IBMCEPH-13341) with existing fix. This occurrence was on a cluster without the fix applied.
+GAPS: No automated test simulates slow CompleteMultipartUpload with concurrent completion requests. No test validates ghost object detection tools (radosgw-admin bucket check).
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+- Concurrent CompleteMultipartUpload with artificial OSD latency injection
+- Verify IBMCEPH-13341 fix prevents ghost creation under same conditions
+- Validate gap detection tooling (radosgw-admin bucket check) finds ghost objects</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,40 +238,46 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW ghost object (HEAD=200, GET=404) caused by multipart upload completion exceeding rgw_mp_lock_max_time, creating a lock-expiry race with overlapping CompleteMultipartUpload requests.</div>
+<div>ROOT CAUSE: Multiple overlapping CompleteMultipartUpload requests for the same upload ID ran concurrently. The completion operation took ~104 minutes (far exceeding rgw_mp_lock_max_time=1800s/30min), causing the CLS multipart lock to expire. When the lock expired, a second request acquired it and completed as a fresh overwrite, enqueueing tail objects for GC. The first request eventually completed too, logging &#x27;WARNING: failed to unlock&#x27;. GC later deleted the tail objects, leaving a ghost object (HEAD returns 200 from head object metadata, GET returns 404 because tail objects are gone). A concurrent cluster-wide latency event (index pool migration) caused the extreme completion times that exposed this known race (IBMCEPH-13341).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z4</li>
-<li>Component: rgw</li>
+<li>CompleteMultipartUpload took 1h43m (6239s) -- far exceeding 1800s lock timeout</li>
+<li>9 CompleteMultipartUpload requests sent within 6 minutes for same object</li>
+<li>&#x27;WARNING: failed to unlock&#x27; in RGW logs -- confirms lock race</li>
+<li>Object accessible at 22:16 (GET 206), ghost at 23:13 (GET 404, HEAD 200)</li>
+<li>Cluster-wide latency spikes: bucket listings taking ~6850s</li>
+<li>&#x27;Scheduling request failed with -2218&#x27; -- RGW saturation</li>
+<li>Root cause: index pool migration activity caused cluster instability</li>
+<li>Version: IBM Ceph 8.1z4</li>
+<li>Related: IBMCEPH-13341 (known ghost object race condition)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Under investigation. The known fix for IBMCEPH-13341 was NOT installed on this cluster. Customer was using workaround (rgw_mp_lock_max_time=1800). The fix needs to be applied. Complete RGW daemon logs were not available for definitive RCA -- customer asked to collect full logs on future occurrence.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ghost object from overlapping CompleteMultipartUpload with lock expiry.</div>
+<div>Environment: IBM Ceph 8.1z4 WITHOUT IBMCEPH-13341 hotfix</div>
 <ul>
-<li>[Prashant Dhange] This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw_mp_lock_max_time = 1800 (30 min) The analysis of earlier provided logs showed:</li>
-<li>[Prashant Dhange] Summary of the 29th July call :  1) As informed to us during the call, there was an index pool migration activity to move index pool to SSD drives due to which cluster was not healthy and this is the reason for the observed increased latency in RGW operation.</li>
+<li><span class="step-num">1.</span> Set rgw_mp_lock_max_time 1800 -- intent: establish timeout that can be exceeded</li>
+<li><span class="step-num">2.</span> Initiate multipart upload for a single object -- intent: create upload</li>
+<li><span class="step-num">3.</span> Upload one part -- intent: complete part upload</li>
+<li><span class="step-num">4.</span> Inject RGW/OSD latency (e.g., throttle bucket index pool) -- intent: make completion slow</li>
+<li><span class="step-num">5.</span> Send multiple concurrent CompleteMultipartUpload requests -- intent: trigger race</li>
+<li><span class="step-num">6.</span> Wait for GC cycle -- intent: allow tail object deletion</li>
+<li><span class="step-num">7.</span> Verify HEAD returns 200 but GET returns 404 -- intent: confirm ghost object</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li><span class="step-num">2.</span> The ghost object</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: New</li>
-<li>Workaround: This issue was raised as a Sev-1 for a ghost object issue ( HEAD=200 ,  GET=404 ) on a cluster that did not have the  IBMCEPH-13341  hotfix installed. The cluster was running with the workaround:  rgw</li>
+<li><code>radosgw-admin bucket check --fix -- detect ghost objects</code></li>
+<li><code>radosgw-admin bucket radoslist vs bucket list -- gap detection</code></li>
+<li>grep &#x27;failed to unlock&#x27; /var/log/ceph/ceph-client.rgw* -- identify races</li>
+<li><code>ceph health detail -- check for OSD/latency warnings</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- For Successful MultipartComplete object, HEAD succeeds but can&#x27;t be retrieved with GET</div>
-<div>Environment: IBM Ceph 8.1z4, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z4 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: For Successful MultipartComplete object</code>, HEAD succeeds but can&#x27;t be retrieved with GET</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Known issue (IBMCEPH-13341) with existing fix. This occurrence was on a cluster without the fix applied.</div>
+<div>GAPS: No automated test simulates slow CompleteMultipartUpload with concurrent completion requests. No test validates ghost object detection tools (radosgw-admin bucket check).</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li>Concurrent CompleteMultipartUpload with artificial OSD latency injection</li>
+<li>Verify IBMCEPH-13341 fix prevents ghost creation under same conditions</li>
+<li>Validate gap detection tooling (<code>radosgw-admin bucket check) finds ghost objects</code></li>
 </ul></div>
 </div>
 

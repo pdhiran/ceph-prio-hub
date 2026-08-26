@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13193: [BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but it doesn’t provide creation dates when the radosgw admin API is used</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but it doesn’t provide creation dates when the radosgw admin API is used
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: rgw
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] could you please share the commit id/link? if patch is already in branch, please move the Jira to right state.  cc
-- [Bipin Kunal] please check if the fix is in higher versions as well.
-- [Justin Caratzas] I can’t find this in  ceph-9.2-rhel-patches , please advise
-
-FIX STATUS:
-- Fix available</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: radosgw-admin user info API (/admin/user) missing create_date field that CLI provides.
+ROOT CAUSE: The Admin REST API uses a separate dump_user_info() function that was not updated when account-related fields (account_id, path, create_date, tags, group_ids) were added to RGWUserInfo::dump(). The CLI uses the full dump which includes create_date, but the API path omits it. This was fixed upstream in commit 2f7a94c71d32 by Casey Bodley (Jan 2025) which adds the missing encode_json calls for account_id, path, create_date, tags, and group_ids to dump_user_info().
+KEY EVIDENCE:
+- Version: 19.2.1-245.0.hotfix.BYOK.el9cp (Squid/8.1)
+- Fix commit: 2f7a94c71d32 (upstream, available from 9.0 onward via rebase)
+- Cherry-picked to ceph-8.1-rhel branch by Jiffin Tony Thottan
+- Confirmed present in ceph-9.2-rhel-patches
+- Status: ON_QA
+FIX STATUS: Fixed. Present in 9.0+ (upstream rebase) and backported to 8.1. Currently ON_QA for tracking purposes.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but it doesn’t provide creation dates when the radosgw admin API is used
-Environment: IBM Ceph 8.1, component: rgw
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify create_date appears in both CLI and API user info output
+Environment: IBM Ceph 8.1 (with fix) or 9.x
+1. Create RGW user: radosgw-admin user create --uid=testuser --display-name=&#x27;Test&#x27; -- intent: create test user
+2. CLI check: radosgw-admin user info --uid=testuser | grep create_date -- intent: verify CLI has it
+3. API check: curl http://&lt;rgw&gt;/admin/user?uid=testuser (with admin credentials) -- intent: verify API has it
+4. Compare both outputs for create_date field -- intent: confirm parity
+DIAGNOSTIC COMMANDS:
+- radosgw-admin user info --uid=&lt;uid&gt;
+- curl -s &#x27;http://&lt;rgw&gt;/admin/user?uid=&lt;uid&gt;&amp;format=json&#x27; (with proper auth)
+- ceph versions (verify build includes fix)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix available. QA validation required.
-
-GAPS:
-- Existing rgw tests may not cover: [BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but 
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix is ON_QA. Needs QE verification that API response includes create_date.
+GAPS: Need to verify create_date field appears correctly in Admin API response after fix.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. Verify create_date in API response for newly created user
+2. Verify create_date in API response for pre-existing user (upgrade scenario)
+3. Verify all 5 added fields (account_id, path, create_date, tags, group_ids) appear in API</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,37 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but it doesn’t provide creation dates when the radosgw admin API is used</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">radosgw-admin user info API (/admin/user) missing create_date field that CLI provides.</div>
+<div>ROOT CAUSE: The Admin REST API uses a separate dump_user_info() function that was not updated when account-related fields (account_id, path, create_date, tags, group_ids) were added to RGWUserInfo::dump(). The CLI uses the full dump which includes create_date, but the API path omits it. This was fixed upstream in commit 2f7a94c71d32 by Casey Bodley (Jan 2025) which adds the missing encode_json calls for account_id, path, create_date, tags, and group_ids to dump_user_info().</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw</li>
+<li>Version: 19.2.1-245.0.hotfix.BYOK.el9cp (Squid/8.1)</li>
+<li>Fix commit: 2f7a94c71d32 (upstream, available from 9.0 onward via rebase)</li>
+<li>Cherry-picked to ceph-8.1-rhel branch by Jiffin Tony Thottan</li>
+<li>Confirmed present in ceph-9.2-rhel-patches</li>
+<li>Status: ON_QA</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed. Present in 9.0+ (upstream rebase) and backported to 8.1. Currently ON_QA for tracking purposes.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify create_date appears in both CLI and API user info output</div>
+<div>Environment: IBM Ceph 8.1 (with fix) or 9.x</div>
 <ul>
-<li>[Bipin Kunal] could you please share the commit id/link? if patch is already in branch, please move the Jira to right state.  cc</li>
-<li>[Bipin Kunal] please check if the fix is in higher versions as well.</li>
-<li>[Justin Caratzas] I can’t find this in  ceph-9.2-rhel-patches , please advise</li>
+<li><span class="step-num">1.</span> Create RGW user: <code>radosgw-admin user create --uid=testuser --display-name=&#x27;Test&#x27; -- intent: create test user</code></li>
+<li><span class="step-num">2.</span> CLI check: <code>radosgw-admin user info --uid=testuser | grep create_date -- intent: verify CLI has it</code></li>
+<li><span class="step-num">3.</span> API check: <code>curl http://&lt;rgw&gt;/admin/user?uid=testuser (with admin credentials) -- intent: verify API has it</code></li>
+<li><span class="step-num">4.</span> Compare both outputs for create_date field -- intent: confirm parity</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Fix available</li>
+<li><code>radosgw-admin user info --uid=&lt;uid&gt;</code></li>
+<li><code>curl -s &#x27;http://&lt;rgw&gt;/admin/user?uid=&lt;uid&gt;&amp;format=json&#x27; (with proper auth)</code></li>
+<li><code>ceph versions (verify build includes fix)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but it doesn’t provide creation dates when the radosgw admin API is used</div>
-<div>Environment: IBM Ceph 8.1, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix available. QA validation required.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: [BUG] (ISCE-1319)The RGW user key listing currently provide creation dates when the CLI is used but</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix is ON_QA. Needs QE verification that API response includes create_date.</div>
+<div>GAPS: Need to verify create_date field appears correctly in Admin API response after fix.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Verify create_date in API response for newly created user</li>
+<li><span class="step-num">2.</span> Verify create_date in API response for pre-existing user (upgrade scenario)</li>
+<li><span class="step-num">3.</span> Verify all 5 added fields (account_id, path, create_date, tags, group_ids) appear in API</li>
 </ul></div>
 </div>
 

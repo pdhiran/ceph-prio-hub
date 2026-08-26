@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13496: Cephadm Agent : `cephadm ceph-volume` failed: Cannot decode JSON:</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm Agent : `cephadm ceph-volume` failed: Cannot decode JSON:
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Swati Thombe] Hi   I attempted to reproduce the reported issue; however, it is  not reproducible in the current setup . Steps Performed and Config we have in our setup(sharing snippet) Enabled debugging ceph config set mgr mgr/cephadm/log_level debug Enabled cephadm agent mode ceph config set
-- [Swati Thombe] Hi    We are closing this case for now due to a lack of required information. If the issue is observed again in the customer environment, please collect and share the following details: ceph-volume Inventory Output The command output should be collected from the node on which inv
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: `cephadm ceph-volume` fails with JSON decode error (&#x27;Expecting value: line 1 column 1&#x27;) when cephadm agent is enabled, indicating empty output from ceph-volume inventory.
+ROOT CAUSE: Not reproducible. When cephadm agent is enabled, the MGR periodically runs `cephadm ceph-volume inventory` on each host. On some hosts, the command returns empty output instead of valid JSON, causing `json.loads(&#x27;&#x27;)` to fail with JSONDecodeError at `serve.py:1925`. The empty output could be caused by: (1) ceph-volume process being killed mid-execution, (2) container startup failure, (3) resource exhaustion, or (4) network/SSH issues between MGR and the host. Customer disabled cephadm agent before investigation could complete.
+KEY EVIDENCE:
+- Error: &#x27;json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)&#x27;
+- Stack: serve.py:1925 -&gt; json.loads(&#x27;&#x27;.join(out))
+- Affected hosts: cephnode1387, cephnode1033 (in a 10K-node cluster)
+- Not reproducible in lab environment
+- Filed separately from IBMCEPH-13320 (TLS drops)
+FIX STATUS: Closed as &#x27;not a bug&#x27;. Not reproducible. If recurs, collect: `cephadm ceph-volume inventory --format=json-pretty` from affected node, sosreport, `ceph log last debug cephadm`.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephadm Agent : `cephadm ceph-volume` failed: Cannot decode JSON:
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Customer has removed the Cephadm agent from the environment and not ready to share further logs. We will have to reproduce the issue at IBM side, if required need to involve QE team for the same.</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce ceph-volume JSON decode failure
+Environment: IBM Ceph 8.1 with cephadm agent enabled, large-scale cluster
+1. Enable cephadm agent: `ceph config set mgr mgr/cephadm/use_agent true` -- intent: activate agent mode
+2. Enable debug logging: `ceph config set mgr mgr/cephadm/log_level debug` -- intent: capture verbose output
+3. Monitor for JSON errors: `ceph log last debug cephadm | grep &#x27;Cannot decode JSON&#x27;` -- intent: detect failures
+4. On affected host, manually run: `cephadm ceph-volume inventory --format=json-pretty` -- intent: verify direct execution works
+DIAGNOSTIC COMMANDS:
+- `cephadm ceph-volume inventory` on affected host -- test direct execution
+- `ceph log last debug cephadm` -- check for JSON errors
+- `journalctl -u cephadm` on affected host -- check agent logs</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: Cephadm Agent : `cephadm ceph-volume` failed: Cannot decode JSON:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Not reproducible. Closed as not a bug.
+GAPS: No test for ceph-volume inventory under concurrent agent access. No test for empty output handling in _run_cephadm_json.
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- ceph-volume inventory under resource pressure (high CPU/memory)
+- Concurrent ceph-volume inventory calls (simulating agent + manual)
+- Error handling for empty/malformed ceph-volume output in serve.py</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,39 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm Agent : `cephadm ceph-volume` failed: Cannot decode JSON:</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">`cephadm ceph-volume` fails with JSON decode error (&#x27;Expecting value: line 1 column 1&#x27;) when cephadm agent is enabled, indicating empty output from ceph-volume inventory.</div>
+<div>ROOT CAUSE: Not reproducible. When cephadm agent is enabled, the MGR periodically runs <code>cephadm ceph-volume inventory</code> on each host. On some hosts, the command returns empty output instead of valid JSON, causing <code>json.loads(&#x27;&#x27;)</code> to fail with JSONDecodeError at <code>serve.py:1925</code>. The empty output could be caused by: (1) ceph-volume process being killed mid-execution, (2) container startup failure, (3) resource exhaustion, or (4) network/SSH issues between MGR and the host. Customer disabled cephadm agent before investigation could complete.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephadm</li>
+<li>Error: &#x27;json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)&#x27;</li>
+<li>Stack: serve.py:1925 -&gt; json.loads(&#x27;&#x27;.join(out))</li>
+<li>Affected hosts: cephnode1387, cephnode1033 (in a 10K-node cluster)</li>
+<li>Not reproducible in lab environment</li>
+<li>Filed separately from IBMCEPH-13320 (TLS drops)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;not a bug&#x27;. Not reproducible. If recurs, collect: <code>cephadm ceph-volume inventory --format=json-pretty</code> from affected node, sosreport, <code>ceph log last debug cephadm</code>.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce ceph-volume JSON decode failure</div>
+<div>Environment: IBM Ceph 8.1 with cephadm agent enabled, large-scale cluster</div>
 <ul>
-<li>[Swati Thombe] Hi   I attempted to reproduce the reported issue; however, it is  not reproducible in the current setup . Steps Performed and Config we have in our setup(sharing snippet) Enabled debugging <code>ceph config set mgr mgr/cephadm/log_level debug Enabled cephadm agent mode ceph config set</code></li>
-<li>[Swati Thombe] Hi    We are closing this case for now due to a lack of required information. If the issue is observed again in the customer environment, please collect and share the following details: ceph-volume Inventory Output The command output should be collected from the node on which inv</li>
+<li><span class="step-num">1.</span> Enable <code>cephadm agent:</code><code><code>ceph config set mgr mgr/cephadm/use_agent true</code></code> -- intent: activate agent mode</li>
+<li><span class="step-num">2.</span> Enable debug logging: <code><code>ceph config set mgr mgr/cephadm/log_level debug</code></code> -- intent: capture verbose output</li>
+<li><span class="step-num">3.</span> Monitor for JSON errors: <code><code>ceph log last debug cephadm | grep &amp;#x27;Cannot decode JSON&amp;#x27;</code></code> -- intent: detect failures</li>
+<li><span class="step-num">4.</span> On affected host, manually run: <code><code>cephadm ceph-volume inventory --format=json-pretty</code></code> -- intent: verify direct execution works</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code><code>cephadm ceph-volume inventory</code></code> on affected host -- test direct execution</li>
+<li><code><code>ceph log last debug cephadm</code></code> -- check for JSON errors</li>
+<li><code><code>journalctl -u cephadm</code></code> on affected host -- check agent logs</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephadm Agent : <code>cephadm ceph-volume</code> failed: Cannot decode JSON:</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Customer has removed the Cephadm agent from the environment and not ready to share further logs. We will have to reproduce the issue at IBM side, if required need to involve QE team for the same.</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: Cephadm Agent :</code><code><code>cephadm ceph-volume</code></code> failed: Cannot decode JSON:</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Not reproducible. Closed as not a bug.</div>
+<div>GAPS: No test for ceph-volume inventory under concurrent agent access. No test for empty output handling in _run_cephadm_json.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>ceph-volume inventory under resource pressure (high CPU/memory)</li>
+<li>Concurrent ceph-volume inventory calls (simulating agent + manual)</li>
+<li>Error handling for empty/malformed ceph-volume output in serve.py</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13413: SSE-S3 not working with vault secret engine set to key value</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,33 +189,38 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SSE-S3 not working with vault secret engine set to key value
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: rgw
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SSE-S3 encryption with Vault KV secret engine returns HTTP 400 because only transit engine is supported for SSE-S3.
+ROOT CAUSE: The RGW source code (rgw_kms.cc) functions create_bucket_key and remove_sse_s3_bucket_key only support the Vault transit secret engine. When KV is configured, both functions fall through to the else branch and return -EINVAL with &#x27;Missing or invalid secret engine&#x27; without contacting Vault. This is by design: SSE-S3 requires the RGW to generate and manage keys dynamically (which transit supports), while KV only stores pre-existing keys (appropriate for SSE-KMS where the client supplies the key ID). The IBM documentation incorrectly suggests KV works for SSE-S3.
+KEY EVIDENCE:
+- Version: 19.2.0-98.el9cp (IBM Ceph 8.0)
+- Marcus Watts (engineer) confirmed: &#x27;SSE-s3 only supports transit and it would not make sense to support kv&#x27;
+- SSE-KMS originally only supported KV; transit added later as recommended choice
+- KV is only kept for existing SSE-KMS deployments
+- Documentation needs correction
+FIX STATUS: Not a bug -- by design. Documentation should be updated to clarify SSE-S3 only supports transit engine. Workaround: use transit secret engine for SSE-S3.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- SSE-S3 not working with vault secret engine set to key value
-Environment: IBM Ceph 8.0, component: rgw
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify SSE-S3 behavior with transit vs KV vault secret engine
+Environment: IBM Ceph 8.0+ with HashiCorp Vault
+1. Configure Vault with KV v2 secret engine -- intent: set up unsupported config
+2. Configure RGW: rgw_crypt_vault_secret = kv, rgw_crypt_s3_kms_backend = vault -- intent: reproduce error
+3. Attempt SSE-S3 PUT: aws s3 cp file s3://bucket/ --sse aws:kms -- intent: trigger HTTP 400
+4. Reconfigure with transit engine -- intent: verify correct behavior
+5. Retry same PUT operation -- intent: confirm success
+DIAGNOSTIC COMMANDS:
+- ceph config get client.rgw rgw_crypt_vault_secret
+- ceph config get client.rgw rgw_crypt_s3_kms_backend
+- grep &#x27;Missing or invalid secret engine&#x27; /var/log/ceph/ceph-client.rgw*.log</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw tests may not cover: SSE-S3 not working with vault secret engine set to key value
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Test likely exists for SSE-S3 with transit but documentation-code mismatch is the issue.
+GAPS: No negative test verifies that KV engine is properly rejected with clear error for SSE-S3. Documentation testing gap.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. Positive: SSE-S3 with vault transit engine succeeds
+2. Negative: SSE-S3 with vault KV engine returns clear error (not crash)
+3. Positive: SSE-KMS with vault KV engine still works (backward compat)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -226,31 +231,39 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SSE-S3 not working with vault secret engine set to key value</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SSE-S3 encryption with Vault KV secret engine returns HTTP 400 because only transit engine is supported for SSE-S3.</div>
+<div>ROOT CAUSE: The RGW source code (rgw_kms.cc) functions create_bucket_key and remove_sse_s3_bucket_key only support the Vault transit secret engine. When KV is configured, both functions fall through to the else branch and return -EINVAL with &#x27;Missing or invalid secret engine&#x27; without contacting Vault. This is by design: SSE-S3 requires the RGW to generate and manage keys dynamically (which transit supports), while KV only stores pre-existing keys (appropriate for SSE-KMS where the client supplies the key ID). The IBM documentation incorrectly suggests KV works for SSE-S3.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: rgw</li>
+<li>Version: 19.2.0-98.el9cp (IBM Ceph 8.0)</li>
+<li>Marcus Watts (engineer) confirmed: &#x27;SSE-s3 only supports transit and it would not make sense to support kv&#x27;</li>
+<li>SSE-KMS originally only supported KV; transit added later as recommended choice</li>
+<li>KV is only kept for existing SSE-KMS deployments</li>
+<li>Documentation needs correction</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Not a bug -- by design. Documentation should be updated to clarify SSE-S3 only supports transit engine. Workaround: use transit secret engine for SSE-S3.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify SSE-S3 behavior with transit vs KV vault secret engine</div>
+<div>Environment: IBM Ceph 8.0+ with HashiCorp Vault</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- SSE-S3 not working with vault secret engine set to key value</div>
-<div>Environment: IBM Ceph 8.0, component: rgw</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rgw tests may not cover: SSE-S3 not working with vault secret engine set to key value</code></li>
+<li><span class="step-num">1.</span> Configure Vault with KV v2 secret engine -- intent: set up unsupported config</li>
+<li><span class="step-num">2.</span> Configure RGW: rgw_crypt_vault_secret = kv, rgw_crypt_s3_kms_backend = vault -- intent: reproduce error</li>
+<li><span class="step-num">3.</span> Attempt SSE-S3 PUT: aws s3 cp file s3://bucket/ --sse aws:kms -- intent: trigger HTTP 400</li>
+<li><span class="step-num">4.</span> Reconfigure with transit engine -- intent: verify correct behavior</li>
+<li><span class="step-num">5.</span> Retry same PUT operation -- intent: confirm success</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config get client.rgw rgw_crypt_vault_secret</code></li>
+<li><code>ceph config get client.rgw rgw_crypt_s3_kms_backend</code></li>
+<li>grep &#x27;Missing or invalid secret engine&#x27; /var/log/ceph/ceph-client.rgw*.log</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Test likely exists for SSE-S3 with transit but documentation-code mismatch is the issue.</div>
+<div>GAPS: No negative test verifies that KV engine is properly rejected with clear error for SSE-S3. Documentation testing gap.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Positive: SSE-S3 with vault transit engine succeeds</li>
+<li><span class="step-num">2.</span> Negative: SSE-S3 with vault KV engine returns clear error (not crash)</li>
+<li><span class="step-num">3.</span> Positive: SSE-KMS with vault KV engine still works (backward compat)</li>
 </ul></div>
 </div>
 

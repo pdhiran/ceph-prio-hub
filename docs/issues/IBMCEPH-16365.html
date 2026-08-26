@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16365: [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,33 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
-
-ROOT CAUSE:
-- Daemon crash reported in cephfs.
-- Affected version(s): 8.1
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Vivek Maurya] This is only for discussing need core dump for final RCA: Crash: &quot;assert_msg&quot;: &quot;/builddir/build/BUILD/ceph-19.2.1/src/mds/MDCache.h: In function &#x27;void MDCache::remove_replay_cap_reconnect(inodeno_t, client_t)&#x27; thread 7fe3bea3a640 time 2026-05-27T03:03:09.398913+0000\n/builddir/bu
-- [Vivek Maurya] Update: The initial analysis by Vivek correctly identified that the crash is occurring in the capability reconnect replay path and highlighted the key observation that multiple client reconnect entries may exist for the same inode during MDS recovery. Based on further review of
-- [Bipin Kunal] Upstream PR not yet merged, Moving this out of 9.2. We will plan it for z-stream. Please prioritize the fix in upstream.
-
-FIX STATUS:
-- Current JIRA status: POST</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MDS crash in cap_imports assertion during client reconnect replay -- the original tracking issue for IBMCEPH-17490 and IBMCEPH-17491.
+ROOT CAUSE: The remove_replay_cap_reconnect() function in MDCache.h:681 asserts cap_imports[ino].size() == 1 then calls cap_imports.erase(ino). During MDS restart, multiple clients (client_A and client_B) may hold caps on the same inode, creating entries cap_imports[ino][client_A] and cap_imports[ino][client_B]. When one client&#x27;s journal replay finishes, the assertion fails because size() is 2, not 1. The upstream fix removes only the specific client entry rather than the entire inode entry, and deletes the inode key only when no entries remain.
+KEY EVIDENCE:
+- Detailed code analysis by Vivek Maurya confirming multi-client cap_imports scenario
+- Assertion at MDCache.h:681 in remove_replay_cap_reconnect()
+- 10 crashes across MDS ranks a and b between May 27 and June 28, 2026
+- VMware/ODF deployment with odf-operator.v4.20.2
+- IBM case TS022492417
+- PR opened upstream (referenced in comment 2026-07-07)
+- Upstream PR not yet merged; moved out of 9.2 to z-stream
+FIX STATUS: Upstream PR exists but not yet merged. Moved out of 9.2 by Bipin Kunal (2026-08-12). Backport tickets: IBMCEPH-17490 (9.1z) and IBMCEPH-17491 (8.1z).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
-Environment: IBM Ceph 8.1, component: cephfs
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce MDS assertion crash with multiple clients holding caps on same inode during MDS restart.
+Environment: IBM Ceph 8.1 or 9.1 with CephFS, 2 active MDS ranks.
+See IBMCEPH-17491 for detailed steps.
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new / ceph crash info &lt;id&gt;
+- ceph daemon mds.&lt;name&gt; session ls
+- ceph daemon mds.&lt;name&gt; dump_mds_cache</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n
-
-SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test coverage. See IBMCEPH-17491 for full gap analysis and needed scenarios.
+GAPS: Same as IBMCEPH-17491.
+SCENARIOS NEEDED: Same as IBMCEPH-17491.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,43 +226,31 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MDS crash in cap_imports assertion during client reconnect replay -- the original tracking issue for IBMCEPH-17490 and IBMCEPH-17491.</div>
+<div>ROOT CAUSE: The remove_replay_cap_reconnect() function in MDCache.h:681 asserts cap_imports[ino].size() == 1 then calls cap_imports.erase(ino). During MDS restart, multiple clients (client_A and client_B) may hold caps on the same inode, creating entries cap_imports[ino][client_A] and cap_imports[ino][client_B]. When one client&#x27;s journal replay finishes, the assertion fails because size() is 2, not 1. The upstream fix removes only the specific client entry rather than the entire inode entry, and deletes the inode key only when no entries remain.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in cephfs.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephfs</li>
+<li>Detailed code analysis by Vivek Maurya confirming multi-client cap_imports scenario</li>
+<li>Assertion at MDCache.h:681 in remove_replay_cap_reconnect()</li>
+<li>10 crashes across MDS ranks a and b between May 27 and June 28, 2026</li>
+<li>VMware/ODF deployment with odf-operator.v4.20.2</li>
+<li>IBM case TS022492417</li>
+<li>PR opened upstream (referenced in comment 2026-07-07)</li>
+<li>Upstream PR not yet merged; moved out of 9.2 to z-stream</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Upstream PR exists but not yet merged. Moved out of 9.2 by Bipin Kunal (2026-08-12). Backport tickets: IBMCEPH-17490 (9.1z) and IBMCEPH-17491 (8.1z).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce MDS assertion crash with multiple clients holding caps on same inode during MDS restart.</div>
+<div>Environment: IBM Ceph 8.1 or 9.1 with CephFS, 2 active MDS ranks.</div>
+<div>See IBMCEPH-17491 for detailed steps.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Vivek Maurya] This is only for discussing need core dump for final RCA: Crash: &quot;assert_msg&quot;: &quot;/builddir/build/BUILD/ceph-19.2.1/src/mds/MDCache.h: In function &#x27;void MDCache::remove_replay_cap_reconnect(inodeno_t, client_t)&#x27; thread 7fe3bea3a640 time 2026-05-27T03:03:09.398913+0000\n/builddir/bu</li>
-<li>[Vivek Maurya] Update: The initial analysis by Vivek correctly identified that the crash is occurring in the capability reconnect replay path and highlighted the key observation that multiple client reconnect entries may exist for the same inode during MDS recovery. Based on further review of</li>
-<li>[Bipin Kunal] Upstream PR not yet merged, Moving this out of 9.2. We will plan it for z-stream. Please prioritize the fix in upstream.</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: POST</li>
+<li><code>ceph crash ls-new / ceph crash info &lt;id&gt;</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; session ls</code></li>
+<li><code>ceph daemon mds.&lt;name&gt; dump_mds_cache</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</div>
-<div>Environment: IBM Ceph 8.1, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: [FDF]MDS crashed multiple times with FAILED ceph_assert(cap_imports[ino].size() == 1)\n</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test coverage. See IBMCEPH-17491 for full gap analysis and needed scenarios.</div>
+<div>GAPS: Same as IBMCEPH-17491.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-17491.</div></div>
 </div>
 
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14403: Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()
-
-ROOT CAUSE:
-- Daemon crash reported in rados.
-- Affected version(s): 9.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Hemanth Kumar Y J] Core dump of one of the OSD uploaded here  :
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD crash loop during startup due to missing OSDMap epoch causing assert failure in prime_merges().
+ROOT CAUSE: During OSD::init(), the OSD calls OSDShard::prime_merges() which needs to load a historical OSDMap (epoch 7455). The OSD&#x27;s local OSDMap store returns 0 bytes for that epoch, meaning the map was either never persisted, was trimmed prematurely, or was corrupted. The code path in OSD.h:689 calls get_map(epoch_t) which asserts on the returned pointer (ceph_assert(ret)), causing an immediate abort. All OSDs on node bruuni010 are affected, entering a crash-restart loop. The missing map epoch is needed to determine PG merge state for PGs that were split/merged around that epoch.
+KEY EVIDENCE:
+- Crash in OSDShard::prime_merges() -&gt; OSD::init() -&gt; OSDService::get_map(epoch_t)
+- Error: &#x27;osd.0 7496 failed to load OSD map for epoch 7455, got 0 bytes&#x27;
+- Assert: FAILED ceph_assert(ret) at OSD.h:689
+- Version: ceph 20.2.1-252.el9cp (Tentacle 9.1)
+- All OSDs on bruuni010 affected
+- Core dump uploaded
+FIX STATUS: Status &#x27;new&#x27;. No engineering response yet. Core dump available for analysis. Assigned to Prashant Dhange. Potential fix: graceful handling of missing historical OSDMaps during prime_merges instead of hard assert.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()
-Environment: IBM Ceph 9.1, component: rados
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Trigger the failure scenario (see engineering findings below)
-5. Check for daemon crash -- `ceph crash ls-new`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce OSD crash on startup due to missing OSDMap epoch in prime_merges context
+Environment: IBM Ceph 9.1 (20.2.1-252.el9cp, Tentacle)
+1. Deploy cluster and run workload to advance OSDMap epochs -- intent: create map history
+2. Trigger PG split/merge by adjusting pg_num -- intent: create merge state
+3. Identify the OSDMap epoch needed by prime_merges from OSD logs -- intent: find target epoch
+4. Corrupt or remove the specific OSDMap epoch from OSD&#x27;s local store -- intent: simulate missing map
+5. Restart OSD -- intent: trigger crash in prime_merges
+DIAGNOSTIC COMMANDS:
+- ceph-objectstore-tool --data-path /var/lib/ceph/osd/ceph-&lt;id&gt; --op list-omap --pgid &lt;meta_pgid&gt;
+- journalctl -u ceph-osd@&lt;id&gt; --since &#x27;5 min ago&#x27;
+- ceph osd dump | grep epoch
+- ceph report</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- No crash regression test for: Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test covers missing historical OSDMap during OSD startup with active PG merges.
+GAPS: OSD startup tests likely don&#x27;t simulate corrupted/missing OSDMap epochs. prime_merges() is only exercised when PG merge history exists.
 SCENARIOS NEEDED:
-- Stability: reproduce conditions, verify no crash
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. OSD startup with trimmed OSDMap store that still has pending PG merge references
+2. OSD startup after partial MonStore data loss
+3. Verify graceful degradation (skip merge priming) instead of hard assert when map is missing</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,40 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD crash loop during startup due to missing OSDMap epoch causing assert failure in prime_merges().</div>
+<div>ROOT CAUSE: During OSD::init(), the OSD calls OSDShard::prime_merges() which needs to load a historical OSDMap (epoch 7455). The OSD&#x27;s local OSDMap store returns 0 bytes for that epoch, meaning the map was either never persisted, was trimmed prematurely, or was corrupted. The code path in OSD.h:689 calls get_map(epoch_t) which asserts on the returned pointer (ceph_assert(ret)), causing an immediate abort. All OSDs on node bruuni010 are affected, entering a crash-restart loop. The missing map epoch is needed to determine PG merge state for PGs that were split/merged around that epoch.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Daemon crash reported in rados.</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: rados</li>
+<li>Crash in OSDShard::prime_merges() -&gt; OSD::init() -&gt; OSDService::get_map(epoch_t)</li>
+<li>Error: &#x27;osd.0 7496 failed to load OSD map for epoch 7455, got 0 bytes&#x27;</li>
+<li>Assert: FAILED ceph_assert(ret) at OSD.h:689</li>
+<li>Version: <code>ceph 20.2.1-252.el9cp (Tentacle 9.1)</code></li>
+<li>All OSDs on bruuni010 affected</li>
+<li>Core dump uploaded</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Status &#x27;new&#x27;. No engineering response yet. Core dump available for analysis. Assigned to Prashant Dhange. Potential fix: graceful handling of missing historical OSDMaps during prime_merges instead of hard assert.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce OSD crash on startup due to missing OSDMap epoch in prime_merges context</div>
+<div>Environment: IBM Ceph 9.1 (20.2.1-252.el9cp, Tentacle)</div>
 <ul>
-<li>[Hemanth Kumar Y J] Core dump of one of the OSD uploaded here  :</li>
+<li><span class="step-num">1.</span> Deploy cluster and run workload to advance OSDMap epochs -- intent: create map history</li>
+<li><span class="step-num">2.</span> Trigger PG split/merge by adjusting pg_num -- intent: create merge state</li>
+<li><span class="step-num">3.</span> Identify the OSDMap epoch needed by prime_merges from OSD logs -- intent: find target epoch</li>
+<li><span class="step-num">4.</span> Corrupt or remove the specific OSDMap epoch from OSD&#x27;s local store -- intent: simulate missing map</li>
+<li><span class="step-num">5.</span> Restart OSD -- intent: trigger crash in prime_merges</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li>ceph-objectstore-tool --data-path /var/lib/ceph/osd/ceph-&lt;id&gt; --op list-omap --pgid &lt;meta_pgid&gt;</li>
+<li><code>journalctl -u ceph-osd@&lt;id&gt; --since &#x27;5 min ago&#x27;</code></li>
+<li><code>ceph osd dump | grep epoch</code></li>
+<li><code>ceph report</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()</div>
-<div>Environment: IBM Ceph 9.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Trigger the failure scenario (see engineering findings below)</li>
-<li><span class="step-num">5.</span> Check for daemon crash -- <code><code>ceph crash ls-new</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No crash regression test for: Ceph OSD crash during startup due to failed OSDMap load and assert failure in prime_merges()</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test covers missing historical OSDMap during OSD startup with active PG merges.</div>
+<div>GAPS: OSD startup tests likely don&#x27;t simulate corrupted/missing OSDMap epochs. prime_merges() is only exercised when PG merge history exists.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Stability: reproduce conditions, verify no crash</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> OSD startup with trimmed OSDMap store that still has pending PG merge references</li>
+<li><span class="step-num">2.</span> OSD startup after partial MonStore data loss</li>
+<li><span class="step-num">3.</span> Verify graceful degradation (skip merge priming) instead of hard assert when map is missing</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13240: [BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,35 +189,46 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: rgw-multisite
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW bucket full sync processes far more entries than actual object count, gets stuck in continuous loop, and blocks other bucket syncs sharing the same datalog shard.
+ROOT CAUSE: During bucket full sync of a 3M-object bucket, the sync status reported 9-11M &#x27;objects completed&#x27; -- this counter includes retried/failed entries, not unique objects. The root cause is lock contention: RGWContinuousLeaseCR fails to acquire bucket-wide sync lease (error -16) due to multiple RGW instances competing. This prevents any instance from completing the full listing, so sync never transitions to incremental mode. Additionally, bucket sync on one large bucket blocks all other buckets in the same datalog shard from progressing. The &#x27;bucket sync disable&#x27; command took 40 hours to take effect because the held lock wasn&#x27;t released.
+KEY EVIDENCE:
+- Bucket: 3M objects primary, 201TB uncompressed, but sync reported 11M+ objects processed
+- 40 hours for sync disable to take effect on secondary
+- Error: &#x27;continuous lease could not lock, log-pool, rgw error -16&#x27;
+- Secondary had more objects (3.09M) than primary (3.01M) despite no writes to secondary
+- radosgw-admin bucket radoslist showed 40M entries (including multipart parts)
+- Engineering (Shilpa) confirmed: counter tracks operations, not unique objects
+- Suggested fix: increase rgw_sync_lease_period from 2min to 20min
+- QE and L3 attempting reproduction at scale with 500M objects
+FIX STATUS: Under investigation. No confirmed fix. QE attempting reproduction with large objects, special characters, and DBR enabled. Workaround: restart secondary RGW instances to force-release locks. Consider sequential bucket sync instead of parallel.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.
-Environment: IBM Ceph 8.1, component: rgw-multisite
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Similar issue where the bucket full sync never finishes but get stuck in continuous loop was reported by atleast 2 other customers. However, it hasn’t been RCA’d yet.     QE (  ) and   are trying to reproduce this at scale. Test cases will include but not limited to: - Create a b</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce bucket full sync getting stuck in continuous loop on large bucket
+Environment: IBM Ceph 8.1 multisite with 3+ RGW instances per zone
+1. Set up active-active multisite -- intent: establish sync infrastructure
+2. Create bucket, disable bucket sync, upload 500M objects -- intent: create large bucket needing full sync
+3. Re-enable bucket sync -- intent: trigger full sync
+4. Monitor: radosgw-admin bucket sync status --bucket=&lt;bucket&gt; -- intent: observe &#x27;objects completed&#x27; growing beyond actual count
+5. Check if other buckets on same datalog shard are blocked -- intent: confirm blocking behavior
+6. Test rgw_sync_lease_period=1200 (20 min) -- intent: test mitigation
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket sync status --bucket=&lt;bucket&gt;
+- radosgw-admin sync status
+- radosgw-admin data sync status
+- grep &#x27;retcode=-16&#x27; /var/log/ceph/ceph-client.rgw*.log
+- radosgw-admin bucket stats --bucket=&lt;bucket&gt;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rgw-multisite tests may not cover: [BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actuall
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE actively trying to reproduce but no confirmed reproduction yet.
+GAPS: No test validates full sync completion for buckets with 100M+ objects. No test for sync lease contention. No test for inter-bucket blocking via shared datalog shards.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rgw-multisite scenario, verify correct behavior</textarea>
+1. Full sync of 500M-object bucket with multiple concurrent RGW sync instances
+2. Verify full sync to incremental sync transition completes
+3. Test bucket sync disable responsiveness (should be &lt;5 minutes, not 40 hours)
+4. Verify other buckets aren&#x27;t blocked by large bucket full sync on same shard
+5. Include: large S3 objects (20GB+), special characters in names, DBR enabled</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -228,32 +239,47 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW bucket full sync processes far more entries than actual object count, gets stuck in continuous loop, and blocks other bucket syncs sharing the same datalog shard.</div>
+<div>ROOT CAUSE: During bucket full sync of a 3M-object bucket, the sync status reported 9-11M &#x27;objects completed&#x27; -- this counter includes retried/failed entries, not unique objects. The root cause is lock contention: RGWContinuousLeaseCR fails to acquire bucket-wide sync lease (error -16) due to multiple RGW instances competing. This prevents any instance from completing the full listing, so sync never transitions to incremental mode. Additionally, bucket sync on one large bucket blocks all other buckets in the same datalog shard from progressing. The &#x27;bucket sync disable&#x27; command took 40 hours to take effect because the held lock wasn&#x27;t released.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw-multisite</li>
+<li>Bucket: 3M objects primary, 201TB uncompressed, but sync reported 11M+ objects processed</li>
+<li>40 hours for sync disable to take effect on secondary</li>
+<li>Error: &#x27;continuous lease could not lock, log-pool, <code>rgw error -16&#x27;</code></li>
+<li>Secondary had more objects (3.09M) than primary (3.01M) despite no writes to secondary</li>
+<li><code>radosgw-admin bucket radoslist showed 40M entries (including multipart parts)</code></li>
+<li>Engineering (Shilpa) confirmed: counter tracks operations, not unique objects</li>
+<li>Suggested fix: increase rgw_sync_lease_period from 2min to 20min</li>
+<li>QE and L3 attempting reproduction at scale with 500M objects</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Under investigation. No confirmed fix. QE attempting reproduction with large objects, special characters, and DBR enabled. Workaround: restart secondary RGW instances to force-release locks. Consider sequential bucket sync instead of parallel.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce bucket full sync getting stuck in continuous loop on large bucket</div>
+<div>Environment: IBM Ceph 8.1 multisite with 3+ RGW instances per zone</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><span class="step-num">1.</span> Set up active-active multisite -- intent: establish sync infrastructure</li>
+<li><span class="step-num">2.</span> Create bucket, disable bucket sync, upload 500M objects -- intent: create large bucket needing full sync</li>
+<li><span class="step-num">3.</span> Re-enable bucket sync -- intent: trigger full sync</li>
+<li><span class="step-num">4.</span> Monitor: <code>radosgw-admin bucket sync status --bucket=&lt;bucket&gt; -- intent: observe &#x27;objects completed&#x27; growing beyond actual count</code></li>
+<li><span class="step-num">5.</span> Check if other buckets on same datalog shard are blocked -- intent: confirm blocking behavior</li>
+<li><span class="step-num">6.</span> Test rgw_sync_lease_period=1200 (20 min) -- intent: test mitigation</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>radosgw-admin bucket sync status --bucket=&lt;bucket&gt;</code></li>
+<li><code>radosgw-admin sync status</code></li>
+<li><code>radosgw-admin data sync status</code></li>
+<li>grep &#x27;retcode=-16&#x27; /var/log/ceph/ceph-client.rgw*.log</li>
+<li><code>radosgw-admin bucket stats --bucket=&lt;bucket&gt;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actually are stored on the source bucket.</div>
-<div>Environment: IBM Ceph 8.1, component: rgw-multisite</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Similar issue where the bucket full sync never finishes but get stuck in continuous loop was reported by atleast 2 other customers. However, it hasn’t been RCA’d yet.     QE (  ) and   are trying to reproduce this at scale. Test cases will include but not limited to: - Create a b</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing rgw-multisite tests may not cover: [BZ#2406796] [GSS] RGW sync issues with a bucket seemingly processing much more objects than actuall</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE actively trying to reproduce but no confirmed reproduction yet.</div>
+<div>GAPS: No test validates full sync completion for buckets with 100M+ objects. No test for sync lease contention. No test for inter-bucket blocking via shared datalog shards.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
+<li><span class="step-num">1.</span> Full sync of 500M-object bucket with multiple concurrent RGW sync instances</li>
+<li><span class="step-num">2.</span> Verify full sync to incremental sync transition completes</li>
+<li><span class="step-num">3.</span> Test bucket sync disable responsiveness (should be &lt;5 minutes, not 40 hours)</li>
+<li><span class="step-num">4.</span> Verify other buckets aren&#x27;t blocked by large bucket full sync on same shard</li>
+<li><span class="step-num">5.</span> Include: large S3 objects (20GB+), special characters in names, DBR enabled</li>
 </ul></div>
 </div>
 

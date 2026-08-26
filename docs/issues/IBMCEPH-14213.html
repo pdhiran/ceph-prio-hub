@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14213: Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,52 +189,61 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW crashes with segfault in tcmalloc during multi-object delete operations on multisite cluster upgraded from Ceph 8 to Ceph 9, related to heap corruption during concurrent delete operations.
 
 ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.0
-- Component: rgw-multisite
+During bulk object deletion (using s5cmd with 64+ workers) on a multisite cluster upgraded from Ceph 8 to 9, the RGW process crashes with SIGSEGV in tcmalloc&#x27;s `ThreadCache::ReleaseToCentralCache()`. The crash occurs in the `io_context_pool` thread, suggesting heap corruption during concurrent I/O processing. A hotfix build (20.1.0-185.0.hotfix.IBMCEPH14213) was provided but showed a different crash in the same tcmalloc path. The underlying issue appears to be a use-after-free or double-free in the RGW multisite delete path that corrupts tcmalloc&#x27;s internal structures.
 
-ENGINEERING FINDINGS:
-- [Chaithra .] Hi  @tserlin , Can you please help with the hotfix repo with debug package and ceph-common. Currently we have only hotfix container build.
-- [Chaithra .] As per yesterdays discussion in “Multisite biweekly “  Sharing new observation on hotfifix test here, Today we have tried again with debug_log 20, and seen different crash on hotfix build. # ceph -v ceph version 20.1.0-185.0.hotfix.IBMCEPH14213.el9cp #rpm -qa|grep gcc libgcc-11.5
-- [Thomas Serlin] The debug RPMs are now here:
-- [Chaithra .] [May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce
-- [Chaithra .] As discussed in call updating here, another crash in bad_alloc: details:     # date;s5cmd --numworkers 64 --endpoint-url http://10.0.67.227:80 --credentials-file ~/.aws/credentials rm s3://test-multidel-50k-pri5/dep1/dep2/*
-Tue May 19 11:41:05 UTC 2026
-
-# date;pkill -9 s5cmd
-Tue
+KEY EVIDENCE:
+- Crash: `tcmalloc::ThreadCache::ReleaseToCentralCache() -&gt; SIGSEGV in io_context_pool thread`
+- Also seen: `std::bad_alloc` crash during same delete workload
+- Trigger: `s5cmd --numworkers 64 rm s3://&lt;bucket&gt;/*` (bulk delete 50K objects)
+- Version: 19.2.1-245.el9cp (upgraded from Ceph 8 to 9)
+- Hotfix delivered but showed different crash; documented as known issue
+- Fix verified in 9.1z2 build (20.2.1-367.el9cp)
 
 FIX STATUS:
-- Fix available in build 20.2.2-34.
-- Verified by: Vidushi Mishra</textarea>
+- Status: Verified
+- Fix available in 9.1z2 and later builds
+- Hotfix was delivered for immediate customer use</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9
-Environment: IBM Ceph 8.0, component: rgw-multisite
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify bulk object deletion in multisite cluster does not crash RGW
+Environment: IBM Ceph 9.x multisite cluster (upgraded from 8.x), versioned buckets
 
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-3. Monitor upgrade -- `ceph orch upgrade status`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Set up multisite cluster -- intent: replicate customer topology
+2. Create bucket and upload 50K+ objects -- intent: populate for deletion
+   ```
+   s5cmd --numworkers 128 cp &#x27;/tmp/files/*&#x27; s3://test-bucket/prefix/
+   ```
+3. Perform bulk delete with high concurrency -- intent: trigger potential crash
+   ```
+   s5cmd --numworkers 64 rm s3://test-bucket/prefix/*
+   ```
+4. Monitor for RGW crashes -- intent: detect segfault
+   ```
+   ceph crash ls-new
+   journalctl -u ceph-rgw* | grep -i &#x27;signal\|segfault\|abort&#x27;
+   ```
 
-SCENARIO DETAIL (from engineering comments):
-[May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce</textarea>
+DIAGNOSTIC COMMANDS:
+- `ceph crash ls-new`
+- `journalctl -u ceph-*rgw* | grep -i &#x27;signal\|caught\|abort&#x27;`
+- `coredumpctl list`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified in 9.1z2. Need regression test for high-concurrency multisite deletes.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- No stress test for bulk object deletion with 64+ concurrent workers on multisite
+- No test for multisite delete after upgrade from 8.x to 9.x
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw-multisite scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Bulk delete 50K+ objects with 64 concurrent workers on upgraded multisite cluster
+- Monitor for RGW crashes during and after deletion
+- Verify sync completes correctly on secondary site after bulk delete on primary</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -245,49 +254,63 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW crashes with segfault in tcmalloc during multi-object delete operations on multisite cluster upgraded from Ceph 8 to Ceph 9, related to heap corruption during concurrent delete operations.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>During bulk object deletion (using s5cmd with 64+ workers) on a multisite cluster upgraded from Ceph 8 to 9, the RGW process crashes with SIGSEGV in tcmalloc&#x27;s <code>ThreadCache::ReleaseToCentralCache()</code>. The crash occurs in the <code>io_context_pool</code> thread, suggesting heap corruption during concurrent I/O processing. A hotfix build (20.1.0-185.0.hotfix.IBMCEPH14213) was provided but showed a different crash in the same tcmalloc path. The underlying issue appears to be a use-after-free or double-free in the RGW multisite delete path that corrupts tcmalloc&#x27;s internal structures.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.0</li>
-<li>Component: rgw-multisite</li>
+<li>Crash: <code>tcmalloc::ThreadCache::ReleaseToCentralCache() -&amp;gt; SIGSEGV in io_context_pool thread</code></li>
+<li>Also seen: <code>std::bad_alloc</code> crash during same delete workload</li>
+<li>Trigger: <code>s5cmd --numworkers 64 rm s3://&amp;lt;bucket&amp;gt;/*</code> (bulk delete 50K objects)</li>
+<li>Version: 19.2.1-245.el9cp (upgraded from Ceph 8 to 9)</li>
+<li>Hotfix delivered but showed different crash; documented as known issue</li>
+<li>Fix verified in 9.1z2 build (20.2.1-367.el9cp)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Chaithra .] Hi  @tserlin , Can you please help with the hotfix repo with debug package and ceph-common. Currently we have only hotfix container build.</li>
-<li>[Chaithra .] As per yesterdays discussion in “Multisite biweekly “  Sharing new observation on hotfifix test here, Today we have tried again with debug_log 20, and seen different crash on hotfix build. # <code>ceph -v ceph version 20.1.0-185.0.hotfix.IBMCEPH14213.el9cp #rpm -qa|grep gcc libgcc-11.5</code></li>
-<li>[Thomas Serlin] The debug RPMs are now here:</li>
-<li>[Chaithra .] [May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce</li>
-<li>[Chaithra .] As discussed in call updating here, another crash in bad_alloc: details:     # date;s5cmd --numworkers 64 --endpoint-url http://10.0.67.227:80 --credentials-file ~/.aws/credentials rm s3://test-multidel-50k-pri5/dep1/dep2/*</li>
-</ul>
-<div>Tue May 19 11:41:05 UTC 2026</div>
-<div># date;pkill -9 s5cmd</div>
-<div>Tue</div>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Fix available in build 20.2.2-34.</li>
-<li>Verified by: Vidushi Mishra</li>
+<li>Status: Verified</li>
+<li>Fix available in 9.1z2 and later builds</li>
+<li>Hotfix was delivered for immediate customer use</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Bucket Content Deletion Issue in RGW multisite post Cluster upgrade from Ceph8 to Ceph 9</div>
-<div>Environment: IBM Ceph 8.0, component: rgw-multisite</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify bulk object deletion in multisite cluster does not crash RGW</div>
+<div>Environment: IBM Ceph 9.x multisite cluster (upgraded from 8.x), versioned buckets</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Set up multisite cluster -- intent: replicate customer topology</li>
+<li><span class="step-num">2.</span> Create bucket and upload 50K+ objects -- intent: populate for deletion</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>[May-20-2026]: QE update: Updates: Enabled debug symbol, using the steps given in  comment        tried to find gdb backtrace for existing coredump, but we are not able see any.        Provided debug repo contains only debuginfo rpms. will check with  @tserlin Tried to reproduce</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
+<pre>
+   s5cmd --numworkers 128 cp &#x27;/tmp/files/*&#x27; s3://test-bucket/prefix/
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Perform bulk delete with high concurrency -- intent: trigger potential crash</li>
+</ul>
+<pre>
+   s5cmd --numworkers 64 rm s3://test-bucket/prefix/*
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Monitor for RGW crashes -- intent: detect segfault</li>
+</ul>
+<pre>
+   ceph crash ls-new
+   journalctl -u ceph-rgw* | grep -i &#x27;signal\|segfault\|abort&#x27;
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph crash ls-new</code></code></li>
+<li><code><code>journalctl -u ceph-*rgw* | grep -i &amp;#x27;signal\|caught\|abort&amp;#x27;</code></code></li>
+<li><code>coredumpctl list</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified in 9.1z2. Need regression test for high-concurrency multisite deletes.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No stress test for bulk object deletion with 64+ concurrent workers on multisite</li>
+<li>No test for multisite delete after upgrade from 8.x to 9.x</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported rgw-multisite scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Bulk delete 50K+ objects with 64 concurrent workers on upgraded multisite cluster</li>
+<li>Monitor for RGW crashes during and after deletion</li>
+<li>Verify sync completes correctly on secondary site after bulk delete on primary</li>
 </ul></div>
 </div>
 

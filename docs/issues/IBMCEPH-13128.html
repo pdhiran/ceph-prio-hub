@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13128: OSD_UNREACHABLE alerts in ceph post cluster expansion</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,40 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD_UNREACHABLE alerts in ceph post cluster expansion
-
-ROOT CAUSE:
-- Affected version(s): 8.1z3
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] Thank you for sharing the logs. We have identified the root cause of the  OSD_UNREACHABLE  warning. The issue occurs because the MON daemon is reading the  public_network  value from  /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config This config file takes precedence over the config db val
-- [Shantanu Bhardwaj] Customer implemented the workaround in the cluster with some modification and it resolved the issue. It was noticed post running all the steps of shared workaround,   cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config  showed all the networks, however  ceph daemon mon.cephnode1156 confi
-- [Prashant Dhange] Hi   , The previously provided daemon reconfig and restart steps did not work because command was skipped since the earlier reconfig was still scheduled :  2026-02-18T02:15:12.447+0000 7f9b2ffc3640  0 log_channel(audit) log [DBG] : from=&#x27;client.3988796 -&#x27; entity=&#x27;client.admin&#x27; cm
-
-FIX STATUS:
-- Current JIRA status: New
-- Workaround: Customer implemented the workaround in the cluster with some modification and it resolved the issue. It was noticed post running all the steps of shared workaround,   cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;mon</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: MON config file takes precedence over config-db for public_network after cluster expansion, causing OSD_UNREACHABLE for 576 OSDs.
+ROOT CAUSE: After expanding from 18 to 21 racks (600 OSDs), the MON daemon reads public_network from /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config which is created during initial deployment and overwritten during upgrades. This file takes precedence over the config-db values set via &#x27;ceph config set&#x27;. The new subnets (17.155.208.32/27, 17.155.212.96/27, 17.155.213.96/27) added via config-db were not reflected in the MON config file, so the MON flagged OSDs on those subnets as unreachable. Additionally, cephadm&#x27;s reconfig+restart scheduling has a race: issuing restart after reconfig is skipped (&#x27;skipping restarting, cause reconfig already scheduled&#x27;), requiring a separate systemctl restart to force the config reload.
+KEY EVIDENCE:
+- MON logs show &#x27;address v1:17.155.208.37:6833 is not in networks&#x27; listing only original 18 CIDRs
+- ceph config dump showed all 21 CIDRs correctly in global/mon/osd/mgr scopes
+- cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config showed only 18 CIDRs before reconfig
+- After &#x27;ceph orch daemon reconfig&#x27; + &#x27;systemctl restart &lt;mon.service&gt;&#x27;, issue resolved
+- Cephadm log: &#x27;skipping restarting mon.cephnode1156, cause reconfig already scheduled&#x27;
+FIX STATUS: Workaround applied (reconfig + systemctl restart each MON). No code fix for the precedence issue. Bug still open (status: new).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- OSD_UNREACHABLE alerts in ceph post cluster expansion
-Environment: IBM Ceph 8.1z3, component: rados
-
-1. Deploy IBM Ceph 8.1z3 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce OSD_UNREACHABLE after adding new public_network subnets during cluster expansion
+Environment: IBM Ceph 8.1z3 (19.2.1-274.2.hotfix), 600+ OSDs across 21 racks, multiple /27 subnets
+1. Deploy cluster with N subnets in public_network -- intent: establish baseline
+2. ceph config set global public_network &#x27;&lt;original_CIDRs&gt;,&lt;new_CIDR1&gt;,&lt;new_CIDR2&gt;&#x27; -- intent: add new subnets to config-db
+3. ceph config set mon public_network &#x27;&lt;same full list&gt;&#x27; -- intent: update MON scope
+4. Add new hosts/OSDs on the new subnets -- intent: expand cluster
+5. Wait 5 minutes, check &#x27;ceph health detail&#x27; -- intent: observe OSD_UNREACHABLE warning
+6. Verify: cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config | grep public_network -- intent: confirm file lacks new CIDRs
+DIAGNOSTIC COMMANDS:
+- ceph health detail
+- ceph config dump | grep public_network
+- ceph daemon mon.&lt;id&gt; config get public_network
+- cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: OSD_UNREACHABLE alerts in ceph post cluster expansion
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test coverage for multi-subnet cluster expansion with public_network config precedence.
+GAPS: No test verifies that MON config file is updated when public_network changes via config-db; no test for cephadm reconfig/restart race condition where restart is skipped.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Expand cluster adding new subnets to public_network, verify OSD_UNREACHABLE does not appear after reconfig+restart
+- Test cephadm daemon reconfig followed immediately by restart (verify restart is not swallowed)
+- Large-scale expansion (&gt;20 subnets) to validate config propagation timing</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,39 +233,41 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD_UNREACHABLE alerts in ceph post cluster expansion</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">MON config file takes precedence over config-db for public_network after cluster expansion, causing OSD_UNREACHABLE for 576 OSDs.</div>
+<div>ROOT CAUSE: After expanding from 18 to 21 racks (600 OSDs), the MON daemon reads public_network from /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config which is created during initial deployment and overwritten during upgrades. This file takes precedence over the config-db values set via &#x27;ceph config set&#x27;. The new subnets (17.155.208.32/27, 17.155.212.96/27, 17.155.213.96/27) added via config-db were not reflected in the MON config file, so the MON flagged OSDs on those subnets as unreachable. Additionally, cephadm&#x27;s reconfig+restart scheduling has a race: issuing restart after reconfig is skipped (&#x27;skipping restarting, cause reconfig already scheduled&#x27;), requiring a separate systemctl restart to force the config reload.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1z3</li>
-<li>Component: rados</li>
+<li>MON logs show &#x27;address v1:17.155.208.37:6833 is not in networks&#x27; listing only original 18 CIDRs</li>
+<li><code>ceph config dump showed all 21 CIDRs correctly in global/mon/osd/mgr scopes</code></li>
+<li>cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config showed only 18 CIDRs before reconfig</li>
+<li>After &#x27;<code>ceph orch daemon reconfig&#x27; + &#x27;systemctl restart &lt;mon.service&gt;&#x27;</code>, issue resolved</li>
+<li>Cephadm log: &#x27;skipping restarting mon.cephnode1156, cause reconfig already scheduled&#x27;</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Workaround applied (reconfig + systemctl restart each MON). No code fix for the precedence issue. Bug still open (status: new).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce OSD_UNREACHABLE after adding new public_network subnets during cluster expansion</div>
+<div>Environment: IBM Ceph 8.1z3 (19.2.1-274.2.hotfix), 600+ OSDs across 21 racks, multiple /27 subnets</div>
 <ul>
-<li>[Prashant Dhange] Thank you for sharing the logs. We have identified the root cause of the  OSD_UNREACHABLE  warning. The issue occurs because the MON daemon is reading the  public_network  value from  /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config This config file takes precedence over the config db val</li>
-<li>[Shantanu Bhardwaj] Customer implemented the workaround in the cluster with some modification and it resolved the issue. It was noticed post running all the steps of shared workaround,   cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config  showed all the networks, however  <code>ceph daemon mon.cephnode1156 confi</code></li>
-<li>[Prashant Dhange] Hi   , The previously provided daemon reconfig and restart steps did not work because command was skipped since the earlier reconfig was still scheduled :  2026-02-18T02:15:12.447+0000 7f9b2ffc3640  0 log_channel(audit) log [DBG] : from=&#x27;client.3988796 -&#x27; entity=&#x27;client.admin&#x27; cm</li>
+<li><span class="step-num">1.</span> Deploy cluster with N subnets in public_network -- intent: establish baseline</li>
+<li><span class="step-num">2.</span> <code>ceph config set global public_network &#x27;&lt;original_CIDRs&gt;</code>,&lt;new_CIDR1&gt;,&lt;new_CIDR2&gt;&#x27; -- intent: add new subnets to config-db</li>
+<li><span class="step-num">3.</span> <code>ceph config set mon public_network &#x27;&lt;same full list&gt;&#x27; -- intent: update MON scope</code></li>
+<li><span class="step-num">4.</span> Add new hosts/OSDs on the new subnets -- intent: expand cluster</li>
+<li><span class="step-num">5.</span> Wait 5 minutes, check &#x27;<code>ceph health detail&#x27; -- intent: observe OSD_UNREACHABLE warning</code></li>
+<li><span class="step-num">6.</span> Verify: cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config | grep public_network -- intent: confirm file lacks new CIDRs</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
-<li>Workaround: Customer implemented the workaround in the cluster with some modification and it resolved the issue. It was noticed post running all the steps of shared workaround,   cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;mon</li>
+<li><code>ceph health detail</code></li>
+<li><code>ceph config dump | grep public_network</code></li>
+<li><code>ceph daemon mon.&lt;id&gt; config get public_network</code></li>
+<li>cat /var/lib/ceph/&lt;fsid&gt;/mon.&lt;monid&gt;/config</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- OSD_UNREACHABLE alerts in ceph post cluster expansion</div>
-<div>Environment: IBM Ceph 8.1z3, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z3 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: OSD_UNREACHABLE alerts in ceph post cluster expansion</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test coverage for multi-subnet cluster expansion with public_network config precedence.</div>
+<div>GAPS: No test verifies that MON config file is updated when public_network changes via config-db; no test for cephadm reconfig/restart race condition where restart is skipped.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Expand cluster adding new subnets to public_network, verify OSD_UNREACHABLE does not appear after reconfig+restart</li>
+<li>Test <code>cephadm daemon reconfig followed immediately by restart (verify restart is not swallowed)</code></li>
+<li>Large-scale expansion (&gt;20 subnets) to validate config propagation timing</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11128: [BZ#2358851] [IBM_Support] [RFE] Turn monitor logging enabled by default</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,38 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2358851] [IBM_Support] [RFE] Turn monitor logging enabled by default
-
-ROOT CAUSE:
-- Affected version(s): 7.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Prashant D] I discussed with Radek about turning on mon and cluster logging by default, since the support teams think it would help them debug problems more easily. From our discussion, Radek felt that setting defaults like this isn’t the best way to manage software. Instead, the support tea
-- [Bipin Kunal] This is not typical RFE which has massive change but yes this is an enhancement which will improve the debugging aspect. That is the reason we are still chasing the fix.  But in case this needs further discussion and it will take time, we can move it to 9.1z.
-- [Indira Sawant] Concerns were raised on the PR about changing default monitor logging, including potential customer impact and log rotation risks. The RFE has been moved to 9.2. This was discussed further within the team, and improving debuggability was still considered important. Redo also plan
-
-FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to enable monitor log-to-file by default -- stalled due to engineering concerns about log rotation risks.
+ROOT CAUSE: Feature request. By default, Ceph monitors do not log to file (only to journalctl via stderr). In collocated scenarios, all daemon logs go to journalctl, making it difficult to filter per-daemon. Support teams need mon logs in files for easier debugging, but engineering raised concerns about filesystem fill risks from increased log volume. PR https://github.com/ceph/ceph/pull/67005 was created but received pushback.
+KEY EVIDENCE:
+- PR: https://github.com/ceph/ceph/pull/67005 (created 2026-01-20, stalled)
+- Engineering concerns: Radek felt defaults aren&#x27;t the best way, support team should decide logging
+- Repeatedly moved: 9.0 -&gt; 9.1 -&gt; 9.2 -&gt; 10.0 -&gt; Backlog
+- Configs: mon_cluster_log_to_file, log_to_file
+- Related: IBMCEPH-11127 (duplicate)
+FIX STATUS: Moved to Backlog (2026-08-21). PR stalled with engineering pushback. Indira Sawant on leave. Not prioritized for 10.0.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2358851]  [RFE] Turn monitor logging enabled by default
-Environment: IBM Ceph 7.1, component: cephadm
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate inability to easily access MON-specific logs in default configuration.
+Environment: Any IBM Ceph cluster with default logging settings.
+1. Check default logging configuration -- intent: confirm log_to_file is false
+   ceph config get mon log_to_file
+   ceph config get mon mon_cluster_log_to_file
+2. Verify MON logs only in journalctl -- intent: show the debugging difficulty
+   ls /var/log/ceph/*/ceph-mon*.log (should be empty/nonexistent)
+   journalctl -u ceph-* | grep mon (all daemons mixed)
+DIAGNOSTIC COMMANDS:
+- ceph config get mon log_to_file
+- ceph config get mon mon_cluster_log_to_file
+- ls /var/log/ceph/*/</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
-
-GAPS:
-- Existing cephadm tests may not cover: [BZ#2358851]  [RFE] Turn monitor logging enabled by default
-
-SCENARIOS NEEDED:
-- Functional: reproduce reported cephadm scenario, verify correct behavior</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No implementation to test. Feature request stalled.
+GAPS: Default mon logging behavior not tested for supportability.
+SCENARIOS NEEDED (once implemented):
+- Default log-to-file: fresh deploy should have mon logs in /var/log/ceph/
+- Log rotation: verify logrotate handles new default without filling filesystem
+- Override: verify admin can disable log-to-file post-deploy</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -231,37 +232,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2358851] [IBM_Support] [RFE] Turn monitor logging enabled by default</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to enable monitor log-to-file by default -- stalled due to engineering concerns about log rotation risks.</div>
+<div>ROOT CAUSE: Feature request. By default, Ceph monitors do not log to file (only to journalctl via stderr). In collocated scenarios, all daemon logs go to journalctl, making it difficult to filter per-daemon. Support teams need mon logs in files for easier debugging, but engineering raised concerns about filesystem fill risks from increased log volume. PR https://github.com/ceph/ceph/pull/67005 was created but received pushback.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.1</li>
-<li>Component: cephadm</li>
+<li>PR: https://github.com/ceph/ceph/pull/67005 (created 2026-01-20, stalled)</li>
+<li>Engineering concerns: Radek felt defaults aren&#x27;t the best way, support team should decide logging</li>
+<li>Repeatedly moved: 9.0 -&gt; 9.1 -&gt; 9.2 -&gt; 10.0 -&gt; Backlog</li>
+<li>Configs: mon_cluster_log_to_file, log_to_file</li>
+<li>Related: IBMCEPH-11127 (duplicate)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Moved to Backlog (2026-08-21). PR stalled with engineering pushback. Indira Sawant on leave. Not prioritized for 10.0.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate inability to easily access MON-specific logs in default configuration.</div>
+<div>Environment: Any IBM Ceph cluster with default logging settings.</div>
 <ul>
-<li>[Prashant D] I discussed with Radek about turning on mon and cluster logging by default, since the support teams think it would help them debug problems more easily. From our discussion, Radek felt that setting defaults like this isn’t the best way to manage software. Instead, the support tea</li>
-<li>[Bipin Kunal] This is not typical RFE which has massive change but yes this is an enhancement which will improve the debugging aspect. That is the reason we are still chasing the fix.  But in case this needs further discussion and it will take time, we can move it to 9.1z.</li>
-<li>[Indira Sawant] Concerns were raised on the PR about changing default monitor logging, including potential customer impact and log rotation risks. The RFE has been moved to 9.2. This was discussed further within the team, and improving debuggability was still considered important. Redo also plan</li>
+<li><span class="step-num">1.</span> Check default logging configuration -- intent: confirm log_to_file is false</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph config get mon log_to_file</div>
+<div>ceph config get mon mon_cluster_log_to_file</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li><span class="step-num">2.</span> Verify MON logs only in <code>journalctl -- intent: show the debugging difficulty</code></li>
+</ul>
+<div>ls /var/log/ceph/*/ceph-mon*.log (should be empty/nonexistent)</div>
+<div>journalctl -u ceph-* | grep mon (all daemons mixed)</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config get mon log_to_file</code></li>
+<li><code>ceph config get mon mon_cluster_log_to_file</code></li>
+<li>ls /var/log/ceph/*/</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2358851]  [RFE] Turn monitor logging enabled by default</div>
-<div>Environment: IBM Ceph 7.1, component: cephadm</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No implementation to test. Feature request stalled.</div>
+<div>GAPS: Default mon logging behavior not tested for supportability.</div>
+<div>SCENARIOS NEEDED (once implemented):</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>cephadm tests may not cover: [BZ#2358851]  [RFE] Turn monitor logging enabled by default</code></li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
+<li>Default log-to-file: fresh deploy should have mon logs in /var/log/ceph/</li>
+<li>Log rotation: verify logrotate handles new default without filling filesystem</li>
+<li>Override: verify admin can disable log-to-file post-deploy</li>
 </ul></div>
 </div>
 

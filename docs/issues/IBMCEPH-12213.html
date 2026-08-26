@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12213: [BZ#2398909] [RFE][ibm_support] Warn when bluestore_cache_size_* is not &lt; osd_memory_target</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,49 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2398909] [RFE][ibm_support] Warn when bluestore_cache_size_* is not &lt; osd_memory_target
-
-ROOT CAUSE:
-- Memory issue (leak, OOM, or excessive consumption).
-- Affected version(s): 9.1
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to add health warnings when bluestore_cache_size_* exceeds osd_memory_target, preventing OSD memory overconsumption.
+ROOT CAUSE: This is a feature request, not a bug. The underlying problem is that administrators can set bluestore_cache_size_hdd/ssd to values exceeding osd_memory_target without any warning. A customer set bluestore_cache_size_ssd to 8GB with osd_memory_target at 4GB, causing OSD memory consumption &gt;11GB and anomalous heartbeat failures. There is no sanity check preventing this misconfiguration. The RFE requests: (1) a health warning similar to OSD_OUT_OF_ORDER_FULL when bluestore_cache_size &gt;= osd_memory_target * 0.95 or osd_memory_cache_min &gt; osd_memory_target - osd_memory_base, and (2) prevention of ceph config set from persisting problematic values without --force.
+KEY EVIDENCE:
+- Customer had: osd_memory_target=4GB, bluestore_cache_size_ssd=8GB, osd_memory_cache_min=4GB
+- Result: OSD memory &gt;11GB, anomalous heartbeat failures
+- Related to IBMCEPH-12079 (same reporter, complementary RFE)
+- Configs involved: bluestore_cache_size_*, osd_memory_target, osd_memory_base, osd_memory_cache_min
+- Assignee: Adam Kupczyk (RADOS team)
+FIX STATUS: RFE status is &#x27;new&#x27;. Aarti Dhikale began investigation (2026-08-06). No PR or implementation yet. Targeted for 9.1.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2398909] [RFE][ibm_support] Warn when bluestore_cache_size_* is not &lt; osd_memory_target
-Environment: IBM Ceph 9.1, component: rados
-
-1. Deploy IBM Ceph 9.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Monitor daemon memory -- `ceph tell &lt;daemon&gt; heap stats`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate OSD memory overconsumption from misconfigured bluestore_cache_size exceeding osd_memory_target.
+Environment: Any IBM Ceph 8.x or 9.x cluster with BlueStore OSDs.
+1. Check current memory settings -- intent: baseline
+   ceph config get osd osd_memory_target
+   ceph config get osd bluestore_cache_size_ssd
+2. Set bluestore_cache_size_ssd to twice osd_memory_target -- intent: create the problematic configuration
+   ceph config set osd osd_memory_target 4294967296
+   ceph config set osd bluestore_cache_size_ssd 8589934592
+   ceph config set osd bluestore_cache_autotune false
+3. Restart OSDs and observe memory usage -- intent: verify OSD memory exceeds target
+   ceph orch restart osd
+   ceph tell osd.* heap stats
+4. Check for heartbeat failures -- intent: observe downstream impact
+   ceph health detail
+DIAGNOSTIC COMMANDS:
+- ceph config show osd.0 | grep -E &#x27;memory|bluestore_cache&#x27;
+- ceph tell osd.* heap stats
+- ceph health detail (look for OSD heartbeat failures)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test validates health warnings for incompatible BlueStore/OSD memory settings. This is an RFE with no implementation yet.
 GAPS:
-- No memory leak detection test for rados
-
+- No health check exists for bluestore_cache_size vs osd_memory_target mismatch
+- No test validates ceph config set rejection of dangerous memory configurations
+- No integration test monitors OSD memory growth under misconfigured cache settings
 SCENARIOS NEEDED:
-- Memory: long-running workload, monitor for leaks
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+- Health warning generation: set bluestore_cache_size &gt; osd_memory_target; verify HEALTH_WARN raised (once RFE implemented)
+- Config set guard: attempt ceph config set with incompatible values; verify rejection without --force
+- Memory growth monitoring: configure mismatch and verify OSD RSS exceeds osd_memory_target
+- Dynamic target interaction: with osd_memory_target_autotune=true, verify warning triggers when autotune lowers target below cache size</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,35 +242,58 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2398909] [RFE][ibm_support] Warn when bluestore_cache_size_* is not &lt; osd_memory_target</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to add health warnings when bluestore_cache_size_* exceeds osd_memory_target, preventing OSD memory overconsumption.</div>
+<div>ROOT CAUSE: This is a feature request, not a bug. The underlying problem is that administrators can set bluestore_cache_size_hdd/ssd to values exceeding osd_memory_target without any warning. A customer set bluestore_cache_size_ssd to 8GB with osd_memory_target at 4GB, causing OSD memory consumption &gt;11GB and anomalous heartbeat failures. There is no sanity check preventing this misconfiguration. The RFE requests: (1) a health warning similar to OSD_OUT_OF_ORDER_FULL when bluestore_cache_size &gt;= osd_memory_target * 0.95 or osd_memory_cache_min &gt; osd_memory_target - osd_memory_base, and (2) prevention of ceph config set from persisting problematic values without --force.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Memory issue (leak, OOM, or excessive consumption).</li>
-<li>Affected version(s): 9.1</li>
-<li>Component: rados</li>
+<li>Customer had: osd_memory_target=4GB, bluestore_cache_size_ssd=8GB, osd_memory_cache_min=4GB</li>
+<li>Result: OSD memory &gt;11GB, anomalous heartbeat failures</li>
+<li>Related to IBMCEPH-12079 (same reporter, complementary RFE)</li>
+<li>Configs involved: bluestore_cache_size_*, osd_memory_target, osd_memory_base, osd_memory_cache_min</li>
+<li>Assignee: Adam Kupczyk (RADOS team)</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: RFE status is &#x27;new&#x27;. Aarti Dhikale began investigation (2026-08-06). No PR or implementation yet. Targeted for 9.1.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate OSD memory overconsumption from misconfigured bluestore_cache_size exceeding osd_memory_target.</div>
+<div>Environment: Any IBM Ceph 8.x or 9.x cluster with BlueStore OSDs.</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2398909] [RFE][ibm_support] Warn when bluestore_cache_size_* is not &lt; osd_memory_target</div>
-<div>Environment: IBM Ceph 9.1, component: rados</div>
+<li><span class="step-num">1.</span> Check current memory settings -- intent: baseline</li>
+</ul>
+<div>ceph config get osd osd_memory_target</div>
+<div>ceph config get osd bluestore_cache_size_ssd</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Monitor daemon memory -- <code><code>ceph tell &amp;lt;daemon&amp;gt; heap stats</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">2.</span> Set bluestore_cache_size_ssd to twice osd_memory_target -- intent: create the problematic configuration</li>
+</ul>
+<div>ceph config set osd osd_memory_target 4294967296</div>
+<div>ceph config set osd bluestore_cache_size_ssd 8589934592</div>
+<div>ceph config set osd bluestore_cache_autotune false</div>
+<ul>
+<li><span class="step-num">3.</span> Restart OSDs and observe memory usage -- intent: verify OSD memory exceeds target</li>
+</ul>
+<div>ceph orch restart osd</div>
+<div>ceph tell osd.* heap stats</div>
+<ul>
+<li><span class="step-num">4.</span> Check for heartbeat failures -- intent: observe downstream impact</li>
+</ul>
+<div>ceph health detail</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph config show osd.0 | grep -E &#x27;memory|bluestore_cache&#x27;</code></li>
+<li><code>ceph tell osd.* heap stats</code></li>
+<li><code>ceph health detail (look for OSD heartbeat failures)</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test validates health warnings for incompatible BlueStore/OSD memory settings. This is an RFE with no implementation yet.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>No memory leak detection test for rados</li>
+<li>No health check exists for bluestore_cache_size vs osd_memory_target mismatch</li>
+<li>No test validates <code>ceph config set rejection of dangerous memory configurations</code></li>
+<li>No integration test monitors OSD memory growth under misconfigured cache settings</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Memory: long-running workload, monitor for leaks</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li>Health warning generation: set bluestore_cache_size &gt; osd_memory_target; verify HEALTH_WARN raised (once RFE implemented)</li>
+<li>Config set guard: attempt <code>ceph config set with incompatible values; verify rejection without --force</code></li>
+<li>Memory growth monitoring: configure mismatch and verify OSD RSS exceeds osd_memory_target</li>
+<li>Dynamic target interaction: with osd_memory_target_autotune=true, verify warning triggers when autotune lowers target below cache size</li>
 </ul></div>
 </div>
 

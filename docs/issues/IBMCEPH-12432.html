@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12432: [RFE][BZ#2420145] [IBM_Support] Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight (65535)</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,45 +189,45 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [RFE][BZ#2420145] [IBM_Support] Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight (65535)
-
-ROOT CAUSE:
-- Affected version(s): 8.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Prashant D] Ceph uses CRUSH to assign weights to devices based on size, but these weights are stored in a 16.16 fixed-point format, which limits the maximum bucket weight to 65535.0, capping cluster size at about 65.5 PiB. When clusters grow beyond this, operations fail with errors like ERAN
-- [Prashant D] Thank you, @Pawan Dhiran, for your time during the quick sync-up call, and I appreciate your hard work. Pawan identified a bug in the following awk command (from comment#5) : $ awk &#x27;/\s*item .* weight [0-9\.]+*$/ { $NF = $NF/10; print } { print }&#x27; crushmap.old.txt &gt; crushmap.new.
-- [Shantanu Bhardwaj] The work around provided by   was validated by QE Team and shared with customer. Support case got autoclosed as no response received from customer. However, the permanent fix is still being worked upstream  . It would be better to keep this Jira open in case other customers come
-- [Bipin Kunal] Ack   .    I see upstream PR getting stale in upstream. could we prioritize the fix in upstream so that we can take it in 10.0?  cc
-- [Radosław Zarzyński] : this PR has been already discussed during CDS Vampire RADOS (see  https://pad.ceph.com/p/cds-vampire-RADOS ): Support for 65+ PB cluster:    - scalability  CRUSH weights restrict the data capacity of entire cluster as &quot;CRUSH represents weights using a 16.16 fixed-point format,
-
-FIX STATUS:
-- Current JIRA status: POST
-- Workaround: thanks for the update   .  when you say  We want to merge it to  main  soon. However, backporting to older releases is completely another story. No plans for that so far as the workaround is available</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE to scale Ceph clusters beyond 65 PiB limit caused by CRUSH weight 16.16 fixed-point format capping root weight at 65535.
+ROOT CAUSE: CRUSH represents weights using a 16.16 fixed-point format where the maximum bucket weight is capped at 65535.0, limiting total cluster capacity to approximately 65.5 PiB. Customer (Apple) needs to scale clusters to ~150 PiB each with 10,836 OSDs. The upstream fix (PR#64055, tracker#71763) introduces `osd_crush_scaling_factor` to scale down weights proportionally. A manual workaround exists: divide all CRUSH weights by a factor (e.g., 10) via crushmap export/awk/reimport.
+KEY EVIDENCE:
+- Customer needs 150 PiB per cluster with 10,836 OSDs
+- QE (Pawan Dhiran) validated the manual workaround procedure including corrected awk command, multi-iteration scale up/down, host addition with osd_crush_initial_weight
+- Original awk command in comment#5 had a bug causing duplicate entries; corrected to: `awk &#x27;/^\s*item .* weight [0-9.]+$/ { $NF = $NF / 10 } { print }&#x27;`
+- New OSDs get weight 0.00139 vs expected 0.00145 (~4% variance) despite setting osd_crush_initial_weight=0.00145
+- Upstream PR discussed at CDS Vampire RADOS, planned for merge to main (10.0/Umbrella)
+FIX STATUS: Upstream PR#64055 will merge to main soon. Risk concern: modifies OSDMap encoding. No backport planned for older releases since workaround is available. Engineering dubious about risk-to-gain ratio for backport.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [RFE][BZ#2420145]  Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight (65535)
-Environment: IBM Ceph 8.1, component: rados
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Thank You @Prashant Dhange for syncing up and providing more info on the scenarios to be tested and helping with the workflows &amp; the additional scripts/ configs to be added during testing. I will complete the remaining scenarios as suggested by you based on apple&#x27;s configs and up</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate CRUSH weight scaling workaround for clusters exceeding 65 PiB
+Environment: IBM Ceph 8.1+ or 9.x, any cluster size (can simulate with small drives)
+1. Export crushmap: `ceph osd getcrushmap -o crushmap.old.bin` -- intent: backup current state
+2. Decompile: `crushtool -d crushmap.old.bin -o crushmap.old.txt` -- intent: get editable text
+3. Divide weights by 10: `awk &#x27;/^\s*item .* weight [0-9.]+$/ { $NF = $NF / 10 } { print }&#x27; crushmap.old.txt &gt; crushmap.new.txt` -- intent: scale down weights
+4. Compile: `crushtool -c crushmap.new.txt -o crushmap.new.bin` -- intent: validate syntax
+5. Set norebalance: `ceph osd set norebalance` -- intent: prevent PG movement
+6. Inject: `ceph osd setcrushmap -i crushmap.new.bin` -- intent: apply new weights
+7. Verify: `ceph osd df tree` and `ceph -s` -- intent: confirm HEALTH_OK and correct weights
+8. Set `ceph config set osd osd_crush_initial_weight &lt;scaled_value&gt;` and add new OSD -- intent: test new OSD addition
+DIAGNOSTIC COMMANDS:
+- ceph osd df tree
+- ceph osd tree
+- ceph df detail
+- ceph -s
+- ceph config get osd osd_crush_initial_weight</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: POST. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: [RFE][BZ#2420145]  Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Manual QE testing completed by Pawan Dhiran (comment#7-8). Automated test coverage absent.
+GAPS: No automated test for CRUSH weight scaling procedure. No test for osd_crush_initial_weight variance issue (0.00139 vs 0.00145). No test for the upcoming osd_crush_scaling_factor feature.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. End-to-end CRUSH weight scaling (divide by 10, verify no rebalance, verify HEALTH_OK)
+2. OSD addition after weight modification with osd_crush_initial_weight set
+3. Weight reversal (scale back up) and verify data integrity
+4. Stress test: concurrent I/O during crushmap injection
+5. When upstream fix lands: test osd_crush_scaling_factor with cluster &gt; simulated 65 PiB</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -238,43 +238,46 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[RFE][BZ#2420145] [IBM_Support] Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight (65535)</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE to scale Ceph clusters beyond 65 PiB limit caused by CRUSH weight 16.16 fixed-point format capping root weight at 65535.</div>
+<div>ROOT CAUSE: CRUSH represents weights using a 16.16 fixed-point format where the maximum bucket weight is capped at 65535.0, limiting total cluster capacity to approximately 65.5 PiB. Customer (Apple) needs to scale clusters to ~150 PiB each with 10,836 OSDs. The upstream fix (PR#64055, tracker#71763) introduces <code>osd_crush_scaling_factor</code> to scale down weights proportionally. A manual workaround exists: divide all CRUSH weights by a factor (e.g., 10) via crushmap export/awk/reimport.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.1</li>
-<li>Component: rados</li>
+<li>Customer needs 150 PiB per cluster with 10,836 OSDs</li>
+<li>QE (Pawan Dhiran) validated the manual workaround procedure including corrected awk command, multi-iteration scale up/down, host addition with osd_crush_initial_weight</li>
+<li>Original awk command in comment#5 had a bug causing duplicate entries; corrected to: <code>awk &amp;#x27;/^\s*item .* weight [0-9.]+$/ { $NF = $NF / 10 } { print }&amp;#x27;</code></li>
+<li>New OSDs get weight 0.00139 vs expected 0.00145 (~4% variance) despite setting osd_crush_initial_weight=0.00145</li>
+<li>Upstream PR discussed at CDS Vampire RADOS, planned for merge to main (10.0/Umbrella)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Upstream PR#64055 will merge to main soon. Risk concern: modifies OSDMap encoding. No backport planned for older releases since workaround is available. Engineering dubious about risk-to-gain ratio for backport.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate CRUSH weight scaling workaround for clusters exceeding 65 PiB</div>
+<div>Environment: IBM Ceph 8.1+ or 9.x, any cluster size (can simulate with small drives)</div>
 <ul>
-<li>[Prashant D] Ceph uses CRUSH to assign weights to devices based on size, but these weights are stored in a 16.16 fixed-point format, which limits the maximum bucket weight to 65535.0, capping cluster size at about 65.5 PiB. When clusters grow beyond this, operations fail with errors like ERAN</li>
-<li>[Prashant D] Thank you, @Pawan Dhiran, for your time during the quick sync-up call, and I appreciate your hard work. Pawan identified a bug in the following awk command (from comment#5) : $ awk &#x27;/\s*item .* weight [0-9\.]+*$/ { $NF = $NF/10; print } { print }&#x27; crushmap.old.txt &gt; crushmap.new.</li>
-<li>[Shantanu Bhardwaj] The work around provided by   was validated by QE Team and shared with customer. Support case got autoclosed as no response received from customer. However, the permanent fix is still being worked upstream  . It would be better to keep this Jira open in case other customers come</li>
-<li>[Bipin Kunal] Ack   .    I see upstream PR getting stale in upstream. could we prioritize the fix in upstream so that we can take it in 10.0?  cc</li>
-<li>[Radosław Zarzyński] : this PR has been already discussed during CDS Vampire RADOS (see  https://pad.ceph.com/p/cds-vampire-RADOS ): Support for 65+ PB cluster:    - scalability  CRUSH weights restrict the data capacity of entire cluster as &quot;CRUSH represents weights using a 16.16 fixed-point format,</li>
+<li><span class="step-num">1.</span> Export crushmap: <code><code>ceph osd getcrushmap -o crushmap.old.bin</code></code> -- intent: backup current state</li>
+<li><span class="step-num">2.</span> Decompile: <code>crushtool -d crushmap.old.bin -o crushmap.old.txt</code> -- intent: get editable text</li>
+<li><span class="step-num">3.</span> Divide weights by 10: <code>awk &amp;#x27;/^\s*item .* weight [0-9.]+$/ { $NF = $NF / 10 } { print }&amp;#x27; crushmap.old.txt &amp;gt; crushmap.new.txt</code> -- intent: scale down weights</li>
+<li><span class="step-num">4.</span> Compile: <code>crushtool -c crushmap.new.txt -o crushmap.new.bin</code> -- intent: validate syntax</li>
+<li><span class="step-num">5.</span> Set norebalance: <code><code>ceph osd set norebalance</code></code> -- intent: prevent PG movement</li>
+<li><span class="step-num">6.</span> Inject: <code><code>ceph osd setcrushmap -i crushmap.new.bin</code></code> -- intent: apply new weights</li>
+<li><span class="step-num">7.</span> Verify: <code><code>ceph osd df tree</code></code> and <code><code>ceph -s</code></code> -- intent: confirm HEALTH_OK and correct weights</li>
+<li><span class="step-num">8.</span> Set <code><code>ceph config set osd osd_crush_initial_weight &amp;lt;scaled_value&amp;gt;</code></code> and add new OSD -- intent: test new OSD addition</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: POST</li>
-<li>Workaround: thanks for the update   .  when you say  We want to merge it to  main  soon. However, backporting to older releases is completely another story. No plans for that so far as the workaround is available</li>
+<li><code>ceph osd df tree</code></li>
+<li><code>ceph osd tree</code></li>
+<li><code>ceph df detail</code></li>
+<li><code>ceph -s</code></li>
+<li><code>ceph config get osd osd_crush_initial_weight</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [RFE][BZ#2420145]  Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight (65535)</div>
-<div>Environment: IBM Ceph 8.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Thank You @Prashant Dhange for syncing up and providing more info on the scenarios to be tested and helping with the workflows &amp; the additional scripts/ configs to be added during testing. I will complete the remaining scenarios as suggested by you based on apple&#x27;s configs and up</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">POST. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: [RFE][BZ#2420145]  Scaling the cluster beyond maximum size (65 Pib) with default maximum root weight</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Manual QE testing completed by Pawan Dhiran (comment#7-8). Automated test coverage absent.</div>
+<div>GAPS: No automated test for CRUSH weight scaling procedure. No test for osd_crush_initial_weight variance issue (0.00139 vs 0.00145). No test for the upcoming osd_crush_scaling_factor feature.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> End-to-end CRUSH weight scaling (divide by 10, verify no rebalance, verify HEALTH_OK)</li>
+<li><span class="step-num">2.</span> OSD addition after weight modification with osd_crush_initial_weight set</li>
+<li><span class="step-num">3.</span> Weight reversal (scale back up) and verify data integrity</li>
+<li><span class="step-num">4.</span> Stress test: concurrent I/O during crushmap injection</li>
+<li><span class="step-num">5.</span> When upstream fix lands: test osd_crush_scaling_factor with cluster &gt; simulated 65 PiB</li>
 </ul></div>
 </div>
 

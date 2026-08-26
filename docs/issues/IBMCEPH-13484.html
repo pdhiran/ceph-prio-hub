@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13484: [9.0] SMB: User/group names missing for permissions</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,49 +189,56 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.0] SMB: User/group names missing for permissions
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: SMB share permissions show SID values instead of AD group names because the Samba `run` directory permissions (0700) prevent winbindd from resolving SIDs via the named pipe.
 
 ROOT CAUSE:
-- Permission or access control issue.
-- Affected version(s): 9.2
-- Component: smb
+The cephadm-deployed SMB container creates the `/var/lib/ceph/&lt;fsid&gt;/&lt;smb-daemon-name&gt;/run` directory with permissions 0700 (owner-only). Winbindd, which handles SID-to-name resolution, uses a Unix socket in this directory. When non-root SMB client processes attempt to communicate with winbindd via this socket, the restrictive permissions prevent access, causing SID resolution failures. As a result, Windows clients see raw SID strings (e.g., S-1-5-21-...) instead of AD group names in the Security tab. A secondary issue was the CTDB sidecar hitting PID limits (2048 per container) causing fork failures, which was mitigated by setting TasksMax=infinity on the systemd unit. The actual root cause fix is `chmod 0755` on the run directory, which was confirmed by the customer to resolve the issue.
 
-ENGINEERING FINDINGS:
-- [Timothy Nguyen] Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fail periodically every 2 hours. This could cause strain on the SMB service. Apr
-- [Maria Fernanda Salas Villaseñor] Hello      I reviewed the latest four sosreports uploaded after the customer applied the TasksMax workaround to the CTDB sidecar units: 2026-05-04/sosreport-ceph01-services-p06-az1-TS021606977-2026-05-04-flkdcxm.tar.xz 2026-05-04/sosreport-ceph01-services-p06-az2-TS021606977-2026
-- [Prashant Dhange] Hi  , &gt; Is the supported method to add the Podman pids limit to the SMB service spec, for example: extra_container_args:
-  - &quot;--pids-limit=4194304&quot; &gt;  followed by: ceph orch apply -i &lt;updated_smb_spec.yaml&gt;
-ceph orch redeploy smb.&lt;service_id&gt; The above proposed workaround of addi
-- [Anoop C S] Our team will set up a reproducible scenario for this issue, debug it further, and develop a RCA.
-- [Maria Fernanda Salas Villaseñor] Hi      Thanks for the updates. Before I provide the workaround to the customer, I would like to confirm the expected next step from your side. Since    was asked for any additional recommendations, should we wait for his input before asking the customer to proceed? Also, could y
+KEY EVIDENCE:
+- Windows Security tab shows SID values instead of AD group names
+- Permissions still work correctly, only display is affected
+- Root cause identified by Anoop C S: run directory permissions too restrictive
+- Workaround: `chmod 0755 /var/lib/ceph/&lt;fsid&gt;/&lt;smb-daemon-name&gt;/run`
+- Customer confirmed workaround resolves the issue
+- Code fix merged in 9.2
+- Secondary: CTDB sidecar PID limit (2048) causes fork failures — workaround: TasksMax=infinity
 
 FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</textarea>
+- Status: Closed (duplicate of IBMCEPH-16027)
+- Code fix merged in 9.2. Workaround available for older versions.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.0] SMB: User/group names missing for permissions
-Environment: IBM Ceph 9.2, component: smb
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce SID-to-name resolution failure in SMB shares
+Environment: IBM Ceph 9.x with SMB service, Active Directory
 
-1. Deploy IBM Ceph 9.2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable SMB module -- `ceph mgr module enable smb`
-3. Create SMB cluster and share -- `ceph smb cluster create &lt;id&gt; user`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Deploy Ceph SMB service with AD integration -- intent: create SMB share with AD auth
+2. From Windows client, add AD group permissions to a share -- intent: set up ACLs
+3. Wait 30+ minutes and check Security tab -- intent: observe SID display
+4. Check run directory permissions: `ls -la /var/lib/ceph/&lt;fsid&gt;/&lt;smb-daemon&gt;/run` -- intent: verify 0700
+5. Apply fix: `chmod 0755 /var/lib/ceph/&lt;fsid&gt;/&lt;smb-daemon&gt;/run` -- intent: verify resolution
+6. Re-check Windows Security tab -- intent: confirm names now display
 
-SCENARIO DETAIL (from engineering comments):
-The current guidance should be good enough to solve current forking issue, for the main issue of the SID-to-name resolution we would still likely need Active Directory Audit Logs to solve or we wait for Anoop to reproduce. If Adam doesn’t respond in a few days I think it’s safe</textarea>
+DIAGNOSTIC COMMANDS:
+- `ls -la /var/lib/ceph/&lt;fsid&gt;/&lt;smb-daemon-name&gt;/run`
+- `ceph orch ps --daemon-type smb`
+- `podman inspect &lt;smb-container&gt; | grep PidsLimit`
+- `ceph smb show ceph.smb.cluster.&lt;id&gt;`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for SID-to-name resolution in Ceph SMB shares.
 
 GAPS:
-- Permission test gap for: [9.0] SMB: User/group names missing for permissions
+- No test verifying run directory permissions after SMB deployment
+- No test for AD SID-to-name resolution on Windows client
+- No test for CTDB sidecar PID limits under load
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported smb scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Deploy SMB with AD, set ACLs from Windows, verify group names display (not SIDs)
+- Verify /run directory permissions are 0755 after deployment
+- Stress test: many concurrent SMB sessions — verify PID limit not hit
+- CTDB recovery test: verify CTDB sidecar survives fork-heavy operations</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -242,49 +249,54 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.0] SMB: User/group names missing for permissions</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">SMB share permissions show SID values instead of AD group names because the Samba `run` directory permissions (0700) prevent winbindd from resolving SIDs via the named pipe.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The cephadm-deployed SMB container creates the <code>/var/lib/ceph/&lt;fsid&gt;/&lt;smb-daemon-name&gt;/run</code> directory with permissions 0700 (owner-only). Winbindd, which handles SID-to-name resolution, uses a Unix socket in this directory. When non-root SMB client processes attempt to communicate with winbindd via this socket, the restrictive permissions prevent access, causing SID resolution failures. As a result, Windows clients see raw SID strings (e.g., S-1-5-21-...) instead of AD group names in the Security tab. A secondary issue was the CTDB sidecar hitting PID limits (2048 per container) causing fork failures, which was mitigated by setting TasksMax=infinity on the systemd unit. The actual root cause fix is <code>chmod 0755</code> on the run directory, which was confirmed by the customer to resolve the issue.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Permission or access control issue.</li>
-<li>Affected version(s): 9.2</li>
-<li>Component: smb</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Timothy Nguyen] Log Analysis: The SMB has an issue with CTDB nodes not being able to complete their jobs because of pid limit, which doesn’t allow the forking needed for the CTDB job. This causes the CTDB nodes to fail periodically every 2 hours. This could cause strain on the SMB service. Apr</li>
-<li>[Maria Fernanda Salas Villaseñor] Hello      I reviewed the latest four sosreports uploaded after the customer applied the TasksMax workaround to the CTDB sidecar units: 2026-05-04/sosreport-ceph01-services-p06-az1-TS021606977-2026-05-04-flkdcxm.tar.xz 2026-05-04/sosreport-ceph01-services-p06-az2-TS021606977-2026</li>
-<li>[Prashant Dhange] Hi  , &gt; Is the supported method to add the Podman pids limit to the SMB service spec, for example: extra_container_args:</li>
-<li>&quot;--pids-limit=4194304&quot; &gt;  followed by: <code>ceph orch apply -i &lt;updated_smb_spec.yaml&gt;</code></li>
-</ul>
-<div>ceph orch redeploy smb.&lt;service_id&gt; The above proposed workaround of addi</div>
-<ul>
-<li>[Anoop C S] Our team will set up a reproducible scenario for this issue, debug it further, and develop a RCA.</li>
-<li>[Maria Fernanda Salas Villaseñor] Hi      Thanks for the updates. Before I provide the workaround to the customer, I would like to confirm the expected next step from your side. Since    was asked for any additional recommendations, should we wait for his input before asking the customer to proceed? Also, could y</li>
+<li>Windows Security tab shows SID values instead of AD group names</li>
+<li>Permissions still work correctly, only display is affected</li>
+<li>Root cause identified by Anoop C S: run directory permissions too restrictive</li>
+<li>Workaround: <code>chmod 0755 /var/lib/ceph/&amp;lt;fsid&amp;gt;/&amp;lt;smb-daemon-name&amp;gt;/run</code></li>
+<li>Customer confirmed workaround resolves the issue</li>
+<li>Code fix merged in 9.2</li>
+<li>Secondary: CTDB sidecar PID limit (2048) causes fork failures — workaround: TasksMax=infinity</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: I already shared the proposed workaround with the customer and ask them to test it. I will update the case once they provide the results. Thank you!</li>
+<li>Status: Closed (duplicate of IBMCEPH-16027)</li>
+<li>Code fix merged in 9.2. Workaround available for older versions.</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.0] SMB: User/group names missing for permissions</div>
-<div>Environment: IBM Ceph 9.2, component: smb</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce SID-to-name resolution failure in SMB shares</div>
+<div>Environment: IBM Ceph 9.x with SMB service, Active Directory</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable SMB module -- <code><code>ceph mgr module enable smb</code></code></li>
-<li><span class="step-num">3.</span> Create SMB cluster and share -- <code><code>ceph smb cluster create &amp;lt;id&amp;gt; user</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy Ceph SMB service with AD integration -- intent: create SMB share with AD auth</li>
+<li><span class="step-num">2.</span> From Windows client, add AD group permissions to a share -- intent: set up ACLs</li>
+<li><span class="step-num">3.</span> Wait 30+ minutes and check Security tab -- intent: observe SID display</li>
+<li><span class="step-num">4.</span> Check run directory permissions: <code>ls -la /var/lib/ceph/&amp;lt;fsid&amp;gt;/&amp;lt;smb-daemon&amp;gt;/run</code> -- intent: verify 0700</li>
+<li><span class="step-num">5.</span> Apply fix: <code>chmod 0755 /var/lib/ceph/&amp;lt;fsid&amp;gt;/&amp;lt;smb-daemon&amp;gt;/run</code> -- intent: verify resolution</li>
+<li><span class="step-num">6.</span> Re-check Windows Security tab -- intent: confirm names now display</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>The current guidance should be good enough to solve current forking issue, for the main issue of the SID-to-name resolution we would still likely need Active Directory Audit Logs to solve or we wait for Anoop to reproduce. If Adam doesn’t respond in a few days I think it’s safe</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ls -la /var/lib/ceph/&amp;lt;fsid&amp;gt;/&amp;lt;smb-daemon-name&amp;gt;/run</code></li>
+<li><code><code>ceph orch ps --daemon-type smb</code></code></li>
+<li><code><code>podman inspect &amp;lt;smb-container&amp;gt; | grep PidsLimit</code></code></li>
+<li><code><code>ceph smb show ceph.smb.cluster.&amp;lt;id&amp;gt;</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for SID-to-name resolution in Ceph SMB shares.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Permission test gap for: [9.0] SMB: User/group names missing for permissions</li>
+<li>No test verifying run directory permissions after SMB deployment</li>
+<li>No test for AD SID-to-name resolution on Windows client</li>
+<li>No test for CTDB sidecar PID limits under load</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported smb scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Deploy SMB with AD, set ACLs from Windows, verify group names display (not SIDs)</li>
+<li>Verify /run directory permissions are 0755 after deployment</li>
+<li>Stress test: many concurrent SMB sessions — verify PID limit not hit</li>
+<li>CTDB recovery test: verify CTDB sidecar survives fork-heavy operations</li>
 </ul></div>
 </div>
 

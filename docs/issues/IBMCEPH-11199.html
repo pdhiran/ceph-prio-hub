@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11199: [BZ#2360663] [IBM Support][Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,47 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2360663] [IBM Support][Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&quot;
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 6.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Kritik Sachdeva] Hello team, As per the discussion between with Prashant &amp; Michael and update on customer ticket (TS019082517) that this issue could be because of high metadata usage of the OSDs (around 1.5Tib) and we can look up the compacting them to avoid this issue. However, we are waiting fo
-- [Kritik Sachdeva] Hello    The case is closed, and sharing the key points from the internal case update ( from Matthew) that helped to fix this. Key items that attributed to improving OSD restart times:
-- removing stale instances
-- mass cleanup of buckets and index data via lc policies
-- splitting
-- [Aarti Dhikale] Hello   , Thanks for the confirmation and for providing the details on how the issue was fixed. I’m closing this issue.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSDs taking 2+ hours to start due to BlueStore NCB allocation metadata recovery from ONodes after unclean shutdown during heavy recovery.
+ROOT CAUSE: When OSDs flap during heavy recovery/backfilling, they undergo unclean shutdowns that corrupt the NCB (Non-volatile Cache of Block allocator) allocation metadata stored in RocksDB. On restart, the OSD reports &#x27;No Valid allocation info on disk (empty file)&#x27; and enters full recovery from ONodes, which takes 2-4 hours for OSDs with ~1.5 TiB metadata. Contributing factors: customer had `osd_compact_on_start = false` disabled, and a Ceph 6 bug (fixed in Ceph 7) caused OSDs not to shut down properly, exacerbating the onode recovery requirement.
+KEY EVIDENCE:
+- Log: &#x27;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&#x27;
+- Log: &#x27;_init_alloc::NCB::restore_allocator() failed! Run Full Recovery from ONodes (might take a while)&#x27;
+- Version: IBM Ceph 6.1z8 (17.2.6-246.el9cp)
+- Customer had osd_compact_on_start=false and osd_fast_shutdown=true
+- Resolution: stale instance cleanup, mass bucket/index cleanup via lc policies, splitting to 3 OSDs per device, kernel/firmware updates, upgrade to Ceph 7
+FIX STATUS: Closed. Issue resolved by upgrading to Ceph 7 (which fixed the improper OSD shutdown bug) and operational improvements. Setting osd_fast_shutdown=false is recommended as preventive measure.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2360663] [Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&quot;
-Environment: IBM Ceph 6.1, component: rados
-
-1. Deploy IBM Ceph 6.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Run baseline benchmark (fio/rados bench) -- record metrics
-5. Trigger the performance scenario described in JIRA
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce slow OSD startup due to NCB allocation recovery
+Environment: IBM Ceph 6.1 (or simulate with heavy metadata OSDs)
+1. Deploy OSDs with large metadata usage (~1.5 TiB) and EC pools with large PGs (70+ GiB) -- intent: simulate customer scale
+2. Set `ceph config set osd osd_fast_shutdown true` -- intent: enable fast (unclean) shutdown
+3. Trigger heavy recovery by marking OSDs down/up rapidly -- intent: cause flapping during recovery
+4. Kill -9 an OSD process during recovery -- intent: force unclean shutdown with dirty metadata
+5. Restart the OSD and measure time to &#x27;up&#x27; state -- intent: observe NCB recovery duration
+DIAGNOSTIC COMMANDS:
+- ceph config get osd osd_fast_shutdown
+- ceph config get osd osd_compact_on_start
+- journalctl -u ceph-osd@&lt;id&gt; | grep -i &#x27;NCB\|restore_allocator\|No Valid&#x27;
+- ceph osd perf (check commit_latency during recovery)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: [BZ#2360663] [Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Vali
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue resolved in Ceph 7. No automated test for NCB recovery duration.
+GAPS: No test validates OSD startup time after unclean shutdown with large metadata. No test for osd_fast_shutdown=false impact on shutdown cleanliness.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. OSD restart time measurement after kill -9 during active recovery
+2. Compare OSD startup with osd_fast_shutdown true vs false
+3. Verify Ceph 7+ fix: OSD shutdown completes properly even during recovery</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -240,46 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2360663] [IBM Support][Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&quot;</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSDs taking 2+ hours to start due to BlueStore NCB allocation metadata recovery from ONodes after unclean shutdown during heavy recovery.</div>
+<div>ROOT CAUSE: When OSDs flap during heavy recovery/backfilling, they undergo unclean shutdowns that corrupt the NCB (Non-volatile Cache of Block allocator) allocation metadata stored in RocksDB. On restart, the OSD reports &#x27;No Valid allocation info on disk (empty file)&#x27; and enters full recovery from ONodes, which takes 2-4 hours for OSDs with ~1.5 TiB metadata. Contributing factors: customer had <code>osd_compact_on_start = false</code> disabled, and a Ceph 6 bug (fixed in Ceph 7) caused OSDs not to shut down properly, exacerbating the onode recovery requirement.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 6.1</li>
-<li>Component: rados</li>
+<li>Log: &#x27;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&#x27;</li>
+<li>Log: &#x27;_init_alloc::NCB::restore_allocator() failed! Run Full Recovery from ONodes (might take a while)&#x27;</li>
+<li>Version: IBM Ceph 6.1z8 (17.2.6-246.el9cp)</li>
+<li>Customer had osd_compact_on_start=false and osd_fast_shutdown=true</li>
+<li>Resolution: stale instance cleanup, mass bucket/index cleanup via lc policies, splitting to 3 OSDs per device, kernel/firmware updates, upgrade to Ceph 7</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed. Issue resolved by upgrading to Ceph 7 (which fixed the improper OSD shutdown bug) and operational improvements. Setting osd_fast_shutdown=false is recommended as preventive measure.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce slow OSD startup due to NCB allocation recovery</div>
+<div>Environment: IBM Ceph 6.1 (or simulate with heavy metadata OSDs)</div>
 <ul>
-<li>[Kritik Sachdeva] Hello team, As per the discussion between with Prashant &amp; Michael and update on customer ticket (TS019082517) that this issue could be because of high metadata usage of the OSDs (around 1.5Tib) and we can look up the compacting them to avoid this issue. However, we are waiting fo</li>
-<li>[Kritik Sachdeva] Hello    The case is closed, and sharing the key points from the internal case update ( from Matthew) that helped to fix this. Key items that attributed to improving OSD restart times:</li>
-<li>removing stale instances</li>
-<li>mass cleanup of buckets and index data via lc policies</li>
-<li>splitting</li>
-<li>[Aarti Dhikale] Hello   , Thanks for the confirmation and for providing the details on how the issue was fixed. I’m closing this issue.</li>
+<li><span class="step-num">1.</span> Deploy OSDs with large metadata usage (~1.5 TiB) and EC pools with large PGs (70+ GiB) -- intent: simulate customer scale</li>
+<li><span class="step-num">2.</span> Set <code><code>ceph config set osd osd_fast_shutdown true</code></code> -- intent: enable fast (unclean) shutdown</li>
+<li><span class="step-num">3.</span> Trigger heavy recovery by marking OSDs down/up rapidly -- intent: cause flapping during recovery</li>
+<li><span class="step-num">4.</span> Kill -9 an OSD process during recovery -- intent: force unclean shutdown with dirty metadata</li>
+<li><span class="step-num">5.</span> Restart the OSD and measure time to &#x27;up&#x27; state -- intent: observe NCB recovery duration</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph config get osd osd_fast_shutdown</code></li>
+<li><code>ceph config get osd osd_compact_on_start</code></li>
+<li><code>journalctl -u ceph-osd@&lt;id&gt; | grep -i &#x27;NCB\|restore_allocator\|No Valid&#x27;</code></li>
+<li><code>ceph osd perf (check commit_latency during recovery)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2360663] [Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Valid allocation info on disk (empty file)&quot;</div>
-<div>Environment: IBM Ceph 6.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">5.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: [BZ#2360663] [Rados] OSDs starts too slow and stuck at &quot;bluestore::NCB::__restore_allocator::No Vali</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue resolved in Ceph 7. No automated test for NCB recovery duration.</div>
+<div>GAPS: No test validates OSD startup time after unclean shutdown with large metadata. No test for osd_fast_shutdown=false impact on shutdown cleanliness.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> OSD restart time measurement after kill -9 during active recovery</li>
+<li><span class="step-num">2.</span> Compare OSD startup with osd_fast_shutdown true vs false</li>
+<li><span class="step-num">3.</span> Verify Ceph 7+ fix: OSD shutdown completes properly even during recovery</li>
 </ul></div>
 </div>
 

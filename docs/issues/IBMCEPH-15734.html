@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15734: [9.1z] [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,47 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z] [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Clone/duplicate of IBMCEPH-15699 for 9.1z tracking; the issue does NOT exist in 9.1 or later.
 
 ROOT CAUSE:
-- Affected version(s): 9.0z2
-- Component: ceph-dashboard
+Same as IBMCEPH-15699. The SSL certificate upload issue was specific to 9.0 where the CertMgr UI was absent. From 9.1 onwards, the CertMgr feature in the Dashboard properly handles `rgw_frontend_ssl_certificate` field naming, eliminating the validation failure.
 
-ENGINEERING FINDINGS:
-- [Abhishek Desai] The issue is not reproducible with 9.1 The issue was fixed for 9.0 as certmgr UI was absent in 9.0.
-- [Bipin Kunal] what are we fixing in 9.2 as a part of    or  do you say that issue doesn’t exist in 9.1  but we had a regression in 9.2 ?
-- [Abhishek Desai] The issue is only reproducible on 9.0 , from 9.1 onwards we are supporting CertMgr feature in dashboard which does not cause the issue.  9.1 9.2 does not need any fix- I have changed the target version for mentioned ticket to 9.0 for which the issue is fixed.
+KEY EVIDENCE:
+- Abhishek Desai: &quot;The issue is not reproducible with 9.1. The issue was fixed for 9.0 as certmgr UI was absent in 9.0.&quot;
+- &quot;9.1 9.2 does not need any fix&quot;
+- Closed as &quot;Not a Bug&quot; for 9.1z stream
 
 FIX STATUS:
-- Current JIRA status: Closed</textarea>
+- Status: Closed (Not a Bug)
+- No fix needed for 9.1+; issue only existed in 9.0</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z] [RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error
-Environment: IBM Ceph 9.0z2, component: ceph-dashboard
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Confirm that SSL certificate upload works correctly on IBM Ceph 9.1+
+Environment: IBM Ceph 9.1 or later with RGW service
 
-1. Deploy IBM Ceph 9.0z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify SSL/TLS configuration -- `ceph config get rgw rgw_frontends`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy RGW with SSL using spec file -- intent: baseline
+   ```
+   ceph orch apply -i rgw-ssl-spec.yaml
+   ```
+2. Navigate to Dashboard -&gt; Administration -&gt; Services -&gt; rgw.service -&gt; Edit -- intent: verify cert visible
+3. Upload SSL certificate + key through Dashboard CertMgr UI -- intent: verify no error
+4. Verify RGW service restarts with new cert -- intent: end-to-end validation
+
+DIAGNOSTIC COMMANDS:
+- `ceph orch ps --service-type rgw`
+- `curl -k https://&lt;rgw-endpoint&gt; | openssl s_client`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Covered by same gaps as IBMCEPH-15699. Verification test needed on 9.1+ to confirm CertMgr handles SSL correctly.
 
 GAPS:
+- Same as IBMCEPH-15699
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Positive test on 9.1+: Upload cert+key via CertMgr Dashboard UI, verify RGW serves with new cert
+- Verify CertMgr UI displays existing certs correctly after upgrade from 9.0 to 9.1</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,37 +240,47 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z] [IBM_Support][RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Clone/duplicate of IBMCEPH-15699 for 9.1z tracking; the issue does NOT exist in 9.1 or later.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>Same as IBMCEPH-15699. The SSL certificate upload issue was specific to 9.0 where the CertMgr UI was absent. From 9.1 onwards, the CertMgr feature in the Dashboard properly handles <code>rgw_frontend_ssl_certificate</code> field naming, eliminating the validation failure.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0z2</li>
-<li>Component: ceph-dashboard</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Abhishek Desai] The issue is not reproducible with 9.1 The issue was fixed for 9.0 as certmgr UI was absent in 9.0.</li>
-<li>[Bipin Kunal] what are we fixing in 9.2 as a part of    or  do you say that issue doesn’t exist in 9.1  but we had a regression in 9.2 ?</li>
-<li>[Abhishek Desai] The issue is only reproducible on 9.0 , from 9.1 onwards we are supporting CertMgr feature in dashboard which does not cause the issue.  9.1 9.2 does not need any fix- I have changed the target version for mentioned ticket to 9.0 for which the issue is fixed.</li>
+<li>Abhishek Desai: &quot;The issue is not reproducible with 9.1. The issue was fixed for 9.0 as certmgr UI was absent in 9.0.&quot;</li>
+<li>&quot;9.1 9.2 does not need any fix&quot;</li>
+<li>Closed as &quot;Not a Bug&quot; for 9.1z stream</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li>Status: Closed (Not a Bug)</li>
+<li>No fix needed for 9.1+; issue only existed in 9.0</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z] [RGW][Dashboard] SSL certificate upload returns 500 Internal Server Error</div>
-<div>Environment: IBM Ceph 9.0z2, component: ceph-dashboard</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Confirm that SSL certificate upload works correctly on IBM Ceph 9.1+</div>
+<div>Environment: IBM Ceph 9.1 or later with RGW service</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify SSL/TLS configuration -- <code><code>ceph config get rgw rgw_frontends</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Deploy RGW with SSL using spec file -- intent: baseline</li>
+</ul>
+<pre>
+   ceph orch apply -i rgw-ssl-spec.yaml
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Navigate to Dashboard -&gt; Administration -&gt; Services -&gt; rgw.service -&gt; Edit -- intent: verify cert visible</li>
+<li><span class="step-num">3.</span> Upload SSL certificate + key through Dashboard CertMgr UI -- intent: verify no error</li>
+<li><span class="step-num">4.</span> Verify RGW service restarts with new cert -- intent: end-to-end validation</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph orch ps --service-type rgw</code></code></li>
+<li><code><code>curl -k https://&amp;lt;rgw-endpoint&amp;gt; | openssl s_client</code></code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Covered by same gaps as IBMCEPH-15699. Verification test needed on 9.1+ to confirm CertMgr handles SSL correctly.</div>
 <div class="section-head">GAPS</div>
+<ul>
+<li>Same as IBMCEPH-15699</li>
+</ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Positive test on 9.1+: Upload cert+key via CertMgr Dashboard UI, verify RGW serves with new cert</li>
+<li>Verify CertMgr UI displays existing certs correctly after upgrade from 9.0 to 9.1</li>
 </ul></div>
 </div>
 

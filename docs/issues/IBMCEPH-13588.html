@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13588: Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solution</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,53 +189,44 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solution
-
-ROOT CAUSE:
-- Performance degradation or timeout behavior reported.
-- Affected version(s): 8.1
-- Component: ceph
-
-ENGINEERING FINDINGS:
-- [Aarti Dhikale] Hello   , For further  analysis, we require the output of the following commands as well: ceph config dump
-ceph orch host ls
-ceph orch ps
-
-ceph nfs cluster ls
-ceph nfs cluster info &lt;cluster-name&gt;
-ceph nfs export ls &lt;cluster_name&gt;
-ceph nfs export info &lt;cluster_name&gt; &lt;export_id&gt;
-- [Karun Josy] Call Summary – 24 April Attendees Acadia Team:  Samuel, Kiran, Afroz, Subramaniyan, Ramya L3 Team:  Vivek, Aarti, Karun QE Team:  Amarnath Key Discussion Points The L3 team shared the preliminary analysis. Observations show a brief increase in latency and a drop in throughput for
-- [Vivek Maurya] , in the future, if your team reproduces the issue, could you please follow the steps outlined in the shared document to collect the logs for analysis?
-- [Afroz Khan I] Hi   , We are currently chasing ~5 minutes outage issue seen with the platform upgrade[IBMCEPH-17180], because of that we had to deprioritise this issue and once outage problem is resolved, we will shift our focus back to this ticket. Thank you! Regards, Afroz
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS export performance degradation (7%-65% IOPS drop, 20s statfs spikes) during rolling OSD node reboots in IBM Cloud RFS platform maintenance.
+ROOT CAUSE: During rolling reboot of OSD nodes in platform maintenance, PG peering storms cause latency spikes. The severity correlates with: 1) PG count per OSD (higher = worse), 2) Whether the rebooted node hosts NFS/MDS/MON in addition to OSDs, 3) Single network for both cluster and client traffic. QE testing confirmed: increasing PGs from 1024 to 2048 made latency 1.6x-2.5x worse with 5x more spikes. Two anomalous 300-464 second spikes were observed on nodes hosting NFS daemons, suggesting NFS daemon migration adds significant latency beyond normal PG peering (~10-26 seconds).
+KEY EVIDENCE:
+- IOPS drop: 7% to 65% during rolling reboot
+- statfs response time: up to 20 seconds (normal baseline: 6-9ms)
+- Ceph 19.2.1-331.el9cp (8.1) with NFS-Ganesha 6.5-34.el9cp
+- 24 OSDs per node, single network
+- PG reduction (25%) improved peak latency from 17.5s to 14s
+- Anomalous 464s spike on node with 7 NFS daemons
+- Investigation incomplete: closed due to insufficient logs; customer to reopen with data
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Customer deprioritized in favor of IBMCEPH-17180 (5-minute outage). L3 requested comprehensive logging (sosreport, debug MDS/NFS logs) for next reproduction.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solution
-Environment: IBM Ceph 8.1, component: ceph
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Run baseline benchmark (fio/rados bench) -- record metrics
-3. Trigger the performance scenario described in JIRA
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi  , As per our last discussion, did we get input from the customer on their expectation of latency during maintenance mode OSD rebooting? Also, has your team had a chance to reproduce the issue on a different cluster?</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce NFS performance degradation during OSD node rolling reboot
+Environment: IBM Ceph 8.1 (19.2.1-331.el9cp) with NFS-Ganesha, multiple converged nodes
+1. Deploy cluster with converged nodes (MON+MGR+MDS+OSD+NFS on same hosts) -- intent: match topology
+2. Create NFS export, mount on client, run sustained IO (fio + stat -f every 5s) -- intent: establish baseline
+3. Begin rolling reboot of OSD nodes one at a time -- intent: simulate maintenance
+4. Record statfs latency spikes during each reboot -- intent: measure impact
+5. Compare: OSD-only nodes vs converged nodes -- intent: isolate NFS contribution
+6. Test mitigation: 10-minute wait between NFS migration and maintenance mode -- intent: test isolation
+DIAGNOSTIC COMMANDS:
+- ceph pg dump
+- ceph osd perf
+- ceph tell mds.&lt;fs&gt; dump_ops_in_flight
+- ceph tell mds.&lt;fs&gt; perf dump
+- stat -f /mnt/nfs_mount (latency measurement)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- No performance baseline test for: Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solu
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE testing in progress but incomplete due to customer unavailability.
+GAPS: No automated test measures NFS export latency during rolling OSD reboots. No test validates the correlation between PG count and reboot-induced latency.
 SCENARIOS NEEDED:
-- Performance: benchmark before/after, compare against SLA
-- Functional: reproduce reported ceph scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Measure NFS statfs latency during rolling reboot at various PG-per-OSD ratios (100, 200, 400)
+2. Compare latency: OSD-only node reboot vs converged node reboot
+3. Validate mitigation: separate NFS daemon migration from OSD maintenance with 10-15 min gap
+4. Test with separate cluster/client networks vs single network</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -246,52 +237,45 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solution</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS export performance degradation (7%-65% IOPS drop, 20s statfs spikes) during rolling OSD node reboots in IBM Cloud RFS platform maintenance.</div>
+<div>ROOT CAUSE: During rolling reboot of OSD nodes in platform maintenance, PG peering storms cause latency spikes. The severity correlates with: 1) PG count per OSD (higher = worse), 2) Whether the rebooted node hosts NFS/MDS/MON in addition to OSDs, 3) Single network for both cluster and client traffic. QE testing confirmed: increasing PGs from 1024 to 2048 made latency 1.6x-2.5x worse with 5x more spikes. Two anomalous 300-464 second spikes were observed on nodes hosting NFS daemons, suggesting NFS daemon migration adds significant latency beyond normal PG peering (~10-26 seconds).</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Performance degradation or timeout behavior reported.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: ceph</li>
+<li>IOPS drop: 7% to 65% during rolling reboot</li>
+<li>statfs response time: up to 20 seconds (normal baseline: 6-9ms)</li>
+<li>Ceph 19.2.1-331.el9cp (8.1) with NFS-Ganesha 6.5-34.el9cp</li>
+<li>24 OSDs per node, single network</li>
+<li>PG reduction (25%) improved peak latency from 17.5s to 14s</li>
+<li>Anomalous 464s spike on node with 7 NFS daemons</li>
+<li>Investigation incomplete: closed due to insufficient logs; customer to reopen with data</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. Customer deprioritized in favor of IBMCEPH-17180 (5-minute outage). L3 requested comprehensive logging (sosreport, debug MDS/NFS logs) for next reproduction.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce NFS performance degradation during OSD node rolling reboot</div>
+<div>Environment: IBM Ceph 8.1 (19.2.1-331.el9cp) with NFS-Ganesha, multiple converged nodes</div>
 <ul>
-<li>[Aarti Dhikale] Hello   , For further  analysis, we require the output of the following commands as well: <code>ceph config dump</code></li>
+<li><span class="step-num">1.</span> Deploy cluster with converged nodes (MON+MGR+MDS+OSD+NFS on same hosts) -- intent: match topology</li>
+<li><span class="step-num">2.</span> Create NFS export, <code>mount on client</code>, run sustained IO (<code>fio + stat -f every 5s) -- intent: establish baseline</code></li>
+<li><span class="step-num">3.</span> Begin rolling reboot of OSD nodes one at a time -- intent: simulate maintenance</li>
+<li><span class="step-num">4.</span> Record statfs latency spikes during each reboot -- intent: measure impact</li>
+<li><span class="step-num">5.</span> Compare: OSD-only nodes vs converged nodes -- intent: isolate NFS contribution</li>
+<li><span class="step-num">6.</span> Test mitigation: 10-minute wait between NFS migration and maintenance mode -- intent: test isolation</li>
 </ul>
-<div>ceph orch host ls</div>
-<div>ceph orch ps</div>
-<div>ceph nfs cluster ls</div>
-<div>ceph nfs cluster info &lt;cluster-name&gt;</div>
-<div>ceph nfs export ls &lt;cluster_name&gt;</div>
-<div>ceph nfs export info &lt;cluster_name&gt; &lt;export_id&gt;</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>[Karun Josy] Call Summary – 24 April Attendees Acadia Team:  Samuel, Kiran, Afroz, Subramaniyan, Ramya L3 Team:  Vivek, Aarti, Karun QE Team:  Amarnath Key Discussion Points The L3 team shared the preliminary analysis. Observations show a brief increase in latency and a drop in throughput for</li>
-<li>[Vivek Maurya] , in the future, if your team reproduces the issue, could you please follow the steps outlined in the shared document to collect the logs for analysis?</li>
-<li>[Afroz Khan I] Hi   , We are currently chasing ~5 minutes outage issue seen with the platform upgrade[IBMCEPH-17180], because of that we had to deprioritise this issue and once outage problem is resolved, we will shift our focus back to this ticket. Thank you! Regards, Afroz</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph pg dump</code></li>
+<li><code>ceph osd perf</code></li>
+<li><code>ceph tell mds.&lt;fs&gt; dump_ops_in_flight</code></li>
+<li><code>ceph tell mds.&lt;fs&gt; perf dump</code></li>
+<li>stat -f /mnt/nfs_mount (latency measurement)</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solution</div>
-<div>Environment: IBM Ceph 8.1, component: ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Run baseline benchmark (fio/<code>rados bench) -- record metrics</code></li>
-<li><span class="step-num">3.</span> Trigger the performance scenario described in JIRA</li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi  , As per our last discussion, did we get input from the customer on their expectation of latency during maintenance mode OSD rebooting? Also, has your team had a chance to reproduce the issue on a different cluster?</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>No performance baseline test for: Performance impact observed on exports during Acadia platform maintenance for the IBM Cloud RFS Solu</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE testing in progress but incomplete due to customer unavailability.</div>
+<div>GAPS: No automated test measures NFS export latency during rolling OSD reboots. No test validates the correlation between PG count and reboot-induced latency.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Performance: benchmark before/after, compare against SLA</li>
-<li>Functional: reproduce reported <code>ceph scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Measure NFS statfs latency during rolling reboot at various PG-per-OSD ratios (100, 200, 400)</li>
+<li><span class="step-num">2.</span> Compare latency: OSD-only node reboot vs converged node reboot</li>
+<li><span class="step-num">3.</span> Validate mitigation: separate NFS daemon migration from OSD maintenance with 10-15 min gap</li>
+<li><span class="step-num">4.</span> Test with separate cluster/client networks vs single network</li>
 </ul></div>
 </div>
 

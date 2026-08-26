@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13156: [ibm_support] RFE: Supportability cron job</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,34 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [ibm_support] RFE: Supportability cron job
-
-ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: rados
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RFE for automated supportability cron job to detect unsupported configurations and alert customers.
+ROOT CAUSE: Customers frequently run unsupported configurations (e.g., RGW index pool on HDDs) without realizing it. No automated mechanism exists to periodically validate cluster configuration against IBM support matrix and alert administrators. The proposal is for a weekly checker that could generate support tickets or email notifications when supportability is breached. This could align with IBM Call Home functionality.
+KEY EVIDENCE:
+- Example: RGW index pool on HDDs is unsupported but commonly misconfigured
+- Disconnected deployments would be problematic for auto-update of checker scripts
+- Related to IBM Call Home: https://www.ibm.com/support/pages/node/7236061
+- No engineering comments or implementation plan
+FIX STATUS: Status &#x27;new&#x27;. Labeled as FutureFeature. No implementation timeline. Assigned to Radosław Zarzyński.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [ibm_support] RFE: Supportability cron job
-Environment: IBM Ceph 9.0, component: rados
-
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate the concept of automated supportability checks
+Environment: IBM Ceph 9.0+
+1. Deploy cluster with intentionally unsupported config (e.g., RGW index pool on HDD class) -- intent: create detectable violation
+2. Run proposed checker script/module -- intent: verify detection
+3. Verify alert generation (health warning, log message, or notification) -- intent: confirm alerting works
+4. Fix the configuration and re-run checker -- intent: confirm false positive absence
+DIAGNOSTIC COMMANDS:
+- ceph osd pool get &lt;index_pool&gt; crush_rule (verify device class)
+- ceph osd crush rule dump
+- ceph health detail</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: [ibm_support] RFE: Supportability cron job
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Insufficient engineering analysis in JIRA. This is a future feature RFE with no implementation.
+GAPS: No existing tests for supportability validation. No framework for configuration compliance checking.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. Detection of HDD-backed index pools
+2. Detection of unsupported kernel versions
+3. Detection of mixed Ceph versions beyond supported upgrade window
+4. Graceful handling of disconnected environments</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -227,32 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[ibm_support] RFE: Supportability cron job</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RFE for automated supportability cron job to detect unsupported configurations and alert customers.</div>
+<div>ROOT CAUSE: Customers frequently run unsupported configurations (e.g., RGW index pool on HDDs) without realizing it. No automated mechanism exists to periodically validate cluster configuration against IBM support matrix and alert administrators. The proposal is for a weekly checker that could generate support tickets or email notifications when supportability is breached. This could align with IBM Call Home functionality.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: rados</li>
+<li>Example: RGW index pool on HDDs is unsupported but commonly misconfigured</li>
+<li>Disconnected deployments would be problematic for auto-update of checker scripts</li>
+<li>Related to IBM Call Home: https://www.ibm.com/support/pages/node/7236061</li>
+<li>No engineering comments or implementation plan</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: Status &#x27;new&#x27;. Labeled as FutureFeature. No implementation timeline. Assigned to Radosław Zarzyński.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate the concept of automated supportability checks</div>
+<div>Environment: IBM Ceph 9.0+</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [ibm_support] RFE: Supportability cron job</div>
-<div>Environment: IBM Ceph 9.0, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: [ibm_support] RFE: Supportability cron job</code></li>
+<li><span class="step-num">1.</span> Deploy cluster with intentionally unsupported config (e.g., RGW index pool on HDD class) -- intent: create detectable violation</li>
+<li><span class="step-num">2.</span> Run proposed checker script/module -- intent: verify detection</li>
+<li><span class="step-num">3.</span> Verify alert generation (health warning, log message, or notification) -- intent: confirm alerting works</li>
+<li><span class="step-num">4.</span> Fix the configuration and re-run checker -- intent: confirm false positive absence</li>
 </ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd pool get &lt;index_pool&gt; crush_rule (verify device class)</code></li>
+<li><code>ceph osd crush rule dump</code></li>
+<li><code>ceph health detail</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Insufficient engineering analysis in JIRA. This is a future feature RFE with no implementation.</div>
+<div>GAPS: No existing tests for supportability validation. No framework for configuration compliance checking.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Detection of HDD-backed index pools</li>
+<li><span class="step-num">2.</span> Detection of unsupported kernel versions</li>
+<li><span class="step-num">3.</span> Detection of mixed Ceph versions beyond supported upgrade window</li>
+<li><span class="step-num">4.</span> Graceful handling of disconnected environments</li>
 </ul></div>
 </div>
 

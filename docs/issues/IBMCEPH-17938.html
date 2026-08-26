@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17938: [9.1z Backport] ceph pg query returns JSONDecodeError when EIO flag is set</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,15 +189,63 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: `ceph pg &lt;pgid&gt; query` command throws Python JSONDecodeError when the pool&#x27;s EIO flag is set, because the OSD returns an empty/error response that the CLI cannot parse.
+
+ROOT CAUSE: When the EIO (Error I/O) flag is enabled on a pool via `ceph osd pool set &lt;pool&gt; eio true`, the OSD returns an error (EIO) for PG query operations on PGs belonging to that pool. The `ceph` CLI tool expects a valid JSON response from `pg query`, but the OSD returns either an empty response or a non-JSON error when the EIO flag intercepts the operation. The Python JSON parser in `/usr/bin/ceph` (specifically `parse_json_funcsigs` in `ceph_argparse.py`) then fails with `JSONDecodeError: Expecting value: line 1 column 1 (char 0)` because it receives an empty string. The issue is that the OSD-side PG query handler does not properly handle the EIO pool flag — it should either return a valid JSON error response or the CLI should gracefully handle the error return code.
+
+KEY EVIDENCE:
+- Reproduced 3/3 times on RHCS 7.1 (18.2.1-75.el9cp) and RHCS 7.0 (18.2.0-156.el9cp)
+- `ceph pg 9.0 query` works before setting EIO, fails after `ceph osd pool set replica1_zone2 eio true`
+- Error trace: JSONDecodeError at line 1327 of /usr/bin/ceph -&gt; parse_json_funcsigs -&gt; json.loads(empty_string)
+- Original issue: IBMCEPH-8606 (BZ#2270897), status &#x27;in progress&#x27;
+- This is a 9.1z backport clone of IBMCEPH-8606
+- Not pool-type specific (affects both replica-1 and standard pools)
+- Created 2026-08-25, status: New
+
+FIX STATUS: Original issue IBMCEPH-8606 is &#x27;in progress&#x27; (not yet fixed). This 9.1z backport will track once the original fix lands. Assigned to Aarti Dhikale.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce JSONDecodeError when running `ceph pg query` on a pool with EIO flag enabled.
+Environment: IBM Ceph 8.1 or 9.x (any version — issue spans all versions since 7.0).
+
+1. Deploy a Ceph cluster -- intent: get a running cluster
+2. Create a pool:
+   ceph osd pool create test-eio-pool 32
+   -- intent: have a pool to set EIO on
+3. Run pg query on any PG of the pool (should succeed):
+   ceph pg &lt;pool-pg-id&gt; query
+   -- intent: verify baseline works
+4. Enable EIO flag on the pool:
+   ceph osd pool set test-eio-pool eio true
+   -- intent: trigger the bug condition
+5. Re-run pg query on the same PG:
+   ceph pg &lt;pool-pg-id&gt; query
+   -- intent: this should throw JSONDecodeError
+6. Verify: Python traceback with &#x27;JSONDecodeError: Expecting value: line 1 column 1 (char 0)&#x27;
+7. Disable EIO and verify pg query works again:
+   ceph osd pool set test-eio-pool eio false
+   ceph pg &lt;pool-pg-id&gt; query
+
+DIAGNOSTIC COMMANDS:
+- ceph osd pool get &lt;pool&gt; eio
+- ceph pg dump --format json | python3 -m json.tool
+- ceph pg &lt;pgid&gt; query 2&gt;&amp;1</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;"></textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Original IBMCEPH-8606 has been open since March 2024 with no fix. No QE test coverage exists.
+
+GAPS:
+- No test exercises `ceph pg query` with EIO flag enabled
+- No test validates CLI graceful error handling for non-JSON OSD responses
+- No test covers all pool flags that might affect pg query output format
+
+SCENARIOS NEEDED:
+1. pg query with EIO flag: Set EIO on pool, run pg query, verify graceful error (not unhandled exception)
+2. pg query with EIO flag cleared: Set and unset EIO, verify pg query returns valid JSON after clearing
+3. All pg-affecting pool flags: Test pg query with other pool flags (nopgchange, nosizechange, etc.) to verify none cause similar JSON parsing failures
+4. pg dump with EIO pool: Verify `ceph pg dump` handles EIO pools without crashing</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -208,9 +256,68 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">`ceph pg &lt;pgid&gt; query` command throws Python JSONDecodeError when the pool&#x27;s EIO flag is set, because the OSD returns an empty/error response that the CLI cannot parse.</div>
+<div>ROOT CAUSE: When the EIO (Error I/O) flag is enabled on a pool via <code>ceph osd pool set &lt;pool&gt; eio true</code>, the OSD returns an error (EIO) for PG query operations on PGs belonging to that pool. The <code>ceph</code> CLI tool expects a valid JSON response from <code>pg query</code>, but the OSD returns either an empty response or a non-JSON error when the EIO flag intercepts the operation. The Python JSON parser in <code>/usr/bin/ceph</code> (specifically <code>parse_json_funcsigs</code> in <code>ceph_argparse.py</code>) then fails with <code>JSONDecodeError: Expecting value: line 1 column 1 (char 0)</code> because it receives an empty string. The issue is that the OSD-side PG query handler does not properly handle the EIO pool flag — it should either return a valid JSON error response or the CLI should gracefully handle the error return code.</div>
+<div class="section-head">KEY EVIDENCE</div>
+<ul>
+<li>Reproduced 3/3 times on RHCS 7.1 (18.2.1-75.el9cp) and RHCS 7.0 (18.2.0-156.el9cp)</li>
+<li><code><code>ceph pg 9.0 query</code></code> works before setting EIO, fails after <code><code>ceph osd pool set replica1_zone2 eio true</code></code></li>
+<li>Error trace: JSONDecodeError at line 1327 of /usr/bin/<code>ceph -&gt; parse_json_funcsigs -&gt; json.loads(empty_string)</code></li>
+<li>Original issue: IBMCEPH-8606 (BZ#2270897), status &#x27;in progress&#x27;</li>
+<li>This is a 9.1z backport clone of IBMCEPH-8606</li>
+<li>Not pool-type specific (affects both replica-1 and standard pools)</li>
+<li>Created 2026-08-25, status: New</li>
+</ul>
+<div>FIX STATUS: Original issue IBMCEPH-8606 is &#x27;in progress&#x27; (not yet fixed). This 9.1z backport will track once the original fix lands. Assigned to Aarti Dhikale.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce JSONDecodeError when running <code>ceph pg query</code> on a pool with EIO flag enabled.</div>
+<div>Environment: IBM Ceph 8.1 or 9.x (any version — issue spans all versions since 7.0).</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy a Ceph cluster -- intent: get a running cluster</li>
+<li><span class="step-num">2.</span> Create a pool:</li>
+</ul>
+<div>ceph osd pool create test-eio-pool 32</div>
+<div>-- intent: have a pool to set EIO on</div>
+<ul>
+<li><span class="step-num">3.</span> Run pg query on any PG of the pool (should succeed):</li>
+</ul>
+<div>ceph pg &lt;pool-pg-id&gt; query</div>
+<div>-- intent: verify baseline works</div>
+<ul>
+<li><span class="step-num">4.</span> Enable EIO flag on the pool:</li>
+</ul>
+<div>ceph osd pool set test-eio-pool eio true</div>
+<div>-- intent: trigger the bug condition</div>
+<ul>
+<li><span class="step-num">5.</span> Re-run pg query on the same PG:</li>
+</ul>
+<div>ceph pg &lt;pool-pg-id&gt; query</div>
+<div>-- intent: this should throw JSONDecodeError</div>
+<ul>
+<li><span class="step-num">6.</span> Verify: Python traceback with &#x27;JSONDecodeError: Expecting value: line 1 column 1 (char 0)&#x27;</li>
+<li><span class="step-num">7.</span> Disable EIO and verify pg query works again:</li>
+</ul>
+<div>ceph osd pool set test-eio-pool eio false</div>
+<div>ceph pg &lt;pool-pg-id&gt; query</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph osd pool get &lt;pool&gt; eio</code></li>
+<li><code>ceph pg dump --format json | python3 -m json.tool</code></li>
+<li><code>ceph pg &lt;pgid&gt; query 2&gt;&amp;1</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Original IBMCEPH-8606 has been open since March 2024 with no fix. No QE test coverage exists.</div>
+<div class="section-head">GAPS</div>
+<ul>
+<li>No test exercises <code><code>ceph pg query</code></code> with EIO flag enabled</li>
+<li>No test validates CLI graceful error handling for non-JSON OSD responses</li>
+<li>No test covers all pool flags that might affect pg query output format</li>
+</ul>
+<div class="section-head">SCENARIOS NEEDED</div>
+<ul>
+<li><span class="step-num">1.</span> pg query with EIO flag: Set EIO on pool, run pg query, verify graceful error (not unhandled exception)</li>
+<li><span class="step-num">2.</span> pg query with EIO flag cleared: Set and unset EIO, verify pg query returns valid JSON after clearing</li>
+<li><span class="step-num">3.</span> All pg-affecting pool flags: Test pg query with other pool flags (nopgchange, nosizechange, etc.) to verify none cause similar JSON parsing failures</li>
+<li><span class="step-num">4.</span> pg dump with EIO pool: Verify <code><code>ceph pg dump</code></code> handles EIO pools without crashing</li>
+</ul></div>
 </div>
 
 

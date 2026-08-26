@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13458: [BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,52 +189,51 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 7.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Oon Kwee Lim] Latest from the customer: We were able to reproduce the issue . ceph mg stuck in in progress state forever . kindly check the below screen shot and I have enabled the debug_mon=20 and debug_auth=20 as you suggested. 
-please let me know what are all the log files required . $ host
-- [Aarti Dhikale] Hi   , From the logs, we observed that  mgr.charter-control-2  and  mgr.charter-control-3   were upgraded successfully, but the upgrade failed while upgrading  mgr.charter-control-1  . Could you please share the logs with debug logging enabled for the mgr for further analysis? In
-- [Vivek Maurya] Hi   , I attempted to reproduce the issue multiple times but was unable to replicate it on my end. Could you please try reproducing it again with the following debug log enabled? ceph config set mon debug_mon 20
-ceph config set m debug_ms 1
-ceph config set mgr debug_mgr 20
-ceph c
-- [Andre Ruffin] Thank you,   and   .  I will ask the partner to reproduce with debug logging
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephadm upgrade pauses with UPGRADE_REDEPLOY_DAEMON during MGR upgrade (RHCS 5-&gt;7), closed for insufficient data.
+ROOT CAUSE: During upgrade from Ceph 5 (v16.x) to Ceph 7 (v18.x/reef), the upgrade paused with &#x27;UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr.charter-control-1 failed&#x27; after a MGR failover sequence. Log analysis shows: (1) mgr.charter-control-1 upgraded mgr.charter-control-2 and mgr.charter-control-3 successfully despite &#x27;Unable to update caps&#x27; warnings, (2) mgr.charter-control-1 then needed to upgrade itself, triggering MGR failover, (3) newly active mgr.charter-control-2 tried to upgrade mgr.charter-control-1 but also got &#x27;Unable to update caps&#x27; warning, (4) the upgrade then errored with &#x27;Unable to fetch keyring for mgr.charter-control-1: exported keyring for mgr.charter-control-1&#x27;. The keyring was actually exported successfully (mon log confirms), but the cephadm upgrade module treated the response as an error. The exact failure mechanism is unclear due to insufficient debug logging. The &#x27;Unable to update caps&#x27; warnings for all 3 MGRs suggest a systematic auth caps issue during the version-crossing upgrade.
+KEY EVIDENCE:
+- Error: &#x27;Unable to fetch keyring for mgr.charter-control-1: exported keyring for mgr.charter-control-1&#x27;
+- Mon log shows keyring WAS exported: &#x27;mon_command_ack([{auth get, mgr.charter-control-1}]=0 exported keyring v432)&#x27;
+- All 3 MGRs got &#x27;Unable to update caps&#x27; warnings during upgrade
+- Upgrade from 5-535 -&gt; 7-522 (multi-version jump)
+- Could not reproduce in engineering lab
+FIX STATUS: Closed as &#x27;insufficient data&#x27;. Customer unable to reproduce with debug logging enabled. Workaround: MGR failover + resume upgrade.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr
-Environment: IBM Ceph 7.1, component: cephadm
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Latest from the customer: We were able to reproduce the issue . ceph mg stuck in in progress state forever . kindly check the below screen shot and I have enabled the debug_mon=20 and debug_auth=20 as you suggested. 
-please let me know what are all the log files required . $ host</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Attempt to reproduce MGR upgrade pause during multi-version Ceph upgrade.
+Environment: Ceph 5 (v16.x) upgrading to Ceph 7 (v18.x reef)
+1. Deploy a 3-node Ceph cluster on version 5 -- intent: establish starting point
+2. Enable debug logging before upgrade -- intent: capture detailed logs for RCA
+   ceph config set mon debug_mon 20
+   ceph config set mon debug_ms 1
+   ceph config set mgr debug_mgr 20
+   ceph config set mgr debug_ms 1
+3. Initiate upgrade to Ceph 7 -- intent: trigger the upgrade sequence
+   ceph orch upgrade start &lt;target-image&gt;
+4. Monitor MGR upgrade phase -- intent: watch for pause/failure
+   watch -n 5 &#x27;ceph orch upgrade status; ceph -s&#x27;
+5. If upgrade pauses, collect logs -- intent: gather RCA data
+   ceph log last 100 cephadm
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade status
+- ceph health detail
+- ceph log last 50 cephadm
+- journalctl -u ceph-mgr@&lt;id&gt; --since &#x27;30 minutes ago&#x27;</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Multi-version MGR upgrade with failover mid-upgrade has limited automated coverage.
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+- No test for Ceph 5-&gt;7 (or similar multi-major-version) upgrade path
+- No test validates MGR auth caps update during cross-version upgrade
+- No test simulates MGR failover during the MGR upgrade phase specifically
+- No test verifies keyring fetch reliability during concurrent MGR failover + upgrade
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Test: Multi-major-version upgrade (5-&gt;7, 7-&gt;8, 8-&gt;9) with focus on MGR phase
+- Test: Simulate MGR failover during upgrade phase, verify upgrade resumes cleanly
+- Test: Verify &#x27;auth caps&#x27; update succeeds for all MGRs during cross-version upgrade
+- Test: Validate upgrade recovery after UPGRADE_REDEPLOY_DAEMON pause (resume works)</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -245,54 +244,60 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephadm upgrade pauses with UPGRADE_REDEPLOY_DAEMON during MGR upgrade (RHCS 5-&gt;7), closed for insufficient data.</div>
+<div>ROOT CAUSE: During upgrade from Ceph 5 (v16.x) to Ceph 7 (v18.x/reef), the upgrade paused with &#x27;UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr.charter-control-1 failed&#x27; after a MGR failover sequence. Log analysis shows: (1) mgr.charter-control-1 upgraded mgr.charter-control-2 and mgr.charter-control-3 successfully despite &#x27;Unable to update caps&#x27; warnings, (2) mgr.charter-control-1 then needed to upgrade itself, triggering MGR failover, (3) newly active mgr.charter-control-2 tried to upgrade mgr.charter-control-1 but also got &#x27;Unable to update caps&#x27; warning, (4) the upgrade then errored with &#x27;Unable to fetch keyring for mgr.charter-control-1: exported keyring for mgr.charter-control-1&#x27;. The keyring was actually exported successfully (mon log confirms), but the cephadm upgrade module treated the response as an error. The exact failure mechanism is unclear due to insufficient debug logging. The &#x27;Unable to update caps&#x27; warnings for all 3 MGRs suggest a systematic auth caps issue during the version-crossing upgrade.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 7.1</li>
-<li>Component: cephadm</li>
+<li>Error: &#x27;Unable to fetch keyring for mgr.charter-control-1: exported keyring for mgr.charter-control-1&#x27;</li>
+<li>Mon log shows keyring WAS exported: &#x27;mon_command_ack([{auth get, mgr.charter-control-1}]=0 exported keyring v432)&#x27;</li>
+<li>All 3 MGRs got &#x27;Unable to update caps&#x27; warnings during upgrade</li>
+<li>Upgrade from 5-535 -&gt; 7-522 (multi-version jump)</li>
+<li>Could not reproduce in engineering lab</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed as &#x27;insufficient data&#x27;. Customer unable to reproduce with debug logging enabled. Workaround: MGR failover + resume upgrade.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Attempt to reproduce MGR upgrade pause during multi-version Ceph upgrade.</div>
+<div>Environment: Ceph 5 (v16.x) upgrading to Ceph 7 (v18.x reef)</div>
 <ul>
-<li>[Oon Kwee Lim] Latest from the customer: We were able to reproduce the issue . <code>ceph mg stuck in in progress state forever . kindly check the below screen shot and I have enabled the debug_mon=20 and debug_auth=20 as you suggested.</code></li>
+<li><span class="step-num">1.</span> Deploy a 3-node Ceph cluster on version 5 -- intent: establish starting point</li>
+<li><span class="step-num">2.</span> Enable debug logging before upgrade -- intent: capture detailed logs for RCA</li>
 </ul>
-<div>please let me know what are all the log files required . $ host</div>
-<ul>
-<li>[Aarti Dhikale] Hi   , From the logs, we observed that  mgr.charter-control-2  and  mgr.charter-control-3   were upgraded successfully, but the upgrade failed while upgrading  mgr.charter-control-1  . Could you please share the logs with debug logging enabled for the mgr for further analysis? In</li>
-<li>[Vivek Maurya] Hi   , I attempted to reproduce the issue multiple times but was unable to replicate it on my end. Could you please try reproducing it again with the following debug log enabled? <code>ceph config set mon debug_mon 20</code></li>
-</ul>
-<div>ceph config set m debug_ms 1</div>
+<div>ceph config set mon debug_mon 20</div>
+<div>ceph config set mon debug_ms 1</div>
 <div>ceph config set mgr debug_mgr 20</div>
-<div>ceph c</div>
+<div>ceph config set mgr debug_ms 1</div>
 <ul>
-<li>[Andre Ruffin] Thank you,   and   .  I will ask the partner to reproduce with debug logging</li>
+<li><span class="step-num">3.</span> Initiate upgrade to Ceph 7 -- intent: trigger the upgrade sequence</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>ceph orch upgrade start &lt;target-image&gt;</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><span class="step-num">4.</span> Monitor MGR upgrade phase -- intent: watch for pause/failure</li>
+</ul>
+<div>watch -n 5 &#x27;ceph orch upgrade status; ceph -s&#x27;</div>
+<ul>
+<li><span class="step-num">5.</span> If upgrade pauses, collect logs -- intent: gather RCA data</li>
+</ul>
+<div>ceph log last 100 cephadm</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch upgrade status</code></li>
+<li><code>ceph health detail</code></li>
+<li><code>ceph log last 50 cephadm</code></li>
+<li><code>journalctl -u ceph-mgr@&lt;id&gt; --since &#x27;30 minutes ago&#x27;</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2398912][GSS]cephadm [ERR] Upgrade: Paused due to UPGRADE_REDEPLOY_DAEMON: Upgrading daemon mgr</div>
-<div>Environment: IBM Ceph 7.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Latest from the customer: We were able to reproduce the issue . ceph mg stuck in in progress state forever . kindly check the below screen shot and I have enabled the debug_mon=20 and debug_auth=20 as you suggested.</div>
-<div>please let me know what are all the log files required . $ host</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Multi-version MGR upgrade with failover mid-upgrade has limited automated coverage.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No test for Ceph 5-&gt;7 (or similar multi-major-version) upgrade path</li>
+<li>No test validates MGR auth caps update during cross-version upgrade</li>
+<li>No test simulates MGR failover during the MGR upgrade phase specifically</li>
+<li>No test verifies keyring fetch reliability during concurrent MGR failover + upgrade</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Test: Multi-major-version upgrade (5-&gt;7, 7-&gt;8, 8-&gt;9) with focus on MGR phase</li>
+<li>Test: Simulate MGR failover during upgrade phase, verify upgrade resumes cleanly</li>
+<li>Test: Verify &#x27;auth caps&#x27; update succeeds for all MGRs during cross-version upgrade</li>
+<li>Test: Validate upgrade recovery after UPGRADE_REDEPLOY_DAEMON pause (resume works)</li>
 </ul></div>
 </div>
 

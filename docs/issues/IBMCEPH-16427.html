@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16427: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,57 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Dashboard returns HTTP 500 on Pool List and Block Images pages when progress events (from CephFS clone operations) have malformed format.
 
 ROOT CAUSE:
-- Affected version(s): 9.0
-- Component: ceph-dashboard
+The `/api/summary` endpoint crashes when parsing progress event data that has an unexpected format. This occurs specifically when a CephFS subvolume clone is in progress -- the progress event format is slightly different from what the Dashboard&#x27;s summary endpoint expects, causing an unhandled exception that returns HTTP 500. The fix (commit c241bba042bb) adds proper handling of clone progress event format.
 
-ENGINEERING FINDINGS:
-- [Venkatesh Ravula] Reproduced the issue on Ceph release 9.9.1.1 version  20.2.1-324.el9cp . After clone of sub-volume snapshot in  File -&gt; File Systems , navigating to  Block → Images  page threw  http 500 Internal server error  on summary api Verified the issue on  Ceph 9.9.1.2 version 20.2.1-379.
+KEY EVIDENCE:
+- Afreen Misbah: &quot;This happens when the format of progress events is just off - and it can be replicated with fs clone&quot;
+- Reproduction: create a clone for a subvolume, then visit Pools or Images page -&gt; 500 error
+- Fix backported to 9.1 via commit c241bba042bb3d92fd9c8e3c5335887fcedb161e
+- Verified fixed in Ceph 9.9.1.2 (20.2.1-379.el9cp)
+- QE (Venkatesh Ravula) confirmed: reproduced on 9.9.1.1, verified fix on 9.9.1.2
 
 FIX STATUS:
-- Current JIRA status: Verified</textarea>
+- Status: Verified
+- Fix: commit c241bba042bb in 9.1z stream
+- Verified in: 20.2.1-379.el9cp</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z2]Ceph Dashboard menus fail with HTTP 500 error
-Environment: IBM Ceph 9.0, component: ceph-dashboard
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify Dashboard does not return 500 during CephFS clone operations
+Environment: IBM Ceph 9.1+ with CephFS and Dashboard enabled
 
-1. Deploy IBM Ceph 9.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Enable dashboard -- `ceph mgr module enable dashboard`
-3. Access at `https://&lt;mgr-host&gt;:8443/`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`
+1. Create a CephFS subvolume and snapshot -- intent: prepare for clone
+   ```
+   ceph fs subvolume create &lt;vol&gt; &lt;subvol&gt; --group_name &lt;group&gt;
+   ceph fs subvolume snapshot create &lt;vol&gt; &lt;subvol&gt; &lt;snap&gt; --group_name &lt;group&gt;
+   ```
+2. Create a clone from the snapshot -- intent: trigger progress event
+   ```
+   ceph fs subvolume snapshot clone &lt;vol&gt; &lt;subvol&gt; &lt;snap&gt; &lt;clone&gt; --group_name &lt;group&gt;
+   ```
+3. While clone is in progress, navigate to Dashboard -&gt; Block -&gt; Images -- intent: trigger 500
+4. Also check Dashboard -&gt; Cluster -&gt; Pool List -- intent: verify both pages
 
-SCENARIO DETAIL (from engineering comments):
-Hi    We are not able to reproduce this issue in QE env. The menus mentioned in the description are accessible and we are not observing any 500 status code. Can you please provide an RCA for this issue? Also can you please let us know if there is any specific scenario that needs</textarea>
+DIAGNOSTIC COMMANDS:
+- `ceph progress` (list active progress events)
+- `ceph fs clone status &lt;vol&gt; &lt;clone&gt; &lt;group&gt;`
+- `curl -k -H &#x27;Authorization: Bearer &lt;token&gt;&#x27; https://&lt;dashboard&gt;/api/summary`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE verified the fix. Need regression test for Dashboard during clone operations.
 
 GAPS:
-- Existing ceph-dashboard tests may not cover: [9.1z2]Ceph Dashboard menus fail with HTTP 500 error
+- No test validates Dashboard pages during active CephFS clone operations
+- No test for progress event format parsing in summary endpoint
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported ceph-dashboard scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Start CephFS clone, navigate to all Dashboard pages, verify no 500 errors
+- Verify /api/summary returns valid JSON during clone in-progress state
+- Test with multiple concurrent clones</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,39 +250,59 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z2][IBM_Support]Ceph Dashboard menus fail with HTTP 500 error</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Dashboard returns HTTP 500 on Pool List and Block Images pages when progress events (from CephFS clone operations) have malformed format.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>The <code>/api/summary</code> endpoint crashes when parsing progress event data that has an unexpected format. This occurs specifically when a CephFS subvolume clone is in progress -- the progress event format is slightly different from what the Dashboard&#x27;s summary endpoint expects, causing an unhandled exception that returns HTTP 500. The fix (commit c241bba042bb) adds proper handling of clone progress event format.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 9.0</li>
-<li>Component: ceph-dashboard</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Venkatesh Ravula] Reproduced the issue on Ceph release 9.9.1.1 version  20.2.1-324.el9cp . After clone of sub-volume snapshot in  File -&gt; File Systems , navigating to  Block → Images  page threw  http 500 Internal server error  on summary api Verified the issue on  Ceph 9.9.1.2 version 20.2.1-379.</li>
+<li>Afreen Misbah: &quot;This happens when the format of progress events is just off - and it can be replicated with fs clone&quot;</li>
+<li>Reproduction: create a clone for a subvolume, then visit Pools or Images page -&gt; 500 error</li>
+<li>Fix backported to 9.1 via commit c241bba042bb3d92fd9c8e3c5335887fcedb161e</li>
+<li>Verified fixed in Ceph 9.9.1.2 (20.2.1-379.el9cp)</li>
+<li>QE (Venkatesh Ravula) confirmed: reproduced on 9.9.1.1, verified fix on 9.9.1.2</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: Verified</li>
+<li>Status: Verified</li>
+<li>Fix: commit c241bba042bb in 9.1z stream</li>
+<li>Verified in: 20.2.1-379.el9cp</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z2]Ceph Dashboard menus fail with HTTP 500 error</div>
-<div>Environment: IBM Ceph 9.0, component: ceph-dashboard</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify Dashboard does not return 500 during CephFS clone operations</div>
+<div>Environment: IBM Ceph 9.1+ with CephFS and Dashboard enabled</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Enable dashboard -- <code><code>ceph mgr module enable dashboard</code></code></li>
-<li><span class="step-num">3.</span> Access at <code>https://&amp;lt;mgr-host&amp;gt;:8443/</code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Create a CephFS subvolume and snapshot -- intent: prepare for clone</li>
 </ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi    We are not able to reproduce this issue in QE env. The menus mentioned in the description are accessible and we are not observing any 500 status code. Can you please provide an RCA for this issue? Also can you please let us know if there is any specific scenario that needs</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Investigation and test coverage needed.</div>
+<pre>
+   ceph fs subvolume create &lt;vol&gt; &lt;subvol&gt; --group_name &lt;group&gt;
+   ceph fs subvolume snapshot create &lt;vol&gt; &lt;subvol&gt; &lt;snap&gt; --group_name &lt;group&gt;
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Create a clone from the snapshot -- intent: trigger progress event</li>
+</ul>
+<pre>
+   ceph fs subvolume snapshot clone &lt;vol&gt; &lt;subvol&gt; &lt;snap&gt; &lt;clone&gt; --group_name &lt;group&gt;
+</pre>
+<ul>
+<li><span class="step-num">3.</span> While clone is in progress, navigate to Dashboard -&gt; Block -&gt; Images -- intent: trigger 500</li>
+<li><span class="step-num">4.</span> Also check Dashboard -&gt; Cluster -&gt; Pool List -- intent: verify both pages</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph progress</code></code> (list active progress events)</li>
+<li><code><code>ceph fs clone status &amp;lt;vol&amp;gt; &amp;lt;clone&amp;gt; &amp;lt;group&amp;gt;</code></code></li>
+<li><code><code>curl -k -H &amp;#x27;Authorization: Bearer &amp;lt;token&amp;gt;&amp;#x27; https://&amp;lt;dashboard&amp;gt;/api/summary</code></code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE verified the fix. Need regression test for Dashboard during clone operations.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing ceph-dashboard tests may not cover: [9.1z2]Ceph Dashboard menus fail with HTTP 500 error</li>
+<li>No test validates Dashboard pages during active CephFS clone operations</li>
+<li>No test for progress event format parsing in summary endpoint</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported ceph-dashboard scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Start CephFS clone, navigate to all Dashboard pages, verify no 500 errors</li>
+<li>Verify /api/summary returns valid JSON during clone in-progress state</li>
+<li>Test with multiple concurrent clones</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-16005: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,41 +189,66 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: CephFS clone stuck in &#x27;in-progress&#x27; state cannot be cancelled because clone tracking index is missing, preventing removal of orphaned subvolumes.
 
 ROOT CAUSE:
-- Affected version(s): not specified
-- Component: cephfs
+A CephFS clone subvolume is stuck in &#x27;in-progress&#x27; state with its tracking index (symlink in `/volumes/_index/clone/`) missing. When `fs clone cancel` is attempted, the `cancel_job()` function calls `get_clone_tracking_index()` which returns None because no index symlink exists. This triggers `VolumeException(-errno.EINVAL, &quot;error canceling clone&quot;)`. Additionally, the parent subvolume&#x27;s `.meta` file still has a `[clone snaps]` section referencing the orphaned clone, preventing snapshot removal. The root cause of how the clone got into this inconsistent state (missing index + stuck in-progress) is unknown.
 
-ENGINEERING FINDINGS:
-- [Brandon McMurray] Logs are attached to the bug now. I think these are the relevant log lines   was looking for: debug 2026-06-24T19:30:51.191+0000 7f504629e640  0 log_channel(audit) log [DBG] : from=&#x27;client.293097161 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;fs clone cancel&quot;, &quot;vol_name&quot;: &quot;ocs-sto
-- [Vivek Maurya] Hi   , As per mgr logs and code, the  clone cancel failed due to the tracking index not being found. debug 2026-06-24T19:30:51.233+0000 7f501b5c9640 -1 mgr.server reply reply (22) Invalid argument error canceling clone Code: def cancel_job(self, volname, job):
-...
-        try:
-- [Rishabh Dave] The issue is that “fs clone status” command keeps printing the status as “in-progress” for the clone subvolume. Running “rm -rf &lt;path-to-clone-subvolume&gt;” should fix that issue. Running “fs clone status” command then would then print “Error ENOENT: subvolume ‘&lt;clone-subvol-name&gt;
+KEY EVIDENCE:
+- MGR log: `mgr.server reply reply (22) Invalid argument error canceling clone`
+- `/volumes/_index/clone/` is empty (no tracking symlinks)
+- `.meta` file of parent has `[clone snaps]` section referencing the stuck clone
+- Resolution: manually `rm -rf` clone subvolume, then edit `.meta` to remove `[clone snaps]` section
+- Rishabh Dave: &quot;Running rm -rf &lt;path-to-clone-subvolume&gt; should fix that issue&quot;
 
 FIX STATUS:
-- Current JIRA status: ASSIGNED</textarea>
+- Status: Assigned (manual cleanup performed, underlying cause unknown)
+- Resolution: Customer manually removed clone directory and edited .meta file
+- No code fix -- root cause of state corruption is unclear</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone
-Environment: IBM Ceph 9.x, component: cephfs
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Document recovery procedure for stuck in-progress clones with missing tracking index
+Environment: CephFS with subvolumes managed by CSI (ODF 4.16, Ceph 18.2.1)
 
-1. Deploy IBM Ceph 9.x cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Identify stuck clone -- intent: detect the issue
+   ```
+   ceph fs clone status &lt;vol&gt; &lt;clone&gt; &lt;group&gt;
+   # Shows &#x27;in-progress&#x27; but no progress
+   ```
+2. Check clone tracking index -- intent: verify it&#x27;s missing
+   ```
+   ls -la /mnt/cephfs/volumes/_index/clone/
+   ```
+3. Attempt cancel (will fail) -- intent: confirm the error
+   ```
+   ceph fs clone cancel &lt;vol&gt; &lt;clone&gt; &lt;group&gt;
+   # Error EINVAL: error canceling clone
+   ```
+4. Manual cleanup -- intent: resolve
+   ```
+   rm -rf /mnt/cephfs/volumes/&lt;group&gt;/&lt;clone&gt;/
+   # Edit parent .meta file to remove [clone snaps] section
+   ```
+
+DIAGNOSTIC COMMANDS:
+- `ceph fs clone status &lt;vol&gt; &lt;clone&gt; &lt;group&gt;`
+- `ls -la /mnt/cephfs/volumes/_index/clone/`
+- `cat /mnt/cephfs/volumes/_&lt;group&gt;:&lt;subvol&gt;.meta`</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: ASSIGNED. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No test covers recovery from orphaned clone state. Root cause of corruption unknown.
 
 GAPS:
-- Existing cephfs tests may not cover: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone
+- No test for clone cancel when tracking index is missing
+- No test for .meta file corruption/inconsistency handling
+- No automated detection of orphaned clones
 
 SCENARIOS NEEDED:
-- Functional: reproduce reported cephfs scenario, verify correct behavior</textarea>
+- Simulate missing clone tracking index, verify clear error message on cancel
+- Test `fs subvolume rm --force` handles stuck in-progress clones
+- Test snapshot removal when parent .meta has stale clone snaps references</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -234,42 +259,70 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">CephFS clone stuck in &#x27;in-progress&#x27; state cannot be cancelled because clone tracking index is missing, preventing removal of orphaned subvolumes.</div>
 <div class="section-head">ROOT CAUSE</div>
+<div>A CephFS clone subvolume is stuck in &#x27;in-progress&#x27; state with its tracking index (symlink in <code>/volumes/_index/clone/</code>) missing. When <code>fs clone cancel</code> is attempted, the <code>cancel_job()</code> function calls <code>get_clone_tracking_index()</code> which returns None because no index symlink exists. This triggers <code>VolumeException(-errno.EINVAL, &quot;error canceling clone&quot;)</code>. Additionally, the parent subvolume&#x27;s <code>.meta</code> file still has a <code>[clone snaps]</code> section referencing the orphaned clone, preventing snapshot removal. The root cause of how the clone got into this inconsistent state (missing index + stuck in-progress) is unknown.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): not specified</li>
-<li>Component: cephfs</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Brandon McMurray] Logs are attached to the bug now. I think these are the relevant log lines   was looking for: debug 2026-06-24T19:30:51.191+0000 7f504629e640  0 log_channel(audit) log [DBG] : from=&#x27;client.293097161 -&#x27; entity=&#x27;client.admin&#x27; cmd=[{&quot;prefix&quot;: &quot;fs clone cancel&quot;, &quot;vol_name&quot;: &quot;ocs-sto</li>
-<li>[Vivek Maurya] Hi   , As per mgr logs and code, the  clone cancel failed due to the tracking index not being found. debug 2026-06-24T19:30:51.233+0000 7f501b5c9640 -1 mgr.server reply reply (22) Invalid argument error canceling clone Code: def cancel_job(self, volname, job):</li>
-</ul>
-<div>...</div>
-<div>try:</div>
-<ul>
-<li>[Rishabh Dave] The issue is that “fs clone status” command keeps printing the status as “in-progress” for the clone subvolume. Running “rm -rf &lt;path-to-clone-subvolume&gt;” should fix that issue. Running “fs clone status” command then would then print “Error ENOENT: subvolume ‘&lt;clone-subvol-name&gt;</li>
+<li>MGR log: <code>mgr.server reply reply (22) Invalid argument error canceling clone</code></li>
+<li><code>/volumes/_index/clone/</code> is empty (no tracking symlinks)</li>
+<li><code>.meta</code> file of parent has <code>[clone snaps]</code> section referencing the stuck clone</li>
+<li>Resolution: manually <code>rm -rf</code> clone subvolume, then edit <code>.meta</code> to remove <code>[clone snaps]</code> section</li>
+<li>Rishabh Dave: &quot;Running rm -rf &lt;path-to-clone-subvolume&gt; should fix that issue&quot;</li>
 </ul>
 <div class="section-head">FIX STATUS</div>
 <ul>
-<li>Current JIRA status: ASSIGNED</li>
+<li>Status: Assigned (manual cleanup performed, underlying cause unknown)</li>
+<li>Resolution: Customer manually removed clone directory and edited .meta file</li>
+<li>No code fix -- root cause of state corruption is unclear</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</div>
-<div>Environment: IBM Ceph 9.x, component: cephfs</div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Document recovery procedure for stuck in-progress clones with missing tracking index</div>
+<div>Environment: CephFS with subvolumes managed by CSI (ODF 4.16, Ceph 18.2.1)</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 9.x cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">1.</span> Identify stuck clone -- intent: detect the issue</li>
+</ul>
+<pre>
+   ceph fs clone status &lt;vol&gt; &lt;clone&gt; &lt;group&gt;
+   # Shows &#x27;in-progress&#x27; but no progress
+</pre>
+<ul>
+<li><span class="step-num">2.</span> Check clone tracking index -- intent: verify it&#x27;s missing</li>
+</ul>
+<pre>
+   ls -la /mnt/cephfs/volumes/_index/clone/
+</pre>
+<ul>
+<li><span class="step-num">3.</span> Attempt cancel (will fail) -- intent: confirm the error</li>
+</ul>
+<pre>
+   ceph fs clone cancel &lt;vol&gt; &lt;clone&gt; &lt;group&gt;
+   # Error EINVAL: error canceling clone
+</pre>
+<ul>
+<li><span class="step-num">4.</span> Manual cleanup -- intent: resolve</li>
+</ul>
+<pre>
+   rm -rf /mnt/cephfs/volumes/&lt;group&gt;/&lt;clone&gt;/
+   # Edit parent .meta file to remove [clone snaps] section
+</pre>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code><code>ceph fs clone status &amp;lt;vol&amp;gt; &amp;lt;clone&amp;gt; &amp;lt;group&amp;gt;</code></code></li>
+<li><code>ls -la /mnt/cephfs/volumes/_index/clone/</code></li>
+<li><code>cat /mnt/cephfs/volumes/_&amp;lt;group&amp;gt;:&amp;lt;subvol&amp;gt;.meta</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">ASSIGNED. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No test covers recovery from orphaned clone state. Root cause of corruption unknown.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Existing cephfs tests may not cover: Cephfs clone cannot be cancelled: Error EINVAL: error canceling clone</li>
+<li>No test for clone cancel when tracking index is missing</li>
+<li>No test for .meta file corruption/inconsistency handling</li>
+<li>No automated detection of orphaned clones</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
+<li>Simulate missing clone tracking index, verify clear error message on cancel</li>
+<li>Test <code>fs subvolume rm --force</code> handles stuck in-progress clones</li>
+<li>Test snapshot removal when parent .meta has stale clone snaps references</li>
 </ul></div>
 </div>
 

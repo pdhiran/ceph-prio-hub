@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17822: [9.1z Backport] - [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,37 +189,55 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] - [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: RGW in archive zone preserves original bucket mtime/ctime on internally-created &#x27;-deleted-&#x27; buckets after lifecycle (LCM) expiration, instead of using the deletion timestamp.
 
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: rgw
+ROOT CAUSE: When RGW&#x27;s lifecycle management (LCM) policy deletes a bucket in an archive zone with a retention period, it creates an internal &#x27;-deleted-&#x27; bucket to preserve metadata. The LCM deletion codepath copies the original bucket&#x27;s creation_time and modification_time (mtime) into the new &#x27;-deleted-&#x27; bucket entity rather than stamping it with the current wall-clock time at deletion. This is a logic error in the RGW archive zone&#x27;s bucket deletion handler — the &#x27;-deleted-&#x27; bucket is logically a new entity created at deletion time, but inherits timestamps from the original bucket. The customer has a 2-month retention policy and observed that July&#x27;s deleted bucket (deleted Oct 2) retained July&#x27;s original timestamps.
 
-FIX STATUS:
-- Current JIRA status: New</textarea>
+KEY EVIDENCE:
+- Cloned from IBMCEPH-14111 (original filing, same description)
+- Affected version: IBM Ceph 8.1 (backport target: 9.1z)
+- Status: New, no fix merged yet
+- Labels: Ceph_L3, RH_Customer_Issue
+- No comments or engineering analysis on this backport clone
+
+FIX STATUS: No fix merged. This is a 9.1z backport clone of IBMCEPH-14111. The original ticket (IBMCEPH-14111) should be checked for fix status. Assigned to Shilpa Jagannath.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] - [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket
-Environment: IBM Ceph 8.1, component: rgw
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Verify that &#x27;-deleted-&#x27; buckets in archive zones use deletion timestamp, not original bucket timestamp.
+Environment: IBM Ceph 9.1z (Tentacle 20.x) with archive zone configured.
 
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Deploy RGW -- `ceph orch apply rgw &lt;realm&gt; &lt;zone&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+1. Deploy a multisite cluster with an archive zone -- intent: archive zone is required for &#x27;-deleted-&#x27; bucket creation
+2. Create a bucket in the archive zone:
+   radosgw-admin bucket create --bucket=test-archive-bucket
+   -- intent: establish a bucket with known creation time
+3. Configure a lifecycle policy with a short expiration (e.g., 1 day for testing):
+   aws s3api put-bucket-lifecycle-configuration --bucket test-archive-bucket --lifecycle-configuration &#x27;{&quot;Rules&quot;:[{&quot;ID&quot;:&quot;expire&quot;,&quot;Status&quot;:&quot;Enabled&quot;,&quot;Expiration&quot;:{&quot;Days&quot;:1}}]}&#x27;
+   -- intent: trigger LCM-driven deletion
+4. Upload objects and wait for LCM to process the bucket deletion
+5. After LCM deletes the bucket, check the &#x27;-deleted-&#x27; bucket metadata:
+   radosgw-admin metadata get bucket:&lt;deleted-bucket-name&gt;
+   -- intent: compare creation_time and mtime with the original bucket
+6. Verify that mtime and creation_time reflect the deletion date, NOT the original bucket&#x27;s dates
+
+DIAGNOSTIC COMMANDS:
+- radosgw-admin bucket stats --bucket=&lt;bucket&gt;
+- radosgw-admin lc list
+- radosgw-admin metadata get bucket:&lt;bucket-name&gt;
+- radosgw-admin metadata list bucket</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No existing QE test coverage for archive zone &#x27;-deleted-&#x27; bucket timestamp validation.
 
 GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
+- No test validates the timestamp metadata on &#x27;-deleted-&#x27; buckets created by LCM in archive zones
+- No test validates that archive zone bucket deletion via LCM creates the &#x27;-deleted-&#x27; entity with correct temporal metadata
 
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported rgw scenario, verify correct behavior</textarea>
+1. Archive zone LCM deletion timestamp test: Create bucket in archive zone, apply LCM expiration, verify &#x27;-deleted-&#x27; bucket has deletion-time timestamps (not original creation timestamps)
+2. Archive zone retention period test: Create multiple buckets, apply retention policy, verify only expired buckets are deleted and their &#x27;-deleted-&#x27; entities have correct timestamps
+3. Negative test: Verify non-archive-zone buckets are not affected by this codepath</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -230,35 +248,57 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] - [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">RGW in archive zone preserves original bucket mtime/ctime on internally-created &#x27;-deleted-&#x27; buckets after lifecycle (LCM) expiration, instead of using the deletion timestamp.</div>
+<div>ROOT CAUSE: When RGW&#x27;s lifecycle management (LCM) policy deletes a bucket in an archive zone with a retention period, it creates an internal &#x27;-deleted-&#x27; bucket to preserve metadata. The LCM deletion codepath copies the original bucket&#x27;s creation_time and modification_time (mtime) into the new &#x27;-deleted-&#x27; bucket entity rather than stamping it with the current wall-clock time at deletion. This is a logic error in the RGW archive zone&#x27;s bucket deletion handler — the &#x27;-deleted-&#x27; bucket is logically a new entity created at deletion time, but inherits timestamps from the original bucket. The customer has a 2-month retention policy and observed that July&#x27;s deleted bucket (deleted Oct 2) retained July&#x27;s original timestamps.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: rgw</li>
+<li>Cloned from IBMCEPH-14111 (original filing, same description)</li>
+<li>Affected version: IBM Ceph 8.1 (backport target: 9.1z)</li>
+<li>Status: New, no fix merged yet</li>
+<li>Labels: Ceph_L3, RH_Customer_Issue</li>
+<li>No comments or engineering analysis on this backport clone</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div>FIX STATUS: No fix merged. This is a 9.1z backport clone of IBMCEPH-14111. The original ticket (IBMCEPH-14111) should be checked for fix status. Assigned to Shilpa Jagannath.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Verify that &#x27;-deleted-&#x27; buckets in archive zones use deletion timestamp, not original bucket timestamp.</div>
+<div>Environment: IBM Ceph 9.1z (Tentacle 20.x) with archive zone configured.</div>
 <ul>
-<li>Current JIRA status: New</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] - [BZ#2404688][GSS]Deleted bucket created after applying LCM policy mantains creation and modification date from the original bucket</div>
-<div>Environment: IBM Ceph 8.1, component: rgw</div>
+<li><span class="step-num">1.</span> Deploy a multisite cluster with an archive zone -- intent: archive zone is required for &#x27;-deleted-&#x27; bucket creation</li>
+<li><span class="step-num">2.</span> Create a bucket in the archive zone:</li>
+</ul>
+<div>radosgw-admin bucket create --bucket=test-archive-bucket</div>
+<div>-- intent: establish a bucket with known creation time</div>
 <ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Deploy RGW -- <code><code>ceph orch apply rgw &amp;lt;realm&amp;gt; &amp;lt;zone&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
+<li><span class="step-num">3.</span> Configure a lifecycle policy with a short expiration (e.g., 1 day for testing):</li>
+</ul>
+<div>aws s3api put-bucket-lifecycle-configuration --bucket test-archive-bucket --lifecycle-configuration &#x27;{&quot;Rules&quot;:[{&quot;ID&quot;:&quot;expire&quot;,&quot;Status&quot;:&quot;Enabled&quot;,&quot;Expiration&quot;:{&quot;Days&quot;:1}}]}&#x27;</div>
+<div>-- intent: trigger LCM-driven deletion</div>
+<ul>
+<li><span class="step-num">4.</span> Upload objects and wait for LCM to process the bucket deletion</li>
+<li><span class="step-num">5.</span> After LCM deletes the bucket, check the &#x27;-deleted-&#x27; bucket metadata:</li>
+</ul>
+<div>radosgw-admin metadata get bucket:&lt;deleted-bucket-name&gt;</div>
+<div>-- intent: compare creation_time and mtime with the original bucket</div>
+<ul>
+<li><span class="step-num">6.</span> Verify that mtime and creation_time reflect the deletion date, NOT the original bucket&#x27;s dates</li>
+</ul>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>radosgw-admin bucket stats --bucket=&lt;bucket&gt;</code></li>
+<li><code>radosgw-admin lc list</code></li>
+<li><code>radosgw-admin metadata get bucket:&lt;bucket-name&gt;</code></li>
+<li><code>radosgw-admin metadata list bucket</code></li>
 </ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No existing QE test coverage for archive zone &#x27;-deleted-&#x27; bucket timestamp validation.</div>
 <div class="section-head">GAPS</div>
 <ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
+<li>No test validates the timestamp metadata on &#x27;-deleted-&#x27; buckets created by LCM in archive zones</li>
+<li>No test validates that archive zone bucket deletion via LCM creates the &#x27;-deleted-&#x27; entity with correct temporal metadata</li>
 </ul>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>rgw scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Archive zone LCM deletion timestamp test: Create bucket in archive zone, apply LCM expiration, verify &#x27;-deleted-&#x27; bucket has deletion-time timestamps (not original creation timestamps)</li>
+<li><span class="step-num">2.</span> Archive zone retention period test: Create multiple buckets, apply retention policy, verify only expired buckets are deleted and their &#x27;-deleted-&#x27; entities have correct timestamps</li>
+<li><span class="step-num">3.</span> Negative test: Verify non-archive-zone buckets are not affected by this codepath</li>
 </ul></div>
 </div>
 

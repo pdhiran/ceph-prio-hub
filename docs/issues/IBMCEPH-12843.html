@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12843: [BZ#2422856] [IBM_Support] All Monitor Daemons are consuming large amount of memory</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2422856] [IBM_Support] All Monitor Daemons are consuming large amount of memory
-
-ROOT CAUSE:
-- Memory issue (leak, OOM, or excessive consumption).
-- Affected version(s): 8.1
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Prashant D] We’re still waiting for the customer to send us the logs, so it’s hard to understand why the MONs were using more than 100GB of memory.  One possible reason could be that we occasionally change how OSDMap encoding works. When that happens, monitors need to re-encode maps for olde
-- [Shantanu Bhardwaj] Hello Bipin, Support case got closed but Apple reported they would like to monitor the cluster health for 1 more week to see if issue reappears.They will be reopen the case alongwith the debug data requested in the BZ incase the issue happens again. If no issue is reported, I wil
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: All 5 monitor daemons consuming 117 GB memory each in a large cluster (44 PiB, 3528 OSDs), temporarily fixed by monitor restart.
+ROOT CAUSE: Root cause undetermined - customer did not provide requested heap profiling data. Suspected causes include: (1) OSDMap re-encoding for older clients when encoding format changes, causing message backlogs and memory growth, (2) RocksDB memory usage from large monitor store in a cluster with 1.58 billion objects. The cluster has 3528 OSDs and 49696 PGs, which creates significant OSDMap churn that monitors must track and distribute.
+KEY EVIDENCE:
+- 5 MONs each consuming ~117 GB (128 GB limit)
+- Cluster: 44 PiB, 3528 OSDs, 1.58G objects, 49696 PGs
+- Version: 18.2.1-229.el9cp (IBM Ceph 7.1 hotfix)
+- Memory dropped to 104-508 MB after MON restart
+- Logs show slow ops (141-263 slow ops) and AdminSocket broken pipe errors
+- Customer: Apple (large production cluster)
+FIX STATUS: Closed (cancelled) - customer did not provide requested heap profiling data. Debugging steps provided: collect heap profile at 15/30/45 min intervals, coredump when usage exceeds 80-100GB.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2422856]  All Monitor Daemons are consuming large amount of memory
-Environment: IBM Ceph 8.1, component: rados
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Monitor daemon memory -- `ceph tell &lt;daemon&gt; heap stats`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Diagnose and reproduce monitor memory growth in large clusters
+Environment: IBM Ceph 7.1+ with large cluster (3000+ OSDs, billions of objects)
+1. Deploy or identify cluster with 3000+ OSDs and high object count -- intent: match customer scale
+2. Enable heap profiler: `ceph tell mon.&lt;host&gt; heap start_profiler` -- intent: capture allocation patterns
+3. Collect heap dumps at 15/30/45/60 min intervals -- intent: track growth over time
+4. Monitor memory: `ceph orch ps --daemon-type mon` -- intent: track MEM USE column
+5. If memory exceeds 80GB, collect coredump before restart -- intent: enable post-mortem analysis
+DIAGNOSTIC COMMANDS:
+- ceph tell mon.&lt;host&gt; heap start_profiler
+- ceph tell mon.&lt;host&gt; heap dump
+- ceph tell mon.&lt;host&gt; heap stop_profiler
+- ceph orch ps --daemon-type mon
+- ceph health detail (check for slow ops)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Scale test may not reach threshold that triggers this issue
-- No memory leak detection test for rados
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Root cause never determined due to insufficient data from customer. No test coverage.
+GAPS: No long-running monitor memory growth test at scale (3000+ OSDs). No test for OSDMap encoding overhead with mixed-version clusters.
 SCENARIOS NEEDED:
-- Memory: long-running workload, monitor for leaks
-- Functional: reproduce reported rados scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+1. Long-running monitor stability test with 1000+ OSDs, track memory over 7 days
+2. OSDMap churn stress test: rapid OSD up/down cycles, measure MON memory
+3. Monitor recovery test: verify memory returns to baseline after restart</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,42 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2422856] [IBM_Support] All Monitor Daemons are consuming large amount of memory</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">All 5 monitor daemons consuming 117 GB memory each in a large cluster (44 PiB, 3528 OSDs), temporarily fixed by monitor restart.</div>
+<div>ROOT CAUSE: Root cause undetermined - customer did not provide requested heap profiling data. Suspected causes include: (1) OSDMap re-encoding for older clients when encoding format changes, causing message backlogs and memory growth, (2) RocksDB memory usage from large monitor store in a cluster with 1.58 billion objects. The cluster has 3528 OSDs and 49696 PGs, which creates significant OSDMap churn that monitors must track and distribute.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Memory issue (leak, OOM, or excessive consumption).</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: rados</li>
+<li>5 MONs each consuming ~117 GB (128 GB limit)</li>
+<li>Cluster: 44 PiB, 3528 OSDs, 1.58G objects, 49696 PGs</li>
+<li>Version: 18.2.1-229.el9cp (IBM Ceph 7.1 hotfix)</li>
+<li>Memory dropped to 104-508 MB after MON restart</li>
+<li>Logs show slow ops (141-263 slow ops) and AdminSocket broken pipe errors</li>
+<li>Customer: Apple (large production cluster)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed (cancelled) - customer did not provide requested heap profiling data. Debugging steps provided: collect heap profile at 15/30/45 min intervals, coredump when usage exceeds 80-100GB.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Diagnose and reproduce monitor memory growth in large clusters</div>
+<div>Environment: IBM Ceph 7.1+ with large cluster (3000+ OSDs, billions of objects)</div>
 <ul>
-<li>[Prashant D] We’re still waiting for the customer to send us the logs, so it’s hard to understand why the MONs were using more than 100GB of memory.  One possible reason could be that we occasionally change how OSDMap encoding works. When that happens, monitors need to re-encode maps for olde</li>
-<li>[Shantanu Bhardwaj] Hello Bipin, Support case got closed but Apple reported they would like to monitor the cluster health for 1 more week to see if issue reappears.They will be reopen the case alongwith the debug data requested in the BZ incase the issue happens again. If no issue is reported, I wil</li>
+<li><span class="step-num">1.</span> Deploy or identify cluster with 3000+ OSDs and high object count -- intent: match customer scale</li>
+<li><span class="step-num">2.</span> Enable heap profiler: <code><code>ceph tell mon.&amp;lt;host&amp;gt; heap start_profiler</code></code> -- intent: capture allocation patterns</li>
+<li><span class="step-num">3.</span> Collect heap dumps at 15/30/45/60 min intervals -- intent: track growth over time</li>
+<li><span class="step-num">4.</span> Monitor memory: <code><code>ceph orch ps --daemon-type mon</code></code> -- intent: track MEM USE column</li>
+<li><span class="step-num">5.</span> If memory exceeds 80GB, collect coredump before restart -- intent: enable post-mortem analysis</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph tell mon.&lt;host&gt; heap start_profiler</code></li>
+<li><code>ceph tell mon.&lt;host&gt; heap dump</code></li>
+<li><code>ceph tell mon.&lt;host&gt; heap stop_profiler</code></li>
+<li><code>ceph orch ps --daemon-type mon</code></li>
+<li><code>ceph health detail (check for slow ops)</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2422856]  All Monitor Daemons are consuming large amount of memory</div>
-<div>Environment: IBM Ceph 8.1, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Monitor daemon memory -- <code><code>ceph tell &amp;lt;daemon&amp;gt; heap stats</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Scale test may not reach threshold that triggers this issue</li>
-<li>No memory leak detection test for rados</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Root cause never determined due to insufficient data from customer. No test coverage.</div>
+<div>GAPS: No long-running monitor memory growth test at scale (3000+ OSDs). No test for OSDMap encoding overhead with mixed-version clusters.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Memory: long-running workload, monitor for leaks</li>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li><span class="step-num">1.</span> Long-running monitor stability test with 1000+ OSDs, track memory over 7 days</li>
+<li><span class="step-num">2.</span> OSDMap churn stress test: rapid OSD up/down cycles, measure MON memory</li>
+<li><span class="step-num">3.</span> Monitor recovery test: verify memory returns to baseline after restart</li>
 </ul></div>
 </div>
 

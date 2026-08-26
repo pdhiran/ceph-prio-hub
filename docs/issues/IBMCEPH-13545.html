@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13545: NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,37 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;
-
-ROOT CAUSE:
-- Affected version(s): 7.2
-- Component: nfs-ganesha/ceph
-
-ENGINEERING FINDINGS:
-- [Harsh Murkunde] Hello Team, I have implemented a workaround in my reproduction cluster, which was experiencing the same failure. By manually removing the  NFSv3 protocol  from the  ganesha.conf  file and restarting the service via  ceph  and  systemctl , I was able to resolve the issue in my env
-- [Harsh Murkunde] Hello  , Thank you for the update. I appreciate you taking this on from the L3 side. Please let me know if you need any further logs, reproduction steps, or details from my initial investigation to assist with your analysis.
-- [Sachin Punadikar] Proposed workaround is correct
-- [Aarti Dhikale] Hi   , A solution for this issue is available in Ceph version 9 where we have implemented the following changes: We are by default enabling only NFSV4, not NFSv3 If user wants to enable NFSv3, then they will have to manually run &#x27;cephadm prepare-host --install-service-dependencie
-- [Harsh Murkunde] Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that starting with  Ceph version 9 ,  NFSv3  will no longer be supported due to planne
-
-FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that s</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: NFS-Ganesha fails with DBUS connection error after upgrade from Quincy (17.2) to Reef (18.2) because the upgraded container lacks dbus-daemon socket at /run/dbus/system_bus_socket.
+ROOT CAUSE: During upgrade from Ceph Quincy (17.2) to Reef (18.2), the NFS-Ganesha container is restarted with a new container image. The Reef-era NFS-Ganesha (v5.7-2) attempts to initialize DBUS for management interface but fails because the container does not have a running dbus-daemon (no /run/dbus/system_bus_socket). Additionally, the container attempts to register NFSv3 (Protocols = 3,4 in ganesha.conf) which also fails. The combination of DBUS failure and NFSv3 registration failure causes the container to exit. Only one of two NFS daemons fails (the one on the upgraded node), while the other succeeds.
+KEY EVIDENCE:
+- Error: &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed (Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory)&quot;
+- Error: &quot;Cannot register NFS V3 on TCP&quot; and &quot;Cannot acquire credentials for principal nfs&quot;
+- Workaround: Remove NFSv3 from ganesha.conf (set Protocols = 4 only) and restart
+- Fix: Ensure dbus socket is available or gracefully degrade without DBUS
+FIX STATUS: Fixed. Resolution &#x27;done&#x27;. Workaround documented: remove &#x27;Protocols = 3&#x27; from ganesha.conf.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;
-Environment: IBM Ceph 7.2, component: nfs-ganesha/ceph
-
-1. Deploy IBM Ceph 7.2 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Trigger failover (stop daemon / power off node / network partition)
-6. Verify recovery -- `ceph -s`
-7. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce NFS-Ganesha DBUS failure after Quincy-to-Reef upgrade
+Environment: Ceph 17.2 (Quincy) cluster with NFS service deployed on 2+ nodes
+1. Deploy NFS cluster on Quincy: `ceph orch apply nfs nfsganesha1 --placement=&#x27;2 node1 node2&#x27;` -- intent: set up NFS on multiple nodes
+2. Initiate upgrade to Reef: `ceph orch upgrade start registry.redhat.io/rhceph/rhceph-7-rhel9:latest` -- intent: trigger rolling upgrade
+3. After upgrade completes, check NFS status: `ceph orch ps | grep nfs` -- intent: observe one daemon in error state
+4. Check journal on failing node: `journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt;.service --no-pager` -- intent: see DBUS and NFSv3 errors
+DIAGNOSTIC COMMANDS:
+- `ceph -s` -- check for &#x27;failed cephadm daemon(s)&#x27;
+- `ceph orch ps | grep nfs` -- identify which daemon is failing
+- `cat /var/lib/ceph/&lt;fsid&gt;/nfs.*/etc/ganesha/ganesha.conf` -- check Protocols setting</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Issue reproduced in lab. Workaround documented.
+GAPS: No automated upgrade test for NFS-Ganesha across major versions (Quincy-&gt;Reef, Reef-&gt;Squid). No test for DBUS availability in NFS containers.
 SCENARIOS NEEDED:
-- HA: failover + recovery, verify data integrity
-- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Rolling upgrade with active NFS service: verify NFS daemons survive across major version upgrades
+- Verify ganesha.conf migration during upgrade (especially Protocols setting)
+- Test DBUS graceful degradation in containerized NFS-Ganesha
+- Verify NFS client transparency during rolling NFS daemon upgrades</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,43 +230,38 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">NFS-Ganesha fails with DBUS connection error after upgrade from Quincy (17.2) to Reef (18.2) because the upgraded container lacks dbus-daemon socket at /run/dbus/system_bus_socket.</div>
+<div>ROOT CAUSE: During upgrade from Ceph Quincy (17.2) to Reef (18.2), the NFS-Ganesha container is restarted with a new container image. The Reef-era NFS-Ganesha (v5.7-2) attempts to initialize DBUS for management interface but fails because the container does not have a running dbus-daemon (no /run/dbus/system_bus_socket). Additionally, the container attempts to register NFSv3 (Protocols = 3,4 in ganesha.conf) which also fails. The combination of DBUS failure and NFSv3 registration failure causes the container to exit. Only one of two NFS daemons fails (the one on the upgraded node), while the other succeeds.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 7.2</li>
-<li>Component: nfs-ganesha/ceph</li>
+<li>Error: &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed (Failed to connect to socket /run/dbus/system_bus_socket: No such file or directory)&quot;</li>
+<li>Error: &quot;Cannot register NFS V3 on TCP&quot; and &quot;Cannot acquire credentials for principal nfs&quot;</li>
+<li>Workaround: Remove NFSv3 from ganesha.conf (set Protocols = 4 only) and restart</li>
+<li>Fix: Ensure dbus socket is available or gracefully degrade without DBUS</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed. Resolution &#x27;done&#x27;. Workaround documented: remove &#x27;Protocols = 3&#x27; from ganesha.conf.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce NFS-Ganesha DBUS failure after Quincy-to-Reef upgrade</div>
+<div>Environment: Ceph 17.2 (Quincy) cluster with NFS service deployed on 2+ nodes</div>
 <ul>
-<li>[Harsh Murkunde] Hello Team, I have implemented a workaround in my reproduction cluster, which was experiencing the same failure. By manually removing the  NFSv3 protocol  from the  ganesha.conf  file and restarting the service via  <code>ceph  and  systemctl</code>, I was able to resolve the issue in my env</li>
-<li>[Harsh Murkunde] Hello  , Thank you for the update. I appreciate you taking this on from the L3 side. Please let me know if you need any further logs, reproduction steps, or details from my initial investigation to assist with your analysis.</li>
-<li>[Sachin Punadikar] Proposed workaround is correct</li>
-<li>[Aarti Dhikale] Hi   , A solution for this issue is available in Ceph version 9 where we have implemented the following changes: We are by default enabling only NFSV4, not NFSv3 If user wants to enable NFSv3, then they will have to manually run &#x27;<code>cephadm prepare-host --install-service-dependencie</code></li>
-<li>[Harsh Murkunde] Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that starting with  Ceph version 9 ,  NFSv3  will no longer be supported due to planne</li>
+<li><span class="step-num">1.</span> Deploy NFS cluster on Quincy: <code><code>ceph orch apply nfs nfsganesha1 --placement=&amp;#x27;2 node1 node2&amp;#x27;</code></code> -- intent: set up NFS on multiple nodes</li>
+<li><span class="step-num">2.</span> Initiate upgrade to Reef: <code><code>ceph orch upgrade start registry.redhat.io/rhceph/rhceph-7-rhel9:latest</code></code> -- intent: trigger rolling upgrade</li>
+<li><span class="step-num">3.</span> After upgrade completes, check NFS status: <code><code>ceph orch ps | grep nfs</code></code> -- intent: observe one daemon in error state</li>
+<li><span class="step-num">4.</span> Check journal on failing node: <code><code>journalctl -u ceph-&amp;lt;fsid&amp;gt;@nfs.&amp;lt;cluster&amp;gt;.&amp;lt;id&amp;gt;.service --no-pager</code></code> -- intent: see DBUS and NFSv3 errors</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: Hi  , Thank you for the update. I will coordinate with the customer regarding the  rpcbind  service and advise them to perform the workaround shared previously. Additionally, I will inform them that s</li>
+<li><code><code>ceph -s</code></code> -- check for &#x27;failed <code>cephadm daemon(s)&#x27;</code></li>
+<li><code><code>ceph orch ps | grep nfs</code></code> -- identify which daemon is failing</li>
+<li><code>cat /var/lib/ceph/&amp;lt;fsid&amp;gt;/nfs.*/etc/ganesha/ganesha.conf</code> -- check Protocols setting</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- NFS-ganesha service is failing and getting error &quot;gsh_dbus_pkginit :DBUS :CRIT :dbus_bus_get failed&quot;</div>
-<div>Environment: IBM Ceph 7.2, component: nfs-ganesha/ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.2 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Trigger failover (stop daemon / power off node / network partition)</li>
-<li><span class="step-num">6.</span> Verify recovery -- <code><code>ceph -s</code></code></li>
-<li><span class="step-num">7.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Issue reproduced in lab. Workaround documented.</div>
+<div>GAPS: No automated upgrade test for NFS-Ganesha across major versions (Quincy-&gt;Reef, Reef-&gt;Squid). No test for DBUS availability in NFS containers.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>HA: failover + recovery, verify data integrity</li>
-<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Rolling upgrade with active NFS service: verify NFS daemons survive across major version upgrades</li>
+<li>Verify ganesha.conf migration during upgrade (especially Protocols setting)</li>
+<li>Test DBUS graceful degradation in containerized NFS-Ganesha</li>
+<li>Verify NFS client transparency during rolling NFS daemon upgrades</li>
 </ul></div>
 </div>
 

@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-12929: [BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due to custom alertmanager.yml</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,43 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due to custom alertmanager.yml
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 8.1
-- Component: cephadm
-
-ENGINEERING FINDINGS:
-- [Swati Thombe] Hi                                                                                                                                                                      While analyzing the upgrade failure ( &#x27;default_webhook_urls&#x27; is undefined ) during  RHCS 6.1 → 8.1z1  upgrade, w
-- [Swati Thombe] Hi      Clarification Required – Backward Compatibility of  default_webhook_urls As per the commit message linked to issue  mgr/cephadm: fix custom alertmanager webhooks (42129dd6) · Commits · ceph / ceph · GitLab , the following changes were introduced to handled below case: Han
-- [Swati Thombe] Hi    This issue has been identified as expected behavior with legacy custom templates. Need to update the Release notes under the Known Issues section to document the required pre-upgrade action. With this clarification, the case can be closed.
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Upgrade from RHCS 6.1z9 to 8.1z1 fails because custom alertmanager.yml template uses &#x27;default_webhook_urls&#x27; variable renamed to &#x27;webhook_urls&#x27; in 8.x.
+ROOT CAUSE: A code change in Ceph 8.x (commit 42129dd6) renamed the Jinja2 template variable &#x27;default_webhook_urls&#x27; to &#x27;webhook_urls&#x27; in the alertmanager configuration generation. Customers with custom alertmanager.yml templates (stored in config-key mgr/cephadm/services/alertmanager/alertmanager.yml) referencing the old variable name hit a Jinja2 UndefinedError during upgrade, blocking the alertmanager daemon redeploy and pausing the entire upgrade at 83/95 daemons. The commit claims backward compatibility was maintained, but it does not function during cross-major-version upgrades.
+KEY EVIDENCE:
+- Error: jinja2.exceptions.UndefinedError: &#x27;default_webhook_urls&#x27; is undefined
+- Traceback in cephadm/services/monitoring.py:353 generate_config()
+- Upgrade progress: 83/95 daemons upgraded, paused at alertmanager
+- Workaround: replace &#x27;default_webhook_urls&#x27; with &#x27;webhook_urls&#x27; in custom template, then &#x27;ceph orch reconfig alertmanager&#x27;
+- Documented as known issue in 9.0z2 and 8.1z6 release notes
+FIX STATUS: Closed. Documented as known issue in release notes. Pre-upgrade action required: update custom alertmanager templates before upgrading from 6.x to 8.x.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due to custom alertmanager.yml
-Environment: IBM Ceph 8.1, component: cephadm
-
-1. Deploy IBM Ceph 8.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add hosts -- `ceph orch host add &lt;host&gt; &lt;ip&gt;`
-3. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-4. Monitor upgrade -- `ceph orch upgrade status`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce upgrade failure due to custom alertmanager.yml with legacy variable names
+Environment: RHCS 6.1z9 -&gt; 8.1z1 upgrade
+1. Deploy RHCS 6.1z9 cluster with custom alertmanager.yml using &#x27;default_webhook_urls&#x27; variable -- intent: match customer setup
+2. Store custom template: ceph config-key set mgr/cephadm/services/alertmanager/alertmanager.yml &#x27;&lt;template&gt;&#x27; -- intent: persist custom config
+3. Initiate upgrade to 8.1z1 -- intent: trigger the failure
+4. Monitor &#x27;ceph orch upgrade status&#x27; -- intent: observe alertmanager redeploy failure
+5. Check mgr logs for jinja2.exceptions.UndefinedError -- intent: confirm root cause
+DIAGNOSTIC COMMANDS:
+- ceph orch upgrade status
+- ceph config-key get mgr/cephadm/services/alertmanager/alertmanager.yml
+- grep &#x27;default_webhook_urls&#x27; in mgr logs
+- ceph health detail</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: This is now a documented known issue with release notes coverage, but no automated upgrade test validates custom alertmanager template compatibility.
+GAPS: No upgrade test includes custom alertmanager.yml with legacy variable names; no pre-upgrade validation checks template variable compatibility.
 SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephadm scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Upgrade test from 6.x to 8.x with custom alertmanager.yml containing &#x27;default_webhook_urls&#x27;
+- Verify upgrade does not pause/fail when template is updated to use &#x27;webhook_urls&#x27;
+- Test pre-upgrade validation tool that warns about incompatible template variables</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -236,42 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due to custom alertmanager.yml</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Upgrade from RHCS 6.1z9 to 8.1z1 fails because custom alertmanager.yml template uses &#x27;default_webhook_urls&#x27; variable renamed to &#x27;webhook_urls&#x27; in 8.x.</div>
+<div>ROOT CAUSE: A code change in Ceph 8.x (commit 42129dd6) renamed the Jinja2 template variable &#x27;default_webhook_urls&#x27; to &#x27;webhook_urls&#x27; in the alertmanager configuration generation. Customers with custom alertmanager.yml templates (stored in config-key mgr/cephadm/services/alertmanager/alertmanager.yml) referencing the old variable name hit a Jinja2 UndefinedError during upgrade, blocking the alertmanager daemon redeploy and pausing the entire upgrade at 83/95 daemons. The commit claims backward compatibility was maintained, but it does not function during cross-major-version upgrades.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 8.1</li>
-<li>Component: cephadm</li>
+<li>Error: jinja2.exceptions.UndefinedError: &#x27;default_webhook_urls&#x27; is undefined</li>
+<li>Traceback in cephadm/services/monitoring.py:353 generate_config()</li>
+<li>Upgrade progress: 83/95 daemons upgraded, paused at alertmanager</li>
+<li>Workaround: replace &#x27;default_webhook_urls&#x27; with &#x27;webhook_urls&#x27; in custom template, then &#x27;<code>ceph orch reconfig alertmanager&#x27;</code></li>
+<li>Documented as known issue in 9.0z2 and 8.1z6 release notes</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed. Documented as known issue in release notes. Pre-upgrade action required: update custom alertmanager templates before upgrading from 6.x to 8.x.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce upgrade failure due to custom alertmanager.yml with legacy variable names</div>
+<div>Environment: RHCS 6.1z9 -&gt; 8.1z1 upgrade</div>
 <ul>
-<li>[Swati Thombe] Hi                                                                                                                                                                      While analyzing the upgrade failure ( &#x27;default_webhook_urls&#x27; is undefined ) during  RHCS 6.1 → 8.1z1  upgrade, w</li>
-<li>[Swati Thombe] Hi      Clarification Required – Backward Compatibility of  default_webhook_urls As per the commit message linked to issue  mgr/cephadm: fix custom alertmanager webhooks (42129dd6) · Commits · <code>ceph / ceph · GitLab</code>, the following changes were introduced to handled below case: Han</li>
-<li>[Swati Thombe] Hi    This issue has been identified as expected behavior with legacy custom templates. Need to update the Release notes under the Known Issues section to document the required pre-upgrade action. With this clarification, the case can be closed.</li>
+<li><span class="step-num">1.</span> Deploy RHCS 6.1z9 cluster with custom alertmanager.yml using &#x27;default_webhook_urls&#x27; variable -- intent: match customer setup</li>
+<li><span class="step-num">2.</span> Store custom template: <code>ceph config-key set mgr/cephadm/services/alertmanager/alertmanager.yml &#x27;&lt;template&gt;&#x27; -- intent: persist custom config</code></li>
+<li><span class="step-num">3.</span> Initiate upgrade to 8.1z1 -- intent: trigger the failure</li>
+<li><span class="step-num">4.</span> Monitor &#x27;<code>ceph orch upgrade status&#x27; -- intent: observe alertmanager redeploy failure</code></li>
+<li><span class="step-num">5.</span> Check mgr logs for jinja2.exceptions.UndefinedError -- intent: confirm root cause</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>ceph orch upgrade status</code></li>
+<li><code>ceph config-key get mgr/cephadm/services/alertmanager/alertmanager.yml</code></li>
+<li>grep &#x27;default_webhook_urls&#x27; in mgr logs</li>
+<li><code>ceph health detail</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2433219] [GSS] Upgrade rhcs6.1z9 to rhcs8.1z1 failed due to custom alertmanager.yml</div>
-<div>Environment: IBM Ceph 8.1, component: cephadm</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add hosts -- <code><code>ceph orch host add &amp;lt;host&amp;gt; &amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">4.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">This is now a documented known issue with release notes coverage, but no automated upgrade test validates custom alertmanager template compatibility.</div>
+<div>GAPS: No upgrade test includes custom alertmanager.yml with legacy variable names; no pre-upgrade validation checks template variable compatibility.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported <code>cephadm scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>Upgrade test from 6.x to 8.x with custom alertmanager.yml containing &#x27;default_webhook_urls&#x27;</li>
+<li>Verify upgrade does not pause/fail when template is updated to use &#x27;webhook_urls&#x27;</li>
+<li>Test pre-upgrade validation tool that warns about incompatible template variables</li>
 </ul></div>
 </div>
 

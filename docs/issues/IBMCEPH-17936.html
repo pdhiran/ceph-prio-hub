@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17936: Option [--rebuild-osds-sharing-devices] isn&#x27;t passed properly</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,15 +189,63 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: The `ceph orch osd rebuild` command&#x27;s `--rebuild-osds-sharing-devices` option is accepted by the CLI parser but never passed to the underlying function, rendering it non-functional.
+
+ROOT CAUSE: Code-level bug in the cephadm orchestrator&#x27;s CLI handler for `orch osd rebuild`. The method signature correctly declares the parameter `rebuild_osds_sharing_devices: bool = False`, but the function body calls `self.osd_rebuild(hostname, osd_id)` without forwarding the `rebuild_osds_sharing_devices` argument. The parameter is parsed from the CLI but silently discarded. This means the flag has never worked — any user who relied on `--rebuild-osds-sharing-devices` to rebuild co-located OSDs on the same device would have gotten single-OSD rebuild behavior instead, potentially leaving shared-device OSDs in an inconsistent state.
+
+KEY EVIDENCE:
+- Code snippet from JIRA shows the bug directly:
+  ```
+  def _osd_rebuild(self, hostname: str, osd_id: str, rebuild_osds_sharing_devices: bool = False) -&gt; HandleCommandResult:
+      completion = self.osd_rebuild(hostname, osd_id)  # &lt;-- missing rebuild_osds_sharing_devices
+  ```
+- Reproducible 100%
+- Workaround: `ceph orch osd rm --replace --zap` (remove and redeploy)
+- Status: ASSIGNED
+- Reporter/assignee: Timothy Nguyen
+- Priority: Minor
+- Labels: Ceph_L3
+
+FIX STATUS: Assigned, no fix merged yet. The fix is trivial — pass the parameter through: `self.osd_rebuild(hostname, osd_id, rebuild_osds_sharing_devices)`.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Demonstrate that --rebuild-osds-sharing-devices flag is silently ignored.
+Environment: Any IBM Ceph version with `ceph orch osd rebuild` command.
+
+1. Deploy a cluster with OSDs that share devices (e.g., multiple OSDs on same NVMe with WAL/DB partitioning) -- intent: need co-located OSDs to test the flag
+2. Identify an OSD sharing a device:
+   ceph osd metadata &lt;osd-id&gt; | grep -E &#x27;device|bluefs&#x27;
+   -- intent: confirm device sharing
+3. Run rebuild WITHOUT the flag:
+   ceph orch osd rebuild &lt;hostname&gt; &lt;osd-id&gt;
+   -- intent: establish baseline behavior
+4. Run rebuild WITH the flag:
+   ceph orch osd rebuild &lt;hostname&gt; &lt;osd-id&gt; --rebuild-osds-sharing-devices
+   -- intent: this should rebuild ALL OSDs on the shared device, but behaves identically to step 3
+5. Verify: Only the specified OSD was rebuilt, co-located OSDs were NOT rebuilt
+   ceph osd metadata &lt;co-located-osd-id&gt;
+   -- intent: confirm co-located OSDs were not touched
+
+DIAGNOSTIC COMMANDS:
+- ceph orch osd rebuild --help
+- ceph osd metadata &lt;osd-id&gt;
+- ceph orch ps --daemon-type osd</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;"></textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No QE test coverage for `ceph orch osd rebuild --rebuild-osds-sharing-devices`.
+
+GAPS:
+- No test exercises the --rebuild-osds-sharing-devices flag
+- No test validates that co-located OSDs are rebuilt when the flag is used
+- No test for `ceph orch osd rebuild` at all (basic functionality)
+
+SCENARIOS NEEDED:
+1. Basic rebuild test: Rebuild a single OSD and verify it comes back healthy
+2. Shared-device rebuild test (post-fix): Deploy OSDs on shared devices, use --rebuild-osds-sharing-devices, verify ALL co-located OSDs are rebuilt
+3. Negative test: Rebuild without the flag on shared device — verify only the specified OSD is rebuilt
+4. Data integrity test: Verify no data loss after rebuild with --rebuild-osds-sharing-devices on a pool with data</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -208,9 +256,68 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">The `ceph orch osd rebuild` command&#x27;s `--rebuild-osds-sharing-devices` option is accepted by the CLI parser but never passed to the underlying function, rendering it non-functional.</div>
+<div>ROOT CAUSE: Code-level bug in the cephadm orchestrator&#x27;s CLI handler for <code>orch osd rebuild</code>. The method signature correctly declares the parameter <code>rebuild_osds_sharing_devices: bool = False</code>, but the function body calls <code>self.osd_rebuild(hostname, osd_id)</code> without forwarding the <code>rebuild_osds_sharing_devices</code> argument. The parameter is parsed from the CLI but silently discarded. This means the flag has never worked — any user who relied on <code>--rebuild-osds-sharing-devices</code> to rebuild co-located OSDs on the same device would have gotten single-OSD rebuild behavior instead, potentially leaving shared-device OSDs in an inconsistent state.</div>
+<div class="section-head">KEY EVIDENCE</div>
+<ul>
+<li>Code snippet from JIRA shows the bug directly:</li>
+</ul>
+<pre>
+  def _osd_rebuild(self, hostname: str, osd_id: str, rebuild_osds_sharing_devices: bool = False) -&gt; HandleCommandResult:
+      completion = self.osd_rebuild(hostname, osd_id)  # &lt;-- missing rebuild_osds_sharing_devices
+</pre>
+<ul>
+<li>Reproducible 100%</li>
+<li>Workaround: <code><code>ceph orch osd rm --replace --zap</code></code> (remove and redeploy)</li>
+<li>Status: ASSIGNED</li>
+<li>Reporter/assignee: Timothy Nguyen</li>
+<li>Priority: Minor</li>
+<li>Labels: Ceph_L3</li>
+</ul>
+<div>FIX STATUS: Assigned, no fix merged yet. The fix is trivial — pass the parameter through: <code>self.osd_rebuild(hostname, osd_id, rebuild_osds_sharing_devices)</code>.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Demonstrate that --rebuild-osds-sharing-devices flag is silently ignored.</div>
+<div>Environment: Any IBM Ceph version with <code>ceph orch osd rebuild</code> command.</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy a cluster with OSDs that share devices (e.g., multiple OSDs on same NVMe with WAL/DB partitioning) -- intent: need co-located OSDs to test the flag</li>
+<li><span class="step-num">2.</span> Identify an OSD sharing a device:</li>
+</ul>
+<div>ceph osd metadata &lt;osd-id&gt; | grep -E &#x27;device|bluefs&#x27;</div>
+<div>-- intent: confirm device sharing</div>
+<ul>
+<li><span class="step-num">3.</span> Run rebuild WITHOUT the flag:</li>
+</ul>
+<div>ceph orch osd rebuild &lt;hostname&gt; &lt;osd-id&gt;</div>
+<div>-- intent: establish baseline behavior</div>
+<ul>
+<li><span class="step-num">4.</span> Run rebuild WITH the flag:</li>
+</ul>
+<div>ceph orch osd rebuild &lt;hostname&gt; &lt;osd-id&gt; --rebuild-osds-sharing-devices</div>
+<div>-- intent: this should rebuild ALL OSDs on the shared device, but behaves identically to step 3</div>
+<ul>
+<li><span class="step-num">5.</span> Verify: Only the specified OSD was rebuilt, co-located OSDs were NOT rebuilt</li>
+</ul>
+<div>ceph osd metadata &lt;co-located-osd-id&gt;</div>
+<div>-- intent: confirm co-located OSDs were not touched</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph orch osd rebuild --help</code></li>
+<li><code>ceph osd metadata &lt;osd-id&gt;</code></li>
+<li><code>ceph orch ps --daemon-type osd</code></li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No QE test coverage for `ceph orch osd rebuild --rebuild-osds-sharing-devices`.</div>
+<div class="section-head">GAPS</div>
+<ul>
+<li>No test exercises the --rebuild-osds-sharing-devices flag</li>
+<li>No test validates that co-located OSDs are rebuilt when the flag is used</li>
+<li>No test for <code><code>ceph orch osd rebuild</code></code> at all (basic functionality)</li>
+</ul>
+<div class="section-head">SCENARIOS NEEDED</div>
+<ul>
+<li><span class="step-num">1.</span> Basic rebuild test: Rebuild a single OSD and verify it comes back healthy</li>
+<li><span class="step-num">2.</span> Shared-device rebuild test (post-fix): Deploy OSDs on shared devices, use --rebuild-osds-sharing-devices, verify ALL co-located OSDs are rebuilt</li>
+<li><span class="step-num">3.</span> Negative test: Rebuild without the flag on shared device — verify only the specified OSD is rebuilt</li>
+<li><span class="step-num">4.</span> Data integrity test: Verify no data loss after rebuild with --rebuild-osds-sharing-devices on a pool with data</li>
+</ul></div>
 </div>
 
 

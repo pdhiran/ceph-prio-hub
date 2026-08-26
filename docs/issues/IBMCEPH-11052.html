@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-11052: [BZ#2357185] [IBM_Support] [NvmeOF] Unable to migrate VM in VMware server from one ceph nvmeOF datastore to another</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,39 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [BZ#2357185] [IBM_Support] [NvmeOF] Unable to migrate VM in VMware server from one ceph nvmeOF datastore to another
-
-ROOT CAUSE:
-- Affected version(s): 8.0
-- Component: nvmeof
-
-ENGINEERING FINDINGS:
-- [Bipin Kunal] Aviv, Where are we wrt to fix for this bug? Asking it as we need to ensure that fix is ready and we can backport the fix in 8.1z and 7.1z quickly. -Bipin
-- [Aviv Caro] The fix is ready in upstream. It was also backported to 8.1 and 8.0 ds branches, but it is not included yet in the z streams.
-- [Bipin Kunal] Hi Aviv, Please keep this bug for 9.0 and if the fix is already in the 9.0 branch, please ack it and update the status of bug so that build team can move it to ON_QA.  I see the fix has been taken in 8.1z3 via bug  https://bugzilla.redhat.com/show_bug.cgi?id=2367435 , so we are g
-- [Aviv Caro] Yes fix is included in 9.0. Please move to ON_QA.
-- [Manasa Gowri] Verified the fix on 9.0 version ceph version 20.1.0-78.el9cp Steps followed 1. Created a datastore on one of the NVMe namespaces with lb group id 1. 2. Created a VM on this datastore 3. Created another datastore on a different NVMe namespace with lb group id 2. 4. Performed stora
-
-FIX STATUS:
-- Current JIRA status: Closed</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: VMware ESXi 8.0u3+ datastore migration between Ceph NVMe/TCP namespaces hangs because the NVMeoF gateway incorrectly advertises support for NVMe extended copy (XCOPY).
+ROOT CAUSE: Starting with ESXi 8.0u3, VMware uses &#x27;nvme extended copy&#x27; for datastore migrations. The Ceph NVMeoF gateway (via SPDK) does not support this operation but does not properly signal this during NVMe connection negotiation. Specifically, reserved bits in certain NVMe commands are not being validated/zeroed, causing ESXi to believe XCOPY is supported. When ESXi issues the XCOPY command, it hangs indefinitely waiting for a response that never comes.
+KEY EVIDENCE:
+- ESXi version affected: 8.0 U3+ (build 24022510)
+- Ceph versions affected: 7.1 and beyond
+- Aviv Caro (dev): &#x27;we need to change the spdk a little bit to return error on one of the commands, if the reserved bits are not zeroed&#x27;
+- Workaround confirmed: disable Hardware Accelerated Move (XCOPY) on ESXi hosts (Broadcom KB 319439)
+- Fix backported to 8.1 via BZ#2367435, included in 8.1z3
+FIX STATUS: Fixed in 9.0 (verified on 20.1.0-78.el9cp by QE). Also fixed in 8.1z3 via BZ#2367435. Fix for 7.1z tracked via BZ#2367436. Closed as part of 9.0 release.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [BZ#2357185]  [NvmeOF] Unable to migrate VM in VMware server from one ceph nvmeOF datastore to another
-Environment: IBM Ceph 8.0, component: nvmeof
-
-1. Deploy IBM Ceph 8.0 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Reproduce VMware datastore migration failure between Ceph NVMe/TCP namespaces
+Environment: IBM Ceph 8.0z2 (19.2.0-98.el9cp), VMware ESXi 8.0 U3+, NVMeoF gateways
+1. Create two NVMe namespaces on the Ceph cluster with different load balancing group IDs -- intent: provide two distinct datastores
+2. Create VMware datastores on each NVMe namespace -- intent: set up ESXi storage
+3. Create a VM on datastore 1 -- intent: have a VM to migrate
+4. Initiate storage vMotion (datastore migration) from datastore 1 to datastore 2 -- intent: trigger XCOPY operation
+5. Observe migration hangs indefinitely -- intent: confirm the bug
+DIAGNOSTIC COMMANDS:
+- `esxcli storage core adapter list` -- verify NVMe adapter status
+- `esxcli system settings advanced list -o /DataMover/HardwareAcceleratedMove` -- check XCOPY setting
+- `ceph nvme-gw show` or equivalent -- check gateway status</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-- Existing nvmeof tests may not cover: [BZ#2357185]  [NvmeOF] Unable to migrate VM in VMware server from one ceph nvmeOF datastore to anoth
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: QE verified fix on 9.0 (20.1.0-78.el9cp). Migration completed successfully.
+GAPS: No automated QE test for VMware-Ceph NVMeoF interoperability. Testing requires VMware ESXi infrastructure.
 SCENARIOS NEEDED:
-- Functional: reproduce reported nvmeof scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- VMware datastore migration between NVMe/TCP namespaces with XCOPY enabled
+- Verify XCOPY is properly rejected (not silently accepted) by the gateway
+- Test with ESXi 8.0u3 and later versions
+- Test migration with XCOPY disabled as regression guard</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,39 +232,40 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[BZ#2357185] [IBM_Support] [NvmeOF] Unable to migrate VM in VMware server from one ceph nvmeOF datastore to another</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">VMware ESXi 8.0u3+ datastore migration between Ceph NVMe/TCP namespaces hangs because the NVMeoF gateway incorrectly advertises support for NVMe extended copy (XCOPY).</div>
+<div>ROOT CAUSE: Starting with ESXi 8.0u3, VMware uses &#x27;nvme extended copy&#x27; for datastore migrations. The Ceph NVMeoF gateway (via SPDK) does not support this operation but does not properly signal this during NVMe connection negotiation. Specifically, reserved bits in certain NVMe commands are not being validated/zeroed, causing ESXi to believe XCOPY is supported. When ESXi issues the XCOPY command, it hangs indefinitely waiting for a response that never comes.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 8.0</li>
-<li>Component: nvmeof</li>
+<li>ESXi version affected: 8.0 U3+ (build 24022510)</li>
+<li>Ceph versions affected: 7.1 and beyond</li>
+<li>Aviv Caro (dev): &#x27;we need to change the spdk a little bit to return error on one of the commands, if the reserved bits are not zeroed&#x27;</li>
+<li>Workaround confirmed: disable Hardware Accelerated Move (XCOPY) on ESXi hosts (Broadcom KB 319439)</li>
+<li>Fix backported to 8.1 via BZ#2367435, included in 8.1z3</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Fixed in 9.0 (verified on 20.1.0-78.el9cp by QE). Also fixed in 8.1z3 via BZ#2367435. Fix for 7.1z tracked via BZ#2367436. Closed as part of 9.0 release.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Reproduce VMware datastore migration failure between Ceph NVMe/TCP namespaces</div>
+<div>Environment: IBM Ceph 8.0z2 (19.2.0-98.el9cp), VMware ESXi 8.0 U3+, NVMeoF gateways</div>
 <ul>
-<li>[Bipin Kunal] Aviv, Where are we wrt to fix for this bug? Asking it as we need to ensure that fix is ready and we can backport the fix in 8.1z and 7.1z quickly. -Bipin</li>
-<li>[Aviv Caro] The fix is ready in upstream. It was also backported to 8.1 and 8.0 ds branches, but it is not included yet in the z streams.</li>
-<li>[Bipin Kunal] Hi Aviv, Please keep this bug for 9.0 and if the fix is already in the 9.0 branch, please ack it and update the status of bug so that build team can move it to ON_QA.  I see the fix has been taken in 8.1z3 via bug  https://bugzilla.redhat.com/show_bug.cgi?id=2367435 , so we are g</li>
-<li>[Aviv Caro] Yes fix is included in 9.0. Please move to ON_QA.</li>
-<li>[Manasa Gowri] Verified the fix on 9.0 version <code>ceph version 20.1.0-78.el9cp Steps followed 1. Created a datastore on one of the NVMe namespaces with lb group id 1. 2. Created a VM on this datastore 3. Created another datastore on a different NVMe namespace with lb group id 2. 4. Performed stora</code></li>
+<li><span class="step-num">1.</span> Create two NVMe namespaces on the Ceph cluster with different load balancing group IDs -- intent: provide two distinct datastores</li>
+<li><span class="step-num">2.</span> Create VMware datastores on each NVMe namespace -- intent: set up ESXi storage</li>
+<li><span class="step-num">3.</span> Create a VM on datastore 1 -- intent: have a VM to migrate</li>
+<li><span class="step-num">4.</span> Initiate storage vMotion (datastore migration) from datastore 1 to datastore 2 -- intent: trigger XCOPY operation</li>
+<li><span class="step-num">5.</span> Observe migration hangs indefinitely -- intent: confirm the bug</li>
 </ul>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: Closed</li>
+<li><code>esxcli storage core adapter list</code> -- verify NVMe adapter status</li>
+<li><code>esxcli system settings advanced list -o /DataMover/HardwareAcceleratedMove</code> -- check XCOPY setting</li>
+<li><code><code>ceph nvme-gw show</code></code> or equivalent -- check gateway status</li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [BZ#2357185]  [NvmeOF] Unable to migrate VM in VMware server from one ceph nvmeOF datastore to another</div>
-<div>Environment: IBM Ceph 8.0, component: nvmeof</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.0 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing nvmeof tests may not cover: [BZ#2357185]  [NvmeOF] Unable to migrate VM in VMware server from one <code>ceph nvmeOF datastore to anoth</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">QE verified fix on 9.0 (20.1.0-78.el9cp). Migration completed successfully.</div>
+<div>GAPS: No automated QE test for VMware-Ceph NVMeoF interoperability. Testing requires VMware ESXi infrastructure.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported nvmeof scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
+<li>VMware datastore migration between NVMe/TCP namespaces with XCOPY enabled</li>
+<li>Verify XCOPY is properly rejected (not silently accepted) by the gateway</li>
+<li>Test with ESXi 8.0u3 and later versions</li>
+<li>Test migration with XCOPY disabled as regression guard</li>
 </ul></div>
 </div>
 

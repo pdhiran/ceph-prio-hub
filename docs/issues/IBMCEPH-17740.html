@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-17740: MOD thread_name:safe_timer  after hotfix.bz2405397 </h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,15 +189,60 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: OSD segfaults every ~12 hours in ScrubQueue::collect_ripe_jobs() on the safe_timer thread, caused by a race condition between PG worker threads mutating scrub job schedules and the safe_timer thread sorting them.
+
+ROOT CAUSE: Race condition in the OSD scrub scheduling code. The safe_timer thread periodically calls `OSD::tick_without_osd_lock() -&gt; OsdScrub::initiate_scrub() -&gt; ScrubQueue::ready_to_scrub() -&gt; ScrubQueue::collect_ripe_jobs()`. Inside `collect_ripe_jobs()`, `std::sort()` iterates over the scrub job vector. Concurrently, PG worker threads call `update_job()` and `delay_on_failure()` which mutate scrub job schedule timestamps in the same vector without holding jobs_lock. When `std::sort()` encounters a job whose comparison key has been mutated mid-sort, the comparison becomes inconsistent, violating the strict weak ordering requirement, leading to undefined behavior and ultimately a segfault. The upstream fix (PR #70762, Tracker Bug #78874) enforces `jobs_lock` across all scrub schedule update paths and introduces `update_job_without_lock()` to prevent deadlocks.
+
+KEY EVIDENCE:
+- Stack trace: safe_timer -&gt; OSD::tick_without_osd_lock+0x422 -&gt; ScrubQueue::ready_to_scrub+0xb0 -&gt; ScrubQueue::collect_ripe_jobs+0x23b -&gt; SIGSEGV
+- Version: 19.2.1-292.1.hotfix.bz2405397.el9cp (Squid with prior hotfix)
+- Cluster context: 1356 OSDs, 486 TiB data, mid-PG increase to 64K PGs, 26933 PGs, 1854 remapped PGs
+- Crashes every 12 hours (matching timer tick interval)
+- HEALTH_WARN: 119 OSDs slow ops in BlueStore, 80 OSDs stalled DB reads, 1009 large omap objects
+- Confirmed identical to upstream Tracker Bug #78874, addressed in PR #70762
+- Manya Dogra confirmed exact stack match and root cause
+- Status: POST (fix in progress)
+
+FIX STATUS: Fix identified as upstream PR #70762. Confirmed applicable by engineering. Status: POST. The prior hotfix (bz2405397) did NOT address this specific race — it is a separate issue.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;"></textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Trigger segfault in ScrubQueue::collect_ripe_jobs() via safe_timer thread race condition.
+Environment: IBM Ceph 8.1z4 (Squid 19.2.1-292.x) with large cluster.
+
+1. Deploy a large cluster with many OSDs (100+) -- intent: increase concurrent PG worker threads
+2. Create many PGs (10,000+) with active scrubbing -- intent: increase scrub job vector size and mutation frequency
+3. Set norebalance flag and trigger PG splitting/remapping:
+   ceph osd set norebalance
+   -- intent: create conditions where PGs are actively updating scrub jobs
+4. Wait for safe_timer ticks (every ~12 hours) -- intent: trigger collect_ripe_jobs() while PG workers mutate schedules
+5. Monitor for OSD crashes:
+   ceph crash ls-new
+   grep &#x27;Segmentation fault&#x27; /var/log/ceph/ceph-osd.*.log
+   -- intent: detect the race-triggered segfault
+
+DIAGNOSTIC COMMANDS:
+- ceph crash ls-new
+- ceph crash info &lt;crash-id&gt;
+- ceph health detail
+- ceph pg dump_stuck
+- grep &#x27;primary but not scheduled&#x27; /var/log/ceph/ceph-osd.*.log (precursor log message)</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;"></textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Upstream fix exists (PR #70762) but needs QE verification on IBM builds.
+
+GAPS:
+- No automated test for the scrub queue race condition
+- No stress test for concurrent PG scrub scheduling with high PG counts
+- No test validates scrub behavior during PG remapping/splitting
+- Difficult to reproduce deterministically — requires specific timing between safe_timer thread and PG workers
+
+SCENARIOS NEEDED:
+1. High-PG-count scrub stress: Deploy 10,000+ PGs on 100+ OSDs, enable scrubbing, run for 48h — verify no OSD crashes
+2. PG split during active scrub: Increase PG count while scrubbing is active — verify no segfaults
+3. Fix verification: Apply the PR #70762 fix and verify no crashes under the same conditions that triggered the bug
+4. Post-hotfix regression: Verify that the bz2405397 hotfix + this fix coexist without regressions</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -208,9 +253,59 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add root cause analysis.</div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add steps to reproduce.</div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box empty">Not yet documented. Edit tracking.json to add test coverage.</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">OSD segfaults every ~12 hours in ScrubQueue::collect_ripe_jobs() on the safe_timer thread, caused by a race condition between PG worker threads mutating scrub job schedules and the safe_timer thread sorting them.</div>
+<div>ROOT CAUSE: Race condition in the OSD scrub scheduling code. The safe_timer thread periodically calls <code>OSD::tick_without_osd_lock() -&gt; OsdScrub::initiate_scrub() -&gt; ScrubQueue::ready_to_scrub() -&gt; ScrubQueue::collect_ripe_jobs()</code>. Inside <code>collect_ripe_jobs()</code>, <code>std::sort()</code> iterates over the scrub job vector. Concurrently, PG worker threads call <code>update_job()</code> and <code>delay_on_failure()</code> which mutate scrub job schedule timestamps in the same vector without holding jobs_lock. When <code>std::sort()</code> encounters a job whose comparison key has been mutated mid-sort, the comparison becomes inconsistent, violating the strict weak ordering requirement, leading to undefined behavior and ultimately a segfault. The upstream fix (PR #70762, Tracker Bug #78874) enforces <code>jobs_lock</code> across all scrub schedule update paths and introduces <code>update_job_without_lock()</code> to prevent deadlocks.</div>
+<div class="section-head">KEY EVIDENCE</div>
+<ul>
+<li>Stack trace: safe_timer -&gt; OSD::tick_without_osd_lock+0x422 -&gt; ScrubQueue::ready_to_scrub+0xb0 -&gt; ScrubQueue::collect_ripe_jobs+0x23b -&gt; SIGSEGV</li>
+<li>Version: 19.2.1-292.1.hotfix.bz2405397.el9cp (Squid with prior hotfix)</li>
+<li>Cluster context: 1356 OSDs, 486 TiB data, mid-PG increase to 64K PGs, 26933 PGs, 1854 remapped PGs</li>
+<li>Crashes every 12 hours (matching timer tick interval)</li>
+<li>HEALTH_WARN: 119 OSDs slow ops in BlueStore, 80 OSDs stalled DB reads, 1009 large omap objects</li>
+<li>Confirmed identical to upstream Tracker Bug #78874, addressed in PR #70762</li>
+<li>Manya Dogra confirmed exact stack match and root cause</li>
+<li>Status: POST (fix in progress)</li>
+</ul>
+<div>FIX STATUS: Fix identified as upstream PR #70762. Confirmed applicable by engineering. Status: POST. The prior hotfix (bz2405397) did NOT address this specific race — it is a separate issue.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Trigger segfault in ScrubQueue::collect_ripe_jobs() via safe_timer thread race condition.</div>
+<div>Environment: IBM Ceph 8.1z4 (Squid 19.2.1-292.x) with large cluster.</div>
+<ul>
+<li><span class="step-num">1.</span> Deploy a large cluster with many OSDs (100+) -- intent: increase concurrent PG worker threads</li>
+<li><span class="step-num">2.</span> Create many PGs (10,000+) with active scrubbing -- intent: increase scrub job vector size and mutation frequency</li>
+<li><span class="step-num">3.</span> Set norebalance flag and trigger PG splitting/remapping:</li>
+</ul>
+<div>ceph osd set norebalance</div>
+<div>-- intent: create conditions where PGs are actively updating scrub jobs</div>
+<ul>
+<li><span class="step-num">4.</span> Wait for safe_timer ticks (every ~12 hours) -- intent: trigger collect_ripe_jobs() while PG workers mutate schedules</li>
+<li><span class="step-num">5.</span> Monitor for OSD crashes:</li>
+</ul>
+<div>ceph crash ls-new</div>
+<div>grep &#x27;Segmentation fault&#x27; /var/log/ceph/ceph-osd.*.log</div>
+<div>-- intent: detect the race-triggered segfault</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
+<ul>
+<li><code>ceph crash ls-new</code></li>
+<li><code>ceph crash info &lt;crash-id&gt;</code></li>
+<li><code>ceph health detail</code></li>
+<li><code>ceph pg dump_stuck</code></li>
+<li>grep &#x27;primary but not scheduled&#x27; /var/log/ceph/ceph-osd.*.log (precursor log message)</li>
+</ul></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Upstream fix exists (PR #70762) but needs QE verification on IBM builds.</div>
+<div class="section-head">GAPS</div>
+<ul>
+<li>No automated test for the scrub queue race condition</li>
+<li>No stress test for concurrent PG scrub scheduling with high PG counts</li>
+<li>No test validates scrub behavior during PG remapping/splitting</li>
+<li>Difficult to reproduce deterministically — requires specific timing between safe_timer thread and PG workers</li>
+</ul>
+<div class="section-head">SCENARIOS NEEDED</div>
+<ul>
+<li><span class="step-num">1.</span> High-PG-count scrub stress: Deploy 10,000+ PGs on 100+ OSDs, enable scrubbing, run for 48h — verify no OSD crashes</li>
+<li><span class="step-num">2.</span> PG split during active scrub: Increase PG count while scrubbing is active — verify no segfaults</li>
+<li><span class="step-num">3.</span> Fix verification: Apply the PR #70762 fix and verify no crashes under the same conditions that triggered the bug</li>
+<li><span class="step-num">4.</span> Post-hotfix regression: Verify that the bz2405397 hotfix + this fix coexist without regressions</li>
+</ul></div>
 </div>
 
 

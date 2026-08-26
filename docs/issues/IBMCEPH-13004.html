@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-13004: [9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,26 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected
-
-ROOT CAUSE:
-- Upgrade-related issue or backport request.
-- Affected version(s): 7.1
-- Component: cephfs
-
-ENGINEERING FINDINGS:
-- [Manan Khanna] Fix working as expected. More details below. Test Kit Version: cephadm shell
-
-[ceph: root@ci-lcera1-node1 /]# ceph version
-ceph version 20.2.1-367.el9cp (a5a909679465df5812cb0990847edd56f4cab2d3) tentacle (stable - RelWithDebInfo) release 9.9.1.2 Setup before running test: [ceph:
-
-FIX STATUS:
-- Fix available in build 20.2.1-360.
-- PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2184</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: 9.1z backport of snap-schedule retention time designator validation -- fix verified.
+ROOT CAUSE: Same as parent IBMCEPH-9302. This is the 9.1z (Tentacle) backport tracking ticket.
+KEY EVIDENCE:
+- Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2184
+- Fix available in build ceph-20.2.1-360
+- Verified on ceph 20.2.1-367.el9cp by Manan Khanna with comprehensive test (valid, invalid, random invalid designators)
+FIX STATUS: Verified. Fix landed in ceph-20.2.1-360. Manan Khanna provided detailed verification with all three test sets (valid, case-inverted, random invalid).</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected
-Environment: IBM Ceph 7.1, component: cephfs
-
-1. Deploy IBM Ceph 7.1 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create CephFS filesystem -- `ceph fs volume create cephfs`
-3. Mount CephFS on client -- `mount -t ceph &lt;mon&gt;:/ /mnt/cephfs -o name=admin`
-4. Upgrade to target version -- `ceph orch upgrade start --image &lt;target-image&gt;`
-5. Monitor upgrade -- `ceph orch upgrade status`
-6. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Same as IBMCEPH-9302 -- verify on 9.1z Tentacle builds.
+Environment: Ceph 9.1z (20.2.1-367.el9cp)
+See IBMCEPH-9302 for detailed steps.
+DIAGNOSTIC COMMANDS: Same as IBMCEPH-9302.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Verified. Fix verified. Regression test needed.
-
-GAPS:
-- Upgrade path may lack pre-condition coverage for this scenario
-
-SCENARIOS NEEDED:
-- Upgrade: validate behavior across affected versions
-- Functional: reproduce reported cephfs scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Fix verified on 9.1z with thorough manual testing. Same automation gaps as IBMCEPH-9302.
+GAPS: Same as IBMCEPH-9302.
+SCENARIOS NEEDED: Same as IBMCEPH-9302.</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,45 +219,22 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">9.1z backport of snap-schedule retention time designator validation -- fix verified.</div>
+<div>ROOT CAUSE: Same as parent IBMCEPH-9302. This is the 9.1z (Tentacle) backport tracking ticket.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Upgrade-related issue or backport request.</li>
-<li>Affected version(s): 7.1</li>
-<li>Component: cephfs</li>
+<li>Downstream MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2184</li>
+<li>Fix available in build ceph-20.2.1-360</li>
+<li>Verified on <code>ceph 20.2.1-367.el9cp by Manan Khanna with comprehensive test (valid</code>, invalid, random invalid designators)</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Manan Khanna] Fix working as expected. More details below. Test Kit Version: <code>cephadm shell</code></li>
-</ul>
-<div>[ceph: root@ci-lcera1-node1 /]# ceph version</div>
-<div>ceph version 20.2.1-367.el9cp (a5a909679465df5812cb0990847edd56f4cab2d3) tentacle (stable - RelWithDebInfo) release 9.9.1.2 Setup before running test: [ceph:</div>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Fix available in build 20.2.1-360.</li>
-<li>PR/MR: https://gitlab.cee.redhat.com/ceph/ceph/-/merge_requests/2184</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [9.1z Backport] [BZ#2297068] [CephFS - Snap Schedule] Add validation for Retention field time designator, retention add 5Y succeeds but not expected</div>
-<div>Environment: IBM Ceph 7.1, component: cephfs</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 7.1 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create CephFS filesystem -- <code><code>ceph fs volume create cephfs</code></code></li>
-<li><span class="step-num">3.</span> Mount CephFS on client -- <code><code>mount -t ceph &amp;lt;mon&amp;gt;:/ /mnt/cephfs -o name=admin</code></code></li>
-<li><span class="step-num">4.</span> Upgrade to target version -- <code><code>ceph orch upgrade start --image &amp;lt;target-image&amp;gt;</code></code></li>
-<li><span class="step-num">5.</span> Monitor upgrade -- <code><code>ceph orch upgrade status</code></code></li>
-<li><span class="step-num">6.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Verified. Fix verified. Regression test needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Upgrade path may lack pre-condition coverage for this scenario</li>
-</ul>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Upgrade: validate behavior across affected versions</li>
-<li>Functional: reproduce reported cephfs scenario, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div>FIX STATUS: Verified. Fix landed in ceph-20.2.1-360. Manan Khanna provided detailed verification with all three test sets (valid, case-inverted, random invalid).</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Same as IBMCEPH-9302 -- verify on 9.1z Tentacle builds.</div>
+<div>Environment: Ceph 9.1z (20.2.1-367.el9cp)</div>
+<div>See IBMCEPH-9302 for detailed steps.</div>
+<div>DIAGNOSTIC COMMANDS: Same as IBMCEPH-9302.</div></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Fix verified on 9.1z with thorough manual testing. Same automation gaps as IBMCEPH-9302.</div>
+<div>GAPS: Same as IBMCEPH-9302.</div>
+<div>SCENARIOS NEEDED: Same as IBMCEPH-9302.</div></div>
 </div>
 
 

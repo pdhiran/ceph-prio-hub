@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-14326: Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,40 +189,41 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter
-
-ROOT CAUSE:
-- Affected version(s): 6.1z2
-- Component: rados
-
-ENGINEERING FINDINGS:
-- [Kamoltat Sirivadhna] I just checked the code base and looks like my hypothesis is correct: ceph orch daemon rm  uses  ceph mon rm  under the hood: services/cephadmservice.py:     def pre_remove(self, daemon: DaemonDescription) -&gt; None:
-        super().pre_remove(daemon)
-
-        assert daemon.daemon_
-
-FIX STATUS:
-- Current JIRA status: New</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: Procedure for replacing a healthy tiebreaker monitor with a new monitor in the same datacenter.
+ROOT CAUSE: Documentation only describes replacing a failed tiebreaker monitor or adding a new arbiter. Customer needed to replace a healthy tiebreaker but the new monitor (added on a separate public network) didn&#x27;t join quorum. The procedure was confirmed by engineering: spin up new monitor in tiebreaker site, wait for quorum join, use &#x27;ceph mon set_new_tiebreaker&#x27; on the new monitor, then gracefully remove the old one with &#x27;ceph orch daemon rm &lt;old-monitor&gt; --force&#x27;. The old tiebreaker remains disallowed from being leader until explicitly removed.
+KEY EVIDENCE:
+- Version: IBM Storage Ceph 6.1z2 [17.2.6-148.el9cp]
+- 2 public networks defined; new monitor on separate network from existing tiebreaker
+- Engineering confirmed: ceph orch daemon rm uses &#x27;ceph mon rm&#x27; under the hood (verified in code)
+- Safe because old tiebreaker continues being disallowed to be leader until removed
+- Temporarily having 2 monitors in tiebreaker zone is acceptable
+FIX STATUS: Closed via support guidance. Procedure documented in JIRA comments. No code fix needed -- documentation gap.</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter
-Environment: IBM Ceph 6.1z2, component: rados
-
-1. Deploy IBM Ceph 6.1z2 cluster -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Add OSDs -- `ceph orch apply osd --all-available-devices`
-3. Create test pool -- `ceph osd pool create test-pool 32`
-4. Verify cluster health -- `ceph -s` and `ceph health detail`</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate tiebreaker monitor replacement procedure without outage
+Environment: IBM Ceph 6.1z2+ with stretch mode enabled (3-site stretch cluster)
+1. Verify current tiebreaker: ceph mon dump | grep tiebreaker -- intent: identify current tiebreaker
+2. Deploy new monitor in tiebreaker site: ceph orch daemon add mon &lt;new_host&gt; -- intent: add replacement
+3. Wait for new monitor to join quorum: ceph quorum_status -- intent: verify quorum membership
+4. Set new tiebreaker: ceph mon set_new_tiebreaker &lt;new_mon_name&gt; -- intent: promote new tiebreaker
+5. Remove old tiebreaker: ceph orch daemon rm mon.&lt;old_name&gt; --force -- intent: decommission old
+6. Verify: ceph mon dump, ceph quorum_status -- intent: confirm healthy state
+DIAGNOSTIC COMMANDS:
+- ceph mon dump
+- ceph quorum_status
+- ceph mon set_new_tiebreaker &lt;name&gt;
+- ceph orch daemon rm mon.&lt;name&gt; --force</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: New. Investigation and test coverage needed.
-
-GAPS:
-- Existing rados tests may not cover: Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same data
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: No automated test for healthy tiebreaker replacement.
+GAPS: Stretch mode tests likely cover failed tiebreaker recovery but not graceful replacement of a healthy tiebreaker. No test validates the 2-monitors-in-tiebreaker-zone transitional state.
 SCENARIOS NEEDED:
-- Functional: reproduce reported rados scenario, verify correct behavior</textarea>
+1. Replace healthy tiebreaker: add new mon, set_new_tiebreaker, remove old, verify quorum throughout
+2. Replace tiebreaker on different public network within same site
+3. Verify client IO continuity during the entire replacement procedure
+4. Negative: attempt set_new_tiebreaker before new mon joins quorum</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -233,38 +234,42 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter</div>
-<div class="section-head">ROOT CAUSE</div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">Procedure for replacing a healthy tiebreaker monitor with a new monitor in the same datacenter.</div>
+<div>ROOT CAUSE: Documentation only describes replacing a failed tiebreaker monitor or adding a new arbiter. Customer needed to replace a healthy tiebreaker but the new monitor (added on a separate public network) didn&#x27;t join quorum. The procedure was confirmed by engineering: spin up new monitor in tiebreaker site, wait for quorum join, use &#x27;ceph mon set_new_tiebreaker&#x27; on the new monitor, then gracefully remove the old one with &#x27;ceph orch daemon rm &lt;old-monitor&gt; --force&#x27;. The old tiebreaker remains disallowed from being leader until explicitly removed.</div>
+<div class="section-head">KEY EVIDENCE</div>
 <ul>
-<li>Affected version(s): 6.1z2</li>
-<li>Component: rados</li>
+<li>Version: IBM Storage Ceph 6.1z2 [17.2.6-148.el9cp]</li>
+<li>2 public networks defined; new monitor on separate network from existing tiebreaker</li>
+<li>Engineering confirmed: <code>ceph orch daemon rm uses &#x27;ceph mon rm&#x27; under the hood (verified in code)</code></li>
+<li>Safe because old tiebreaker continues being disallowed to be leader until removed</li>
+<li>Temporarily having 2 monitors in tiebreaker zone is acceptable</li>
 </ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
+<div>FIX STATUS: Closed via support guidance. Procedure documented in JIRA comments. No code fix needed -- documentation gap.</div></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate tiebreaker monitor replacement procedure without outage</div>
+<div>Environment: IBM Ceph 6.1z2+ with stretch mode enabled (3-site stretch cluster)</div>
 <ul>
-<li>[Kamoltat Sirivadhna] I just checked the code base and looks like my hypothesis is correct: <code>ceph orch daemon rm  uses  ceph mon rm  under the hood: services/cephadmservice.py:     def pre_remove(self</code>, daemon: DaemonDescription) -&gt; None:</li>
+<li><span class="step-num">1.</span> Verify current tiebreaker: <code>ceph mon dump | grep tiebreaker -- intent: identify current tiebreaker</code></li>
+<li><span class="step-num">2.</span> Deploy new monitor in tiebreaker site: <code>ceph orch daemon add mon &lt;new_host&gt; -- intent: add replacement</code></li>
+<li><span class="step-num">3.</span> Wait for new monitor to join quorum: <code>ceph quorum_status -- intent: verify quorum membership</code></li>
+<li><span class="step-num">4.</span> Set new tiebreaker: <code>ceph mon set_new_tiebreaker &lt;new_mon_name&gt; -- intent: promote new tiebreaker</code></li>
+<li><span class="step-num">5.</span> Remove old tiebreaker: <code>ceph orch daemon rm mon.&lt;old_name&gt; --force -- intent: decommission old</code></li>
+<li><span class="step-num">6.</span> Verify: <code>ceph mon dump</code>, <code>ceph quorum_status -- intent: confirm healthy state</code></li>
 </ul>
-<div>super().pre_remove(daemon)</div>
-<div>assert daemon.daemon_</div>
-<div class="section-head">FIX STATUS</div>
+<div class="section-head">DIAGNOSTIC COMMANDS</div>
 <ul>
-<li>Current JIRA status: New</li>
+<li><code>ceph mon dump</code></li>
+<li><code>ceph quorum_status</code></li>
+<li><code>ceph mon set_new_tiebreaker &lt;name&gt;</code></li>
+<li><code>ceph orch daemon rm mon.&lt;name&gt; --force</code></li>
 </ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same datacenter</div>
-<div>Environment: IBM Ceph 6.1z2, component: rados</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 6.1z2 cluster -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Add OSDs -- <code><code>ceph orch apply osd --all-available-devices</code></code></li>
-<li><span class="step-num">3.</span> Create test pool -- <code><code>ceph osd pool create test-pool 32</code></code></li>
-<li><span class="step-num">4.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">New. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<ul>
-<li>Existing <code>rados tests may not cover: Replacement of the active tie-breaker monitor node with newly deployed monitor node in the same data</code></li>
-</ul>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">No automated test for healthy tiebreaker replacement.</div>
+<div>GAPS: Stretch mode tests likely cover failed tiebreaker recovery but not graceful replacement of a healthy tiebreaker. No test validates the 2-monitors-in-tiebreaker-zone transitional state.</div>
 <div class="section-head">SCENARIOS NEEDED</div>
 <ul>
-<li>Functional: reproduce reported <code>rados scenario</code>, verify correct behavior</li>
+<li><span class="step-num">1.</span> Replace healthy tiebreaker: add new mon, set_new_tiebreaker, remove old, verify quorum throughout</li>
+<li><span class="step-num">2.</span> Replace tiebreaker on different public network within same site</li>
+<li><span class="step-num">3.</span> Verify client IO continuity during the entire replacement procedure</li>
+<li><span class="step-num">4.</span> Negative: attempt set_new_tiebreaker before new mon joins quorum</li>
 </ul></div>
 </div>
 

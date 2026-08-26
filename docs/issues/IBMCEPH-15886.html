@@ -118,7 +118,7 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 <body>
 <a href="../index.html" class="back">&larr; Back to Dashboard</a>
 <h1>IBMCEPH-15886: [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</h1>
-<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:23 UTC</p>
+<p style="font-size:0.8rem;color:var(--ibm-gray-50);">Generated: 2026-08-26 07:43 UTC</p>
 
 <div class="meta-grid">
   <div class="meta-card"><dl>
@@ -189,46 +189,50 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">SUMMARY: [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster
-
-ROOT CAUSE:
-- Affected version(s): 8.1z6
-- Component: nfs-ganesha/ceph
-
-ENGINEERING FINDINGS:
-- [Prashant Dhange] From the mds debug logs, are we trying to determine if the issue is related to the missing async patch ( https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/e717b455336ffa48e908dc9d37f3ddd3fd67ecb2 ) or another root cause involving session management between NFS-Ganesha and
-- [Rajesh Prasad] Right now, the async patch isn’t confirmed since no FSAL calls appear to trigger the async path in the logs. On the MDS side, I wanted to trace activity during the OPEN call, but FSAL_CEPH doesn’t seem to have made any calls to MDS through libCephFS API.
-- [Prashant Dhange] After reviewing the Ganesha logs again (including the latest debug logs), I am inclined towards a RADOS cluster grace period coordination deadlock causing NFS operations to hang indefinitely. The root cause seems to be a non-zero recovery epoch (rec) in the RADOS grace database p
-- [Aarti Dhikale] [ Sharing my analysis ---    Internal Do no share with customer] I traced the code changes for OPEN operations using strace and found that the client is requesting claim type 4, which corresponds to CLAIM_FH = 4. Inside the  open4_validate_claim()  function, I encountered the rel
-- [Sachin Punadikar] Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer then proactively check the grace-table content before the upgrade and if found no
-
-FIX STATUS:
-- Current JIRA status: Closed
-- Workaround: Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer th</textarea>
+      <textarea id="ed-analysis" rows="8" style="width:100%;">### Root Cause Analysis:
+```
+SUMMARY: NFS mount point becomes read-only after cluster upgrade due to stale grace table entry causing infinite NFS4ERR_GRACE
+ROOT CAUSE: After upgrading to 8.1z6, an erroneous entry &#x27;node0&#x27; was found in the RADOS grace table alongside the valid &#x27;nfs.fileserver1.0&#x27; entry. This caused a coordination deadlock: the running Ganesha instance (nfs.fileserver1.0) expected the non-existent &#x27;node0&#x27; to also enter and complete grace. Since &#x27;node0&#x27; never existed, the recovery epoch (rec) remained non-zero, rados_cluster_try_lift_grace() kept returning false, and grace period never lifted. All OP_OPEN operations returned NFS4ERR_GRACE indefinitely -- clients could list directories (READDIR doesn&#x27;t require OPEN) but couldn&#x27;t read/write files. The stale &#x27;node0&#x27; entry likely originated from a pre-8.1z3 NFS cluster setup that was upgraded through multiple versions.
+KEY EVIDENCE:
+- Grace table dump: cur=425 rec=424, two entries: nfs.fileserver1.0 (E) and node0 (NE)
+- Continuous &#x27;check grace:reclaim complete(0) clid count(0)&#x27; every 10s -- grace never lifts
+- Export 1 failed with EPERM from ceph_start_reclaim() (main.c:456)
+- All OP_OPEN -&gt; NFS4ERR_GRACE (code path: open4_validate_claim -&gt; nfs_get_grace_status)
+- rados_grace_lift() succeeds (ret=0) but rec != 0 prevents grace lift
+- Workaround: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns fileserver1 remove node0
+FIX STATUS: Resolved via workaround (remove stale grace entry + restart Ganesha). Unable to reproduce in QE (tried 8.0z2-&gt;8.1z3-&gt;8.1z6 upgrade path). Root cause is stale grace state from unknown pre-8.1z3 upgrade path. Closed as &#x27;insufficient data&#x27;. Preventive: check grace table content before upgrades.
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">Goal: Validate and reproduce -- [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster
-Environment: IBM Ceph 8.1z6, component: nfs-ganesha/ceph
-
-1. Deploy IBM Ceph 8.1z6 cluster with CephFS -- `cephadm bootstrap --mon-ip=&lt;ip&gt;`
-2. Create NFS cluster -- `ceph nfs cluster create &lt;name&gt; &lt;host&gt;`
-3. Create NFS export -- `ceph nfs export create cephfs &lt;cluster&gt; /export cephfs /`
-4. Mount NFS on client -- `mount -t nfs -o nfsvers=4.2 &lt;host&gt;:/export /mnt/nfs`
-5. Verify cluster health -- `ceph -s` and `ceph health detail`
-
-SCENARIO DETAIL (from engineering comments):
-Hi   , At this code level (8.1 and 9.0) active-active Ganesha is not supported. Need to stick with active-passive setup. Active-active will be supported with 9.1 version, which is yet to be released. About upgrade, QE team is trying to reproduce this issue. Once I get inputs from</textarea>
+      <textarea id="ed-repro" rows="8" style="width:100%;">### Steps to Reproduce:
+```
+Goal: Reproduce NFS grace period deadlock from stale grace table entry
+Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), active-passive NFS with ingress
+1. Deploy NFS cluster on pre-8.1z3 version (where node IDs were &#x27;node&lt;N&gt;&#x27; format)
+2. Upgrade through: pre-8.1z3 -&gt; 8.1z3 -&gt; 8.1z6
+3. After upgrade, check: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
+4. If stale entries present, mount NFS and try file operations (cat, touch)
+5. Observe hang -- NFS4ERR_GRACE returned for all OPEN operations
+DIAGNOSTIC COMMANDS:
+- ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;nfs_try_lift_grace&#x27;
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;NFS4ERR_GRACE&#x27;
+```</textarea>
     </div>
     <div class="edit-field" style="margin-top:0.5rem;">
       <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">SUMMARY: Closed. Investigation and test coverage needed.
-
-GAPS:
-
+      <textarea id="ed-coverage" rows="6" style="width:100%;">### Test Coverage:
+```
+SUMMARY: QE attempted reproduction (8.0z2-&gt;8.1z3-&gt;8.1z6) but did not hit the issue. Gap in testing pre-8.1z3 upgrade paths.
+GAPS: No test validates grace table integrity across NFS cluster upgrades. No test covers upgrade paths from very old NFS versions where node IDs used &#x27;node&lt;N&gt;&#x27; format.
 SCENARIOS NEEDED:
-- Functional: reproduce reported nfs-ganesha/ceph scenario, verify correct behavior
-- Regression: verify fix holds in latest builds</textarea>
+- Pre-upgrade grace table validation check
+- Post-upgrade grace table integrity check (no stale entries)
+- NFS operations test immediately after upgrade (file read/write, not just mount)
+- Grace table corruption injection test: add stale entry, verify detection/recovery
+- Upgrade path test from earliest supported version through all z-streams
+```</textarea>
     </div>
     <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
       <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
@@ -239,43 +243,44 @@ SCENARIOS NEEDED:
 </div>
 
 <div id="analysis-view">
-<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div class="summary-line">[NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</div>
-<div class="section-head">ROOT CAUSE</div>
-<ul>
-<li>Affected version(s): 8.1z6</li>
-<li>Component: nfs-ganesha/ceph</li>
-</ul>
-<div class="section-head">ENGINEERING FINDINGS</div>
-<ul>
-<li>[Prashant Dhange] From the mds debug logs, are we trying to determine if the issue is related to the missing async patch ( https://gitlab.cee.redhat.com/ceph/nfs-ganesha/-/commit/e717b455336ffa48e908dc9d37f3ddd3fd67ecb2 ) or another root cause involving session management between NFS-Ganesha and</li>
-<li>[Rajesh Prasad] Right now, the async patch isn’t confirmed since no FSAL calls appear to trigger the async path in the logs. On the MDS side, I wanted to trace activity during the OPEN call, but FSAL_CEPH doesn’t seem to have made any calls to MDS through libCephFS API.</li>
-<li>[Prashant Dhange] After reviewing the Ganesha logs again (including the latest debug logs), I am inclined towards a RADOS cluster grace period coordination deadlock causing NFS operations to hang indefinitely. The root cause seems to be a non-zero recovery epoch (rec) in the RADOS grace database p</li>
-<li>[Aarti Dhikale] [ Sharing my analysis ---    Internal Do no share with customer] I traced the code changes for OPEN operations using strace and found that the client is requesting claim type 4, which corresponds to CLAIM_FH = 4. Inside the  open4_validate_claim()  function, I encountered the rel</li>
-<li>[Sachin Punadikar] Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer then proactively check the grace-table content before the upgrade and if found no</li>
-</ul>
-<div class="section-head">FIX STATUS</div>
-<ul>
-<li>Current JIRA status: Closed</li>
-<li>Workaround: Unable to reproduce the issue, hence closing There is workaround to fix the situation and get the NFS cluster in working state. In case support team get to know about the upgrade plan from customer th</li>
-</ul></div>
-<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>Goal: Validate and reproduce -- [NFS-Ganesha] [8.1z6] ingress backed nfs mount point could not read files after upgrading ceph cluster</div>
-<div>Environment: IBM Ceph 8.1z6, component: nfs-ganesha/ceph</div>
-<ul>
-<li><span class="step-num">1.</span> Deploy IBM Ceph 8.1z6 cluster with CephFS -- <code><code>cephadm bootstrap --mon-ip=&amp;lt;ip&amp;gt;</code></code></li>
-<li><span class="step-num">2.</span> Create NFS cluster -- <code><code>ceph nfs cluster create &amp;lt;name&amp;gt; &amp;lt;host&amp;gt;</code></code></li>
-<li><span class="step-num">3.</span> Create NFS export -- <code><code>ceph nfs export create cephfs &amp;lt;cluster&amp;gt; /export cephfs /</code></code></li>
-<li><span class="step-num">4.</span> Mount NFS on client -- <code><code>mount -t nfs -o nfsvers=4.2 &amp;lt;host&amp;gt;:/export /mnt/nfs</code></code></li>
-<li><span class="step-num">5.</span> Verify cluster health -- <code><code>ceph -s</code></code> and <code><code>ceph health detail</code></code></li>
-</ul>
-<div>SCENARIO DETAIL (from engineering comments):</div>
-<div>Hi   , At this code level (8.1 and 9.0) active-active Ganesha is not supported. Need to stick with active-passive setup. Active-active will be supported with 9.1 version, which is yet to be released. About upgrade, QE team is trying to reproduce this issue. Once I get inputs from</div></div>
-<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div class="summary-line">Closed. Investigation and test coverage needed.</div>
-<div class="section-head">GAPS</div>
-<div class="section-head">SCENARIOS NEEDED</div>
-<ul>
-<li>Functional: reproduce reported nfs-ganesha/<code>ceph scenario</code>, verify correct behavior</li>
-<li>Regression: verify fix holds in latest builds</li>
-</ul></div>
+<div class="analysis-label">Root Cause Analysis</div><div class="analysis-box"><div>### Root Cause Analysis:</div>
+<pre>
+SUMMARY: NFS mount point becomes read-only after cluster upgrade due to stale grace table entry causing infinite NFS4ERR_GRACE
+ROOT CAUSE: After upgrading to 8.1z6, an erroneous entry &#x27;node0&#x27; was found in the RADOS grace table alongside the valid &#x27;nfs.fileserver1.0&#x27; entry. This caused a coordination deadlock: the running Ganesha instance (nfs.fileserver1.0) expected the non-existent &#x27;node0&#x27; to also enter and complete grace. Since &#x27;node0&#x27; never existed, the recovery epoch (rec) remained non-zero, rados_cluster_try_lift_grace() kept returning false, and grace period never lifted. All OP_OPEN operations returned NFS4ERR_GRACE indefinitely -- clients could list directories (READDIR doesn&#x27;t require OPEN) but couldn&#x27;t read/write files. The stale &#x27;node0&#x27; entry likely originated from a pre-8.1z3 NFS cluster setup that was upgraded through multiple versions.
+KEY EVIDENCE:
+- Grace table dump: cur=425 rec=424, two entries: nfs.fileserver1.0 (E) and node0 (NE)
+- Continuous &#x27;check grace:reclaim complete(0) clid count(0)&#x27; every 10s -- grace never lifts
+- Export 1 failed with EPERM from ceph_start_reclaim() (main.c:456)
+- All OP_OPEN -&gt; NFS4ERR_GRACE (code path: open4_validate_claim -&gt; nfs_get_grace_status)
+- rados_grace_lift() succeeds (ret=0) but rec != 0 prevents grace lift
+- Workaround: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns fileserver1 remove node0
+FIX STATUS: Resolved via workaround (remove stale grace entry + restart Ganesha). Unable to reproduce in QE (tried 8.0z2-&gt;8.1z3-&gt;8.1z6 upgrade path). Root cause is stale grace state from unknown pre-8.1z3 upgrade path. Closed as &#x27;insufficient data&#x27;. Preventive: check grace table content before upgrades.
+</pre></div>
+<div class="analysis-label">Steps to Reproduce</div><div class="analysis-box"><div>### Steps to Reproduce:</div>
+<pre>
+Goal: Reproduce NFS grace period deadlock from stale grace table entry
+Environment: IBM Ceph 8.1z6 (19.2.1-366.el9cp), active-passive NFS with ingress
+1. Deploy NFS cluster on pre-8.1z3 version (where node IDs were &#x27;node&lt;N&gt;&#x27; format)
+2. Upgrade through: pre-8.1z3 -&gt; 8.1z3 -&gt; 8.1z6
+3. After upgrade, check: ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
+4. If stale entries present, mount NFS and try file operations (cat, touch)
+5. Observe hang -- NFS4ERR_GRACE returned for all OPEN operations
+DIAGNOSTIC COMMANDS:
+- ganesha-rados-grace --pool &#x27;.nfs&#x27; --ns &lt;cluster&gt; dump
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;nfs_try_lift_grace&#x27;
+- journalctl -u ceph-&lt;fsid&gt;@nfs.&lt;cluster&gt;.&lt;id&gt; | grep &#x27;NFS4ERR_GRACE&#x27;
+</pre></div>
+<div class="analysis-label">Test Coverage</div><div class="analysis-box"><div>### Test Coverage:</div>
+<pre>
+SUMMARY: QE attempted reproduction (8.0z2-&gt;8.1z3-&gt;8.1z6) but did not hit the issue. Gap in testing pre-8.1z3 upgrade paths.
+GAPS: No test validates grace table integrity across NFS cluster upgrades. No test covers upgrade paths from very old NFS versions where node IDs used &#x27;node&lt;N&gt;&#x27; format.
+SCENARIOS NEEDED:
+- Pre-upgrade grace table validation check
+- Post-upgrade grace table integrity check (no stale entries)
+- NFS operations test immediately after upgrade (file read/write, not just mount)
+- Grace table corruption injection test: add stale entry, verify detection/recovery
+- Upgrade path test from earliest supported version through all z-streams
+</pre></div>
 </div>
 
 
