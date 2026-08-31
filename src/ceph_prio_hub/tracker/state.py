@@ -212,6 +212,12 @@ class IssueStateDB:
             except json.JSONDecodeError:
                 self._sync_metadata = {}
 
+    def reload(self) -> None:
+        """Re-read issues.json from disk (hot-reload, no process restart)."""
+        self._issues = {}
+        self._sync_metadata = {}
+        self._load()
+
     def save(self) -> None:
         self._state_dir.mkdir(parents=True, exist_ok=True)
 

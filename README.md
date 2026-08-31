@@ -1,95 +1,197 @@
 # ceph-prio-hub
 
-MCP server for monitoring Ceph prio-list emails, consolidating issues, and tracking test coverage gaps.
+MCP server for **customer prio-list issue tracking**. Pulls IBMCEPH JIRA issues labelled `Ceph_L3` / `IBM_Customer_Issue`, consolidates prio-list email threads (ocs / ceph / odf), extracts case IDs and errors, records QA tracking, and can publish a dashboard.
 
-## What It Does
+This is **not** a general bug search. For “is this crash known?” use **ceph-issue-kb**. Use prio-hub when the work is a customer escalation, prio-list mail, or L3 tracking.
 
-- Monitors **ocs-prio-list**, **ceph-prio-list**, and **odf-prio-list** emails via Microsoft Graph API
-- Consolidates email threads into unified issues (groups replies, matches case IDs across threads)
-- Extracts structured data: case IDs, JIRA IDs, Ceph versions, components, error messages, stack traces
-- Correlates with JIRA via `ceph-issue-kb` for issue status, labels (Ceph_L3, IBM_Customer_Issue), and comments
-- Cross-references with `ceph-cmd-kb` and `ceph-doc-kb` for reproduction steps and coverage analysis
-- Publishes an interactive dashboard + per-issue RCA reports to GitHub Pages
-- Sanitizes all published data (redacts private IPs, customer names, internal domains)
+## For agents (read this first)
+
+| Do | Do not |
+|---|---|
+| Sync and list L3 / IBM_Customer_Issue JIRA | Search the 18k+ issue corpus — **ceph-issue-kb** |
+| Record analysis, repro steps, test coverage on a prio issue | Invent Ceph CLI — verify with **ceph-cmd-kb** |
+| Fetch prio-list emails and timelines | Treat email as the primary source — JIRA is primary |
+| Generate the HTML dashboard after tracking updates | Publish unsanitized customer data |
+
+**Typical first calls**
+
+1. `health()` — JIRA credentials and last sync.
+2. `sync_jira_issues(since="YYYY-MM-DD")` or `fetch_jira_issues(since=...)` for a delta.
+3. `get_jira_issue("IBMCEPH-xxxxx")` or `get_issue_timeline(case_id=...)`.
+4. `update_tracking(...)` after analysis; then `generate_dashboard_tool()` if the user wants the site refreshed.
+
+**Credentials (required for JIRA tools)**
+
+Same env as ceph-issue-kb: `JIRA_USERNAME` and `JIRA_API_TOKEN`. Email tools additionally need Azure AD (`~/.ceph-prio-hub/config.json`).
+
+## Ceph Engineering Intelligence Platform
+
+| MCP | Cursor key | Use when | SSE port |
+|-----|------------|----------|----------|
+| **ceph-cmd-kb** | `ceph-cmd-kb` | Verify Ceph CLI, flags, configs | 8081 |
+| **ceph-doc-kb** | `ceph-doc-kb` | How-to, architecture, IBM procedures | 8082 |
+| **ceph-issue-kb** | `ceph-issue-kb` | Known bugs, workarounds, stacktraces | 8083 |
+| **ceph-prio-hub** | `ceph-prio-hub` | Customer prio-list / L3 tracking | 8080 |
+| **cephci-kb** | `cephci-kb` | CephCI tests, call graphs, YAML | 8084 |
+
+Cross-MCP: after extracting an error from a prio email, call **ceph-issue-kb** `is_known_issue` / `search_issues`. For repro commands, verify with **ceph-cmd-kb**. For product procedure, **ceph-doc-kb**.
 
 ## Setup
 
-### 1. Azure AD App Registration (One-Time)
+### 1. Install
 
-1. Go to [Azure Portal](https://portal.azure.com) > **App registrations** > **New registration**
-2. Name: `Prio Email Monitor`
-3. Supported account types: **Accounts in this organizational directory only**
-4. No redirect URI needed
-5. Go to **API permissions** > **Add a permission** > **Microsoft Graph** > **Delegated** > `Mail.Read`
-6. Go to **Authentication** > Enable **Allow public client flows**
-7. Copy the **Application (client) ID** and **Directory (tenant) ID**
+```bash
+cd /path/to/ceph-prio-hub
+pip install -e .
+```
 
-### 2. Configure
+Put JIRA credentials in the environment (or in `~/Projects/ceph-issue-kb/.env`, which the MCP also loads):
+
+```bash
+export JIRA_USERNAME="you@ibm.com"
+export JIRA_API_TOKEN="..."
+```
+
+### 2. Azure AD (email only — optional)
+
+Email fetch needs a public-client Azure app with Microsoft Graph `Mail.Read` (delegated) and **Allow public client flows**. Then:
 
 ```bash
 mkdir -p ~/.ceph-prio-hub
 cat > ~/.ceph-prio-hub/config.json << 'EOF'
 {
-  "client_id": "YOUR_CLIENT_ID_HERE",
-  "tenant_id": "YOUR_TENANT_ID_HERE"
+  "client_id": "YOUR_CLIENT_ID",
+  "tenant_id": "YOUR_TENANT_ID"
 }
 EOF
 ```
 
-### 3. Install
+On first email tool call the server prints a device code. Authenticate once; the token is cached under `~/.ceph-prio-hub/`.
 
-```bash
-cd ~/Projects/ceph-prio-hub
-pip install -e .
-```
+JIRA-only workflows do **not** need Azure.
 
-### 4. Register in Cursor
+### 3. Incorporate into an agent
 
-The server is registered in `~/.cursor/mcp.json`:
+**Cursor** — `~/.cursor/mcp.json`:
 
 ```json
 {
-  "ceph-prio-hub": {
-    "command": "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3",
-    "args": ["-m", "ceph_prio_hub.server.mcp_server"],
-    "cwd": "/Users/pawandhiran/Projects/ceph-prio-hub"
+  "mcpServers": {
+    "ceph-prio-hub": {
+      "command": "python3",
+      "args": ["-m", "ceph_prio_hub.server.mcp_server"],
+      "cwd": "/path/to/ceph-prio-hub"
+    }
   }
 }
 ```
 
-### 5. First Authentication
+**SSE** (Claude Desktop, Bob, Continue):
 
-On first use, the server will display a device code. Visit the URL shown and enter the code to authenticate with your Microsoft account. The token is cached so this only happens once.
+```bash
+python3 -m ceph_prio_hub.server.mcp_server --transport sse --host 0.0.0.0 --port 8080
+```
 
-## MCP Tools
+```json
+{
+  "mcpServers": {
+    "ceph-prio-hub": {
+      "url": "http://localhost:8080/sse",
+      "transport": "sse"
+    }
+  }
+}
+```
 
-| Tool | Description |
-|------|-------------|
-| `fetch_prio_emails` | Fetch recent emails from prio-lists (filterable by list, date range) |
-| `get_email_details` | Get full email body + conversation thread for a message |
-| `search_prio_emails` | Keyword search across prio-list emails |
-| `extract_issue_info` | Parse email text to extract case IDs, versions, components, errors |
-| `get_prio_stats` | Aggregate statistics on consolidated issues |
-| `sync_issues` | Incremental sync — fetch new emails, consolidate into issues |
-| `get_issue_timeline` | Full chronological timeline for a consolidated issue |
-| `capabilities` | Server capabilities and prio-list configuration |
-| `health` | Health check — Azure config, state, connectivity |
+State is stored in `~/.ceph-prio-hub/state/` (`issues.json`, `sync_metadata.json`) and tracking in the tracking DB used by `get_tracking` / `update_tracking`.
+
+## Tool catalog
+
+### JIRA (primary)
+
+| Tool | Args | When to call |
+|------|------|----------------|
+| `fetch_jira_issues` | `labels="Ceph_L3,IBM_Customer_Issue"`, `since="YYYY-MM-DD"`, `status`, `component`, `limit=100` | List prio JIRA issues. Pass `since` for a date delta. |
+| `sync_jira_issues` | `labels`, `since="YYYY-MM-DD"`, `limit=200` | Fetch and merge into local state. If `since` is omitted, uses last sync timestamp. |
+| `get_jira_issue` | `issue_key` (e.g. `IBMCEPH-16204`) | Full issue + comments |
+
+### Email (optional)
+
+| Tool | Args | When to call |
+|------|------|----------------|
+| `fetch_prio_emails` | `prio_list="all\|ceph\|ocs\|odf"`, `days_back=7`, `limit=50`, `since="YYYY-MM-DD"` | Recent mail. `since` overrides `days_back`. |
+| `get_email_details` | `message_id` | Full body + thread |
+| `search_prio_emails` | `query`, `prio_list`, `days_back=30`, `limit=20` | Keyword search across lists |
+| `extract_issue_info_tool` | `subject`, `body` | Parse case IDs, JIRA IDs, versions, components, errors, stack traces |
+
+### Consolidation, tracking, dashboard
+
+| Tool | Args | When to call |
+|------|------|----------------|
+| `sync_issues` | `days_back`, `limit=200` | Incremental email → consolidated issues. Omit `days_back` to use last sync. |
+| `get_issue_timeline` | `issue_id` or `case_id` | Chronological emails + JIRA for one issue |
+| `get_prio_stats` | (none) | Counts by component / list / severity |
+| `get_tracking` | `issue_key` | QA analysis, repro, coverage, status |
+| `update_tracking` | `issue_key` plus any of `qa_status`, `qa_assignee`, `internal_priority`, `analysis`, `repro_steps`, `test_coverage`, `hotfix_status`, `notes` | Additive update — empty strings are ignored |
+| `list_tracking_status` | (none) | All assessed issues grouped by QA status |
+| `generate_dashboard_tool` | `output_dir` (default `~/.ceph-prio-hub/site/`) | Write `index.html` + per-issue reports |
+| `capabilities` | (none) | Sources and tool list |
+| `health` | (none) | JIRA connectivity, Azure config, last sync |
+
+**`qa_status` values:** `not_assessed`, `needs_analysis`, `reproducing`, `test_written`, `verified`, `wont_fix`.
+
+### Agent workflow: “sync prio issues since last week and analyse one”
+
+1. `health()` — fail fast if JIRA is down.
+2. `sync_jira_issues(since="2026-08-24")`
+3. `fetch_jira_issues(since="2026-08-24", limit=50)` — pick a key.
+4. `get_jira_issue("IBMCEPH-xxxxx")`
+5. Optionally `search_issues` on **ceph-issue-kb** for duplicates.
+6. `update_tracking(issue_key=..., analysis=..., repro_steps=..., qa_status="needs_analysis")`
+7. `generate_dashboard_tool()` if the user wants the HTML site.
+
+## Updating the knowledge base (delta dates)
+
+Prio-hub state is live, not a frozen FAISS dump. Delta sync uses the same `--since YYYY-MM-DD` contract as issue-KB.
+
+```bash
+# CLI (JIRA → ~/.ceph-prio-hub/state/)
+python3 scripts/sync.py --since 2026-08-01 --verbose
+python3 scripts/sync.py --since 2026-08-01 --emails   # also Graph mail
+python3 scripts/sync.py                                # since last sync timestamp
+
+# Canonical wrapper (last-run tracker + .reload_trigger)
+./update_index.sh                 # last run, or last 1 day
+./update_index.sh 7
+./update_index.sh 2026-08-01
+./update_index.sh --reset
+```
+
+Full maintainer help (hot-reload, git auto-update, no Cursor restart): [UPDATING.md](UPDATING.md).
+
+Equivalent MCP calls:
+
+```text
+sync_jira_issues(since="2026-08-01")
+fetch_prio_emails(since="2026-08-01", limit=50)
+sync_issues(days_back=7)          # email consolidation; uses last_sync if days_back omitted
+```
 
 ## Architecture
 
 ```
-┌─────────────────────┐     ┌──────────────────┐     ┌────────────────┐
-│  Microsoft Graph API │────▶│  ceph-prio-hub   │────▶│  GitHub Pages  │
-│  (Outlook emails)    │     │  (MCP server)    │     │  (Dashboard)   │
-└─────────────────────┘     └────────┬─────────┘     └────────────────┘
-                                     │
-                            ┌────────┴─────────┐
-                            │  Ceph KB MCPs    │
-                            │  • ceph-issue-kb │
-                            │  • ceph-cmd-kb   │
-                            │  • ceph-doc-kb   │
-                            └──────────────────┘
+ibm-ceph.atlassian.net (IBMCEPH, labels Ceph_L3 / IBM_Customer_Issue)
+        │
+        ▼
+ JiraClient  ──►  IssueStateDB (~/.ceph-prio-hub/state/)
+        │                    │
+        │                    ├── TrackingDB (QA fields)
+        │                    └── generate_dashboard → HTML site
+        │
+ Microsoft Graph (optional) ──► prio-list mailboxes
 ```
+
+Published dashboard HTML is sanitized (IPs, customer names, internal domains redacted). Do not bypass the sanitizer when publishing.
 
 ## Development
 

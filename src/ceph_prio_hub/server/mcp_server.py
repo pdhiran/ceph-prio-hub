@@ -43,6 +43,7 @@ def create_mcp_server(
     config: ServerConfig,
     graph: GraphClient | None = None,
     state_db: IssueStateDB | None = None,
+    tracking_db: TrackingDB | None = None,
 ) -> FastMCP:
     """Build and return a FastMCP server.
 
@@ -68,7 +69,7 @@ def create_mcp_server(
     )
 
     db = state_db or IssueStateDB(config.state_dir)
-    tracking = TrackingDB()
+    tracking = tracking_db or TrackingDB()
     _jira_client: JiraClient | None = None
 
     def _get_graph() -> GraphClient:
@@ -92,21 +93,29 @@ def create_mcp_server(
         prio_list: str = "all",
         days_back: int = 7,
         limit: int = 50,
+        since: str = "",
     ) -> dict[str, Any]:
         """Fetch recent emails from prio-lists.
 
         Args:
             prio_list: Which list to fetch from: "ceph", "ocs", "odf", or "all".
-            days_back: How many days back to look (default 7).
+            days_back: How many days back to look (default 7). Ignored if since is set.
             limit: Maximum number of emails to return (default 50).
-
-        Returns:
-            List of email summaries with subject, sender, date, case IDs, and body preview.
+            since: ISO date YYYY-MM-DD. Fetch emails received on or after this date.
+                Same contract as python index_issues.py --since DATE.
         """
         try:
+            from datetime import datetime as _dt, timezone as _tz
             client = _get_graph()
+            since_dt = None
+            if since:
+                try:
+                    since_dt = _dt.strptime(since, "%Y-%m-%d").replace(tzinfo=_tz.utc)
+                except ValueError:
+                    return {"error": f"Invalid since date {since!r}; expected YYYY-MM-DD"}
             emails = client.fetch_prio_emails(
                 prio_list=prio_list, days_back=days_back, limit=limit,
+                since=since_dt,
             )
             results = []
             for email in emails:
@@ -672,6 +681,19 @@ def main(argv: list[str] | None = None) -> None:
         default=8080,
         help="Port for SSE transport (default: 8080)",
     )
+    parser.add_argument(
+        "--auto-update",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Git-pull this repo and watch .reload_trigger (default: enabled)",
+    )
+    parser.add_argument(
+        "--update-interval",
+        type=float,
+        default=1,
+        metavar="HOURS",
+        help="Hours between periodic git/JIRA checks (default: 1, 0=disable periodic)",
+    )
     args = parser.parse_args(argv)
 
     if args.transport == "stdio":
@@ -680,7 +702,17 @@ def main(argv: list[str] | None = None) -> None:
     config = ServerConfig.load()
     config.ensure_dirs()
 
-    mcp = create_mcp_server(config)
+    db = IssueStateDB(config.state_dir)
+    tracking = TrackingDB()
+    mcp = create_mcp_server(config, state_db=db, tracking_db=tracking)
+
+    if args.auto_update:
+        from ceph_prio_hub.server.auto_update import start_auto_update
+        repo_root = Path(__file__).resolve().parents[3]
+        start_auto_update(
+            db, tracking, repo_root,
+            update_interval_hours=args.update_interval,
+        )
 
     if args.transport == "sse":
         mcp.settings.port = args.port

@@ -862,38 +862,86 @@ h3 { font-size: 0.9rem; font-weight: 600; margin: 1.2rem 0 0.4rem; color: var(--
 .tl-badge.comment { background: #e6f4ea; color: var(--ibm-green); }
 .tl-badge.email { background: #f3e8fd; color: var(--ibm-purple); }
 
-.edit-btn {
-  font-size: 0.72rem; padding: 3px 12px; border-radius: 4px; border: 1px solid var(--ibm-blue);
-  background: #fff; color: var(--ibm-blue); cursor: pointer; font-weight: 500;
-  margin-left: 0.5rem; vertical-align: middle; transition: all 0.15s;
+.pencil-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border: none; background: transparent;
+  cursor: pointer; border-radius: 3px; vertical-align: middle;
+  opacity: 0.35; transition: all 0.15s; margin-left: 0.3rem; padding: 0;
 }
-.edit-btn:hover { background: var(--ibm-blue); color: #fff; }
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;
-}
-@media (max-width: 900px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
-.edit-field label {
-  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ibm-gray-50);
-  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem;
-}
-.edit-field select, .edit-field textarea {
-  font-family: inherit; font-size: 0.82rem; padding: 0.35rem 0.5rem;
-  border: 1px solid var(--ibm-gray-30); border-radius: 4px; background: #fff;
+.pencil-btn:hover { opacity: 1; background: rgba(15,98,254,0.08); }
+.pencil-btn svg { width: 13px; height: 13px; fill: var(--ibm-blue); }
+
+.inline-edit { display: none; margin-top: 0.3rem; }
+.inline-edit.active { display: block; }
+.inline-edit select, .inline-edit textarea {
+  font-family: inherit; font-size: 0.82rem; padding: 0.3rem 0.5rem;
+  border: 1px solid var(--ibm-blue); border-radius: 4px; background: #fff;
   color: var(--ibm-gray-90); width: 100%; box-sizing: border-box;
 }
-.edit-field select:focus, .edit-field textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
-.save-btn {
+.inline-edit select:focus, .inline-edit textarea:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.inline-edit select { max-width: 200px; }
+
+.field-view { display: inline; }
+.field-view.hidden { display: none; }
+
+.save-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: #fff; border-top: 2px solid var(--ibm-blue);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  padding: 0.6rem 2rem; display: none; align-items: center; gap: 0.75rem;
+}
+.save-bar.visible { display: flex; }
+.save-bar .save-btn {
   font-size: 0.8rem; padding: 0.4rem 1.2rem; border-radius: 4px; border: none;
   background: var(--ibm-blue); color: #fff; cursor: pointer; font-weight: 500;
-  transition: background 0.15s;
 }
-.save-btn:hover { background: #0353e9; }
-.cancel-btn {
+.save-bar .save-btn:hover { background: #0353e9; }
+.save-bar .discard-btn {
   font-size: 0.8rem; padding: 0.4rem 1rem; border-radius: 4px;
   border: 1px solid var(--ibm-gray-30); background: #fff; color: var(--ibm-gray-70);
   cursor: pointer; font-weight: 500;
 }
-.cancel-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .discard-btn:hover { background: var(--ibm-gray-10); }
+.save-bar .change-count { font-size: 0.78rem; color: var(--ibm-gray-50); }
+
+.settings-gear {
+  position: fixed; top: 12px; right: 16px; z-index: 200;
+  width: 30px; height: 30px; border: none; background: transparent;
+  cursor: pointer; opacity: 0.4; transition: opacity 0.15s; padding: 0;
+}
+.settings-gear:hover { opacity: 0.9; }
+.settings-gear svg { width: 22px; height: 22px; fill: var(--ibm-gray-70); }
+.settings-gear.configured svg { fill: var(--ibm-green); }
+
+.settings-panel {
+  display: none; position: fixed; top: 50px; right: 16px; z-index: 200;
+  background: #fff; border: 1px solid var(--ibm-gray-20); border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 1.2rem 1.4rem;
+  width: 360px; font-size: 0.82rem;
+}
+.settings-panel.open { display: block; }
+.settings-panel h4 { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--ibm-gray-90); }
+.settings-panel p { font-size: 0.75rem; color: var(--ibm-gray-50); margin-bottom: 0.6rem; line-height: 1.4; }
+.settings-panel input[type="password"] {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; padding: 0.35rem 0.5rem;
+  border: 1px solid var(--ibm-gray-30); border-radius: 4px; width: 100%;
+  box-sizing: border-box; margin-bottom: 0.5rem;
+}
+.settings-panel input:focus { outline: 2px solid var(--ibm-blue); border-color: transparent; }
+.settings-panel .btn-row { display: flex; gap: 0.4rem; align-items: center; }
+.settings-panel .btn-sm {
+  font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 4px; cursor: pointer;
+  font-weight: 500; border: none;
+}
+.settings-panel .btn-sm.primary { background: var(--ibm-blue); color: #fff; }
+.settings-panel .btn-sm.danger { background: var(--ibm-red); color: #fff; }
+.settings-panel .btn-sm.secondary { background: var(--ibm-gray-10); color: var(--ibm-gray-70); border: 1px solid var(--ibm-gray-30); }
+.sync-indicator {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  margin-right: 0.3rem; vertical-align: middle;
+}
+.sync-indicator.on { background: var(--ibm-green); }
+.sync-indicator.off { background: var(--ibm-gray-50); }
 """
 
 
@@ -1004,76 +1052,127 @@ def _render_issue_report(row: dict, issue: ConsolidatedIssue, tracking: Tracking
 </div>
 
 <div class="qa-section" id="qa-section">
-  <h3>QA Tracking <button class="edit-btn" id="edit-toggle" onclick="toggleEdit()">Edit</button></h3>
-
-  <div id="qa-view">
-    <div class="qa-grid">
-      <div class="qa-field"><dt>QA Status</dt><dd>{_qa_badge(row['qa_status'])}</dd></div>
-      <div class="qa-field"><dt>QA Owner</dt><dd>{_esc(row['qa_assignee']) or '<span style="color:var(--ibm-gray-50);">Unassigned</span>'}</dd></div>
-      <div class="qa-field"><dt>Internal Priority</dt><dd>{_esc(row['internal_priority']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</dd></div>
+  <h3>QA Tracking</h3>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>QA Status <button class="pencil-btn" onclick="editField('qa_status')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_status">{_qa_badge(row['qa_status'])}</span>
+        <div class="inline-edit" id="edit-qa_status">
+          <select id="ed-qa-status" onchange="markDirty()">
+            {''.join(f'<option value="{s}"{" selected" if s == row["qa_status"] else ""}>{QA_STATUS_LABELS.get(s, s)}</option>' for s in QA_STATUSES)}
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="qa-grid">
-      <div class="qa-field"><dt>Hotfix Status</dt><dd>{_esc(row['hotfix_status']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</dd></div>
+    <div class="qa-field">
+      <dt>QA Owner <button class="pencil-btn" onclick="editField('qa_assignee')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-qa_assignee">{_esc(row['qa_assignee']) or '<span style="color:var(--ibm-gray-50);">Unassigned</span>'}</span>
+        <div class="inline-edit" id="edit-qa_assignee">
+          <select id="ed-qa-assignee" onchange="markDirty()">
+            <option value="">-- Unassigned --</option>
+            {''.join(f'<option value="{_esc(n)}"{" selected" if n == row["qa_assignee"] else ""}>{_esc(n)}</option>' for n in TEAM_NAMES)}
+          </select>
+        </div>
+      </dd>
     </div>
-    {f'<div style="margin-top:0.5rem;font-size:0.85rem;"><strong>Notes:</strong> {_esc(row["notes"])}</div>' if row.get("notes") else ''}
+    <div class="qa-field">
+      <dt>Internal Priority <button class="pencil-btn" onclick="editField('priority')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-priority">{_esc(row['internal_priority']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</span>
+        <div class="inline-edit" id="edit-priority">
+          <select id="ed-priority" onchange="markDirty()">
+            {''.join(f'<option value="{p}"{" selected" if p == row["internal_priority"] else ""}>{p or "-- None --"}</option>' for p in ["", "P0", "P1", "P2", "P3"])}
+          </select>
+        </div>
+      </dd>
+    </div>
   </div>
-
-  <div id="qa-edit" style="display:none;">
-    <div class="edit-grid">
-      <div class="edit-field">
-        <label>QA Status</label>
-        <select id="ed-qa-status">
-          {''.join(f'<option value="{s}"{" selected" if s == row["qa_status"] else ""}>{QA_STATUS_LABELS.get(s, s)}</option>' for s in QA_STATUSES)}
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>QA Owner</label>
-        <select id="ed-qa-assignee">
-          <option value="">-- Unassigned --</option>
-          {''.join(f'<option value="{_esc(n)}"{" selected" if n == row["qa_assignee"] else ""}>{_esc(n)}</option>' for n in TEAM_NAMES)}
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Internal Priority</label>
-        <select id="ed-priority">
-          {''.join(f'<option value="{p}"{" selected" if p == row["internal_priority"] else ""}>{p or "-- None --"}</option>' for p in ["", "P0", "P1", "P2", "P3"])}
-        </select>
-      </div>
-      <div class="edit-field">
-        <label>Hotfix Status</label>
-        <select id="ed-hotfix">
-          {''.join(f'<option value="{h}"{" selected" if h == row["hotfix_status"] else ""}>{h or "-- None --"}</option>' for h in ["", "requested", "delivered", "not_needed"])}
-        </select>
-      </div>
+  <div class="qa-grid">
+    <div class="qa-field">
+      <dt>Hotfix Status <button class="pencil-btn" onclick="editField('hotfix')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-hotfix">{_esc(row['hotfix_status']) or '<span style="color:var(--ibm-gray-50);">--</span>'}</span>
+        <div class="inline-edit" id="edit-hotfix">
+          <select id="ed-hotfix" onchange="markDirty()">
+            {''.join(f'<option value="{h}"{" selected" if h == row["hotfix_status"] else ""}>{h or "-- None --"}</option>' for h in ["", "requested", "delivered", "not_needed"])}
+          </select>
+        </div>
+      </dd>
     </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Notes</label>
-      <textarea id="ed-notes" rows="2" style="width:100%;">{_esc(row.get('notes', ''))}</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Root Cause Analysis</label>
-      <textarea id="ed-analysis" rows="8" style="width:100%;">{_esc(row.get('analysis', ''))}</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Steps to Reproduce</label>
-      <textarea id="ed-repro" rows="8" style="width:100%;">{_esc(row.get('repro_steps', ''))}</textarea>
-    </div>
-    <div class="edit-field" style="margin-top:0.5rem;">
-      <label>Test Coverage</label>
-      <textarea id="ed-coverage" rows="6" style="width:100%;">{_esc(row.get('test_coverage', ''))}</textarea>
-    </div>
-    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
-      <button class="save-btn" onclick="saveChanges()">Save to GitHub</button>
-      <button class="cancel-btn" onclick="toggleEdit()">Cancel</button>
-      <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);align-self:center;"></span>
+    <div class="qa-field" style="grid-column: span 2;">
+      <dt>Notes <button class="pencil-btn" onclick="editField('notes')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button></dt>
+      <dd>
+        <span class="field-view" id="view-notes">{_esc(row.get('notes', '')) or '<span style="color:var(--ibm-gray-50);">--</span>'}</span>
+        <div class="inline-edit" id="edit-notes">
+          <textarea id="ed-notes" rows="2" onchange="markDirty()" oninput="markDirty()">{_esc(row.get('notes', ''))}</textarea>
+        </div>
+      </dd>
     </div>
   </div>
 </div>
 
-<div id="analysis-view">
-{_analysis_block("Root Cause Analysis", row.get("analysis", ""))}
-{_analysis_block("Steps to Reproduce", row.get("repro_steps", ""))}
-{_analysis_block("Test Coverage", row.get("test_coverage", ""))}
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Root Cause Analysis</div>
+    <button class="pencil-btn" onclick="editField('analysis')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-analysis">
+    <div class="analysis-box{' empty' if not row.get('analysis') else ''}">{_format_analysis(row.get('analysis', '')) if row.get('analysis') else 'Not yet documented.'}</div>
+  </span>
+  <div class="inline-edit" id="edit-analysis">
+    <textarea id="ed-analysis" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">{_esc(row.get('analysis', ''))}</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Steps to Reproduce</div>
+    <button class="pencil-btn" onclick="editField('repro')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-repro">
+    <div class="analysis-box{' empty' if not row.get('repro_steps') else ''}">{_format_analysis(row.get('repro_steps', '')) if row.get('repro_steps') else 'Not yet documented.'}</div>
+  </span>
+  <div class="inline-edit" id="edit-repro">
+    <textarea id="ed-repro" rows="10" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">{_esc(row.get('repro_steps', ''))}</textarea>
+  </div>
+</div>
+
+<div>
+  <div style="display:flex;align-items:center;gap:0.3rem;">
+    <div class="analysis-label">Test Coverage</div>
+    <button class="pencil-btn" onclick="editField('coverage')"><svg viewBox="0 0 16 16"><path d="M12.1 1.3a1 1 0 011.4 0l1.2 1.2a1 1 0 010 1.4L5.8 12.8l-3.3.8.8-3.3L12.1 1.3zM2 14h12v1H2v-1z"/></svg></button>
+  </div>
+  <span class="field-view" id="view-coverage">
+    <div class="analysis-box{' empty' if not row.get('test_coverage') else ''}">{_format_analysis(row.get('test_coverage', '')) if row.get('test_coverage') else 'Not yet documented.'}</div>
+  </span>
+  <div class="inline-edit" id="edit-coverage">
+    <textarea id="ed-coverage" rows="8" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;" onchange="markDirty()" oninput="markDirty()">{_esc(row.get('test_coverage', ''))}</textarea>
+  </div>
+</div>
+
+<button class="settings-gear" id="settings-gear" onclick="toggleSettings()" title="Sync settings">
+  <svg viewBox="0 0 20 20"><path d="M17.2 8.6l-1.5-.3a5.9 5.9 0 00-.5-1.2l.8-1.3a.5.5 0 00-.1-.6l-1.1-1.1a.5.5 0 00-.6-.1l-1.3.8a5.9 5.9 0 00-1.2-.5l-.3-1.5a.5.5 0 00-.5-.4H9.3a.5.5 0 00-.5.4l-.3 1.5a5.9 5.9 0 00-1.2.5l-1.3-.8a.5.5 0 00-.6.1L4.3 5.2a.5.5 0 00-.1.6l.8 1.3a5.9 5.9 0 00-.5 1.2l-1.5.3a.5.5 0 00-.4.5v1.6a.5.5 0 00.4.5l1.5.3c.1.4.3.8.5 1.2l-.8 1.3a.5.5 0 00.1.6l1.1 1.1a.5.5 0 00.6.1l1.3-.8c.4.2.8.4 1.2.5l.3 1.5a.5.5 0 00.5.4h1.6a.5.5 0 00.5-.4l.3-1.5c.4-.1.8-.3 1.2-.5l1.3.8a.5.5 0 00.6-.1l1.1-1.1a.5.5 0 00.1-.6l-.8-1.3c.2-.4.4-.8.5-1.2l1.5-.3a.5.5 0 00.4-.5V9.1a.5.5 0 00-.4-.5zM10 13a3 3 0 110-6 3 3 0 010 6z"/></svg>
+</button>
+
+<div class="settings-panel" id="settings-panel">
+  <h4>GitHub Sync Settings</h4>
+  <p>Save a Personal Access Token (repo scope) to sync edits to the shared GitHub repo. Without this, edits are saved locally in your browser only.</p>
+  <div id="token-status" style="margin-bottom:0.5rem;font-size:0.78rem;"></div>
+  <input type="password" id="gh-token-input" placeholder="ghp_xxxxxxxxxxxx">
+  <div class="btn-row">
+    <button class="btn-sm primary" onclick="saveToken()">Save Token</button>
+    <button class="btn-sm danger" id="clear-token-btn" onclick="clearToken()" style="display:none;">Remove</button>
+    <button class="btn-sm secondary" onclick="toggleSettings()">Close</button>
+  </div>
+</div>
+
+<div class="save-bar" id="save-bar">
+  <button class="save-btn" onclick="saveAll()">Save</button>
+  <button class="discard-btn" onclick="discardAll()">Discard</button>
+  <span class="change-count" id="change-count"></span>
+  <span id="save-status" style="font-size:0.8rem;color:var(--ibm-gray-50);margin-left:auto;"></span>
 </div>
 
 {errors_html}
@@ -1085,99 +1184,189 @@ def _render_issue_report(row: dict, issue: ConsolidatedIssue, tracking: Tracking
 
 <script>
 const ISSUE_ID = '{_esc(row["jira_key"])}';
+const LS_KEY = 'priohub_' + ISSUE_ID;
+const GH_TOKEN_KEY = 'priohub_gh_token';
 const REPO_OWNER = 'pdhiran';
 const REPO_NAME = 'ceph-prio-hub';
-const TRACKING_PATH = 'tracking.json';
 
-function toggleEdit() {{
-  const view = document.getElementById('qa-view');
-  const edit = document.getElementById('qa-edit');
-  const btn = document.getElementById('edit-toggle');
-  const analysis = document.getElementById('analysis-view');
-  if (edit.style.display === 'none') {{
-    edit.style.display = 'block';
-    view.style.display = 'none';
-    analysis.style.display = 'none';
-    btn.textContent = 'Cancel';
-  }} else {{
-    edit.style.display = 'none';
-    view.style.display = 'block';
-    analysis.style.display = 'block';
-    btn.textContent = 'Edit';
-  }}
+const dirtyFields = new Set();
+
+function getFieldData() {{
+  return {{
+    qa_status: document.getElementById('ed-qa-status').value,
+    qa_assignee: document.getElementById('ed-qa-assignee').value,
+    internal_priority: document.getElementById('ed-priority').value,
+    hotfix_status: document.getElementById('ed-hotfix').value,
+    notes: document.getElementById('ed-notes').value,
+    analysis: document.getElementById('ed-analysis').value,
+    repro_steps: document.getElementById('ed-repro').value,
+    test_coverage: document.getElementById('ed-coverage').value,
+  }};
 }}
 
-function getToken() {{
-  let token = localStorage.getItem('gh_prio_hub_token');
-  if (!token) {{
-    token = prompt('Enter your GitHub Personal Access Token (needs repo scope):');
-    if (token) localStorage.setItem('gh_prio_hub_token', token);
-  }}
-  return token;
-}}
-
-async function saveChanges() {{
-  const token = getToken();
-  if (!token) return;
-
-  const status = document.getElementById('save-status');
-  status.textContent = 'Saving...';
-  status.style.color = 'var(--ibm-blue)';
-
+// Load locally saved overrides on page load
+(function loadLocal() {{
   try {{
-    const url = `https://api.github.com/repos/${{REPO_OWNER}}/${{REPO_NAME}}/contents/${{TRACKING_PATH}}`;
-    const resp = await fetch(url, {{ headers: {{ 'Authorization': `token ${{token}}` }} }});
-
-    let trackingData = {{ issues: {{}} }};
-    let sha = null;
-
-    if (resp.ok) {{
-      const file = await resp.json();
-      sha = file.sha;
-      trackingData = JSON.parse(atob(file.content));
-    }}
-
-    if (!trackingData.issues) trackingData.issues = {{}};
-    if (!trackingData.issues[ISSUE_ID]) trackingData.issues[ISSUE_ID] = {{}};
-
-    const entry = trackingData.issues[ISSUE_ID];
-    entry.qa_status = document.getElementById('ed-qa-status').value;
-    entry.qa_assignee = document.getElementById('ed-qa-assignee').value;
-    entry.internal_priority = document.getElementById('ed-priority').value;
-    entry.hotfix_status = document.getElementById('ed-hotfix').value;
-    entry.notes = document.getElementById('ed-notes').value;
-    entry.analysis = document.getElementById('ed-analysis').value;
-    entry.repro_steps = document.getElementById('ed-repro').value;
-    entry.test_coverage = document.getElementById('ed-coverage').value;
-
-    const body = {{
-      message: `Update tracking: ${{ISSUE_ID}}`,
-      content: btoa(unescape(encodeURIComponent(JSON.stringify(trackingData, null, 2)))),
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (!saved) return;
+    const fieldMap = {{
+      qa_status: 'ed-qa-status', qa_assignee: 'ed-qa-assignee',
+      internal_priority: 'ed-priority', hotfix_status: 'ed-hotfix',
+      notes: 'ed-notes', analysis: 'ed-analysis',
+      repro_steps: 'ed-repro', test_coverage: 'ed-coverage',
     }};
-    if (sha) body.sha = sha;
-
-    const putResp = await fetch(url, {{
-      method: 'PUT',
-      headers: {{
-        'Authorization': `token ${{token}}`,
-        'Content-Type': 'application/json',
-      }},
-      body: JSON.stringify(body),
+    Object.entries(fieldMap).forEach(([key, elId]) => {{
+      if (saved[key] !== undefined) {{
+        const el = document.getElementById(elId);
+        if (el) el.value = saved[key];
+      }}
     }});
+  }} catch(e) {{}}
+  refreshGearState();
+}})();
 
-    if (putResp.ok) {{
-      status.textContent = 'Saved! Reload to see changes.';
-      status.style.color = 'var(--ibm-green)';
-    }} else {{
-      const err = await putResp.json();
-      status.textContent = 'Error: ' + (err.message || putResp.status);
-      status.style.color = 'var(--ibm-red)';
-      if (putResp.status === 401) localStorage.removeItem('gh_prio_hub_token');
-    }}
-  }} catch (e) {{
-    status.textContent = 'Error: ' + e.message;
-    status.style.color = 'var(--ibm-red)';
+function editField(field) {{
+  const viewEl = document.getElementById('view-' + field);
+  const editEl = document.getElementById('edit-' + field);
+  if (!editEl) return;
+  if (editEl.classList.contains('active')) {{
+    editEl.classList.remove('active');
+    if (viewEl) viewEl.classList.remove('hidden');
+  }} else {{
+    editEl.classList.add('active');
+    if (viewEl) viewEl.classList.add('hidden');
+    const input = editEl.querySelector('select, textarea');
+    if (input) input.focus();
   }}
+}}
+
+function markDirty() {{
+  const fields = ['qa_status','qa_assignee','priority','hotfix','notes','analysis','repro','coverage'];
+  dirtyFields.clear();
+  fields.forEach(f => {{
+    const el = document.getElementById('edit-' + f);
+    if (el && el.classList.contains('active')) dirtyFields.add(f);
+  }});
+  const bar = document.getElementById('save-bar');
+  const count = document.getElementById('change-count');
+  if (dirtyFields.size > 0) {{
+    bar.classList.add('visible');
+    count.textContent = dirtyFields.size + ' field' + (dirtyFields.size > 1 ? 's' : '') + ' modified';
+  }} else {{
+    bar.classList.remove('visible');
+  }}
+}}
+
+function discardAll() {{
+  document.querySelectorAll('.inline-edit.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.field-view.hidden').forEach(el => el.classList.remove('hidden'));
+  dirtyFields.clear();
+  document.getElementById('save-bar').classList.remove('visible');
+}}
+
+// --- Settings panel ---
+function toggleSettings() {{
+  const panel = document.getElementById('settings-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) refreshTokenStatus();
+}}
+
+function refreshGearState() {{
+  const gear = document.getElementById('settings-gear');
+  gear.classList.toggle('configured', !!localStorage.getItem(GH_TOKEN_KEY));
+}}
+
+function refreshTokenStatus() {{
+  const el = document.getElementById('token-status');
+  const clearBtn = document.getElementById('clear-token-btn');
+  if (localStorage.getItem(GH_TOKEN_KEY)) {{
+    el.innerHTML = '<span class="sync-indicator on"></span> GitHub sync enabled';
+    el.style.color = 'var(--ibm-green)';
+    clearBtn.style.display = 'inline-block';
+  }} else {{
+    el.innerHTML = '<span class="sync-indicator off"></span> Local only (no sync)';
+    el.style.color = 'var(--ibm-gray-50)';
+    clearBtn.style.display = 'none';
+  }}
+}}
+
+function saveToken() {{
+  const input = document.getElementById('gh-token-input');
+  const val = input.value.trim();
+  if (val) {{
+    localStorage.setItem(GH_TOKEN_KEY, val);
+    input.value = '';
+    refreshTokenStatus();
+    refreshGearState();
+  }}
+}}
+
+function clearToken() {{
+  localStorage.removeItem(GH_TOKEN_KEY);
+  refreshTokenStatus();
+  refreshGearState();
+}}
+
+// --- Save: always localStorage, optionally GitHub ---
+async function saveAll() {{
+  const data = getFieldData();
+  const status = document.getElementById('save-status');
+
+  // 1. Always save to localStorage
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+
+  // 2. If GitHub token configured, also push to repo
+  const token = localStorage.getItem(GH_TOKEN_KEY);
+  if (token) {{
+    status.textContent = 'Syncing to GitHub...';
+    status.style.color = 'var(--ibm-blue)';
+    try {{
+      const url = `https://api.github.com/repos/${{REPO_OWNER}}/${{REPO_NAME}}/contents/tracking.json`;
+      const resp = await fetch(url, {{ headers: {{ Authorization: `token ${{token}}` }} }});
+      let trackingData = {{ issues: {{}} }};
+      let sha = null;
+      if (resp.ok) {{
+        const file = await resp.json();
+        sha = file.sha;
+        trackingData = JSON.parse(atob(file.content));
+      }}
+      if (!trackingData.issues) trackingData.issues = {{}};
+      if (!trackingData.issues[ISSUE_ID]) trackingData.issues[ISSUE_ID] = {{}};
+      Object.assign(trackingData.issues[ISSUE_ID], data);
+
+      const body = {{
+        message: `Update tracking: ${{ISSUE_ID}}`,
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(trackingData, null, 2)))),
+      }};
+      if (sha) body.sha = sha;
+
+      const putResp = await fetch(url, {{
+        method: 'PUT',
+        headers: {{ Authorization: `token ${{token}}`, 'Content-Type': 'application/json' }},
+        body: JSON.stringify(body),
+      }});
+      if (putResp.ok) {{
+        status.textContent = 'Saved + synced to GitHub';
+        status.style.color = 'var(--ibm-green)';
+      }} else {{
+        if (putResp.status === 401) {{
+          localStorage.removeItem(GH_TOKEN_KEY);
+          refreshGearState();
+          status.textContent = 'Saved locally. Token expired -- update in settings.';
+        }} else {{
+          status.textContent = 'Saved locally. GitHub sync failed (' + putResp.status + ')';
+        }}
+        status.style.color = 'var(--ibm-orange)';
+      }}
+    }} catch (e) {{
+      status.textContent = 'Saved locally. GitHub sync error.';
+      status.style.color = 'var(--ibm-orange)';
+    }}
+  }} else {{
+    status.textContent = 'Saved locally';
+    status.style.color = 'var(--ibm-green)';
+  }}
+  setTimeout(() => {{ status.textContent = ''; }}, 4000);
 }}
 </script>
 </body>

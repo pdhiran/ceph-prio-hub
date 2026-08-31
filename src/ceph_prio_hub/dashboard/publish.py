@@ -108,12 +108,25 @@ def git_commit_and_push(docs_dir: Path, message: str) -> bool:
         return False
 
 
+def detect_enrichment_delta(db: IssueStateDB, tracking: TrackingDB) -> list[str]:
+    """Find JIRA keys that need (re-)enrichment.
+
+    An issue needs enrichment when:
+    - It has no enriched_at timestamp (never enriched)
+    - Its analysis is empty or too short (<100 chars)
+    - Its state.last_updated > tracking.enriched_at (JIRA updated since last enrichment)
+    """
+    return tracking.issues_needing_enrichment(db.get_all_issues())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Sync, generate, and publish dashboard")
     parser.add_argument("--no-sync", action="store_true", help="Skip JIRA sync")
     parser.add_argument("--no-push", action="store_true", help="Skip git commit/push")
     parser.add_argument("--since", default="", help="Sync issues since date (YYYY-MM-DD)")
     parser.add_argument("--limit", type=int, default=500, help="Max issues to fetch")
+    parser.add_argument("--detect-delta", action="store_true",
+                        help="Print JIRA keys needing enrichment and exit")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -133,8 +146,19 @@ def main() -> None:
     else:
         logger.info("Skipping JIRA sync (--no-sync)")
 
-    logger.info("Generating dashboard...")
     tracking = TrackingDB()
+
+    if args.detect_delta:
+        delta = detect_enrichment_delta(db, tracking)
+        if delta:
+            logger.info("Issues needing enrichment: %d", len(delta))
+            for key in delta:
+                print(key)
+        else:
+            logger.info("All issues are up to date -- no enrichment needed")
+        return
+
+    logger.info("Generating dashboard...")
     index = generate_dashboard(db, site_dir, tracking)
     logger.info("Dashboard generated: %s", index)
 

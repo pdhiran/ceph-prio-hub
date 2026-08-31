@@ -27,3 +27,6 @@ token_cache.json
 config.json
 .env
 .env.*
+
+.reload_trigger
+.last_index_update
