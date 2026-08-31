@@ -69,7 +69,7 @@ def create_mcp_server(
     )
 
     db = state_db or IssueStateDB(config.state_dir)
-    tracking = tracking_db or TrackingDB()
+    tracking = tracking_db or TrackingDB(config.tracking_file)
     _jira_client: JiraClient | None = None
 
     def _get_graph() -> GraphClient:
@@ -588,7 +588,7 @@ def create_mcp_server(
         """
         out = Path(output_dir) if output_dir else config.state_dir.parent / "site"
         try:
-            index_path = generate_dashboard(db, out)
+            index_path = generate_dashboard(db, out, tracking=tracking)
             issues_dir = out / "issues"
             issue_count = len(list(issues_dir.glob("*.html"))) if issues_dir.exists() else 0
             return {
@@ -703,7 +703,7 @@ def main(argv: list[str] | None = None) -> None:
     config.ensure_dirs()
 
     db = IssueStateDB(config.state_dir)
-    tracking = TrackingDB()
+    tracking = TrackingDB(config.tracking_file)
     mcp = create_mcp_server(config, state_db=db, tracking_db=tracking)
 
     if args.auto_update:

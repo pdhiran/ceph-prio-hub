@@ -28,6 +28,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from ceph_prio_hub.config import TRACKING_FILE
+
 logger = logging.getLogger(__name__)
 
 QA_STATUSES = [
@@ -60,7 +62,7 @@ class TrackingDB:
     """Manages the team-editable tracking data."""
 
     def __init__(self, path: Path | None = None) -> None:
-        self._path = path or Path.home() / ".ceph-prio-hub" / "tracking.json"
+        self._path = path or TRACKING_FILE
         self._data: dict[str, dict[str, Any]] = {}
         self._load()
 

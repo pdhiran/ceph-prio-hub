@@ -3,8 +3,8 @@
 - ``git pull --ff-only`` of this repo: ``.py`` changes exit the MCP
   subprocess so Cursor respawns it; anything else hot-reloads DBs.
 - ``.reload_trigger`` watcher: ``./update_index.sh`` (a separate process)
-  writes ``~/.ceph-prio-hub/`` then touches the trigger; this thread
-  re-reads state from disk. Cursor does not restart.
+  writes ``~/.ceph-prio-hub/state/`` then touches the trigger; this thread
+  re-reads that same ``config.state_dir`` from disk. Cursor does not restart.
 - Optional periodic JIRA delta if ``JIRA_USERNAME`` / ``JIRA_API_TOKEN``
   are set.
 """
@@ -153,7 +153,7 @@ def _do_update(
         if any(f.endswith(".py") for f in files):
             logger.info("Code changes detected, restarting MCP process (Cursor respawns it)")
             os._exit(0)
-            return
+            return  # mocked tests: os._exit is patched and must not fall through
 
         logger.info("Prio-hub repo updated, hot-reloading state (no Cursor restart)")
         _reload_dbs(state_db, tracking_db)
@@ -213,10 +213,7 @@ def start_auto_update(
         return
 
     if repo_root is None:
-        repo_root = _find_repo_root(Path(__file__))
-    if repo_root is None:
-        logger.debug("Auto-update skipped: not a git repository")
-        return
+        repo_root = _find_repo_root(Path(__file__)) or Path(__file__).resolve().parents[3]
 
     stop_event = threading.Event()
     _periodic_stop = stop_event

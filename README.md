@@ -103,7 +103,7 @@ python3 -m ceph_prio_hub.server.mcp_server --transport sse --host 0.0.0.0 --port
 }
 ```
 
-State is stored in `~/.ceph-prio-hub/state/` (`issues.json`, `sync_metadata.json`) and tracking in the tracking DB used by `get_tracking` / `update_tracking`.
+State is stored in `~/.ceph-prio-hub/state/` (`issues.json`, `sync_metadata.json` — this is `STATE_DIR` / `config.state_dir`). QA tracking is `~/.ceph-prio-hub/tracking.json` (sibling of `state/`, used by `get_tracking` / `update_tracking`). `scripts/sync.py` writes `state/` only.
 
 ## Tool catalog
 
@@ -185,7 +185,7 @@ ibm-ceph.atlassian.net (IBMCEPH, labels Ceph_L3 / IBM_Customer_Issue)
         ▼
  JiraClient  ──►  IssueStateDB (~/.ceph-prio-hub/state/)
         │                    │
-        │                    ├── TrackingDB (QA fields)
+        │                    ├── TrackingDB (~/.ceph-prio-hub/tracking.json)
         │                    └── generate_dashboard → HTML site
         │
  Microsoft Graph (optional) ──► prio-list mailboxes

@@ -71,8 +71,8 @@ def publish_to_docs(site_dir: Path, docs_dir: Path) -> None:
 
 def sync_tracking_to_repo(repo: Path) -> None:
     """Copy tracking.json to repo root so GitHub API can read/write it."""
-    from ceph_prio_hub.config import CONFIG_DIR
-    src = CONFIG_DIR / "tracking.json"
+    from ceph_prio_hub.config import TRACKING_FILE
+    src = TRACKING_FILE
     dst = repo / "tracking.json"
     if src.exists():
         shutil.copy2(src, dst)

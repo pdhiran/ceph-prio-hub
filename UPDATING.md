@@ -2,7 +2,14 @@
 
 This is the maintainer help for **ceph-prio-hub**. Agents and humans: use this page when refreshing JIRA/email state. Do not invent a different workflow.
 
-Prio-hub is **live state**, not a frozen FAISS dump. Canonical disk location: `~/.ceph-prio-hub/` (`issues.json`, `sync_metadata.json`, `tracking.json`). Git holds the MCP **code**, not the issue database.
+Prio-hub is **live state**, not a frozen FAISS dump. Canonical disk layout under `~/.ceph-prio-hub/`:
+
+| File | Path | Writer |
+|---|---|---|
+| `issues.json`, `sync_metadata.json` | `~/.ceph-prio-hub/state/` (`STATE_DIR` / `config.state_dir`) | `scripts/sync.py`, MCP `sync_jira_issues` |
+| `tracking.json` | `~/.ceph-prio-hub/tracking.json` (sibling of `state/`, **not** inside it) | MCP `update_tracking` — `sync.py` does **not** write this |
+
+Git holds the MCP **code**, not the issue database.
 
 Cursor does **not** need a restart after `./update_index.sh`. The MCP re-reads state from disk when it sees `.reload_trigger`. If git pull brings `.py` changes, Cursor respawns the MCP subprocess.
 
@@ -23,7 +30,7 @@ cd /path/to/ceph-prio-hub
 ## What `./update_index.sh` does
 
 1. Resolves `--since`.
-2. Runs `python3 scripts/sync.py --since DATE --verbose` (JIRA → `~/.ceph-prio-hub/`).
+2. Runs `python3 scripts/sync.py --since DATE --verbose` (JIRA → `~/.ceph-prio-hub/state/`).
 3. Touches `.reload_trigger` in the **git repo root**.
 4. Writes `.last_index_update`.
 
@@ -38,7 +45,7 @@ touch .reload_trigger
 
 | Event | What the MCP does | Cursor |
 |---|---|---|
-| `./update_index.sh` (separate process wrote `~/.ceph-prio-hub/`) | Trigger watcher (~5s) calls `IssueStateDB.reload()` + `TrackingDB.reload()` | Stays open |
+| `./update_index.sh` (separate process wrote `~/.ceph-prio-hub/state/`) | Trigger watcher (~5s) calls `IssueStateDB.reload()` (reads `self._state_dir` = `config.state_dir`) + `TrackingDB.reload()` (reads `config.tracking_file`) | Stays open |
 | `git pull` of this repo, `*.py` changed | MCP `os._exit(0)`; Cursor respawns the subprocess | Stays open |
 | `git pull` of non-Python files | Hot-reload DBs from disk | Stays open |
 | Periodic timer (default 1h) | Git pull; if `JIRA_USERNAME` + `JIRA_API_TOKEN` are set, JIRA delta into the in-process DB | Stays open |
@@ -74,5 +81,5 @@ Those mutate the **in-process** DB. `./update_index.sh` mutates disk from anothe
 | Symptom | Check |
 |---|---|
 | MCP tools still show pre-sync issues | Wait 5s after trigger; confirm MCP cwd/repo is this checkout |
-| Periodic JIRA never runs | Env vars not visible to the MCP process (Cursor does not load your shell `.env` unless listed in MCP env) |
+| Periodic JIRA never runs | Env vars not visible to the MCP process. `mcp_server.py` loads repo `.env` and `~/Projects/ceph-issue-kb/.env` via dotenv; Cursor MCP `env` does **not** auto-load your shell. If those files are missing, `_maybe_sync_jira` is skipped. `.reload_trigger` still works — it only re-reads disk. |
 | Azure mail not fetched | `scripts/sync.py --emails` plus `~/.ceph-prio-hub/config.json` |

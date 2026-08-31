@@ -6,8 +6,8 @@
 #   ./update_index.sh --reset      # clear the last-run tracker
 #
 # Requires JIRA_USERNAME / JIRA_API_TOKEN (same as ceph-issue-kb).
-# Writes ~/.ceph-prio-hub/ then touches .reload_trigger so a running MCP
-# re-reads state from disk without restarting Cursor.
+# Writes ~/.ceph-prio-hub/state/ then touches .reload_trigger so a running MCP
+# re-reads that same directory from disk without restarting Cursor.
 
 set -euo pipefail
 cd "$(dirname "$0")"

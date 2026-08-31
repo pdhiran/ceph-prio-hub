@@ -21,9 +21,6 @@ from ceph_prio_hub.parser.issue_extractor import ExtractedIssueInfo, extract_iss
 
 logger = logging.getLogger(__name__)
 
-ISSUES_FILE = STATE_DIR / "issues.json"
-SYNC_METADATA_FILE = STATE_DIR / "sync_metadata.json"
-
 _RE_SUBJECT_CLEAN = re.compile(r"^(?:(?:Re|Fwd|Fw)\s*:\s*)+", re.IGNORECASE)
 
 
@@ -213,7 +210,13 @@ class IssueStateDB:
                 self._sync_metadata = {}
 
     def reload(self) -> None:
-        """Re-read issues.json from disk (hot-reload, no process restart)."""
+        """Re-read ``self._state_dir`` (``issues.json`` + ``sync_metadata.json``).
+
+        Uses the instance directory passed to ``__init__`` (MCP / ``sync.py``:
+        ``config.state_dir``, default ``STATE_DIR`` = ``~/.ceph-prio-hub/state``).
+        Does not consult a module-level path, so a custom ``state_dir`` and a
+        ``./update_index.sh`` write to that same dir both round-trip here.
+        """
         self._issues = {}
         self._sync_metadata = {}
         self._load()

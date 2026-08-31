@@ -8,6 +8,7 @@ from pathlib import Path
 
 CONFIG_DIR = Path.home() / ".ceph-prio-hub"
 STATE_DIR = CONFIG_DIR / "state"
+TRACKING_FILE = CONFIG_DIR / "tracking.json"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 TOKEN_CACHE_FILE = CONFIG_DIR / "token_cache.json"
 
@@ -74,6 +75,15 @@ class ServerConfig:
     def load(cls) -> "ServerConfig":
         azure = AzureConfig.load()
         return cls(azure=azure)
+
+    @property
+    def tracking_file(self) -> Path:
+        """QA tracking JSON — sibling of ``state_dir``, never inside it.
+
+        Production: ``~/.ceph-prio-hub/tracking.json``. ``scripts/sync.py``
+        writes ``state_dir`` only; it does not touch this file.
+        """
+        return self.state_dir.parent / "tracking.json"
 
     def ensure_dirs(self) -> None:
         self.state_dir.mkdir(parents=True, exist_ok=True)
