@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """CLI delta sync for ceph-prio-hub.
 
-Same ``--since DATE`` contract as ``python index_issues.py --since DATE``.
+Same ``--since YYYY-MM-DD`` contract as ceph-issue-kb ``index_issues.py``
+(JIRA ``updated >=`` that date).
 
 Usage:
     python scripts/sync.py

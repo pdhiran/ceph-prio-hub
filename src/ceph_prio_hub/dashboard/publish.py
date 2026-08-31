@@ -12,7 +12,7 @@ import argparse
 import logging
 import shutil
 import subprocess
-import sys
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -30,6 +30,16 @@ from ceph_prio_hub.tracker.tracking import TrackingDB
 logger = logging.getLogger(__name__)
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DOCS_DIR = REPO_ROOT / "docs"
+
+
+def _parse_since(value: str) -> str:
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Invalid date {value!r}; expected YYYY-MM-DD"
+        ) from exc
+    return value
 
 
 def sync_jira(db: IssueStateDB, since: str | None = None, limit: int = 500) -> dict:
@@ -119,15 +129,21 @@ def detect_enrichment_delta(db: IssueStateDB, tracking: TrackingDB) -> list[str]
     return tracking.issues_needing_enrichment(db.get_all_issues())
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Sync, generate, and publish dashboard")
     parser.add_argument("--no-sync", action="store_true", help="Skip JIRA sync")
     parser.add_argument("--no-push", action="store_true", help="Skip git commit/push")
-    parser.add_argument("--since", default="", help="Sync issues since date (YYYY-MM-DD)")
+    parser.add_argument(
+        "--since",
+        metavar="YYYY-MM-DD",
+        type=_parse_since,
+        default=None,
+        help="Sync issues since date (YYYY-MM-DD)",
+    )
     parser.add_argument("--limit", type=int, default=500, help="Max issues to fetch")
     parser.add_argument("--detect-delta", action="store_true",
                         help="Print JIRA keys needing enrichment and exit")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -138,7 +154,7 @@ def main() -> None:
 
     if not args.no_sync:
         logger.info("Syncing JIRA issues...")
-        result = sync_jira(db, since=args.since or None, limit=args.limit)
+        result = sync_jira(db, since=args.since, limit=args.limit)
         logger.info(
             "Sync complete: %d fetched, %d new, %d updated, %d total",
             result["fetched"], result["new"], result["updated"], result["total"],
@@ -166,7 +182,6 @@ def main() -> None:
     publish_to_docs(site_dir, DOCS_DIR)
 
     if not args.no_push:
-        from datetime import datetime
         ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
         total = len(db.get_all_issues())
         msg = f"Update dashboard: {total} issues ({ts} UTC)"

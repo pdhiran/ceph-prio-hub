@@ -1,20 +1,19 @@
 """MCP server for the Ceph Prio-List Issue Hub.
 
-Uses FastMCP from the ``mcp`` SDK. Exposes tools for fetching prio-list
-emails, extracting issue info, managing consolidated issues, and generating
-statistics.
+Uses FastMCP from the ``mcp`` SDK. JIRA (IBMCEPH ``Ceph_L3`` /
+``IBM_Customer_Issue``) is the primary source; prio-list email is optional.
 
 Run with::
 
     python -m ceph_prio_hub.server.mcp_server                     # stdio (Cursor)
-    python -m ceph_prio_hub.server.mcp_server --transport sse      # SSE
+    python -m ceph_prio_hub.server.mcp_server --transport sse --host 0.0.0.0 --port 8080
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
-import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +38,17 @@ from ceph_prio_hub.tracker.tracking import TrackingDB, QA_STATUSES, QA_STATUS_LA
 logger = logging.getLogger(__name__)
 
 
+def _validate_since(since: str) -> dict[str, str] | None:
+    """Reject non-ISO dates before any JIRA/Graph call. Empty means omitted."""
+    if not since:
+        return None
+    try:
+        datetime.strptime(since, "%Y-%m-%d")
+    except ValueError:
+        return {"error": f"Invalid since date {since!r}; expected YYYY-MM-DD"}
+    return None
+
+
 def create_mcp_server(
     config: ServerConfig,
     graph: GraphClient | None = None,
@@ -59,11 +69,10 @@ def create_mcp_server(
     mcp = FastMCP(
         "Ceph Prio-List Issue Hub",
         instructions=(
-            "Monitor and analyze prio-list emails (ocs-prio-list, ceph-prio-list, "
-            "odf-prio-list) for customer issue tracking and test coverage analysis. "
-            "Consolidates email threads, correlates with JIRA, and tracks issue "
-            "lifecycle. Key tools: fetch_prio_emails, sync_issues, get_issue_timeline, "
-            "extract_issue_info."
+            "Customer prio-list / L3 tracking for Ceph. JIRA (IBMCEPH labels "
+            "Ceph_L3 / IBM_Customer_Issue) is the primary source; prio-list email "
+            "is optional. Key tools: health, sync_jira_issues, fetch_jira_issues, "
+            "get_jira_issue, update_tracking, generate_dashboard_tool."
         ),
         icons=[ceph_icon],
     )
@@ -102,17 +111,16 @@ def create_mcp_server(
             days_back: How many days back to look (default 7). Ignored if since is set.
             limit: Maximum number of emails to return (default 50).
             since: ISO date YYYY-MM-DD. Fetch emails received on or after this date.
-                Same contract as python index_issues.py --since DATE.
+                Same YYYY-MM-DD contract as scripts/sync.py --since.
         """
+        err = _validate_since(since)
+        if err:
+            return err
         try:
-            from datetime import datetime as _dt, timezone as _tz
             client = _get_graph()
             since_dt = None
             if since:
-                try:
-                    since_dt = _dt.strptime(since, "%Y-%m-%d").replace(tzinfo=_tz.utc)
-                except ValueError:
-                    return {"error": f"Invalid since date {since!r}; expected YYYY-MM-DD"}
+                since_dt = datetime.strptime(since, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             emails = client.fetch_prio_emails(
                 prio_list=prio_list, days_back=days_back, limit=limit,
                 since=since_dt,
@@ -363,6 +371,9 @@ def create_mcp_server(
             component: Filter by component name (e.g. "RGW", "CephFS").
             limit: Maximum number of issues (default 100).
         """
+        err = _validate_since(since)
+        if err:
+            return err
         try:
             jira = _get_jira()
             label_list = [l.strip() for l in labels.split(",") if l.strip()]
@@ -411,6 +422,9 @@ def create_mcp_server(
             since: Only sync issues updated since this date (YYYY-MM-DD).
             limit: Maximum issues to fetch (default 200).
         """
+        err = _validate_since(since)
+        if err:
+            return err
         try:
             jira = _get_jira()
             label_list = [l.strip() for l in labels.split(",") if l.strip()]
@@ -617,16 +631,10 @@ def create_mcp_server(
                 },
                 "email": {
                     "lists": ["ocs-prio-list", "ceph-prio-list", "odf-prio-list"],
-                    "status": "planned",
+                    "status": "optional",
                 },
             },
-            "tools": [
-                "fetch_jira_issues", "sync_jira_issues", "get_jira_issue",
-                "generate_dashboard",
-                "fetch_prio_emails", "get_email_details", "search_prio_emails",
-                "extract_issue_info", "get_prio_stats", "sync_issues",
-                "get_issue_timeline", "capabilities", "health",
-            ],
+            "tools": list(mcp._tool_manager._tools.keys()),
         }
 
     @mcp.tool()
@@ -654,6 +662,7 @@ def create_mcp_server(
             "last_sync": stats.get("last_sync"),
             "sync_count": stats.get("sync_count", 0),
             "state_dir": str(config.state_dir),
+            "tracking_file": str(config.tracking_file),
         }
 
     return mcp
@@ -673,7 +682,12 @@ def main(argv: list[str] | None = None) -> None:
         "--transport",
         default="stdio",
         choices=["stdio", "sse"],
-        help="MCP transport (default: stdio)",
+        help="MCP transport (default: stdio). SSE listens on --host/--port.",
+    )
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Bind address for SSE transport (default: 0.0.0.0)",
     )
     parser.add_argument(
         "--port",
@@ -685,7 +699,11 @@ def main(argv: list[str] | None = None) -> None:
         "--auto-update",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Git-pull this repo and watch .reload_trigger (default: enabled)",
+        help=(
+            "Git-pull this repo and watch .reload_trigger (default: on). "
+            "--no-auto-update disables both; Cursor must restart the MCP "
+            "subprocess after ./update_index.sh."
+        ),
     )
     parser.add_argument(
         "--update-interval",
@@ -715,6 +733,7 @@ def main(argv: list[str] | None = None) -> None:
         )
 
     if args.transport == "sse":
+        mcp.settings.host = args.host
         mcp.settings.port = args.port
 
     mcp.run(transport=args.transport)

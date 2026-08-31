@@ -19,7 +19,7 @@ Needs `JIRA_USERNAME` / `JIRA_API_TOKEN` (same as ceph-issue-kb; `.env` in this 
 
 ```bash
 cd /path/to/ceph-prio-hub
-./update_index.sh                 # since last successful run, or last 1 day
+./update_index.sh                 # since yesterday of last success (1-day overlap), or last 1 day if first run
 ./update_index.sh 7               # last 7 days
 ./update_index.sh 2026-08-01      # explicit ISO date
 ./update_index.sh --reset         # clear .last_index_update
@@ -32,7 +32,7 @@ cd /path/to/ceph-prio-hub
 1. Resolves `--since`.
 2. Runs `python3 scripts/sync.py --since DATE --verbose` (JIRA → `~/.ceph-prio-hub/state/`).
 3. Touches `.reload_trigger` in the **git repo root**.
-4. Writes `.last_index_update`.
+4. Writes `.last_index_update` to **yesterday of the run date** (1-day overlap), not the ISO `--since` you passed.
 
 Add `--emails` only via the Python CLI if you also want Graph mail (Azure must be configured):
 
@@ -51,7 +51,7 @@ touch .reload_trigger
 | Periodic timer (default 1h) | Git pull; if `JIRA_USERNAME` + `JIRA_API_TOKEN` are set, JIRA delta into the in-process DB | Stays open |
 | No git remote | Pull skipped; trigger watcher still runs | Stays open |
 
-Disable: `--no-auto-update`. Interval: `--update-interval HOURS` (default 1).
+Disable: `--no-auto-update` (skips git pull **and** the trigger watcher). Interval: `--update-interval HOURS` (default 1).
 
 ### Cursor MCP config
 
@@ -70,7 +70,7 @@ fetch_prio_emails(since="2026-08-01", limit=50)
 sync_issues(days_back=7)
 ```
 
-Those mutate the **in-process** DB. `./update_index.sh` mutates disk from another process — that is why the trigger exists.
+Those mutate the in-process DB and `db.save()` to `~/.ceph-prio-hub/state/`. `./update_index.sh` writes that same directory from another process — that is why `.reload_trigger` exists.
 
 ## Files that must stay untracked
 

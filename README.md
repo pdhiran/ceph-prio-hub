@@ -41,7 +41,8 @@ Cross-MCP: after extracting an error from a prio email, call **ceph-issue-kb** `
 ### 1. Install
 
 ```bash
-cd /path/to/ceph-prio-hub
+git clone https://github.com/pdhiran/ceph-prio-hub.git
+cd ceph-prio-hub
 pip install -e .
 ```
 
@@ -85,6 +86,8 @@ JIRA-only workflows do **not** need Azure.
   }
 }
 ```
+
+**Auto-update is on by default** (no extra flags needed): git pull of this repo on startup/interval, plus a `.reload_trigger` watcher so `./update_index.sh` hot-reloads without restarting Cursor. `--no-auto-update` disables **both** — including the trigger — so Cursor must restart the MCP subprocess after `./update_index.sh`. Interval: `--update-interval HOURS` (default `1`; `0` = startup pull only, trigger still watched). Details: [UPDATING.md](UPDATING.md).
 
 **SSE** (Claude Desktop, Bob, Continue):
 
@@ -136,7 +139,7 @@ State is stored in `~/.ceph-prio-hub/state/` (`issues.json`, `sync_metadata.json
 | `list_tracking_status` | (none) | All assessed issues grouped by QA status |
 | `generate_dashboard_tool` | `output_dir` (default `~/.ceph-prio-hub/site/`) | Write `index.html` + per-issue reports |
 | `capabilities` | (none) | Sources and tool list |
-| `health` | (none) | JIRA connectivity, Azure config, last sync |
+| `health` | (none) | JIRA connectivity, Azure config, last sync, `state_dir`, `tracking_file` |
 
 **`qa_status` values:** `not_assessed`, `needs_analysis`, `reproducing`, `test_written`, `verified`, `wont_fix`.
 
@@ -152,7 +155,7 @@ State is stored in `~/.ceph-prio-hub/state/` (`issues.json`, `sync_metadata.json
 
 ## Updating the knowledge base (delta dates)
 
-Prio-hub state is live, not a frozen FAISS dump. Delta sync uses the same `--since YYYY-MM-DD` contract as issue-KB.
+Prio-hub state is live, not a frozen FAISS dump. `--since YYYY-MM-DD` is a JIRA filter: issues with `updated >=` that date (same ISO shape as issue-KB; not a git log).
 
 ```bash
 # CLI (JIRA → ~/.ceph-prio-hub/state/)
@@ -161,13 +164,13 @@ python3 scripts/sync.py --since 2026-08-01 --emails   # also Graph mail
 python3 scripts/sync.py                                # since last sync timestamp
 
 # Canonical wrapper (last-run tracker + .reload_trigger)
-./update_index.sh                 # last run, or last 1 day
+./update_index.sh                 # 1-day overlap from last success, or last 1 day
 ./update_index.sh 7
 ./update_index.sh 2026-08-01
 ./update_index.sh --reset
 ```
 
-Full maintainer help (hot-reload, git auto-update, no Cursor restart): [UPDATING.md](UPDATING.md).
+Full maintainer help (hot-reload, `--no-auto-update` kills the trigger): [UPDATING.md](UPDATING.md).
 
 Equivalent MCP calls:
 
@@ -183,11 +186,10 @@ sync_issues(days_back=7)          # email consolidation; uses last_sync if days_
 ibm-ceph.atlassian.net (IBMCEPH, labels Ceph_L3 / IBM_Customer_Issue)
         │
         ▼
- JiraClient  ──►  IssueStateDB (~/.ceph-prio-hub/state/)
-        │                    │
-        │                    ├── TrackingDB (~/.ceph-prio-hub/tracking.json)
-        │                    └── generate_dashboard → HTML site
-        │
+ JiraClient  ──►  IssueStateDB (~/.ceph-prio-hub/state/)  ──┐
+                                                             ├──► generate_dashboard → HTML site
+ TrackingDB (~/.ceph-prio-hub/tracking.json)  ─────────────┘
+
  Microsoft Graph (optional) ──► prio-list mailboxes
 ```
 

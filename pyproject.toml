@@ -5,13 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ceph-prio-hub"
 version = "0.1.0"
-description = "Ceph Prio-List Issue Hub — monitors prio-list emails via Microsoft Graph API, consolidates issues, and cross-references with Ceph knowledge bases"
+description = "Ceph Prio-List Issue Hub — JIRA L3 / IBM_Customer_Issue tracking, optional prio-list email, QA tracking, and dashboard"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 
 dependencies = [
     "mcp>=1.0",
+    "requests>=2.31",
     "msgraph-sdk>=1.0",
     "azure-identity>=1.15",
     "msal>=1.28",
